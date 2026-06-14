@@ -1,4 +1,5 @@
 import { MASTERS } from '@/data/index';
+import { SELL_UNLOCKS } from '@/domain/shop';
 import type { SkillTreeDef } from '@/domain/types';
 
 // ============================================================================
@@ -125,6 +126,26 @@ export function validateMasters(): ValidationResult {
     if (it.buyPrice < 0) errors.push(`[items] "${it.id}" の buyPrice が負`);
     if (it.category === 'consumable' && !it.useContext && !it.effects) {
       errors.push(`[items] 消費アイテム "${it.id}" に useContext も effects も無い（使用不能）`);
+    }
+  }
+
+  // 敵ドロップ: itemId の実在・rate の範囲（[04 §7]）
+  for (const e of Object.values(enemies)) {
+    for (const d of e.drops ?? []) {
+      if (!(d.itemId in items)) {
+        errors.push(`[enemies] "${e.id}" のドロップ "${d.itemId}" が未定義アイテム`);
+      }
+      if (d.rate < 0 || d.rate > 1) {
+        errors.push(`[enemies] "${e.id}" のドロップ "${d.itemId}" の rate が 0..1 外`);
+      }
+    }
+  }
+
+  // 素材売却での解放（[04 §8]）: キー素材と解放先装備の実在
+  for (const [matId, equipIds] of Object.entries(SELL_UNLOCKS)) {
+    if (!(matId in items)) errors.push(`[SELL_UNLOCKS] キー素材 "${matId}" が未定義`);
+    for (const eid of equipIds) {
+      if (!(eid in equipment)) errors.push(`[SELL_UNLOCKS] 解放先装備 "${eid}" が未定義`);
     }
   }
 

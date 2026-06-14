@@ -93,6 +93,17 @@ describe('battle: drops & items', () => {
     }
   });
 
+  test('倒した敵を翌ターン二重抽選しない（wasDown 判定）', () => {
+    // スライム1体を倒したターンのドロップ数を記録し、次ターンに増えないこと
+    let state = startBattle(diveSave(), ['enemy_slime']);
+    const rng = createRng(7);
+    while (state.outcome === 'ongoing') state = resolveTurn(state, attackAll(state), rng);
+    const dropsAtWin = state.drops.length;
+    // 既に決着しているので resolveTurn は no-op（outcome!=ongoing で即return）
+    const again = resolveTurn(state, [], rng);
+    expect(again.drops.length).toBe(dropsAtWin);
+  });
+
   test('戦闘中アイテム使用でHP回復し、終了時に倉庫から消費される', () => {
     let save = diveSave();
     save = addItem(save, 'item_potion', 2);

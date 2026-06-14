@@ -511,12 +511,21 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
   let members = save.guild.members;
   let gold = save.guild.gold;
 
-  // 図鑑: 遭遇した敵は seen、撃破した敵は defeated（勝敗を問わず記録）
+  // 図鑑: 遭遇した敵は seen、撃破した敵は defeated（勝敗を問わず記録）。
+  // 勝利時は入手したドロップを dropsFound に記録。bestiary 確定前にまとめて構築する。
   const monsters = { ...save.bestiary.monsters };
   for (const e of state.enemies) {
     if (!e.enemyId) continue;
     const prev = monsters[e.enemyId] ?? { seen: false, defeated: false, dropsFound: [] };
     monsters[e.enemyId] = { ...prev, seen: true, defeated: prev.defeated || e.isDown };
+  }
+  if (win) {
+    for (const d of state.drops) {
+      const prev = monsters[d.enemyId];
+      if (prev && !prev.dropsFound.includes(d.itemId)) {
+        monsters[d.enemyId] = { ...prev, dropsFound: [...prev.dropsFound, d.itemId] };
+      }
+    }
   }
   const bestiary = { ...save.bestiary, monsters };
 
@@ -526,13 +535,6 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     const partyIds = new Set(party.map((p) => p.charId));
     const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
     members = members.map((m) => (partyIds.has(m.id) ? grantExpToChar(m, share) : m));
-    // 図鑑: 入手したドロップを記録
-    for (const d of state.drops) {
-      const prev = monsters[d.enemyId];
-      if (prev && !prev.dropsFound.includes(d.itemId)) {
-        monsters[d.enemyId] = { ...prev, dropsFound: [...prev.dropsFound, d.itemId] };
-      }
-    }
   }
 
   let next: SaveData = {

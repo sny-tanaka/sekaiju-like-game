@@ -27,7 +27,7 @@ export function unlockedTier(save: SaveData): number {
  * 素材を売ると並ぶ装備（[04 §8]）。素材 ID → 解放される装備 ID。
  * 売却すると shopStock.unlockedItemIds に恒久追加され、ティア未到達でも購入できる。
  */
-const SELL_UNLOCKS: Record<ItemId, ItemId[]> = {
+export const SELL_UNLOCKS: Record<ItemId, ItemId[]> = {
   item_slime_jelly: ['equip_slime_shield'],
   item_rat_tail: ['equip_rat_dagger'],
   item_bat_wing: ['equip_bat_cloak'],
@@ -45,9 +45,7 @@ const equipNote = (id: ItemId): string => {
 };
 
 /**
- * 購入できる商品一覧（消費アイテム＋解放ティア以下の装備）。
- * TODO(Phase 4): 設計 04 §8 の「素材を売ると装備が並ぶ」恒久解放ループ
- *   （shopStock.unlockedItemIds）を実装する。現状は到達階ティアのみで解放。
+ * 購入できる商品一覧（消費アイテム＋解放ティア以下の装備＋素材売却で解放済みの装備）。
  */
 export function shopCatalog(save: SaveData): ShopEntry[] {
   const tier = unlockedTier(save);
