@@ -341,6 +341,194 @@ describe('battle: ユニオンスキル（[03 §9]）', () => {
   });
 });
 
+describe('battle: 召喚（設置・[03 §8]）', () => {
+  // 召喚スキルを習得した魔導士（使い魔）のセーブ。
+  function summonerSave(skillId: string): SaveData {
+    let save = createInitialSaveData('召喚');
+    save = addCharacterToGuild(
+      save,
+      createCharacter({ raceId: 'race_pix', classId: 'class_mage', name: '術' })
+    );
+    const m = save.guild.members[0];
+    save = {
+      ...save,
+      guild: {
+        ...save.guild,
+        members: [{ ...m, learnedSkills: { ...m.learnedSkills, [skillId]: 1 } }],
+      },
+    };
+    return startDive(save, 1);
+  }
+
+  test('召喚スキルで召喚体が最前列に追加される', () => {
+    const save = summonerSave('skill_summon_wolf');
+    const state = startBattle(save, ['enemy_slime']);
+    expect(state.summons).toHaveLength(0);
+    const actor = state.allies[0];
+    const after = resolveTurn(
+      state,
+      [{ kind: 'skill', actorId: actor.id, skillId: 'skill_summon_wolf', targetId: actor.id }],
+      createRng(1)
+    );
+    expect(after.summons.length).toBe(1);
+    expect(after.summons[0].isSummon).toBe(true);
+    expect(after.summons[0].summonKind).toBe('summon_wolf');
+    expect(after.log.some((l) => l.text.includes('召喚した'))).toBe(true);
+  });
+
+  test('自律召喚体（狼）はターンに敵を攻撃する', () => {
+    const save = summonerSave('skill_summon_wolf');
+    let state = startBattle(save, ['enemy_slime']);
+    // 1ターン目で召喚
+    state = resolveTurn(
+      state,
+      [
+        {
+          kind: 'skill',
+          actorId: state.allies[0].id,
+          skillId: 'skill_summon_wolf',
+          targetId: state.allies[0].id,
+        },
+      ],
+      createRng(1)
+    );
+    const enemyHp = state.enemies[0].hp;
+    // 2ターン目: 召喚主は防御、狼が自律攻撃 → 敵 HP が減る
+    const after = resolveTurn(
+      state,
+      [{ kind: 'guard', actorId: state.allies[0].id }],
+      createRng(2)
+    );
+    expect(after.enemies[0].hp).toBeLessThan(enemyHp);
+  });
+
+  test('召喚枠は最大3体まで', () => {
+    const save = summonerSave('skill_summon_wolf');
+    let state = startBattle(save, ['enemy_slime']);
+    const actor = state.allies[0];
+    // TP を十分に与える
+    state = { ...state, allies: state.allies.map((a) => ({ ...a, tp: 99 })) };
+    for (let i = 0; i < 5; i++) {
+      state = resolveTurn(
+        state,
+        [{ kind: 'skill', actorId: actor.id, skillId: 'skill_summon_wolf', targetId: actor.id }],
+        createRng(10 + i)
+      );
+      if (state.outcome !== 'ongoing') break;
+    }
+    expect(state.summons.filter((s) => !s.isDown).length).toBeLessThanOrEqual(3);
+  });
+
+  test('壁の召喚体（石像・actsOnTurn=false）は自律攻撃しない', () => {
+    const save = summonerSave('skill_summon_bulwark');
+    let state = startBattle(save, ['enemy_slime']);
+    state = resolveTurn(
+      state,
+      [
+        {
+          kind: 'skill',
+          actorId: state.allies[0].id,
+          skillId: 'skill_summon_bulwark',
+          targetId: state.allies[0].id,
+        },
+      ],
+      createRng(1)
+    );
+    expect(state.summons[0].summonKind).toBe('summon_bulwark');
+    const enemyHp = state.enemies[0].hp;
+    // 召喚主は防御、石像は行動しない → 敵 HP は変化しない
+    const after = resolveTurn(
+      state,
+      [{ kind: 'guard', actorId: state.allies[0].id }],
+      createRng(2)
+    );
+    expect(after.enemies[0].hp).toBe(enemyHp);
+  });
+
+  test('persistsAfterBattle な使い魔は勝利後 diveState に残り、次戦闘で復元される', () => {
+    const save = summonerSave('skill_summon_familiar');
+    let state = startBattle(save, ['enemy_slime']);
+    // 召喚
+    state = resolveTurn(
+      state,
+      [
+        {
+          kind: 'skill',
+          actorId: state.allies[0].id,
+          skillId: 'skill_summon_familiar',
+          targetId: state.allies[0].id,
+        },
+      ],
+      createRng(1)
+    );
+    expect(state.summons[0].summonKind).toBe('summon_familiar');
+    // 強制的に勝利状態へ（敵を倒す）
+    const won: BattleState = {
+      ...state,
+      outcome: 'win',
+      enemies: state.enemies.map((e) => ({ ...e, hp: 0, isDown: true })),
+    };
+    const after = applyBattleResult(save, won);
+    expect(after.diveState!.persistentSummons.length).toBe(1);
+    expect(after.diveState!.persistentSummons[0].summonKind).toBe('summon_familiar');
+    // 次戦闘で復元
+    const next = startBattle(after, ['enemy_slime']);
+    expect(next.summons.length).toBe(1);
+    expect(next.summons[0].summonKind).toBe('summon_familiar');
+  });
+
+  test('戦闘限りの召喚体（狼）は勝利後 diveState に残らない', () => {
+    const save = summonerSave('skill_summon_wolf');
+    let state = startBattle(save, ['enemy_slime']);
+    state = resolveTurn(
+      state,
+      [
+        {
+          kind: 'skill',
+          actorId: state.allies[0].id,
+          skillId: 'skill_summon_wolf',
+          targetId: state.allies[0].id,
+        },
+      ],
+      createRng(1)
+    );
+    const won: BattleState = {
+      ...state,
+      outcome: 'win',
+      enemies: state.enemies.map((e) => ({ ...e, hp: 0, isDown: true })),
+    };
+    const after = applyBattleResult(save, won);
+    expect(after.diveState!.persistentSummons.length).toBe(0);
+  });
+
+  test('召喚体は全滅判定に数えない（味方全滅なら召喚体が残っても lose）', () => {
+    // 壁の石像（攻撃しない）を使い、敵を倒し切れない状況で味方全滅 → lose を確認
+    const save = summonerSave('skill_summon_bulwark');
+    let state = startBattle(save, ['enemy_slime']);
+    state = resolveTurn(
+      state,
+      [
+        {
+          kind: 'skill',
+          actorId: state.allies[0].id,
+          skillId: 'skill_summon_bulwark',
+          targetId: state.allies[0].id,
+        },
+      ],
+      createRng(1)
+    );
+    // 味方を瀕死にして敵を強化…ではなく、味方を0にした状態を作って1ターン回す
+    const downed: BattleState = {
+      ...state,
+      allies: state.allies.map((a) => ({ ...a, hp: 0, isDown: true })),
+    };
+    const after = resolveTurn(downed, [], createRng(3));
+    expect(after.outcome).toBe('lose');
+    // 召喚体は生きていてもよい
+    expect(after.summons.length).toBe(1);
+  });
+});
+
 describe('battle: drops & items', () => {
   test('勝利時にドロップが倉庫・図鑑へ反映される', () => {
     const save = diveSave();

@@ -335,6 +335,27 @@ export const Page = () => {
         ))}
       </div>
 
+      {/* 召喚体（最前列）。生存中のみ表示。 */}
+      {state.summons.length > 0 ? (
+        <div className={styles.summons}>
+          {state.summons.map((s) => (
+            <div
+              key={s.id}
+              className={`${styles.summon} ${s.isDown ? styles.down : ''}`}
+            >
+              <span className={styles.summonName}>🐾 {s.name}</span>
+              <StatBar
+                value={s.hp}
+                max={s.maxHp}
+                color="#8d6e63"
+                showValue={false}
+              />
+              <span className={styles.summonHp}>HP {Math.max(0, s.hp)}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       {/* 味方: 前衛/後衛の2段 */}
       <div className={styles.party}>
         <div className={styles.rowTag}>前衛</div>

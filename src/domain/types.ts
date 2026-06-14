@@ -127,6 +127,10 @@ export interface Combatant {
   enemyId?: EnemyId; // 敵のみ
   /** 敵の属性倍率（弱点1.5 / 耐性0.5 / 無効0。未指定は等倍1.0）。 */
   resist?: Partial<Record<Element, number>>;
+  /** 召喚体か（[03 §8]）。true のとき summonKind / ownerId を持つ。 */
+  isSummon?: boolean;
+  summonKind?: SummonKind; // 召喚体の種別（SUMMONS マスター参照）
+  ownerId?: string; // 召喚主の charId
 }
 
 export interface DamageResult {
@@ -148,6 +152,7 @@ export type TitleId = string;
 export type SkillId = string;
 export type EnemyId = string;
 export type ItemId = string;
+export type SummonKind = string;
 
 /** `cellKey` の正準形は `"x,y"`（カンマ区切り・ゼロ埋めなし）。 */
 export type CellKey = string;
@@ -221,6 +226,22 @@ export interface EnemyMaster {
   drops?: { itemId: ItemId; rate: number }[];
 }
 
+/**
+ * 召喚体マスター（[03 §8]）。設置物／使い魔の素ステータスと挙動フラグ。
+ * 召喚体は最前列の壁／攻撃役として扱う。
+ */
+export interface SummonMaster {
+  id: SummonKind;
+  name: string;
+  baseStats: Stats; // 出現階でスケールする基準値（敵と同様に enemyScale を流用）
+  refDepth: number;
+  attackElement: PhysElement; // 自律攻撃の物理属性
+  actsOnTurn: boolean; // 自律行動（true=毎ターン攻撃 / false=壁のみ）
+  buffImmune: boolean; // 強化弱体が効かない個体か
+  persistsAfterBattle: boolean; // 戦闘間（同一探索中）に残るか（使い魔系）
+  persistsOutOfDungeon: boolean; // 拠点帰還後も残るか（MVP では未使用＝false 運用）
+}
+
 // ----------------------------------------------------------------------------
 // 戦闘スキル定義（[03 §5]）。マスターデータ（関数値を含むため保存しない）。
 // ----------------------------------------------------------------------------
@@ -242,7 +263,8 @@ export type SkillEffectDef =
       modifier: (lv: number) => number;
       turns: number;
       stackGroup: string;
-    };
+    }
+  | { kind: 'summon'; summonKind: SummonKind };
 
 export interface BattleSkillDef {
   id: SkillId;
@@ -310,6 +332,8 @@ export interface BattleState {
   depth: number;
   allies: Combatant[];
   enemies: Combatant[];
+  /** 召喚体（[03 §8]）。最前列の壁/攻撃役。最大3体。味方の全滅判定には数えない。 */
+  summons: Combatant[];
   log: BattleLogEntry[];
   outcome: BattleOutcome;
   /** 突入時の先手（[03 §10]）。FOE接触時に preemptive/ambush になる。 */
@@ -548,10 +572,14 @@ export interface DivePartyMember {
   ailments: ActiveAilment[];
 }
 
-/** 探索をまたいで残る召喚体（[03 §8]）。Phase 0 は型のみ。 */
+/**
+ * 戦闘をまたいで残る召喚体のスナップショット（[03 §8]）。
+ * persistsAfterBattle な召喚体を diveState に保存し、次戦闘で復元する。
+ */
 export interface SummonSnapshot {
-  summonId: string;
-  remainingTurns: number;
+  summonKind: SummonKind;
+  ownerId: string;
+  hp: number;
 }
 
 /**

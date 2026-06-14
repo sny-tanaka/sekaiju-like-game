@@ -4,6 +4,7 @@ import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
 import { RACES } from '@/data/races';
 import { SKILLS } from '@/data/skills';
+import { SUMMONS } from '@/data/summons';
 import { TITLES } from '@/data/titles';
 import { UNION_SKILLS } from '@/data/unionSkills';
 
@@ -14,6 +15,7 @@ export { EQUIPMENT } from '@/data/equipment';
 export { ITEMS } from '@/data/items';
 export { RACES } from '@/data/races';
 export { SKILLS } from '@/data/skills';
+export { SUMMONS } from '@/data/summons';
 export { TITLES } from '@/data/titles';
 export { UNION_SKILLS } from '@/data/unionSkills';
 
@@ -24,6 +26,7 @@ export const MASTERS = {
   titles: TITLES,
   skills: SKILLS,
   unionSkills: UNION_SKILLS,
+  summons: SUMMONS,
   enemies: ENEMIES,
   items: ITEMS,
   equipment: EQUIPMENT,
