@@ -107,13 +107,24 @@ export function validateMasters(): ValidationResult {
     checkSkillTree(`titles/${title.id}`, title.skillTree, skillIds, errors);
   }
 
-  // 装備: slot と weaponType/armorType の整合
+  // 装備: slot と weaponType/armorType の整合、価格の非負
   for (const eq of Object.values(equipment)) {
     if (eq.slot === 'weapon' && !eq.weaponType) {
       errors.push(`[equipment] "${eq.id}" は weapon だが weaponType が未設定`);
     }
     if (eq.slot === 'armor' && !eq.armorType) {
       errors.push(`[equipment] "${eq.id}" は armor だが armorType が未設定`);
+    }
+    if (eq.buyPrice < 0 || eq.tier < 0) {
+      errors.push(`[equipment] "${eq.id}" の buyPrice/tier が負`);
+    }
+  }
+
+  // アイテム: 価格非負、消費アイテムは使用手段（effects か useContext）を持つ
+  for (const it of Object.values(items)) {
+    if (it.buyPrice < 0) errors.push(`[items] "${it.id}" の buyPrice が負`);
+    if (it.category === 'consumable' && !it.useContext && !it.effects) {
+      errors.push(`[items] 消費アイテム "${it.id}" に useContext も effects も無い（使用不能）`);
     }
   }
 

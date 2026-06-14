@@ -321,7 +321,7 @@ export const Page = () => {
                             >
                               {c.name}
                               <span className={styles.itemHp}>
-                                {p.hp}/{max.hp}
+                                HP {p.hp}/{max.hp}・TP {p.tp}/{max.tp}
                               </span>
                             </button>
                           );

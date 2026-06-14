@@ -530,8 +530,14 @@ export interface ForgeInventory {
 }
 
 export interface ShopStock {
-  /** 解放済みティア（10層帯ごとに解放）。 */
-  unlockedTiers: number[];
+  /**
+   * 解放済みの最大ティア（[04 §8]）。
+   * ※ Phase 3 では品揃えティアを towerState.record.deepestReached から算出するため
+   *   このフィールドは未使用。Phase 4 でショップ独自の解放管理に使う。
+   */
+  unlockedTier: number;
+  /** 売却で恒久解放された商品 ID（素材を売ると並ぶ。Phase 4 で実装）。 */
+  unlockedItemIds: string[];
 }
 
 // ============================================================================
