@@ -1,14 +1,18 @@
+import { BALANCE } from '@/data/balance';
 import {
   acquireTitle,
   canAcquireTitle,
   canReincarnate,
   lookupRebirthBonus,
   reincarnate,
+  reincarnateInSave,
   transferClass,
+  transferClassInSave,
 } from '@/domain/charProgress';
-import { createCharacter } from '@/domain/saveData';
-import { skillLevel } from '@/domain/skillTree';
-import type { Character } from '@/domain/types';
+import { addItem, equipItem, itemCount } from '@/domain/inventory';
+import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
+import { availableSP, skillLevel } from '@/domain/skillTree';
+import type { Character, SaveData } from '@/domain/types';
 
 function warrior(over: Partial<Character> = {}): Character {
   const c = createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: 'A' });
@@ -42,6 +46,50 @@ describe('transferClass', () => {
     let c = warrior({ level: 3 });
     c = transferClass(c, 'class_mage');
     expect(c.level).toBe(1);
+  });
+
+  test('SP 総量は新レベル基準に再計算され、増殖しない（回帰）', () => {
+    // Lv20（total=57相当）→ 転職で Lv15。total は 3*(15-1)=42 に再計算される
+    const c = warrior({ level: 20, skillPoints: { total: 57, spent: 0 } });
+    const after = transferClass(c, 'class_mage');
+    expect(after.skillPoints.total).toBe(BALANCE.SP_PER_LEVEL * 14);
+    expect(availableSP(after)).toBeLessThanOrEqual(BALANCE.SP_PER_LEVEL * 14);
+    expect(availableSP(after)).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('transferClassInSave', () => {
+  test('新職業で装備不可になった装備は倉庫へ戻る', () => {
+    let save: SaveData = createInitialSaveData('g');
+    const c = createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: 'A' });
+    save = addCharacterToGuild(save, c);
+    save = addItem(save, 'equip_short_sword', 1);
+    save = equipItem(save, c.id, 'equip_short_sword');
+    expect(save.guild.members[0].equipment.weapon).toBe('equip_short_sword');
+
+    save = transferClassInSave(save, c.id, 'class_mage'); // 魔導士は剣不可
+    const m = save.guild.members[0];
+    expect(m.classId).toBe('class_mage');
+    expect(m.equipment.weapon).toBeNull();
+    expect(itemCount(save, 'equip_short_sword')).toBe(1); // 倉庫へ返却
+  });
+});
+
+describe('reincarnateInSave', () => {
+  test('装備は失わず倉庫へ戻してから作り直す', () => {
+    let save: SaveData = createInitialSaveData('g');
+    const c = createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: 'A' });
+    save = addCharacterToGuild(save, { ...c, level: 50 });
+    save = addItem(save, 'equip_iron_armor', 1);
+    save = equipItem(save, c.id, 'equip_iron_armor');
+
+    save = reincarnateInSave(save, c.id, { raceId: 'race_pix', classId: 'class_mage', name: 'B' });
+    const m = save.guild.members[0];
+    expect(m.id).toBe(c.id);
+    expect(m.classId).toBe('class_mage');
+    expect(m.equipment.armor).toBeNull();
+    expect(itemCount(save, 'equip_iron_armor')).toBe(1); // 倉庫へ返却
+    expect(m.rebirthBonus).toEqual({ allStats: 6, bonusSp: 6 });
   });
 });
 

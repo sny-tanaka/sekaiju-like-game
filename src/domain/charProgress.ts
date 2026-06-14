@@ -1,8 +1,26 @@
 import { BALANCE, CLASS_CHANGE_LEVEL_PENALTY, TITLE_BONUS_SP, UNLOCK } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { RACES } from '@/data/races';
+import { canEquip, unequipItem } from '@/domain/inventory';
 import { createCharacter } from '@/domain/saveData';
-import type { Character, ClassId, RaceId, RebirthBonus, TitleId } from '@/domain/types';
+import type {
+  Character,
+  ClassId,
+  EquipSlotKey,
+  RaceId,
+  RebirthBonus,
+  SaveData,
+  TitleId,
+} from '@/domain/types';
+
+const EQUIP_SLOTS: EquipSlotKey[] = ['weapon', 'armor', 'accessory'];
+
+function replaceMember(save: SaveData, charId: string, char: Character): SaveData {
+  return {
+    ...save,
+    guild: { ...save.guild, members: save.guild.members.map((m) => (m.id === charId ? char : m)) },
+  };
+}
 
 // ============================================================================
 // 転職・転生・称号（[01 §6-8]）。すべて純関数。
@@ -29,7 +47,7 @@ const sumLevels = (learned: Record<string, number>) =>
 export function transferClass(char: Character, newClassId: ClassId): Character {
   if (!CLASSES[newClassId]) return char;
   const keepIds = raceSkillIds(char.raceId);
-  const learned: Record<string, number> = {};
+  let learned: Record<string, number> = {};
   for (const [sid, lv] of Object.entries(char.learnedSkills)) {
     if (keepIds.has(sid)) learned[sid] = lv;
   }
@@ -38,18 +56,42 @@ export function transferClass(char: Character, newClassId: ClassId): Character {
   if (starter && !learned[starter]) learned[starter] = 1;
 
   const level = Math.max(1, char.level - CLASS_CHANGE_LEVEL_PENALTY);
-  // spent は保持スキル分だけに再計算（職業/称号分の SP を払い戻す）
-  const spent = sumLevels(learned) - (starter && learned[starter] ? 1 : 0);
+  // SP 総量は新レベル基準に再計算（転職コスト=レベル低下を SP にも反映。増殖を防ぐ）。
+  const total = BALANCE.SP_PER_LEVEL * Math.max(0, level - 1);
+  // 開始スキルの無料 Lv1 は spent に含めない
+  let spent = sumLevels(learned) - (starter && learned[starter] ? 1 : 0);
+  // 低レベル化で種族スキル投資を払い切れない場合は剥奪（負の SP を作らない）
+  if (spent > total) {
+    learned = starter ? { [starter]: 1 } : {};
+    spent = 0;
+  }
 
   return {
     ...char,
     classId: newClassId,
     titleId: null,
     level,
-    exp: 0,
+    exp: 0, // MVP: 新レベル開始時点に丸める（設計の「該当Lvに合わせて再計算」の簡略）
     learnedSkills: learned,
-    skillPoints: { ...char.skillPoints, spent: Math.max(0, spent) },
+    skillPoints: { total, spent },
   };
+}
+
+/**
+ * 転職を SaveData に適用する。職業変更後、新職業で装備不可になった装備は外して倉庫へ戻す。
+ */
+export function transferClassInSave(save: SaveData, charId: string, newClassId: ClassId): SaveData {
+  const char = save.guild.members.find((m) => m.id === charId);
+  if (!char) return save;
+  let next = replaceMember(save, charId, transferClass(char, newClassId));
+  const changed = next.guild.members.find((m) => m.id === charId)!;
+  for (const slot of EQUIP_SLOTS) {
+    const itemId = changed.equipment[slot];
+    if (itemId && !canEquip(changed, itemId)) {
+      next = unequipItem(next, charId, slot); // 倉庫へ返却
+    }
+  }
+  return next;
 }
 
 // ---- 転生 ----------------------------------------------------------------
@@ -107,6 +149,25 @@ export function reincarnate(
     rebirthBonus: bonus,
     skillPoints: { total, spent: base.skillPoints.spent },
   };
+}
+
+/**
+ * 転生を SaveData に適用する。装備は失わず倉庫へ戻してから作り直す。
+ */
+export function reincarnateInSave(
+  save: SaveData,
+  charId: string,
+  next: { raceId: RaceId; classId: ClassId; name: string }
+): SaveData {
+  const char = save.guild.members.find((m) => m.id === charId);
+  if (!char || !canReincarnate(char)) return save;
+  // 装備を全て倉庫へ返却してから作り直す（資産消失を防ぐ）
+  let s = save;
+  for (const slot of EQUIP_SLOTS) {
+    if (char.equipment[slot]) s = unequipItem(s, charId, slot);
+  }
+  const updated = s.guild.members.find((m) => m.id === charId)!;
+  return replaceMember(s, charId, reincarnate(updated, next));
 }
 
 // ---- 称号 ----------------------------------------------------------------

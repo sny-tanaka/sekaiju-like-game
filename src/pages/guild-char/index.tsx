@@ -13,8 +13,8 @@ import {
   acquireTitle,
   canAcquireTitle,
   canReincarnate,
-  reincarnate,
-  transferClass,
+  reincarnateInSave,
+  transferClassInSave,
 } from '@/domain/charProgress';
 import { canEquip, equipItem, unequipItem } from '@/domain/inventory';
 import {
@@ -215,7 +215,7 @@ export const Page = () => {
             type="button"
             className={styles.actBtn}
             disabled={transferTo === char.classId}
-            onClick={() => void updateChar((c) => transferClass(c, transferTo))}
+            onClick={() => void applyAndPersist((s) => transferClassInSave(s, id, transferTo))}
           >
             転職する
           </button>
@@ -309,15 +309,16 @@ export const Page = () => {
               <button
                 type="button"
                 className={styles.danger}
-                onClick={() =>
-                  void updateChar((c) =>
-                    reincarnate(c, {
+                onClick={() => {
+                  void applyAndPersist((s) =>
+                    reincarnateInSave(s, id, {
                       raceId: rbRace,
                       classId: rbClass,
-                      name: rbName.trim() || c.name,
+                      name: rbName.trim() || char.name,
                     })
-                  )
-                }
+                  );
+                  setRbOpen(false);
+                }}
               >
                 転生を実行
               </button>

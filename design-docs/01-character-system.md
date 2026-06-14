@@ -170,6 +170,8 @@ transferClass(char, newClassId):
 | 70〜99 | +10 | +8 | Lv+10 |
 | 100（上限） | +20 | +10 | Lv+12 |
 
+> **列の意味（実装の正準）**: 「全能力上昇」「SP上昇」が `RebirthBonus.allStats` / `bonusSp` の実値（実装 `lookupRebirthBonus` はこの2列を採用）。「総SP（目安）」は **新キャラの開始時に持つ SP の概算** で、`開始Lv分の通常SP（SP_PER_LEVEL×(startLv-1)）＋ bonusSp` を「Lv 換算で +N 相当」と表記した参考値（厳密値ではない）。
+
 ```ts
 interface RebirthBonus {
   allStats: number;  // 全能力に加算
