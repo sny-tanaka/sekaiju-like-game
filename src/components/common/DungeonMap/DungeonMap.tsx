@@ -3,7 +3,8 @@ import type { MouseEvent } from 'react';
 
 import styles from './style.module.scss';
 
-import type { Dir, FloorMaster } from '@/domain/types';
+import { mapIconSymbol } from '@/data/mapIcons';
+import type { Dir, FloorMaster, PlacedIcon } from '@/domain/types';
 
 type Props = {
   floor: FloorMaster;
@@ -11,6 +12,8 @@ type Props = {
   explored: string[];
   pos: { x: number; y: number };
   dir: Dir;
+  /** プレイヤーが手動配置したアイコン。 */
+  icons?: PlacedIcon[];
   /** 1セルの最大ピクセル（画面幅に合わせて縮む）。 */
   maxCell?: number;
   /** セルタップで隣接1歩移動などに使う。 */
@@ -29,7 +32,15 @@ const COLORS = {
 
 // 2D 俯瞰のプレイヤーマップ（02 §4 / MVP の主役ビュー）。
 // 探索済みセルのみ床・壁を描画し、未踏は霧として残す。自動マップ相当。
-export const DungeonMap = ({ floor, explored, pos, dir, maxCell = 26, onCellClick }: Props) => {
+export const DungeonMap = ({
+  floor,
+  explored,
+  pos,
+  dir,
+  icons = [],
+  maxCell = 26,
+  onCellClick,
+}: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cell = Math.max(10, Math.min(maxCell, Math.floor(360 / floor.width)));
   const w = floor.width * cell;
@@ -98,6 +109,15 @@ export const DungeonMap = ({ floor, explored, pos, dir, maxCell = 26, onCellClic
       }
     }
 
+    // プレイヤーが手動配置したアイコン（探索済みセルのみ表示）
+    ctx.font = `${Math.floor(cell * 0.66)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const ic of icons) {
+      if (!exploredSet.has(`${ic.x},${ic.y}`)) continue;
+      ctx.fillText(mapIconSymbol(ic.iconId), ic.x * cell + cell / 2, ic.y * cell + cell / 2 + 1);
+    }
+
     // プレイヤー（向きに合わせた三角形）
     const cx = pos.x * cell + cell / 2;
     const cy = pos.y * cell + cell / 2;
@@ -111,7 +131,7 @@ export const DungeonMap = ({ floor, explored, pos, dir, maxCell = 26, onCellClic
     ctx.lineTo(cx + Math.cos(a - 2.5) * r, cy + Math.sin(a - 2.5) * r);
     ctx.closePath();
     ctx.fill();
-  }, [floor, explored, pos, dir, cell, w, h]);
+  }, [floor, explored, pos, dir, icons, cell, w, h]);
 
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
     if (!onCellClick) return;

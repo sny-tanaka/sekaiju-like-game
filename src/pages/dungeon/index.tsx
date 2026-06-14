@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
@@ -6,12 +6,17 @@ import styles from './style.module.scss';
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
+import { MAP_ICONS } from '@/data/mapIcons';
 import { goDeeper, goShallower, moveStep, returnToTown, stairsAt, turnTo } from '@/domain/dive';
 import { gaugeLevel } from '@/domain/encounter';
 import { DELTA, turnBack, turnLeft, turnRight } from '@/domain/movement';
+import { eraseIcon, placeIcon } from '@/domain/playerMap';
 import { createRng } from '@/domain/rng';
 import type { Dir, Rng } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+
+// マップ編集の選択ツール: null=移動モード / 'erase'=消しゴム / それ以外=アイコンID
+type Tool = string | null;
 
 // 探索（ダンジョン）。自動生成1階のグリッド移動＋自動マップ＋エンカウントゲージ。
 // 階段で上下移動、帰還で拠点へ。オートセーブは階移動・帰還時（[05 §4]）。
@@ -20,6 +25,8 @@ export const Page = () => {
   const { save, applySave, applyAndPersist } = useGameState();
   // 移動中エンカウント抽選用の ephemeral 乱数（ダイブ内で1本。再開時は作り直し）
   const rngRef = useRef<Rng | null>(null);
+  // マップ編集ツール（null=移動）。アイコン配置/消去はオートセーブ。
+  const [tool, setTool] = useState<Tool>(null);
 
   const dive = save?.diveState ?? null;
   const floor = useMemo(
@@ -71,15 +78,25 @@ export const Page = () => {
   const handleCellClick = useCallback(
     (x: number, y: number) => {
       if (!dive) return;
+      const depth = dive.depth;
+      // マップ編集モード: 探索済みセルにアイコンを配置/消去（オートセーブ）
+      if (tool !== null) {
+        if (tool === 'erase') {
+          void applyAndPersist((s) => eraseIcon(s, depth, x, y));
+        } else {
+          void applyAndPersist((s) => placeIcon(s, depth, x, y, tool));
+        }
+        return;
+      }
+      // 移動モード: 隣接1マスのみ移動
       const dx = x - dive.pos.x;
       const dy = y - dive.pos.y;
-      // 隣接1マスのみ移動（それ以外は無視）
       const dir = (['N', 'E', 'S', 'W'] as Dir[]).find(
         (d) => DELTA[d].dx === dx && DELTA[d].dy === dy
       );
       if (dir) doMove(dir);
     },
-    [dive, doMove]
+    [dive, doMove, tool, applyAndPersist]
   );
 
   if (!save) {
@@ -129,9 +146,47 @@ export const Page = () => {
           explored={save.exploredCells[dive.depth] ?? []}
           pos={dive.pos}
           dir={dive.dir}
+          icons={save.playerMaps[dive.depth]?.icons ?? []}
           onCellClick={handleCellClick}
         />
       </div>
+
+      <div className={styles.palette}>
+        <button
+          type="button"
+          className={`${styles.tool} ${tool === null ? styles.toolActive : ''}`}
+          onClick={() => setTool(null)}
+          aria-label="移動モード"
+        >
+          🚶
+        </button>
+        {MAP_ICONS.map((ic) => (
+          <button
+            key={ic.id}
+            type="button"
+            className={`${styles.tool} ${tool === ic.id ? styles.toolActive : ''}`}
+            onClick={() => setTool(ic.id)}
+            aria-label={ic.label}
+          >
+            {ic.symbol}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={`${styles.tool} ${tool === 'erase' ? styles.toolActive : ''}`}
+          onClick={() => setTool('erase')}
+          aria-label="消しゴム"
+        >
+          🧽
+        </button>
+      </div>
+      <p className={styles.paletteHint}>
+        {tool === null
+          ? '隣接マスをタップで移動。アイコンを選ぶとマップに書き込めます。'
+          : tool === 'erase'
+            ? 'マップ上のマスをタップでアイコンを消去。'
+            : 'マップ上の探索済みマスをタップでアイコンを配置（再タップで消去）。'}
+      </p>
 
       {stairKind && (
         <button
