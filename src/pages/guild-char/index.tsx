@@ -1,11 +1,21 @@
+import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
 import { RACES } from '@/data/races';
 import { SKILLS } from '@/data/skills';
+import { TITLES } from '@/data/titles';
+import {
+  acquireTitle,
+  canAcquireTitle,
+  canReincarnate,
+  reincarnate,
+  transferClass,
+} from '@/domain/charProgress';
 import { canEquip, equipItem, unequipItem } from '@/domain/inventory';
 import {
   availableSP,
@@ -15,8 +25,11 @@ import {
   skillNodesFor,
 } from '@/domain/skillTree';
 import { computeBaseStats } from '@/domain/stats';
-import type { Character, EquipSlotKey, SaveData, StatKey } from '@/domain/types';
+import type { Character, ClassId, EquipSlotKey, RaceId, SaveData, StatKey } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+
+const RACE_IDS = Object.keys(RACES);
+const CLASS_IDS = Object.keys(CLASSES);
 
 const SLOTS: EquipSlotKey[] = ['weapon', 'armor', 'accessory'];
 const SLOT_LABEL: Record<EquipSlotKey, string> = {
@@ -40,6 +53,11 @@ export const Page = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { save, applyAndPersist } = useGameState();
+  const [transferTo, setTransferTo] = useState<ClassId>(CLASS_IDS[0]);
+  const [rbName, setRbName] = useState('');
+  const [rbRace, setRbRace] = useState<RaceId>(RACE_IDS[0]);
+  const [rbClass, setRbClass] = useState<ClassId>(CLASS_IDS[0]);
+  const [rbOpen, setRbOpen] = useState(false);
 
   if (!save) {
     return (
@@ -61,6 +79,7 @@ export const Page = () => {
 
   const stats = computeBaseStats(char);
   const sp = availableSP(char);
+  const deepestReached = save.towerState.record.deepestReached;
 
   const updateChar = (fn: (c: Character) => Character) =>
     applyAndPersist((s: SaveData) => ({
@@ -172,6 +191,146 @@ export const Page = () => {
             );
           })}
         </ul>
+      </section>
+
+      {/* 育成: 転職・称号・転生 */}
+      <section className={styles.card}>
+        <h2 className={styles.h2}>転職</h2>
+        <div className={styles.jobRow}>
+          <select
+            className={styles.select}
+            value={transferTo}
+            onChange={(e) => setTransferTo(e.target.value)}
+          >
+            {CLASS_IDS.map((cid) => (
+              <option
+                key={cid}
+                value={cid}
+              >
+                {CLASSES[cid].name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className={styles.actBtn}
+            disabled={transferTo === char.classId}
+            onClick={() => void updateChar((c) => transferClass(c, transferTo))}
+          >
+            転職する
+          </button>
+        </div>
+        <p className={styles.warn}>
+          ※ レベルが {CLASS_CHANGE_LEVEL_PENALTY}{' '}
+          下がり、職業/称号スキルは振り直しになります（種族スキルは保持）。
+        </p>
+
+        <h2 className={styles.h2}>称号</h2>
+        {char.titleId ? (
+          <p className={styles.titleHave}>習得済み: {TITLES[char.titleId]?.name}</p>
+        ) : deepestReached < UNLOCK.TITLE_DEPTH ? (
+          <p className={styles.warn}>
+            第 {UNLOCK.TITLE_DEPTH} 階到達で習得できます（現在 {deepestReached}F）。
+          </p>
+        ) : (
+          <div className={styles.titleOpts}>
+            {(CLASSES[char.classId]?.titleOptions ?? []).map((tid) => (
+              <button
+                key={tid}
+                type="button"
+                className={styles.titleBtn}
+                disabled={!canAcquireTitle(char, tid, deepestReached)}
+                onClick={() => void updateChar((c) => acquireTitle(c, tid, deepestReached))}
+              >
+                {TITLES[tid]?.name}（SP+5）
+              </button>
+            ))}
+          </div>
+        )}
+
+        <h2 className={styles.h2}>転生</h2>
+        {!canReincarnate(char) ? (
+          <p className={styles.warn}>
+            Lv{UNLOCK.REBIRTH_MIN_LEVEL} 以上で転生できます（現在 Lv{char.level}）。
+          </p>
+        ) : !rbOpen ? (
+          <button
+            type="button"
+            className={styles.actBtn}
+            onClick={() => setRbOpen(true)}
+          >
+            転生する…
+          </button>
+        ) : (
+          <div className={styles.rbForm}>
+            <p className={styles.warn}>
+              ※ 作り直して強い新人になります（開始Lv {Math.min(30, Math.floor(char.level / 2))}
+              ・ボーナス付き）。
+            </p>
+            <input
+              className={styles.input}
+              type="text"
+              maxLength={16}
+              placeholder={char.name}
+              value={rbName}
+              onChange={(e) => setRbName(e.target.value)}
+            />
+            <div className={styles.jobRow}>
+              <select
+                className={styles.select}
+                value={rbRace}
+                onChange={(e) => setRbRace(e.target.value)}
+              >
+                {RACE_IDS.map((r) => (
+                  <option
+                    key={r}
+                    value={r}
+                  >
+                    {RACES[r].name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className={styles.select}
+                value={rbClass}
+                onChange={(e) => setRbClass(e.target.value)}
+              >
+                {CLASS_IDS.map((c) => (
+                  <option
+                    key={c}
+                    value={c}
+                  >
+                    {CLASSES[c].name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.jobRow}>
+              <button
+                type="button"
+                className={styles.danger}
+                onClick={() =>
+                  void updateChar((c) =>
+                    reincarnate(c, {
+                      raceId: rbRace,
+                      classId: rbClass,
+                      name: rbName.trim() || c.name,
+                    })
+                  )
+                }
+              >
+                転生を実行
+              </button>
+              <button
+                type="button"
+                className={styles.actBtn}
+                onClick={() => setRbOpen(false)}
+              >
+                やめる
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       <footer className={styles.foot}>
