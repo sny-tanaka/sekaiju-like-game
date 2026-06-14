@@ -6,17 +6,18 @@
   height: 100%;
   max-width: 560px;
   margin: 0 auto;
-  padding: 14px 12px 18px;
+  padding: 12px 12px 16px;
   color: var.$text-dark;
   overflow-y: auto;
 }
 
+// ---- 敵 ----
 .enemies {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .enemy {
@@ -47,85 +48,163 @@
   opacity: 0.4;
 }
 
+// ---- ログ ----
 .log {
-  min-height: 92px;
-  max-height: 120px;
+  min-height: 76px;
+  max-height: 110px;
   overflow-y: auto;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   padding: 8px 10px;
   border-radius: 10px;
   background-color: rgba(0, 0, 0, 0.05);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
 .logLine {
   white-space: pre-wrap;
 }
 
-.allies {
+// ---- 味方（2段グリッド） ----
+.party {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
-.ally {
-  padding: 8px 10px;
-  border-radius: 10px;
-  background-color: var.$white;
-  box-shadow: 0 1px 3px var.$shadow-light;
-}
-
-.allyHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2px;
-}
-
-.allyName {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.uni {
+.rowTag {
   font-size: 11px;
   font-weight: 800;
-  color: #ff9800;
+  opacity: 0.7;
 }
 
-.cmdRow {
+.cardRow {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 6px;
+  margin-bottom: 4px;
 }
 
-.cmd {
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid var.$gray;
-  border-radius: 8px;
+.card {
+  flex: 1 1 30%;
+  min-width: 104px;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: 10px;
   background-color: var.$white;
-  font-size: 13px;
+  box-shadow: 0 1px 3px var.$shadow-light;
+  text-align: left;
   cursor: pointer;
 }
 
-.cmdActive {
+.cardActive {
   border-color: var.$primary;
-  background-color: #e3f2fd;
-  font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.35);
 }
 
-.actions {
+.cardDecided {
+  background-color: #f1f8e9;
+}
+
+.cardName {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.uni {
+  color: #ff9800;
+}
+
+.cardNums {
+  font-size: 10px;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardCmd {
+  font-size: 11px;
+  font-weight: 700;
+  color: var.$primary;
+}
+
+.empty {
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+// ---- コマンド入力 ----
+.command {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.target {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.cmdHead {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.menuBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border: 1px solid var.$gray;
+  border-radius: 12px;
+  background-color: var.$white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}
+
+.tp {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.menuBack {
+  grid-column: 1 / -1;
+  min-height: 40px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: transparent;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.execRow {
   display: flex;
   gap: 8px;
-  margin-top: auto;
 }
 
-.flee {
-  min-height: 52px;
+.redo {
+  min-height: 56px;
   padding: 0 18px;
   border: 1px solid var.$gray;
   border-radius: 12px;
@@ -134,14 +213,14 @@
   cursor: pointer;
 }
 
-.resolve {
+.primary {
   flex: 1;
-  min-height: 52px;
+  min-height: 56px;
   border: none;
   border-radius: 12px;
   background-color: var.$primary;
   color: var.$white;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 800;
   cursor: pointer;
 
@@ -150,12 +229,13 @@
   }
 }
 
+// ---- 結果 ----
 .result {
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-top: auto;
   padding: 16px;
   border-radius: 12px;
   background-color: var.$white;
