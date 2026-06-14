@@ -1,3 +1,5 @@
+@use 'variables' as var;
+
 // 最低限のリセット。body のデフォルト margin で 100dvh とずれるのを防ぐ。
 *,
 *::before,
@@ -38,7 +40,8 @@ body {
 }
 
 // .layout は 100svh (最小ビューポート) なので URL バー収納時に layout の下に
-// 隙間が出る。隙間を layout のグラデ末端色で塗って繋ぎ目を消す。
+// 隙間が出る。隙間を背景ベースカラーで塗って繋ぎ目を消す。
+// 背景は本家・世界樹の迷宮に寄せたライトグリーン系。
 body {
-  background-color: #f1e7ff;
+  background-color: var.$bg-base;
 }

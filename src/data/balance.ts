@@ -50,8 +50,9 @@ export const PARTY_MAX = FORMATION_FRONT_SLOTS + FORMATION_BACK_SLOTS;
 // 進行解放トリガー（設計書 06 §8。到達階でシステムを解放する）
 // ----------------------------------------------------------------------------
 
+// 種族・職業の選択は作成時から自由（全体ゲートなし）。
+// 個別の「条件付き職業」の解放階は今後 ClassMaster 側に定義しうる（[01 §4]）。
 export const UNLOCK = {
-  CLASS_CHANGE_DEPTH: 5, // 転職解放
   TITLE_DEPTH: 20, // 称号（第2スキルツリー）解放
   REBIRTH_MIN_LEVEL: 30, // 転生可能な最低レベル
 } as const;
