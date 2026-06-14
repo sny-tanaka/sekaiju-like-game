@@ -29,16 +29,42 @@
   opacity: 0.6;
 }
 
-.slots {
+.body {
+  flex: 1;
+}
+
+.menu {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  flex: 1;
+  gap: 16px;
 }
 
 .loading {
   text-align: center;
   opacity: 0.6;
+}
+
+.warn {
+  margin: 0;
+  font-size: 14px;
+  color: #c62828;
+  line-height: 1.6;
+}
+
+.danger {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: 10px;
+  background-color: #e53935;
+  color: var.$white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+  }
 }
 
 .dialog {

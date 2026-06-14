@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { deleteDB } from 'idb';
 import { MemoryRouter, Route, Routes } from 'react-router';
 
+import { createInitialSaveData } from '@/domain/saveData';
 import { Page as TitlePage } from '@/pages/title';
 import { GameStateProvider } from '@/store/gameState';
-import { _resetDbForTest } from '@/store/saveStore';
+import { _resetDbForTest, saveGame } from '@/store/saveStore';
 
 function renderApp() {
   return render(
@@ -29,26 +30,43 @@ function renderApp() {
 beforeEach(async () => {
   await _resetDbForTest();
   await deleteDB('sekaiju-like-game');
-  localStorage.clear();
 });
 
 describe('TitlePage', () => {
-  test('空スロットから新規作成して拠点へ遷移する', async () => {
+  test('セーブが無い場合は「最初から」で新規作成して拠点へ遷移する', async () => {
     const user = userEvent.setup();
     renderApp();
 
-    // スロット一覧が読み込まれる
-    await waitFor(() => expect(screen.getAllByText('空きスロット').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '最初から' })).toBeInTheDocument()
+    );
+    await user.click(screen.getByRole('button', { name: '最初から' }));
 
-    // 最初のスロットで新規作成
-    await user.click(screen.getAllByRole('button', { name: '新規作成' })[0]);
-
-    // ギルド名入力
-    const input = screen.getByPlaceholderText('ななしのギルド');
+    // セーブが無いので確認ダイアログは出ず、直接ギルド名入力
+    const input = await screen.findByPlaceholderText('ななしのギルド');
     await user.type(input, '勇者の集い');
     await user.click(screen.getByRole('button', { name: 'はじめる' }));
 
-    // 拠点へ遷移
     await waitFor(() => expect(screen.getByText('拠点画面')).toBeInTheDocument());
+  });
+
+  test('既存セーブがある場合「最初から」は確認ダイアログを挟む', async () => {
+    await saveGame(createInitialSaveData('既存ギルド'));
+    const user = userEvent.setup();
+    renderApp();
+
+    // つづきから が出る
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'つづきから' })).toBeInTheDocument()
+    );
+
+    // 最初から → 確認ダイアログ
+    await user.click(screen.getByRole('button', { name: '最初から' }));
+    expect(await screen.findByText('最初から始めますか？')).toBeInTheDocument();
+    expect(screen.getByText(/既存ギルド/)).toBeInTheDocument();
+
+    // 消して始める → ギルド名入力へ
+    await user.click(screen.getByRole('button', { name: 'データを消して始める' }));
+    expect(await screen.findByPlaceholderText('ななしのギルド')).toBeInTheDocument();
   });
 });

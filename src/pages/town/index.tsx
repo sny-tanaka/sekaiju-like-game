@@ -22,6 +22,8 @@ export const Page = () => {
   }
 
   const { guild, towerState, diveState } = save;
+  // 団員が 0 人の間はギルドメニュー以外（ダイブ・ショップ等）を使えない（確定事項）。
+  const hasMembers = guild.members.length > 0;
 
   const handleExit = () => {
     exitToTitle();
@@ -50,17 +52,30 @@ export const Page = () => {
         </dl>
       </header>
 
+      {!hasMembers && (
+        <p className={styles.hint}>
+          まずは「ギルド管理」で冒険者を作成してください。団員がいないとダイブできません。
+        </p>
+      )}
+
       <main className={styles.menu}>
         <MenuButton
           label={diveState ? '潜行を再開' : 'ダイブ開始'}
-          description={diveState ? `${diveState.depth}F から再開` : '第1階からタワーへ潜る'}
+          description={
+            !hasMembers
+              ? '団員が必要です'
+              : diveState
+                ? `${diveState.depth}F から再開`
+                : '第1階からタワーへ潜る'
+          }
           variant="primary"
+          disabled={!hasMembers}
           onClick={() => navigate('/dungeon')}
         />
         <MenuButton
           label="ギルド管理"
-          description="編成・キャラ作成（Phase 3）"
-          disabled
+          description="編成・キャラ作成"
+          onClick={() => navigate('/guild')}
         />
         <MenuButton
           label="ショップ"

@@ -12,48 +12,46 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 beforeEach(async () => {
   await _resetDbForTest();
   await deleteDB('sekaiju-like-game');
-  localStorage.clear();
 });
 
-describe('gameState store', () => {
-  test('startNewGame で SaveData が生成され state に載る', async () => {
+describe('gameState store (単一セーブ)', () => {
+  test('startNewGame で団員0人の SaveData が生成される', async () => {
     const { result } = renderHook(() => useGameState(), { wrapper });
     await act(async () => {
-      await result.current.startNewGame(0, 'マイギルド');
+      await result.current.startNewGame('マイギルド');
     });
-    expect(result.current.slot).toBe(0);
     expect(result.current.save?.guild.name).toBe('マイギルド');
+    expect(result.current.save?.guild.members).toHaveLength(0);
     expect(result.current.save?.diveState).toBeNull();
   });
 
-  test('continueGame で保存済みスロットを再開できる', async () => {
+  test('continueGame で保存済みセーブを再開できる', async () => {
     const first = renderHook(() => useGameState(), { wrapper });
     await act(async () => {
-      await first.result.current.startNewGame(1, 'リロードギルド');
+      await first.result.current.startNewGame('リロードギルド');
     });
 
-    // 別ツリーで続きから
     const second = renderHook(() => useGameState(), { wrapper });
     await act(async () => {
-      const r = await second.result.current.continueGame(1);
+      const r = await second.result.current.continueGame();
       expect(r.ok).toBe(true);
     });
     expect(second.result.current.save?.guild.name).toBe('リロードギルド');
   });
 
-  test('continueGame は空スロットで ok:false', async () => {
+  test('continueGame はセーブが無ければ ok:false', async () => {
     const { result } = renderHook(() => useGameState(), { wrapper });
     let res: { ok: boolean } = { ok: true };
     await act(async () => {
-      res = await result.current.continueGame(2);
+      res = await result.current.continueGame();
     });
     expect(res.ok).toBe(false);
   });
 
-  test('applySave で SaveData を純粋に更新し、persist で永続化される', async () => {
+  test('applySave で更新し、persist で永続化される', async () => {
     const { result } = renderHook(() => useGameState(), { wrapper });
     await act(async () => {
-      await result.current.startNewGame(0, 'ギルド');
+      await result.current.startNewGame('ギルド');
     });
 
     act(() => {
@@ -69,21 +67,25 @@ describe('gameState store', () => {
     });
     await waitFor(() => expect(result.current.saving).toBe(false));
 
-    // 再読込で gold が永続化されている
     const reload = renderHook(() => useGameState(), { wrapper });
     await act(async () => {
-      await reload.result.current.continueGame(0);
+      await reload.result.current.continueGame();
     });
     expect(reload.result.current.save?.guild.gold).toBe(9999);
   });
 
-  test('exitToTitle で state がクリアされる', async () => {
+  test('exitToTitle で state がクリアされる（セーブは残る）', async () => {
     const { result } = renderHook(() => useGameState(), { wrapper });
     await act(async () => {
-      await result.current.startNewGame(0, 'ギルド');
+      await result.current.startNewGame('ギルド');
     });
     act(() => result.current.exitToTitle());
-    expect(result.current.slot).toBeNull();
     expect(result.current.save).toBeNull();
+
+    // セーブ自体は残っているので再開できる
+    await act(async () => {
+      await result.current.continueGame();
+    });
+    expect(result.current.save?.guild.name).toBe('ギルド');
   });
 });

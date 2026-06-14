@@ -1,36 +1,34 @@
 import { createContext, useCallback, useContext, useMemo, useReducer, useRef } from 'react';
 import type { Dispatch, ReactNode, RefObject } from 'react';
 
-import { createInitialSaveData, createStarterParty } from '@/domain/saveData';
+import { createInitialSaveData } from '@/domain/saveData';
 import type { SaveData } from '@/domain/types';
-import { setLastSlot } from '@/store/localPrefs';
-import { loadFromSlot, saveToSlot } from '@/store/saveStore';
+import { loadGame, saveGame } from '@/store/saveStore';
 
 // ============================================================================
-// ゲーム状態ストア（[05 §6]）。
+// ゲーム状態ストア（[05 §6]）。セーブは1つ。
 // 永続化対象 SaveData を単一の真実とする。状態遷移は純粋な reducer に寄せ、
 // 永続化（IndexedDB 書き込み）は provider の effect 層（async メソッド）で行う。
 // ============================================================================
 
 interface GameState {
-  slot: number | null;
   save: SaveData | null;
   saving: boolean;
 }
 
 type Action =
-  | { type: 'load'; slot: number; save: SaveData }
+  | { type: 'load'; save: SaveData }
   | { type: 'updateSave'; updater: (prev: SaveData) => SaveData }
   | { type: 'setSave'; save: SaveData }
   | { type: 'saving'; saving: boolean }
   | { type: 'clear' };
 
-const initialState: GameState = { slot: null, save: null, saving: false };
+const initialState: GameState = { save: null, saving: false };
 
 function reducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case 'load':
-      return { ...state, slot: action.slot, save: action.save };
+      return { ...state, save: action.save };
     case 'updateSave':
       return state.save ? { ...state, save: action.updater(state.save) } : state;
     case 'setSave':
@@ -43,15 +41,15 @@ function reducer(state: GameState, action: Action): GameState {
 }
 
 interface GameStateContextValue extends GameState {
-  /** 新規ゲームを開始してスロットへ初期セーブする。 */
-  startNewGame: (slot: number, guildName: string) => Promise<void>;
-  /** 既存スロットを読み込む。成功可否を返す。 */
-  continueGame: (slot: number) => Promise<{ ok: boolean; reason?: string }>;
+  /** 新規ゲームを開始して初期セーブを書き込む（既存セーブは上書き）。 */
+  startNewGame: (guildName: string) => Promise<void>;
+  /** セーブを読み込む。成功可否を返す。 */
+  continueGame: () => Promise<{ ok: boolean; reason?: string }>;
   /** メモリ上の SaveData を純粋に更新する。 */
   applySave: (updater: (prev: SaveData) => SaveData) => void;
-  /** 現在の SaveData を現在のスロットへ永続化する（オートセーブ契機で呼ぶ）。 */
+  /** 現在の SaveData を永続化する（オートセーブ契機で呼ぶ）。 */
   persist: () => Promise<void>;
-  /** タイトルへ戻る（メモリ状態クリア）。 */
+  /** タイトルへ戻る（メモリ状態クリア。セーブは消さない）。 */
   exitToTitle: () => void;
 }
 
@@ -68,20 +66,18 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const stateRef = useStateRef(state);
 
-  const startNewGame = useCallback(async (slot: number, guildName: string) => {
-    const save = createInitialSaveData(guildName, createStarterParty());
-    const stamped = await saveToSlot(slot, save);
-    setLastSlot(slot);
-    dispatch({ type: 'load', slot, save: stamped });
+  const startNewGame = useCallback(async (guildName: string) => {
+    const save = createInitialSaveData(guildName);
+    const stamped = await saveGame(save);
+    dispatch({ type: 'load', save: stamped });
   }, []);
 
-  const continueGame = useCallback(async (slot: number) => {
-    const result = await loadFromSlot(slot);
+  const continueGame = useCallback(async () => {
+    const result = await loadGame();
     if (!result.ok) {
       return { ok: false, reason: result.reason };
     }
-    setLastSlot(slot);
-    dispatch({ type: 'load', slot, save: result.data });
+    dispatch({ type: 'load', save: result.data });
     return { ok: true };
   }, []);
 
@@ -90,11 +86,11 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const persist = useCallback(async () => {
-    const { slot, save } = stateRef.current;
-    if (slot === null || !save) return;
+    const { save } = stateRef.current;
+    if (!save) return;
     dispatch({ type: 'saving', saving: true });
     try {
-      const stamped = await saveToSlot(slot, save);
+      const stamped = await saveGame(save);
       dispatch({ type: 'setSave', save: stamped });
     } finally {
       dispatch({ type: 'saving', saving: false });
@@ -102,7 +98,6 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   }, [stateRef]);
 
   const exitToTitle = useCallback(() => {
-    setLastSlot(null);
     dispatch({ type: 'clear' });
   }, []);
 
@@ -129,6 +124,5 @@ export function useGameState(): GameStateContextValue {
   return ctx;
 }
 
-// 型を export 用に再公開
 export type { GameState };
 export type GameStateDispatch = Dispatch<Action>;

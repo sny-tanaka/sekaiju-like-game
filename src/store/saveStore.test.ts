@@ -1,32 +1,19 @@
-import { deleteDB } from 'idb';
+import { deleteDB, openDB } from 'idb';
 
-import { createRng } from '@/domain/rng';
-import { createInitialSaveData, createStarterParty } from '@/domain/saveData';
-import {
-  _resetDbForTest,
-  deleteSlot,
-  listSlots,
-  loadFromSlot,
-  saveToSlot,
-} from '@/store/saveStore';
-
-function makeSave(name = 'ギルド') {
-  return createInitialSaveData(name, createStarterParty(createRng(1)));
-}
+import { createInitialSaveData } from '@/domain/saveData';
+import { _resetDbForTest, deleteGame, getSaveMeta, loadGame, saveGame } from '@/store/saveStore';
 
 beforeEach(async () => {
   await _resetDbForTest();
   await deleteDB('sekaiju-like-game');
 });
 
-describe('saveStore (IndexedDB)', () => {
-  test('保存したスロットを読み込める', async () => {
-    const save = makeSave('テスト');
-    const stamped = await saveToSlot(0, save);
-    // savedAt はストア側でスタンプされる
+describe('saveStore (IndexedDB・単一セーブ)', () => {
+  test('保存したセーブを読み込める', async () => {
+    const stamped = await saveGame(createInitialSaveData('テスト'));
     expect(stamped.savedAt).toBeGreaterThan(0);
 
-    const result = await loadFromSlot(0);
+    const result = await loadGame();
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.guild.name).toBe('テスト');
@@ -34,38 +21,45 @@ describe('saveStore (IndexedDB)', () => {
     }
   });
 
-  test('空スロットは empty を返す', async () => {
-    const result = await loadFromSlot(1);
+  test('セーブが無ければ empty を返す', async () => {
+    const result = await loadGame();
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('empty');
   });
 
-  test('削除したスロットは空になる', async () => {
-    await saveToSlot(0, makeSave());
-    await deleteSlot(0);
-    const result = await loadFromSlot(0);
+  test('saveGame は常に同じキーを上書きする（セーブは1つ）', async () => {
+    await saveGame(createInitialSaveData('一人目'));
+    await saveGame(createInitialSaveData('二人目'));
+    const result = await loadGame();
+    expect(result.ok && result.data.guild.name).toBe('二人目');
+  });
+
+  test('削除したセーブは空になる', async () => {
+    await saveGame(createInitialSaveData('x'));
+    await deleteGame();
+    const result = await loadGame();
     expect(result.ok).toBe(false);
   });
 
-  test('listSlots は各スロットのメタ（空は null）を返す', async () => {
-    await saveToSlot(0, makeSave('ギルドA'));
-    await saveToSlot(2, makeSave('ギルドC'));
-    const metas = await listSlots();
-    expect(metas).toHaveLength(3);
-    expect(metas[0]?.guildName).toBe('ギルドA');
-    expect(metas[1]).toBeNull();
-    expect(metas[2]?.guildName).toBe('ギルドC');
+  test('getSaveMeta は概況メタを返し、無ければ null', async () => {
+    expect(await getSaveMeta()).toBeNull();
+    await saveGame(createInitialSaveData('ギルドA'));
+    const meta = await getSaveMeta();
+    expect(meta?.guildName).toBe('ギルドA');
+    expect(meta?.memberCount).toBe(0);
   });
 
-  test('破損データは corrupted フラグ付きで列挙される', async () => {
-    await saveToSlot(0, makeSave());
-    // 破損データを直接書き込む（schemaVersion を壊す）
-    const { openDB } = await import('idb');
-    const db = await openDB('sekaiju-like-game', 1);
-    await db.put('saves', { schemaVersion: 9999, guild: { name: 'x', members: [] } }, 1);
+  test('破損データは corrupted メタを返す', async () => {
+    const db = await openDB('sekaiju-like-game', 1, {
+      upgrade(d) {
+        if (!d.objectStoreNames.contains('saves')) d.createObjectStore('saves');
+      },
+    });
+    await db.put('saves', { schemaVersion: 9999, guild: { name: 'x', members: [] } }, 'main');
     db.close();
+    await _resetDbForTest();
 
-    const metas = await listSlots();
-    expect(metas[1]?.corrupted).toBe(true);
+    const meta = await getSaveMeta();
+    expect(meta?.corrupted).toBe(true);
   });
 });

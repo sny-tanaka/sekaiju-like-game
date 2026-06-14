@@ -29,22 +29,22 @@ export const BALANCE = {
 } as const;
 
 // ----------------------------------------------------------------------------
-// 初期セーブ関連の暫定値（設計書 05 §4.1 / 07 §4 で「要確定」とされた値）
-// MVP では少額＋初級装備の方針。プレイテストで調整する。
+// 初期セーブ関連（設計書 05 §4.1 / 07 §4 ＋ ユーザー確定事項）
 // ----------------------------------------------------------------------------
 
-/** ニューゲーム開始時の所持金。 */
+/** ニューゲーム開始時の所持金（確定）。 */
 export const STARTING_GOLD = 500;
 
-/** 初期パーティの人数（既定職業のキャラを自動生成。[07 §4]）。 */
-export const STARTER_PARTY_SIZE = 4;
+// 初期パーティは 0 人（確定）。初期キャラはプレイヤーがギルドで自分で作成する。
+// 団員が 0 人の間はギルドメニュー以外（ダイブ・ショップ等）を使えない。
 
 /** ギルドのメンバー上限（[01 §9]）。 */
 export const GUILD_MEMBER_LIMIT = 30;
 
-/** パーティ前衛/後衛のスロット数。 */
+/** 出撃パーティの最大人数（前衛3 + 後衛2 = 5。確定）。 */
 export const FORMATION_FRONT_SLOTS = 3;
 export const FORMATION_BACK_SLOTS = 2;
+export const PARTY_MAX = FORMATION_FRONT_SLOTS + FORMATION_BACK_SLOTS;
 
 // ----------------------------------------------------------------------------
 // 進行解放トリガー（設計書 06 §8。到達階でシステムを解放する）
@@ -70,6 +70,9 @@ export const encounterTier = (depth: number): number => Math.floor((depth - 1) /
 /** 次のレベルに必要な経験値（[01 §5]）。 */
 export const expToNext = (level: number): number =>
   Math.round(BALANCE.EXP_CURVE_BASE * Math.pow(level, BALANCE.EXP_CURVE_POW));
+
+/** レベル上限（100）に達したキャラは経験値を獲得しない（確定。[01 §5]）。 */
+export const canGainExp = (level: number): boolean => level < BALANCE.LEVEL_CAP;
 
 /** 出現階に応じた敵ステータス係数（[06 §3]）。 */
 export const enemyScale = (depth: number, refDepth: number): number =>

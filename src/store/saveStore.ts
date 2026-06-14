@@ -1,30 +1,28 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
-import type { SaveData, SlotMeta } from '@/domain/types';
+import type { SaveData, SaveMeta } from '@/domain/types';
 import {
   type LoadResult,
-  corruptedSlotMeta,
-  deriveSlotMeta,
+  corruptedSaveMeta,
+  deriveSaveMeta,
   deserializeSave,
   serializeSave,
 } from '@/store/saveSerialization';
 
 // ============================================================================
 // IndexedDB によるセーブ永続化（[05 §4]）。
-// 大きめのゲーム状態（セーブデータ・図鑑・全フロアの地図）は IndexedDB に保存する。
+// セーブデータは1つ（確定事項）。固定キー1件のみを読み書きする。
 // シリアライズ/マイグレーション/破損判定は saveSerialization.ts（純関数）に委譲。
 // ============================================================================
 
 const DB_NAME = 'sekaiju-like-game';
 const DB_VERSION = 1; // IndexedDB のオブジェクトストア構造のバージョン
 const SAVE_STORE = 'saves';
-
-/** セーブ可能なスロット数。 */
-export const SLOT_COUNT = 3;
+const SAVE_KEY = 'main'; // 単一セーブの固定キー
 
 interface GameDB extends DBSchema {
   [SAVE_STORE]: {
-    key: number; // slot 番号
+    key: string;
     value: SaveData;
   };
 }
@@ -44,55 +42,43 @@ function getDB(): Promise<IDBPDatabase<GameDB>> {
   return dbPromise;
 }
 
-/** 指定スロットへセーブする。savedAt はここでスタンプする（[05 §4.1]）。 */
-export async function saveToSlot(slot: number, data: SaveData): Promise<SaveData> {
+/** セーブする。savedAt はここでスタンプする（[05 §4.1]）。 */
+export async function saveGame(data: SaveData): Promise<SaveData> {
   const stamped: SaveData = { ...data, savedAt: Date.now() };
   const db = await getDB();
-  await db.put(SAVE_STORE, serializeSave(stamped), slot);
+  await db.put(SAVE_STORE, serializeSave(stamped), SAVE_KEY);
   return stamped;
 }
 
-/** 指定スロットを読み込む。破損・未知バージョンは ok:false を返す（上書きしない）。 */
-export async function loadFromSlot(
-  slot: number
-): Promise<LoadResult | { ok: false; reason: 'empty' }> {
+/** セーブを読み込む。空・破損・未知バージョンは ok:false を返す（上書きしない）。 */
+export async function loadGame(): Promise<LoadResult | { ok: false; reason: 'empty' }> {
   const db = await getDB();
-  const raw = await db.get(SAVE_STORE, slot);
+  const raw = await db.get(SAVE_STORE, SAVE_KEY);
   if (raw === undefined) {
     return { ok: false, reason: 'empty' };
   }
   return deserializeSave(raw);
 }
 
-/** 指定スロットを削除する。 */
-export async function deleteSlot(slot: number): Promise<void> {
+/** セーブを削除する。 */
+export async function deleteGame(): Promise<void> {
   const db = await getDB();
-  await db.delete(SAVE_STORE, slot);
+  await db.delete(SAVE_STORE, SAVE_KEY);
 }
 
-/** 全スロットのメタ情報を返す（空スロットは null）。タイトルのスロット一覧用。 */
-export async function listSlots(): Promise<(SlotMeta | null)[]> {
+/** セーブの概況メタを返す（無ければ null）。タイトル表示用。 */
+export async function getSaveMeta(): Promise<SaveMeta | null> {
   const db = await getDB();
-  const metas: (SlotMeta | null)[] = [];
-  for (let slot = 0; slot < SLOT_COUNT; slot++) {
-    const raw = await db.get(SAVE_STORE, slot);
-    if (raw === undefined) {
-      metas.push(null);
-      continue;
-    }
-    const result = deserializeSave(raw);
-    if (!result.ok) {
-      metas.push(corruptedSlotMeta(slot));
-      continue;
-    }
-    // メタ導出で想定外の例外が出ても、一覧全体を巻き添えにせず破損として扱う
-    try {
-      metas.push(deriveSlotMeta(slot, result.data));
-    } catch {
-      metas.push(corruptedSlotMeta(slot));
-    }
+  const raw = await db.get(SAVE_STORE, SAVE_KEY);
+  if (raw === undefined) return null;
+  const result = deserializeSave(raw);
+  if (!result.ok) return corruptedSaveMeta();
+  // メタ導出で想定外の例外が出ても破損として扱う
+  try {
+    return deriveSaveMeta(result.data);
+  } catch {
+    return corruptedSaveMeta();
   }
-  return metas;
 }
 
 /** テスト用: 開いている接続を閉じてキャッシュをリセットする（deleteDB のブロック回避）。 */

@@ -1,5 +1,5 @@
 import { CURRENT_SCHEMA_VERSION } from '@/domain/saveData';
-import type { SaveData, SlotMeta } from '@/domain/types';
+import type { SaveData, SaveMeta } from '@/domain/types';
 
 // ============================================================================
 // セーブデータのシリアライズ・マイグレーション・破損判定（[05 §4.2]）。
@@ -79,25 +79,22 @@ export function deserializeSave(raw: unknown): LoadResult {
   return { ok: true, data: working };
 }
 
-/** タイトルのスロット選択に出すメタ情報を SaveData から導出する。 */
-export function deriveSlotMeta(slot: number, data: SaveData): SlotMeta {
-  const leader = data.guild.members[0];
+/** タイトルに出すセーブの概況メタ情報を SaveData から導出する。 */
+export function deriveSaveMeta(data: SaveData): SaveMeta {
   return {
-    slot,
     guildName: data.guild.name,
     deepestReached: data.towerState.record.deepestReached,
-    level: leader?.level ?? 0,
+    memberCount: data.guild.members.length,
     savedAt: data.savedAt,
   };
 }
 
-/** 破損スロットのメタ情報。 */
-export function corruptedSlotMeta(slot: number): SlotMeta {
+/** 破損セーブのメタ情報。 */
+export function corruptedSaveMeta(): SaveMeta {
   return {
-    slot,
     guildName: '(破損データ)',
     deepestReached: 0,
-    level: 0,
+    memberCount: 0,
     savedAt: 0,
     corrupted: true,
   };

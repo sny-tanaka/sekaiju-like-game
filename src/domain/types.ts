@@ -467,12 +467,11 @@ export interface SaveData {
   flags: Record<string, boolean>; // 到達階トリガーの解放フラグ
 }
 
-/** タイトルのスロット選択に出すメタ情報（SaveData から導出）。 */
-export interface SlotMeta {
-  slot: number;
+/** タイトルに出すセーブの概況メタ情報（SaveData から導出）。セーブは1つ。 */
+export interface SaveMeta {
   guildName: string;
   deepestReached: number;
-  level: number; // パーティ先頭の代表レベル等（概況）
+  memberCount: number; // 団員数（概況）
   savedAt: number;
   corrupted?: boolean;
 }

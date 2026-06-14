@@ -9,6 +9,16 @@ html,
 body {
   margin: 0;
   padding: 0;
+  // 採用フォント: Noto Sans JP（index.html で読み込み）。未ロード時は system フォントへフォールバック。
+  font-family:
+    'Noto Sans JP',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'Hiragino Sans',
+    'Hiragino Kaku Gothic ProN',
+    Meiryo,
+    sans-serif;
   // スマホで縦にスクロールできてしまう（コンテンツが画面に収まっていても rubber-band で動く）
   // のを完全に抑止する。
   height: 100%;

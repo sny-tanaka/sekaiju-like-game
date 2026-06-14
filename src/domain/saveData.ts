@@ -1,9 +1,10 @@
 import {
   FORMATION_BACK_SLOTS,
   FORMATION_FRONT_SLOTS,
-  STARTER_PARTY_SIZE,
+  GUILD_MEMBER_LIMIT,
   STARTING_GOLD,
 } from '@/data/balance';
+import { CLASSES } from '@/data/classes';
 import { RACES } from '@/data/races';
 import { randomSeed } from '@/domain/rng';
 import type {
@@ -13,13 +14,14 @@ import type {
   EquipmentSlots,
   GameSettings,
   PartyFormation,
-  Rng,
+  RaceId,
   SaveData,
   TowerRecord,
 } from '@/domain/types';
 
 // ============================================================================
-// ニューゲーム初期化（設計書 05 §4.1）。Phase 0 で最初に必要なもの。
+// ニューゲーム初期化（設計書 05 §4.1 ＋ ユーザー確定事項）。
+// 初期パーティは 0 人。キャラはプレイヤーがギルドで作成する。
 // ============================================================================
 
 /** SaveData の論理バージョン（migration 用。IndexedDB の DB バージョンとは別物）。 */
@@ -46,25 +48,26 @@ export function emptyTowerRecord(): TowerRecord {
 
 const emptyEquipment = (): EquipmentSlots => ({ weapon: null, armor: null, accessory: null });
 
-/** 職業ごとの初期装備（[05 §4.1] 暫定の初級装備）。 */
-const STARTER_EQUIPMENT: Record<ClassId, Partial<EquipmentSlots>> = {
-  class_warrior: { weapon: 'equip_short_sword', armor: 'equip_iron_armor' },
-  class_guardian: { weapon: 'equip_iron_spear', armor: 'equip_iron_armor' },
-  class_mage: { weapon: 'equip_oak_staff', armor: 'equip_cloth_robe' },
-  class_ranger: { weapon: 'equip_short_bow', armor: 'equip_leather_armor' },
-};
+/** ランダムなキャラ ID を発番する。 */
+function generateCharId(): string {
+  return `char_${Date.now().toString(36)}_${Math.floor(Math.random() * 0xffffff).toString(36)}`;
+}
 
-/** 初期パーティに使う種族の並び（バランス・物理・魔法・敏捷の4枠）。 */
-const STARTER_RACE_ORDER = ['race_human', 'race_garon', 'race_pix', 'race_therian'];
-
-const STARTER_DEFAULT_NAMES = ['アレン', 'ボルグ', 'ミラ', 'カイ'];
-
-/** Lv1・既定職業のキャラを1体生成する。 */
-function createStarterCharacter(raceId: string, name: string, idSuffix: string): Character {
-  const race = RACES[raceId];
-  const classId = race.defaultClassId;
+/**
+ * Lv1 のキャラクターを1体作る（キャラ作成 UI から呼ぶ。Phase 3 で本格利用）。
+ * 種族・職業・名前を指定。装備は空（拠点で整える）。
+ */
+export function createCharacter(params: {
+  raceId: RaceId;
+  classId: ClassId;
+  name: string;
+  id?: string;
+}): Character {
+  const { raceId, classId, name, id } = params;
+  if (!RACES[raceId]) throw new Error(`createCharacter: 未定義の種族 "${raceId}"`);
+  if (!CLASSES[classId]) throw new Error(`createCharacter: 未定義の職業 "${classId}"`);
   return {
-    id: `char_${idSuffix}`,
+    id: id ?? generateCharId(),
     name,
     raceId,
     classId,
@@ -73,42 +76,57 @@ function createStarterCharacter(raceId: string, name: string, idSuffix: string):
     exp: 0,
     skillPoints: { total: 0, spent: 0 },
     learnedSkills: {},
-    equipment: { ...emptyEquipment(), ...STARTER_EQUIPMENT[classId] },
+    equipment: emptyEquipment(),
+  };
+}
+
+/** 空のパーティ編成（全スロット null）。 */
+export function emptyFormation(): PartyFormation {
+  return {
+    front: Array<string | null>(FORMATION_FRONT_SLOTS).fill(null),
+    back: Array<string | null>(FORMATION_BACK_SLOTS).fill(null),
+  };
+}
+
+/** 編成に空きがあれば charId を配置する（前衛→後衛の順）。空きが無ければそのまま返す。 */
+function placeInFormation(formation: PartyFormation, charId: string): PartyFormation {
+  const frontIdx = formation.front.indexOf(null);
+  if (frontIdx !== -1) {
+    const front = [...formation.front];
+    front[frontIdx] = charId;
+    return { ...formation, front };
+  }
+  const backIdx = formation.back.indexOf(null);
+  if (backIdx !== -1) {
+    const back = [...formation.back];
+    back[backIdx] = charId;
+    return { ...formation, back };
+  }
+  return formation;
+}
+
+/**
+ * ギルドに新メンバーを加えた新しい SaveData を返す（純粋）。
+ * 出撃枠に空きがあれば自動で編成にも配置する。上限超過時は変更せず返す。
+ */
+export function addCharacterToGuild(save: SaveData, char: Character): SaveData {
+  if (save.guild.members.length >= GUILD_MEMBER_LIMIT) return save;
+  return {
+    ...save,
+    guild: {
+      ...save.guild,
+      members: [...save.guild.members, char],
+      party: placeInFormation(save.guild.party, char.id),
+    },
   };
 }
 
 /**
- * 初期パーティを自動生成する（[07 §4]: フルキャラメイク強制はしない）。
- * 決定論的にしたい場合は rng を渡す。省略時はキャラ ID にタイムスタンプを使う。
- */
-export function createStarterParty(rng?: Rng): Character[] {
-  return Array.from({ length: STARTER_PARTY_SIZE }, (_, i) => {
-    const raceId = STARTER_RACE_ORDER[i % STARTER_RACE_ORDER.length];
-    const name = STARTER_DEFAULT_NAMES[i] ?? `冒険者${i + 1}`;
-    const idSuffix = rng ? rng.int(0xffffffff).toString(36) + i : `${Date.now().toString(36)}_${i}`;
-    return createStarterCharacter(raceId, name, idSuffix);
-  });
-}
-
-/** パーティ編成の初期配置（前衛/後衛スロットに順に詰める）。 */
-export function defaultFormation(party: Character[]): PartyFormation {
-  const front: (string | null)[] = Array(FORMATION_FRONT_SLOTS).fill(null);
-  const back: (string | null)[] = Array(FORMATION_BACK_SLOTS).fill(null);
-  party.forEach((char, i) => {
-    if (i < FORMATION_FRONT_SLOTS) {
-      front[i] = char.id;
-    } else if (i - FORMATION_FRONT_SLOTS < FORMATION_BACK_SLOTS) {
-      back[i - FORMATION_FRONT_SLOTS] = char.id;
-    }
-  });
-  return { front, back };
-}
-
-/**
  * 新規セーブの初期状態を作る（[05 §4.1]）。
- * savedAt は呼び出し側（永続化層）でスタンプする方針なので 0 で初期化する。
+ * 団員 0 人・拠点（diveState=null）で開始する。
+ * savedAt は永続化層でスタンプするため 0 で初期化する。
  */
-export function createInitialSaveData(guildName: string, starterParty: Character[]): SaveData {
+export function createInitialSaveData(guildName: string): SaveData {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     savedAt: 0,
@@ -117,8 +135,8 @@ export function createInitialSaveData(guildName: string, starterParty: Character
     guild: {
       name: guildName,
       gold: STARTING_GOLD,
-      members: starterParty,
-      party: defaultFormation(starterParty),
+      members: [], // 初期 0 人。プレイヤーが作成する
+      party: emptyFormation(),
       storage: [],
       bestiary: emptyBestiary(),
     },
