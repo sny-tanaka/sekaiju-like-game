@@ -19,7 +19,7 @@ export interface UseResult {
  * 探索中にアイテムを使う。charId は対象の出撃メンバー（帰還アイテムは対象不要）。
  * 倉庫から1つ消費し、効果を diveState のパーティに適用する。
  */
-export function useFieldItem(save: SaveData, itemId: string, charId?: string): UseResult {
+export function applyFieldItem(save: SaveData, itemId: string, charId?: string): UseResult {
   const item = ITEMS[itemId];
   if (!item) return { save, ok: false, message: 'そのアイテムは無い' };
   if (!item.useContext?.includes('field')) {
