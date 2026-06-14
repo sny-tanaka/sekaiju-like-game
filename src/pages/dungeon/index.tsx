@@ -39,13 +39,15 @@ export const Page = () => {
       if (!save) return;
       if (!rngRef.current) rngRef.current = createRng((save.masterSeed ^ 0x9e3779b9) >>> 0);
       const result = moveStep(save, dir, rngRef.current);
-      applySave(() => result.save);
+      // 1歩ごとに永続化する（位置・踏破セル＝オートマップ・エンカウント残歩数を失わない）。
+      // 書き込みは非同期で UI はブロックしない。
+      void applyAndPersist(() => result.save);
       if (result.triggered) {
         // ダミー戦闘へ（戦闘ロジックは Phase 2）。戻ると探索を継続。
         navigate('/battle');
       }
     },
-    [save, applySave, navigate]
+    [save, applyAndPersist, navigate]
   );
 
   const doTurn = useCallback(
@@ -81,6 +83,8 @@ export const Page = () => {
       const depth = dive.depth;
       // マップ編集モード: 探索済みセルにアイコンを配置/消去（オートセーブ）
       if (tool !== null) {
+        const explored = (save?.exploredCells[depth] ?? []).includes(`${x},${y}`);
+        if (!explored) return; // 未踏破セルには配置・消去しない（描画もされないため）
         if (tool === 'erase') {
           void applyAndPersist((s) => eraseIcon(s, depth, x, y));
         } else {
@@ -96,7 +100,7 @@ export const Page = () => {
       );
       if (dir) doMove(dir);
     },
-    [dive, doMove, tool, applyAndPersist]
+    [dive, doMove, tool, save, applyAndPersist]
   );
 
   if (!save) {

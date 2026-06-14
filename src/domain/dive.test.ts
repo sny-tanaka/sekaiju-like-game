@@ -86,6 +86,17 @@ describe('dive', () => {
     expect(next.diveState).toBeNull();
   });
 
+  test('2階から goShallower すると1階の出口（stairsUp）に立つ', () => {
+    const save = goDeeper(startDive(saveWithParty(), 1)); // 1F -> 2F
+    const back = goShallower(save); // 2F -> 1F
+    expect(back.diveState!.depth).toBe(1);
+    const floor1 = back.towerState.floors[1].generated;
+    const cell = floor1.cells[back.diveState!.pos.y][back.diveState!.pos.x];
+    expect(cell.event?.kind).toBe('stairsUp');
+    // 戻った階の現在セルは探索済みに含まれる
+    expect(back.exploredCells[1]).toContain(`${back.diveState!.pos.x},${back.diveState!.pos.y}`);
+  });
+
   test('returnToTown で潜行終了', () => {
     const save = startDive(saveWithParty(), 1);
     expect(returnToTown(save).diveState).toBeNull();

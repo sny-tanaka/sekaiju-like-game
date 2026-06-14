@@ -169,7 +169,11 @@ export function stairsAt(save: SaveData): 'stairsUp' | 'stairsDown' | null {
   return null;
 }
 
-/** 出口（stairsUp）から1つ深い階へ。次階の入口に立つ。 */
+/**
+ * 出口（stairsUp）から1つ深い階へ。次階の入口に立つ。
+ * TODO(Phase 3): ボス階（isBossFloor）は BossGateState.defeated まで出口を封鎖する
+ *   ゲート判定をここに挟む（[06 §4] canAscend）。現状は常に通行可。
+ */
 export function goDeeper(save: SaveData): SaveData {
   if (!save.diveState) return save;
   const nextDepth = save.diveState.depth + 1;
