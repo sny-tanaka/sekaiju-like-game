@@ -5,6 +5,7 @@ import {
   STARTING_GOLD,
 } from '@/data/balance';
 import { RACES } from '@/data/races';
+import { randomSeed } from '@/domain/rng';
 import type {
   BestiaryState,
   Character,
@@ -111,6 +112,7 @@ export function createInitialSaveData(guildName: string, starterParty: Character
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     savedAt: 0,
+    masterSeed: randomSeed(),
     settings: { ...DEFAULT_SETTINGS },
     guild: {
       name: guildName,

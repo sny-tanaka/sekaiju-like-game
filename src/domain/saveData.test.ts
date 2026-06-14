@@ -1,4 +1,5 @@
 import { STARTER_PARTY_SIZE, STARTING_GOLD } from '@/data/balance';
+import { EQUIPMENT } from '@/data/equipment';
 import { createRng } from '@/domain/rng';
 import {
   CURRENT_SCHEMA_VERSION,
@@ -19,6 +20,17 @@ describe('saveData', () => {
     }
     // ID が重複しない
     expect(new Set(party.map((c) => c.id)).size).toBe(party.length);
+  });
+
+  test('初期装備の ID はすべて装備マスターに存在する', () => {
+    const party = createStarterParty(createRng(5));
+    for (const char of party) {
+      for (const itemId of Object.values(char.equipment)) {
+        if (itemId !== null) {
+          expect(EQUIPMENT[itemId]).toBeDefined();
+        }
+      }
+    }
   });
 
   test('createStarterParty は同一シードで決定論的', () => {
@@ -45,6 +57,7 @@ describe('saveData', () => {
     expect(save.guild.gold).toBe(STARTING_GOLD);
     expect(save.guild.members).toHaveLength(STARTER_PARTY_SIZE);
     expect(save.diveState).toBeNull();
+    expect(typeof save.masterSeed).toBe('number');
     expect(save.towerState.record.deepestReached).toBe(0);
     expect(save.towerState.warp.unlockedCheckpoints).toEqual([]);
     expect(Object.keys(save.towerState.floors)).toHaveLength(0);

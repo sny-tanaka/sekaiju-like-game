@@ -81,7 +81,16 @@ export async function listSlots(): Promise<(SlotMeta | null)[]> {
       continue;
     }
     const result = deserializeSave(raw);
-    metas.push(result.ok ? deriveSlotMeta(slot, result.data) : corruptedSlotMeta(slot));
+    if (!result.ok) {
+      metas.push(corruptedSlotMeta(slot));
+      continue;
+    }
+    // メタ導出で想定外の例外が出ても、一覧全体を巻き添えにせず破損として扱う
+    try {
+      metas.push(deriveSlotMeta(slot, result.data));
+    } catch {
+      metas.push(corruptedSlotMeta(slot));
+    }
   }
   return metas;
 }

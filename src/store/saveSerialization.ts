@@ -1,5 +1,4 @@
 import { CURRENT_SCHEMA_VERSION } from '@/domain/saveData';
-import { computeBaseStats } from '@/domain/stats';
 import type { SaveData, SlotMeta } from '@/domain/types';
 
 // ============================================================================
@@ -31,15 +30,18 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-/** 最低限の構造チェック（壊れたセーブの検出）。 */
+/** 最低限の構造チェック（壊れたセーブの検出）。後続の参照でクラッシュしない程度まで見る。 */
 function looksLikeSaveData(v: unknown): v is SaveData {
   if (!isPlainObject(v)) return false;
   if (typeof v.schemaVersion !== 'number') return false;
+  if (typeof v.masterSeed !== 'number') return false;
   if (!isPlainObject(v.guild)) return false;
-  const guild = v.guild as Record<string, unknown>;
+  const guild = v.guild;
   if (typeof guild.name !== 'string') return false;
   if (!Array.isArray(guild.members)) return false;
   if (!isPlainObject(v.towerState)) return false;
+  if (!isPlainObject(v.towerState.record)) return false;
+  if (typeof v.towerState.record.deepestReached !== 'number') return false;
   return true;
 }
 
@@ -80,17 +82,11 @@ export function deserializeSave(raw: unknown): LoadResult {
 /** タイトルのスロット選択に出すメタ情報を SaveData から導出する。 */
 export function deriveSlotMeta(slot: number, data: SaveData): SlotMeta {
   const leader = data.guild.members[0];
-  let level = 0;
-  if (leader) {
-    // 代表レベル（パーティ先頭）。computeBaseStats が通る健全性も兼ねる。
-    computeBaseStats(leader);
-    level = leader.level;
-  }
   return {
     slot,
     guildName: data.guild.name,
     deepestReached: data.towerState.record.deepestReached,
-    level,
+    level: leader?.level ?? 0,
     savedAt: data.savedAt,
   };
 }

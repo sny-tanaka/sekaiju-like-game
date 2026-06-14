@@ -80,6 +80,18 @@ describe('rng', () => {
     expect(child1.next()).toEqual(child2.next());
   });
 
+  test('baseSeed を渡して restoreRng すると消費後も fork を再現できる', () => {
+    const original = createRng(7777);
+    // いくらか消費してから fork
+    original.next();
+    original.next();
+    const expectedChild = original.fork('floor:3').next();
+
+    // state と baseSeed を保存 → 復元
+    const restored = restoreRng(original.state, 7777);
+    expect(restored.fork('floor:3').next()).toEqual(expectedChild);
+  });
+
   test('state を保存して restoreRng で続きを再現できる', () => {
     const r = createRng(555);
     r.next();

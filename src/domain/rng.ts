@@ -83,9 +83,15 @@ export function createRng(seed: number): Rng {
 
 /**
  * シリアライズした state から Rng を復元する。
- * 復元後は数列の続きを再現できる。fork の基準には state を使うので、
- * 「ある時点から fork して別系列を作る」用途では createRng で作り直すこと。
+ * 復元後は数列の続きを再現できる。fork を消費後も正しく再現したい場合は、
+ * 生成元の baseSeed（例: SaveData.masterSeed）を渡すこと。
+ * 省略時は state を baseSeed とみなす（fork は復元時点の状態起点になる）。
  */
-export function restoreRng(state: number): Rng {
-  return new Mulberry32(state, state);
+export function restoreRng(state: number, baseSeed?: number): Rng {
+  return new Mulberry32(state, baseSeed ?? state);
+}
+
+/** 非決定的に 32bit のマスターシードを作る（ニューゲーム時の masterSeed 生成用）。 */
+export function randomSeed(): number {
+  return Math.floor(Math.random() * 0x100000000) >>> 0;
 }

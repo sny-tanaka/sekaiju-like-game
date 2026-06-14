@@ -448,6 +448,12 @@ export interface GameSettings {
 export interface SaveData {
   schemaVersion: number; // SaveData の論理バージョン（migration 用）
   savedAt: number; // epoch ms
+  /**
+   * このセーブ固有のマスターシード（[05 §0.4]）。不変。
+   * 階生成・戦闘などの乱数は createRng(masterSeed).fork('floor:'+depth) のように
+   * ここから決定論的に派生させる。fork ツリーの再現性の起点。
+   */
+  masterSeed: number;
   settings: GameSettings;
   guild: Guild;
   towerState: TowerState;
