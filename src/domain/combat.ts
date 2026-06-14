@@ -104,13 +104,13 @@ export function computeDamage(
   const atk = isPhysical ? atkD.patk : atkD.matk;
   const def = isPhysical ? defD.pdef : defD.mdef;
 
-  // ① 命中判定（物理のみ。魔法は必中＝属性補正のみ）
+  // ① 命中判定（物理のみ。魔法は必中＝属性補正のみ）。acc/eva バフを反映する。
   let hit = true;
   if (isPhysical) {
-    const blind = isBlind(attacker) ? 0.5 : 0;
+    const blind = isBlind(attacker) ? BALANCE.BLIND_ACC_PENALTY : 0;
     const hitChance = clamp(
-      0.9 + (attacker.stats.agi - defender.stats.agi) * 0.01 - blind,
-      0.3,
+      BALANCE.BASE_HIT + (atkD.acc - defD.eva) * BALANCE.HIT_AGI_K - blind,
+      BALANCE.HIT_MIN,
       1.0
     );
     hit = rng.next() < hitChance;
@@ -121,12 +121,11 @@ export function computeDamage(
   const base = atk * params.power;
   const mitigated = (base * BALANCE.DAMAGE_DEF_K) / (BALANCE.DAMAGE_DEF_K + Math.max(0, def));
 
-  // 隊列補正（近接物理 × 後衛は減衰。攻撃側・防御側どちらの後衛も対象）
+  // 隊列補正（近接物理）: 攻撃側後衛＝与ダメ減、防御側後衛＝被ダメ減を独立に乗算（[03 §3/§7]）
   const physicalMelee = isPhysical && PHYS.includes(params.element as PhysElement);
-  const rowMult =
-    physicalMelee && (attacker.row === 'back' || defender.row === 'back')
-      ? BALANCE.BACK_ROW_MELEE_MULT
-      : 1;
+  const atkRowMult = physicalMelee && attacker.row === 'back' ? BALANCE.BACK_ROW_MELEE_MULT : 1;
+  const defRowMult = physicalMelee && defender.row === 'back' ? BALANCE.BACK_ROW_MELEE_MULT : 1;
+  const rowMult = atkRowMult * defRowMult;
 
   // ② ダメージ振れ
   const [lo, hi] = BALANCE.DMG_VARIANCE;
@@ -135,7 +134,11 @@ export function computeDamage(
   let dmg = mitigated * params.elementMultiplier * rowMult * variance;
 
   // ③ クリティカル
-  const critRate = clamp(0.05 + (attacker.stats.luc - defender.stats.luc) * 0.005, 0.02, 0.5);
+  const critRate = clamp(
+    BALANCE.CRIT_BASE + (attacker.stats.luc - defender.stats.luc) * BALANCE.CRIT_LUC_K,
+    BALANCE.CRIT_MIN,
+    BALANCE.CRIT_MAX
+  );
   const critical = rng.next() < critRate;
   if (critical) dmg *= BALANCE.CRIT_MULT;
 

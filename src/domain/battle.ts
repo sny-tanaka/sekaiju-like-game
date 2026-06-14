@@ -154,7 +154,11 @@ function applyAilment(target: Combatant, a: ActiveAilment): void {
 
 /** 状態異常の付与確率（[03 §6.2]）。 */
 function ailmentChance(base: number, attacker: Combatant, defender: Combatant): number {
-  return clamp(base * (1 + (attacker.stats.luc - defender.stats.luc) * 0.01), 0, 0.95);
+  return clamp(
+    base * (1 + (attacker.stats.luc - defender.stats.luc) * BALANCE.AILMENT_LUC_K),
+    0,
+    BALANCE.AILMENT_MAX
+  );
 }
 
 function skillTargets(
@@ -344,7 +348,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (actor.isDown) continue;
     if (next.outcome !== 'ongoing') break;
     // 麻痺: 30% で行動不能
-    if (isParalyzed(actor) && rng.next() < 0.3) {
+    if (isParalyzed(actor) && rng.next() < BALANCE.PARALYSIS_SKIP) {
       next.log.push({ text: `${actor.name} は麻痺で動けない` });
       continue;
     }
@@ -382,17 +386,21 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (aliveSide(next, 'enemy').length === 0 || aliveSide(next, 'ally').length === 0) break;
   }
 
-  // ターン終了処理: 毒ダメージ → バフ/状態異常の残ターン減算
+  // ターン終了処理: 毒ダメージ → TP自然回復 → バフ/状態異常の残ターン減算
   for (const c of [...next.allies, ...next.enemies]) {
     if (c.isDown) continue;
     const poison = c.ailments.find((a) => a.type === 'poison');
     if (poison) {
-      const dmg = poison.magnitude ?? Math.max(1, Math.floor(c.maxHp * 0.05));
+      const dmg = poison.magnitude ?? Math.max(1, Math.floor(c.maxHp * BALANCE.POISON_HP_RATIO));
       dealDamage(c, dmg, next.log);
       next.log.push({ text: `${c.name} は毒で ${dmg} のダメージ` });
     }
   }
   for (const c of [...next.allies, ...next.enemies]) {
+    if (!c.isDown && c.maxTp > 0) {
+      // TP 自然回復（[03 §2]）。TP枯渇での詰みを防ぐ。
+      c.tp = Math.min(c.maxTp, c.tp + Math.ceil(c.maxTp * BALANCE.TP_REGEN_RATIO));
+    }
     c.buffs = c.buffs
       .map((b) => ({ ...b, remainingTurns: b.remainingTurns - 1 }))
       .filter((b) => b.remainingTurns > 0);
@@ -450,6 +458,8 @@ function grantExpToChar(char: Character, exp: number): Character {
 export function applyBattleResult(save: SaveData, state: BattleState): SaveData {
   if (!save.diveState) return save;
   const win = state.outcome === 'win';
+  // 戦闘終了時はゲージ +15（勝利・逃走とも。[03 §9.1] 戦闘終了時に全員 +15）
+  const ended = state.outcome === 'win' || state.outcome === 'fled';
   const byId = new Map(state.allies.map((a) => [a.id, a]));
 
   // 味方の戦闘後ステータスを diveState に反映
@@ -457,13 +467,21 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     const a = byId.get(p.charId);
     if (!a) return p;
     let gauge = a.unionGauge;
-    if (win && !a.isDown) gauge = clamp(gauge + BALANCE.UNION_GAIN_ON_WIN, 0, 100);
+    if (ended && !a.isDown) gauge = clamp(gauge + BALANCE.UNION_GAIN_ON_WIN, 0, 100);
     return { ...p, hp: a.hp, tp: a.tp, unionGauge: gauge, ailments: a.ailments };
   });
 
   let members = save.guild.members;
   let gold = save.guild.gold;
-  let bestiary = save.bestiary;
+
+  // 図鑑: 遭遇した敵は seen、撃破した敵は defeated（勝敗を問わず記録）
+  const monsters = { ...save.bestiary.monsters };
+  for (const e of state.enemies) {
+    if (!e.enemyId) continue;
+    const prev = monsters[e.enemyId] ?? { seen: false, defeated: false, dropsFound: [] };
+    monsters[e.enemyId] = { ...prev, seen: true, defeated: prev.defeated || e.isDown };
+  }
+  const bestiary = { ...save.bestiary, monsters };
 
   if (win) {
     const { exp, gold: dropGold } = battleRewards(state);
@@ -471,14 +489,6 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     const partyIds = new Set(party.map((p) => p.charId));
     const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
     members = members.map((m) => (partyIds.has(m.id) ? grantExpToChar(m, share) : m));
-    // 図鑑: 撃破記録
-    const monsters = { ...bestiary.monsters };
-    for (const e of state.enemies) {
-      if (!e.enemyId) continue;
-      const prev = monsters[e.enemyId] ?? { seen: true, defeated: false, dropsFound: [] };
-      monsters[e.enemyId] = { ...prev, seen: true, defeated: true };
-    }
-    bestiary = { ...bestiary, monsters };
   }
 
   return {

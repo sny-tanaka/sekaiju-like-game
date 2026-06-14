@@ -157,6 +157,47 @@ describe('combat: computeDamage', () => {
     );
   });
 
+  test('隊列補正は攻撃側後衛・防御側後衛で独立に乗算される（近接物理）', () => {
+    const p = {
+      statBase: 'str' as const,
+      power: 2,
+      element: 'bash' as const,
+      elementMultiplier: 1,
+    };
+    // 攻撃側 agi を高くして必中にし、隊列補正だけを比較する
+    const front = combatant({ stats: { ...baseStats, str: 30, agi: 100 }, row: 'front' });
+    const backAtk = combatant({ stats: { ...baseStats, str: 30, agi: 100 }, row: 'back' });
+    const defFront = combatant({ side: 'enemy', row: 'front' });
+    const defBack = combatant({ side: 'enemy', row: 'back' });
+    const d = (a: typeof front, t: typeof defFront) => computeDamage(a, t, p, createRng(4)).damage;
+    // 前衛→前衛=等倍 が最大。後衛攻撃 or 後衛被弾で減り、両方後衛が最小。
+    expect(d(front, defFront)).toBeGreaterThan(d(backAtk, defFront));
+    expect(d(front, defFront)).toBeGreaterThan(d(front, defBack));
+    expect(d(backAtk, defBack)).toBeLessThan(d(backAtk, defFront));
+  });
+
+  test('命中は acc/eva バフを反映する（回避バフで当たりにくくなる）', () => {
+    const atk = combatant({ side: 'enemy', stats: { ...baseStats, agi: 12 } });
+    const evasive = combatant({
+      stats: { ...baseStats, agi: 12 },
+      buffs: [{ stat: 'eva', modifier: 1.5, remainingTurns: 3, stackGroup: 'evaBuff' }],
+    });
+    const plain = combatant({ stats: { ...baseStats, agi: 12 } });
+    const p = {
+      statBase: 'str' as const,
+      power: 1,
+      element: 'slash' as const,
+      elementMultiplier: 1,
+    };
+    let evHits = 0;
+    let plHits = 0;
+    for (let i = 0; i < 300; i++) {
+      if (computeDamage(atk, evasive, p, createRng(i)).hit) evHits++;
+      if (computeDamage(atk, plain, p, createRng(i)).hit) plHits++;
+    }
+    expect(evHits).toBeLessThan(plHits);
+  });
+
   test('防御が高いほどダメージが減る（除算型）', () => {
     const a = combatant({ stats: { ...baseStats, str: 30 } });
     const lowDef = combatant({ side: 'enemy', stats: { ...baseStats, vit: 1 } });
