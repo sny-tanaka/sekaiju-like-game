@@ -5,6 +5,7 @@ import styles from './style.module.scss';
 
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
+import { SKILLS } from '@/data/skills';
 import { applyBattleResult, battleRewards, resolveTurn, startBattle } from '@/domain/battle';
 import { returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
@@ -214,22 +215,6 @@ export const Page = () => {
         ))}
       </div>
 
-      {/* ログ */}
-      <div className={styles.log}>
-        {state.log.length === 0 ? (
-          <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
-        ) : (
-          state.log.slice(-6).map((l, i) => (
-            <div
-              key={i}
-              className={styles.logLine}
-            >
-              {l.text}
-            </div>
-          ))
-        )}
-      </div>
-
       {/* 味方: 前衛/後衛の2段 */}
       <div className={styles.party}>
         <div className={styles.rowTag}>前衛</div>
@@ -269,16 +254,19 @@ export const Page = () => {
             <>
               <div className={styles.cmdHead}>{active.name} のコマンド</div>
               {skillMenu ? (
-                <div className={styles.menu}>
+                <div className={styles.skillList}>
                   {usableSkills(active).map((sid) => (
                     <button
                       type="button"
                       key={sid}
-                      className={styles.menuBtn}
+                      className={styles.skillBtn}
                       onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
                     >
-                      {BATTLE_SKILLS[sid].name}
-                      <span className={styles.tp}>TP {BATTLE_SKILLS[sid].tpCost(1)}</span>
+                      <span className={styles.skillTop}>
+                        <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
+                        <span className={styles.tp}>TP {BATTLE_SKILLS[sid].tpCost(1)}</span>
+                      </span>
+                      <span className={styles.skillDesc}>{SKILLS[sid]?.description ?? ''}</span>
                     </button>
                   ))}
                   {usableSkills(active).length === 0 ? (
@@ -347,6 +335,22 @@ export const Page = () => {
           )}
         </div>
       )}
+
+      {/* ログ（最下部・残りエリアを使用） */}
+      <div className={styles.log}>
+        {state.log.length === 0 ? (
+          <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
+        ) : (
+          state.log.map((l, i) => (
+            <div
+              key={i}
+              className={styles.logLine}
+            >
+              {l.text}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };
