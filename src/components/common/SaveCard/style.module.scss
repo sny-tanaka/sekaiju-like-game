@@ -1,0 +1,75 @@
+@use 'variables' as var;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 18px 16px;
+  border: 1px solid var.$gray;
+  border-radius: 14px;
+  background-color: var.$white;
+  color: var.$text-dark;
+  box-shadow: 0 2px 6px var.$shadow-light;
+}
+
+.corrupted {
+  border-color: #e57373;
+  background-color: #fff5f5;
+}
+
+.corruptedText {
+  font-size: 15px;
+  color: #c62828;
+  font-weight: 700;
+}
+
+.corruptedNote {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.guildName {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin: 0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  dt {
+    font-size: 11px;
+    opacity: 0.6;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+}
+
+.continue {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: 10px;
+  background-color: var.$primary;
+  color: var.$white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.85;
+  }
+}

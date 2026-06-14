@@ -1,0 +1,75 @@
+@use 'variables' as var;
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  overflow-y: auto;
+  color: var.$text-dark;
+}
+
+.head {
+  margin-bottom: 20px;
+}
+
+.guildName {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.stats {
+  display: flex;
+  gap: 20px;
+  margin: 10px 0 0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  dt {
+    font-size: 11px;
+    opacity: 0.6;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+}
+
+.hint {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: #fff8e1;
+  border: 1px solid #ffe082;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.foot {
+  margin-top: 20px;
+}
+
+.exit {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: transparent;
+  color: var.$text-dark;
+  font-size: 14px;
+  cursor: pointer;
+}

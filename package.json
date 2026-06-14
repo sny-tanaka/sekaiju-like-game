@@ -1,6 +1,6 @@
 {
   "name": "sekaiju-like-game",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "type": "module",
   "scripts": {
@@ -20,12 +20,17 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "idb": "^8.0.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router": "^7.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@storybook/addon-a11y": "^10.4.4",
+    "@storybook/addon-docs": "^10.4.4",
+    "@storybook/addon-mcp": "^0.6.0",
+    "@storybook/react-vite": "^10.4.4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
@@ -41,6 +46,7 @@
     "eslint-plugin-react": "^7.37.3",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-unused-imports": "^4.1.4",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^15.14.0",
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
@@ -49,18 +55,14 @@
     "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "^4.1.0",
     "sass": "^1.83.1",
+    "storybook": "^10.4.4",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.19.1",
     "vite": "^6.0.7",
     "vite-plugin-pwa": "^0.21.1",
     "vitest": "^2.1.8",
     "workbox-build": "^7.4.0",
-    "workbox-window": "^7.4.0",
-    "storybook": "^10.4.4",
-    "@storybook/react-vite": "^10.4.4",
-    "@storybook/addon-a11y": "^10.4.4",
-    "@storybook/addon-docs": "^10.4.4",
-    "@storybook/addon-mcp": "^0.6.0"
+    "workbox-window": "^7.4.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
