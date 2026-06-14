@@ -226,6 +226,7 @@ export interface EnemyMaster {
 export type SkillEffectDef =
   | { kind: 'damage'; power: (lv: number) => number; statBase: 'str' | 'int'; hits?: number }
   | { kind: 'heal'; amount: (lv: number) => number }
+  | { kind: 'restoreTp'; amount: (lv: number) => number }
   | {
       kind: 'ailment';
       ailment: AilmentType;
@@ -276,16 +277,26 @@ export interface BattleState {
   outcome: BattleOutcome;
 }
 
+export type ItemCategory = 'consumable' | 'material' | 'drop' | 'valuable';
+
 export interface ItemMaster {
   id: ItemId;
   name: string;
   description: string;
+  category: ItemCategory;
+  buyPrice: number; // ショップ購入価格（売却はこの半額）。0=非売品
+  /** 消費アイテムの使用効果（[03 §5] の SkillEffectDef を再利用）。 */
+  effects?: SkillEffectDef[];
+  /** 使用可能な場面。未指定は使用不可（素材等）。 */
+  useContext?: ('battle' | 'field')[];
 }
 
 export interface EquipmentMaster {
   id: ItemId;
   name: string;
   slot: EquipSlotKey;
+  tier: number; // 10層帯ティア（解放階＝tier*10 目安）
+  buyPrice: number; // ショップ購入価格（売却は半額）
   weaponType?: WeaponType;
   armorType?: ArmorType;
   bonuses: EquipBonuses;
@@ -519,8 +530,14 @@ export interface ForgeInventory {
 }
 
 export interface ShopStock {
-  /** 解放済みティア（10層帯ごとに解放）。 */
-  unlockedTiers: number[];
+  /**
+   * 解放済みの最大ティア（[04 §8]）。
+   * ※ Phase 3 では品揃えティアを towerState.record.deepestReached から算出するため
+   *   このフィールドは未使用。Phase 4 でショップ独自の解放管理に使う。
+   */
+  unlockedTier: number;
+  /** 売却で恒久解放された商品 ID（素材を売ると並ぶ。Phase 4 で実装）。 */
+  unlockedItemIds: string[];
 }
 
 // ============================================================================

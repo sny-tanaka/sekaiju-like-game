@@ -155,7 +155,7 @@ export function createInitialSaveData(guildName: string): SaveData {
     playerMaps: {},
     exploredCells: {},
     forgeInventory: { fragments: {}, ingots: { copper: 0, silver: 0, gold: 0 } },
-    shopStock: { unlockedTiers: [0] },
+    shopStock: { unlockedTier: 0, unlockedItemIds: [] },
     flags: {},
   };
 }
