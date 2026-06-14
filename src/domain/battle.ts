@@ -258,6 +258,7 @@ function ailmentChance(base: number, attacker: Combatant, defender: Combatant): 
 /**
  * target 種別から対象 Combatant を解決する（通常スキル・ユニオン共通）。
  * allyOne は actor と同陣営、enemyOne/Row は敵陣営に限定する（誤対象＝味方を攻撃/敵を回復 を防ぐ）。
+ * allyAll は味方側のとき召喚体も含む（[03 §8]：召喚体はバフ/回復対象になりうる。buffImmune 個体は addBuff 側で弾く）。
  * 対象 ID が不正なら安全側にフォールバック（単体回復＝自分 / 単体攻撃＝生存敵の先頭）。
  */
 function resolveTargets(
@@ -271,7 +272,9 @@ function resolveTargets(
     case 'self':
       return [actor];
     case 'allyAll':
-      return aliveSide(state, actor.side);
+      return actor.side === 'ally'
+        ? [...aliveSide(state, 'ally'), ...aliveSummons(state)]
+        : aliveSide(state, 'enemy');
     case 'allyOne': {
       const t = find(state, targetId);
       return t && t.side === actor.side ? [t] : [actor];
@@ -373,6 +376,7 @@ function applySkillEffect(
       break;
     }
     case 'summon': {
+      if (actor.side !== 'ally') break; // 召喚は味方専用（敵が summon 効果を持っても味方側を生まない）
       if (aliveSummons(state).length >= MAX_SUMMONS) {
         state.log.push({ text: 'これ以上は召喚できない' });
         break;
@@ -674,6 +678,10 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       }
     }
   }
+
+  // 倒れた召喚体は盤面から除去する（屍の蓄積・UI への残留を防ぐ。[03 §8]）。
+  // ※ ID は `summon_${turn}_${idx}` でターン番号を含むため、除去で配列が縮んでも次ターン以降と衝突しない。
+  next.summons = next.summons.filter((s) => !s.isDown);
 
   next.turn += 1;
   if (aliveSide(next, 'enemy').length === 0) next.outcome = 'win';

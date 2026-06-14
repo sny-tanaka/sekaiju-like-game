@@ -445,6 +445,51 @@ describe('battle: 召喚（設置・[03 §8]）', () => {
     expect(after.enemies[0].hp).toBe(enemyHp);
   });
 
+  test('allyAll バフ/回復は召喚体にも乗るが、buffImmune 個体（石像）には乗らない', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const tmpl = base.allies[0];
+    // 狼（非 immune）と石像（buffImmune）を盤面に注入し、HP を減らす
+    const mk = (id: string, kind: string) => ({
+      ...tmpl,
+      id,
+      name: kind,
+      isSummon: true,
+      summonKind: kind,
+      ownerId: tmpl.id,
+      buffs: [],
+      ailments: [],
+      hp: 20,
+      maxHp: 45,
+    });
+    let state: BattleState = {
+      ...base,
+      summons: [mk('s_wolf', 'summon_wolf'), mk('s_stone', 'summon_bulwark')],
+    };
+    state = withGauge(state, 0, 100);
+    // ヒトのユニオン「結束の鬨」= 全体回復＋patk バフ
+    const after = resolveTurn(
+      state,
+      [
+        {
+          kind: 'union',
+          actorId: state.allies[0].id,
+          unionSkillId: 'skill_union_rally',
+          participantIds: [state.allies[0].id],
+          targetId: state.allies[0].id,
+        },
+      ],
+      createRng(1)
+    );
+    const wolf = after.summons.find((s) => s.id === 's_wolf')!;
+    const stone = after.summons.find((s) => s.id === 's_stone')!;
+    // 回復は両者に乗る（buffImmune は回復は妨げない）
+    expect(wolf.hp).toBeGreaterThan(20);
+    expect(stone.hp).toBeGreaterThan(20);
+    // patk バフは狼に乗り、石像（buffImmune）には乗らない
+    expect(wolf.buffs.some((b) => b.stat === 'patk')).toBe(true);
+    expect(stone.buffs.length).toBe(0);
+  });
+
   test('persistsAfterBattle な使い魔は勝利後 diveState に残り、次戦闘で復元される', () => {
     const save = summonerSave('skill_summon_familiar');
     let state = startBattle(save, ['enemy_slime']);
