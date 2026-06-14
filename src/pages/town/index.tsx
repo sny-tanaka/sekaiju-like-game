@@ -3,13 +3,13 @@ import { useNavigate, Navigate } from 'react-router';
 import styles from './style.module.scss';
 
 import { MenuButton } from '@/components/common/MenuButton/MenuButton';
+import { startDive } from '@/domain/dive';
 import { useGameState } from '@/store/gameState';
 
 // 拠点（街）ハブ（[07 §2]）。各施設への導線を持つ。
-// Phase 0 では未実装施設は無効表示にし、ダイブとタイトル復帰のみ機能する。
 export const Page = () => {
   const navigate = useNavigate();
-  const { save, exitToTitle } = useGameState();
+  const { save, exitToTitle, applyAndPersist } = useGameState();
 
   // セーブが無い状態で直接来たらタイトルへ
   if (!save) {
@@ -28,6 +28,14 @@ export const Page = () => {
   const handleExit = () => {
     exitToTitle();
     navigate('/title');
+  };
+
+  // ダイブ開始（潜行中でなければ第1階から開始してオートセーブ）/ 潜行を再開
+  const handleDive = async () => {
+    if (!diveState) {
+      await applyAndPersist((s) => startDive(s, 1));
+    }
+    navigate('/dungeon');
   };
 
   return (
@@ -70,7 +78,7 @@ export const Page = () => {
           }
           variant="primary"
           disabled={!hasMembers}
-          onClick={() => navigate('/dungeon')}
+          onClick={() => void handleDive()}
         />
         <MenuButton
           label="ギルド管理"

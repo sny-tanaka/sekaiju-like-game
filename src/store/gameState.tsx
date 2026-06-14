@@ -47,6 +47,8 @@ interface GameStateContextValue extends GameState {
   continueGame: () => Promise<{ ok: boolean; reason?: string }>;
   /** メモリ上の SaveData を純粋に更新する。 */
   applySave: (updater: (prev: SaveData) => SaveData) => void;
+  /** SaveData を更新し、その結果を即座に永続化する（階移動・帰還などのオートセーブ契機）。 */
+  applyAndPersist: (updater: (prev: SaveData) => SaveData) => Promise<void>;
   /** 現在の SaveData を永続化する（オートセーブ契機で呼ぶ）。 */
   persist: () => Promise<void>;
   /** タイトルへ戻る（メモリ状態クリア。セーブは消さない）。 */
@@ -85,6 +87,23 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'updateSave', updater });
   }, []);
 
+  const applyAndPersist = useCallback(
+    async (updater: (prev: SaveData) => SaveData) => {
+      const prev = stateRef.current.save;
+      if (!prev) return;
+      const next = updater(prev);
+      dispatch({ type: 'setSave', save: next });
+      dispatch({ type: 'saving', saving: true });
+      try {
+        const stamped = await saveGame(next);
+        dispatch({ type: 'setSave', save: stamped });
+      } finally {
+        dispatch({ type: 'saving', saving: false });
+      }
+    },
+    [stateRef]
+  );
+
   const persist = useCallback(async () => {
     const { save } = stateRef.current;
     if (!save) return;
@@ -107,10 +126,11 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       startNewGame,
       continueGame,
       applySave,
+      applyAndPersist,
       persist,
       exitToTitle,
     }),
-    [state, startNewGame, continueGame, applySave, persist, exitToTitle]
+    [state, startNewGame, continueGame, applySave, applyAndPersist, persist, exitToTitle]
   );
 
   return <GameStateContext.Provider value={value}>{children}</GameStateContext.Provider>;
