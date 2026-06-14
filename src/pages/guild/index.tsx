@@ -15,7 +15,7 @@ import { useGameState } from '@/store/gameState';
 // 種族と職業はそれぞれ独立に選択できる（確定事項）。
 export const Page = () => {
   const navigate = useNavigate();
-  const { save, applySave, persist } = useGameState();
+  const { save, applyAndPersist } = useGameState();
 
   const raceIds = Object.keys(RACES);
   const classIds = Object.keys(CLASSES);
@@ -27,12 +27,12 @@ export const Page = () => {
   const handleCreate = useCallback(async () => {
     const finalName = name.trim() || '名もなき冒険者';
     const char = createCharacter({ raceId, classId, name: finalName });
-    applySave((prev) => addCharacterToGuild(prev, char));
-    setName('');
     setBusy(true);
-    await persist();
+    // 更新と永続化を原子的に行う（applySave+persist だと persist が更新前の状態を保存し戻してしまう）
+    await applyAndPersist((prev) => addCharacterToGuild(prev, char));
+    setName('');
     setBusy(false);
-  }, [name, raceId, classId, applySave, persist]);
+  }, [name, raceId, classId, applyAndPersist]);
 
   if (!save) {
     return (

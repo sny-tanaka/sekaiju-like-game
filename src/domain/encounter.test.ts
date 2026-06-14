@@ -13,7 +13,7 @@ describe('encounter', () => {
 
   test('歩くごとに残り歩数が減り、0でエンカウント発生＆リセット', () => {
     const r = createRng(5);
-    let steps = 3;
+    const steps = 3;
     let res = onStep(steps, r);
     expect(res.triggered).toBe(false);
     expect(res.stepsUntilEncounter).toBe(2);

@@ -1,5 +1,5 @@
-import { createRng } from '@/domain/rng';
 import { findEventCell, generateFloor } from '@/domain/generateFloor';
+import { createRng } from '@/domain/rng';
 import type { Dir, FloorMaster } from '@/domain/types';
 
 const DELTA: Record<Dir, { dx: number; dy: number }> = {

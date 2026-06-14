@@ -1,9 +1,9 @@
 import { isBossFloor } from '@/data/balance';
 import { initEncounter, onStep } from '@/domain/encounter';
 import { findEventCell, generateFloor } from '@/domain/generateFloor';
+import { openDirs, step } from '@/domain/movement';
 import { createRng } from '@/domain/rng';
 import { computeBaseStats } from '@/domain/stats';
-import { openDirs, step } from '@/domain/movement';
 import { cellKey } from '@/domain/types';
 import type { Dir, DivePartyMember, FloorMaster, Rng, SaveData, TowerFloor } from '@/domain/types';
 

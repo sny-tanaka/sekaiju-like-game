@@ -1,4 +1,3 @@
-import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
 import {
   ensureFloor,
   goDeeper,
@@ -8,8 +7,9 @@ import {
   startDive,
   stairsAt,
 } from '@/domain/dive';
-import { createRng } from '@/domain/rng';
 import { openDirs } from '@/domain/movement';
+import { createRng } from '@/domain/rng';
+import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
 import type { Dir, SaveData } from '@/domain/types';
 
 function saveWithParty(): SaveData {
