@@ -164,6 +164,14 @@ function setFoeRuntime(save: SaveData, depth: number, foeRuntime: FoeRuntimeStat
  * 戻り値 triggered=true なら戦闘へ遷移する。FOE 接触時は diveState.pendingFoeBattle に予約を入れる。
  * 解決順: ①プレイヤー移動 → ②プレイヤーが FOE セルへ踏込＝先制戦闘 →
  *         ③エンカウント抽選 → ④FOE 1手（接触＝通常/不意打ち戦闘）。
+ *
+ * 設計判断（手番制の例外）: ②でプレイヤーが FOE に踏み込んだターンは早期 return し、
+ * 他の FOE は動かさない（④をスキップ）。「プレイヤーから攻めに行った1手」は即戦闘に入る
+ * 方が自然なため。複数 FOE 誘導パズルへの影響は軽微とみなす。
+ *
+ * MVP 簡略化（[03 §10] との既知の乖離）: FOE には向きの概念が無い（FoeRuntimeState に dir 無し）
+ * ため、②のプレイヤー踏込は接触方向（背後/側面/正面）を判定できず一律 'preemptive' とする。
+ * 設計書の「背後/側面から接触＝先制、正面＝通常」は将来 FOE に向きを持たせたら精緻化する。
  */
 export function moveStep(
   save: SaveData,

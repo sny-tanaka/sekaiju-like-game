@@ -6,6 +6,11 @@ import type { Dir, EnemyId, FirstStrike, FloorMaster, FoeRuntimeState, Rng } fro
 // 「プレイヤー1歩＝全FOE1手」。spawnId 昇順で1体ずつ解決。
 // 感知（sightRange 内）で追跡（alerted）→ 最短方向へ moveSpeed 分前進、接触で戦闘。
 // 非追跡は patrol（wander/charge/static）。FOE は特殊床の影響を受けない（MVP）。
+//
+// MVP 簡略化（設計書との既知の乖離。将来精緻化の余地。06 §2.1 実装メモ参照）:
+//  - 感知は壁透過の manhattan 距離のみ（02 §6.1③「壁で遮られなければ」は未考慮）。
+//  - 追跡は BFS ではなく貪欲（manhattan を縮める1歩）。袋小路では同距離移動せず停止しうる。
+//  - alerted は一度立つと解除しない（プレイヤーが離れても追尾を続ける）。
 // ============================================================================
 
 export interface FoeStepResult {
@@ -35,7 +40,10 @@ export function stepFoes(
   const occupied = new Set(foes.filter((f) => !f.defeated).map((f) => `${f.cell.x},${f.cell.y}`));
   let contact: FoeStepResult['contact'] = null;
 
-  const sorted = [...foes].sort((a, b) => a.spawnId.localeCompare(b.spawnId));
+  // spawnId 昇順で解決（処理順を固定）。数値サフィックス（foe_2 < foe_10）を考慮する。
+  const sorted = [...foes].sort((a, b) =>
+    a.spawnId.localeCompare(b.spawnId, undefined, { numeric: true })
+  );
   for (const foe of sorted) {
     if (contact) break; // 接触＝戦闘開始。残りは動かさない
     if (foe.defeated) continue;

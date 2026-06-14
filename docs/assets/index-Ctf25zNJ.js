@@ -14649,7 +14649,7 @@ function k_(a, i, o, s, r) {
     h = new Map(a.foeSpawns.map((b) => [b.id, b])),
     _ = new Set(d.filter((b) => !b.defeated).map((b) => `${b.cell.x},${b.cell.y}`));
   let g = null;
-  const m = [...d].sort((b, S) => b.spawnId.localeCompare(S.spawnId));
+  const m = [...d].sort((b, S) => b.spawnId.localeCompare(S.spawnId, void 0, { numeric: !0 }));
   for (const b of m) {
     if (g) break;
     if (b.defeated) continue;
@@ -17935,7 +17935,7 @@ const _x = () => {
                     ],
                   }),
         }),
-        y.jsxs('footer', { className: Lt.foot, children: ['v', '0.1.11'] }),
+        y.jsxs('footer', { className: Lt.foot, children: ['v', '0.1.12'] }),
       ],
     });
   },
