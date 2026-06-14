@@ -1,11 +1,21 @@
 import { isBossFloor } from '@/data/balance';
 import { initEncounter, onStep } from '@/domain/encounter';
+import { stepFoes } from '@/domain/foe';
 import { findEventCell, generateFloor } from '@/domain/generateFloor';
 import { openDirs, step } from '@/domain/movement';
 import { createRng } from '@/domain/rng';
 import { computeBaseStats } from '@/domain/stats';
 import { cellKey } from '@/domain/types';
-import type { Dir, DivePartyMember, FloorMaster, Rng, SaveData, TowerFloor } from '@/domain/types';
+import type {
+  Dir,
+  DivePartyMember,
+  FloorMaster,
+  FoeRuntimeState,
+  PendingFoeBattle,
+  Rng,
+  SaveData,
+  TowerFloor,
+} from '@/domain/types';
 
 // ============================================================================
 // ダイブ（潜行）管理（設計書 06 §2 / 05 §4 / 02）。
@@ -24,13 +34,20 @@ export function ensureFloor(save: SaveData, depth: number): { save: SaveData; fl
   if (existing) return { save, floor: existing };
 
   const generated: FloorMaster = generateFloor(depth, floorRng(save.masterSeed, depth));
+  // FOE のランタイム状態を初期配置から構築（[02 §6]）。
+  const foeRuntime: FoeRuntimeState[] = generated.foeSpawns.map((s) => ({
+    spawnId: s.id,
+    cell: { ...s.startCell },
+    defeated: false,
+    alerted: false,
+  }));
   const floor: TowerFloor = {
     depth,
     seed: save.masterSeed,
     generated,
     isBossFloor: isBossFloor(depth),
     encounterTier: Math.floor((depth - 1) / 10),
-    foeRuntime: [],
+    foeRuntime,
     openedChests: [],
     depletedGathers: [],
     consumedEvents: [],
@@ -104,6 +121,7 @@ function enterFloor(save: SaveData, depth: number, encounterRng: Rng): SaveData 
       party: next.diveState?.party ?? buildDiveParty(next),
       persistentSummons: next.diveState?.persistentSummons ?? [],
       encounter: { stepsUntilEncounter: initEncounter(encounterRng) },
+      pendingFoeBattle: null,
     },
   };
   return reveal(next, depth, entrance.x, entrance.y);
@@ -129,9 +147,31 @@ export function turnTo(save: SaveData, dir: Dir): SaveData {
   return { ...save, diveState: { ...save.diveState, dir } };
 }
 
+/** towerState.floors[depth].foeRuntime を差し替えた新 save を返す。 */
+function setFoeRuntime(save: SaveData, depth: number, foeRuntime: FoeRuntimeState[]): SaveData {
+  const floor = save.towerState.floors[depth];
+  return {
+    ...save,
+    towerState: {
+      ...save.towerState,
+      floors: { ...save.towerState.floors, [depth]: { ...floor, foeRuntime } },
+    },
+  };
+}
+
 /**
- * dir 方向へ1歩進む。進めれば探索記録を更新し、エンカウント判定を行う。
- * 戻り値 triggered=true なら戦闘へ遷移する（呼び出し側でダミー戦闘画面へ）。
+ * dir 方向へ1歩進む。進めれば探索記録を更新し、FOE を1手動かし、エンカウント判定を行う（[02 §6]）。
+ * 戻り値 triggered=true なら戦闘へ遷移する。FOE 接触時は diveState.pendingFoeBattle に予約を入れる。
+ * 解決順: ①プレイヤー移動 → ②プレイヤーが FOE セルへ踏込＝先制戦闘 →
+ *         ③エンカウント抽選 → ④FOE 1手（接触＝通常/不意打ち戦闘）。
+ *
+ * 設計判断（手番制の例外）: ②でプレイヤーが FOE に踏み込んだターンは早期 return し、
+ * 他の FOE は動かさない（④をスキップ）。「プレイヤーから攻めに行った1手」は即戦闘に入る
+ * 方が自然なため。複数 FOE 誘導パズルへの影響は軽微とみなす。
+ *
+ * MVP 簡略化（[03 §10] との既知の乖離）: FOE には向きの概念が無い（FoeRuntimeState に dir 無し）
+ * ため、②のプレイヤー踏込は接触方向（背後/側面/正面）を判定できず一律 'preemptive' とする。
+ * 設計書の「背後/側面から接触＝先制、正面＝通常」は将来 FOE に向きを持たせたら精緻化する。
  */
 export function moveStep(
   save: SaveData,
@@ -140,12 +180,32 @@ export function moveStep(
 ): { save: SaveData; moved: boolean; triggered: boolean } {
   const dive = save.diveState;
   if (!dive) return { save, moved: false, triggered: false };
-  const floor = save.towerState.floors[dive.depth].generated;
+  const towerFloor = save.towerState.floors[dive.depth];
+  const floor = towerFloor.generated;
   const dest = step(floor, dive.pos, dir);
   if (!dest) {
     // 進めない場合でも向きは変える
     return { save: turnTo(save, dir), moved: false, triggered: false };
   }
+
+  // ② プレイヤーが FOE のいるセルへ踏み込んだ → 先制で戦闘（[03 §10]）
+  const hitFoe = towerFloor.foeRuntime.find(
+    (f) => !f.defeated && f.cell.x === dest.x && f.cell.y === dest.y
+  );
+  if (hitFoe) {
+    const spawn = floor.foeSpawns.find((s) => s.id === hitFoe.spawnId);
+    const pending: PendingFoeBattle | null = spawn
+      ? { spawnId: hitFoe.spawnId, enemyId: spawn.enemyId, firstStrike: 'preemptive' }
+      : null;
+    let next: SaveData = {
+      ...save,
+      diveState: { ...dive, pos: dest, dir, pendingFoeBattle: pending },
+    };
+    next = reveal(next, dive.depth, dest.x, dest.y);
+    return { save: next, moved: true, triggered: pending !== null };
+  }
+
+  // ③ 通常移動＋エンカウント抽選
   const enc = onStep(dive.encounter.stepsUntilEncounter, rng);
   let next: SaveData = {
     ...save,
@@ -154,10 +214,51 @@ export function moveStep(
       pos: dest,
       dir,
       encounter: { stepsUntilEncounter: enc.stepsUntilEncounter },
+      pendingFoeBattle: null,
     },
   };
   next = reveal(next, dive.depth, dest.x, dest.y);
+
+  // ④ FOE を1手動かす（プレイヤー1歩＝全FOE1手・[02 §6]）
+  const fr = stepFoes(floor, towerFloor.foeRuntime, dest, dir, rng);
+  next = setFoeRuntime(next, dive.depth, fr.foes);
+  if (fr.contact) {
+    next = {
+      ...next,
+      diveState: {
+        ...next.diveState!,
+        pendingFoeBattle: {
+          spawnId: fr.contact.spawnId,
+          enemyId: fr.contact.enemyId,
+          firstStrike: fr.contact.firstStrike,
+        },
+      },
+    };
+    return { save: next, moved: true, triggered: true };
+  }
+
   return { save: next, moved: true, triggered: enc.triggered };
+}
+
+/**
+ * FOE 戦闘の決着を反映する（[02 §6]）。
+ * - 勝利: 該当 FOE を defeated にしてマップから消す。
+ * - いずれの結果でも pendingFoeBattle をクリアする（接触は消費済み）。
+ * 戦闘結果（HP/経験値等）の反映は applyBattleResult が別途行う。
+ */
+export function resolveFoeBattle(save: SaveData, win: boolean): SaveData {
+  const dive = save.diveState;
+  if (!dive) return save;
+  const pending = dive.pendingFoeBattle;
+  let next: SaveData = { ...save, diveState: { ...dive, pendingFoeBattle: null } };
+  if (pending && win) {
+    const floor = next.towerState.floors[dive.depth];
+    const foeRuntime = floor.foeRuntime.map((f) =>
+      f.spawnId === pending.spawnId ? { ...f, defeated: true } : f
+    );
+    next = setFoeRuntime(next, dive.depth, foeRuntime);
+  }
+  return next;
 }
 
 /** 現在セルの階段種別（上り/下り/なし）。 */
@@ -205,6 +306,7 @@ export function goShallower(save: SaveData): SaveData {
       pos: { x: exit.x, y: exit.y },
       dir: facing,
       encounter: { stepsUntilEncounter: initEncounter(rng) },
+      pendingFoeBattle: null,
     },
   };
   return reveal(next, prevDepth, exit.x, exit.y);

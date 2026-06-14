@@ -19,9 +19,9 @@ if (!self.define) {
     const o = e || ('document' in self ? document.currentScript.src : '') || location.href;
     if (i[o]) return;
     let r = {};
-    const f = (e) => n(e, o),
-      t = { module: { uri: o }, exports: r, require: f };
-    i[o] = Promise.all(s.map((e) => t[e] || f(e))).then((e) => (c(...e), r));
+    const t = (e) => n(e, o),
+      f = { module: { uri: o }, exports: r, require: t };
+    i[o] = Promise.all(s.map((e) => f[e] || t(e))).then((e) => (c(...e), r));
   };
 }
 define(['./workbox-1ef09536'], function (e) {
@@ -31,12 +31,12 @@ define(['./workbox-1ef09536'], function (e) {
   }),
     e.precacheAndRoute(
       [
-        { url: 'index.html', revision: '06494598cf7dffc61780ae9cf0a90639' },
+        { url: 'index.html', revision: '642b8267e2c2603939fc2b6f0c4fb0ba' },
         { url: 'icon-512.png', revision: 'aea6735f0e3902695c58dbca460dc603' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
         { url: 'assets/index-hIQ-4kQQ.css', revision: null },
-        { url: 'assets/index-CkU_7P7D.js', revision: null },
+        { url: 'assets/index-Ctf25zNJ.js', revision: null },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
         { url: 'icon-512.png', revision: 'aea6735f0e3902695c58dbca460dc603' },

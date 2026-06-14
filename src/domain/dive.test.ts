@@ -3,6 +3,7 @@ import {
   goDeeper,
   goShallower,
   moveStep,
+  resolveFoeBattle,
   returnToTown,
   startDive,
   stairsAt,
@@ -106,5 +107,94 @@ describe('dive', () => {
     const save = startDive(saveWithParty(), 1);
     // startDive は入口（stairsDown）に立つ
     expect(stairsAt(save)).toBe('stairsDown');
+  });
+
+  test('ensureFloor は foeRuntime を初期配置から構築する', () => {
+    const save = saveWithParty();
+    const { floor } = ensureFloor(save, 1);
+    expect(floor.foeRuntime.length).toBe(floor.generated.foeSpawns.length);
+    for (const fr of floor.foeRuntime) {
+      const spawn = floor.generated.foeSpawns.find((s) => s.id === fr.spawnId)!;
+      expect(fr.cell).toEqual(spawn.startCell);
+      expect(fr.defeated).toBe(false);
+      expect(fr.alerted).toBe(false);
+    }
+  });
+
+  test('FOE セルへ踏み込むと先制戦闘が予約される', () => {
+    let save = startDive(saveWithParty(), 1);
+    const depth = save.diveState!.depth;
+    const floor = save.towerState.floors[depth].generated;
+    // FOE を現在地の開口先へ移動させて、その方向へ踏み込ませる
+    const { x, y } = save.diveState!.pos;
+    const dir = openDirs(floor, x, y)[0] as Dir;
+    const dx = dir === 'E' ? 1 : dir === 'W' ? -1 : 0;
+    const dy = dir === 'S' ? 1 : dir === 'N' ? -1 : 0;
+    save = {
+      ...save,
+      towerState: {
+        ...save.towerState,
+        floors: {
+          ...save.towerState.floors,
+          [depth]: {
+            ...save.towerState.floors[depth],
+            foeRuntime: [
+              { spawnId: 'foe_0', cell: { x: x + dx, y: y + dy }, defeated: false, alerted: false },
+            ],
+            generated: {
+              ...floor,
+              foeSpawns: [
+                {
+                  id: 'foe_0',
+                  enemyId: 'enemy_slime',
+                  startCell: { x: x + dx, y: y + dy },
+                  patrol: { kind: 'static' },
+                  moveSpeed: 1,
+                  sightRange: 0,
+                  respawn: false,
+                },
+              ],
+            },
+          },
+        },
+      },
+    };
+    const res = moveStep(save, dir, createRng(1));
+    expect(res.triggered).toBe(true);
+    expect(res.save.diveState!.pendingFoeBattle).not.toBeNull();
+    expect(res.save.diveState!.pendingFoeBattle!.firstStrike).toBe('preemptive');
+    expect(res.save.diveState!.pendingFoeBattle!.enemyId).toBe('enemy_slime');
+  });
+
+  test('resolveFoeBattle は勝利で FOE を撃破扱いにし予約をクリアする', () => {
+    let save = startDive(saveWithParty(), 1);
+    const depth = save.diveState!.depth;
+    save = {
+      ...save,
+      towerState: {
+        ...save.towerState,
+        floors: {
+          ...save.towerState.floors,
+          [depth]: {
+            ...save.towerState.floors[depth],
+            foeRuntime: [
+              { spawnId: 'foe_0', cell: { x: 0, y: 0 }, defeated: false, alerted: true },
+            ],
+          },
+        },
+      },
+      diveState: {
+        ...save.diveState!,
+        pendingFoeBattle: { spawnId: 'foe_0', enemyId: 'enemy_slime', firstStrike: 'preemptive' },
+      },
+    };
+    const win = resolveFoeBattle(save, true);
+    expect(win.diveState!.pendingFoeBattle).toBeNull();
+    expect(win.towerState.floors[depth].foeRuntime[0].defeated).toBe(true);
+
+    // 敗走（win=false）なら撃破されず予約のみクリア
+    const fled = resolveFoeBattle(save, false);
+    expect(fled.diveState!.pendingFoeBattle).toBeNull();
+    expect(fled.towerState.floors[depth].foeRuntime[0].defeated).toBe(false);
   });
 });

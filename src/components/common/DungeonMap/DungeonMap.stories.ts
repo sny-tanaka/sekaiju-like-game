@@ -39,3 +39,14 @@ export const FullyExplored: StoryObj<T> = {
 export const PartiallyExplored: StoryObj<T> = {
   args: { explored: partial },
 };
+
+// FOE（徘徊敵）を自動表示。未感知=くすんだ赤、追跡中=鮮やかな赤。
+export const WithFoes: StoryObj<T> = {
+  args: {
+    explored: allCells,
+    foes: [
+      { x: entrance.x + 2, y: entrance.y + 1, alerted: false },
+      { x: entrance.x - 1, y: entrance.y + 3, alerted: true },
+    ],
+  },
+};

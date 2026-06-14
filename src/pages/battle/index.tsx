@@ -8,7 +8,7 @@ import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { ITEMS } from '@/data/items';
 import { SKILLS } from '@/data/skills';
 import { applyBattleResult, battleRewards, resolveTurn, startBattle } from '@/domain/battle';
-import { returnToTown } from '@/domain/dive';
+import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
 import { itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
@@ -35,15 +35,30 @@ export const Page = () => {
   const [targetId, setTargetId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // 初期化（1回のみ）: エンカウント抽選＋戦闘生成
+  // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
     if (state || !save?.diveState) return;
     const depth = save.diveState.depth;
     const seed =
       (save.masterSeed ^ (depth * 2654435761) ^ (save.towerState.record.totalDives * 40503)) >>> 0;
     rngRef.current = createRng(seed);
-    setState(startBattle(save, rollEncounter(depth, rngRef.current)));
+    const pending = save.diveState.pendingFoeBattle;
+    if (pending) {
+      setState(startBattle(save, [pending.enemyId], pending.firstStrike));
+    } else {
+      setState(startBattle(save, rollEncounter(depth, rngRef.current)));
+    }
   }, [save, state]);
+
+  // 不意打ち: ターン1は味方が動けない。突入直後に敵の先手1巡を自動解決する。
+  const ambushDone = useRef(false);
+  useEffect(() => {
+    if (!state || !rngRef.current || ambushDone.current) return;
+    if (state.turn === 1 && state.firstStrike === 'ambush' && state.outcome === 'ongoing') {
+      ambushDone.current = true;
+      setState(resolveTurn(state, [], rngRef.current));
+    }
+  }, [state]);
 
   const aliveEnemies = useMemo(() => state?.enemies.filter((e) => !e.isDown) ?? [], [state]);
   const aliveAllies = useMemo(() => state?.allies.filter((a) => !a.isDown) ?? [], [state]);
@@ -82,11 +97,13 @@ export const Page = () => {
   const finish = useCallback(
     async (final: BattleState) => {
       setBusy(true);
+      // FOE 戦闘なら勝敗に応じて該当 FOE を撃破扱いにし、予約をクリアする（[02 §6]）
+      const win = final.outcome === 'win';
       if (final.outcome === 'lose') {
         await applyAndPersist((s) => returnToTown(applyBattleResult(s, final)));
         navigate('/town');
       } else {
-        await applyAndPersist((s) => applyBattleResult(s, final));
+        await applyAndPersist((s) => resolveFoeBattle(applyBattleResult(s, final), win));
         navigate('/dungeon');
       }
     },

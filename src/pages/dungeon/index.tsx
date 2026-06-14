@@ -38,6 +38,16 @@ export const Page = () => {
     () => (save && dive ? save.towerState.floors[dive.depth]?.generated : null),
     [save, dive]
   );
+  // 生存中の FOE（マップ・擬似3Dに自動表示）。
+  const foes = useMemo(
+    () =>
+      save && dive
+        ? (save.towerState.floors[dive.depth]?.foeRuntime ?? [])
+            .filter((f) => !f.defeated)
+            .map((f) => ({ x: f.cell.x, y: f.cell.y, alerted: f.alerted }))
+        : [],
+    [save, dive]
+  );
 
   const doMove = useCallback(
     (dir: Dir) => {
@@ -168,6 +178,7 @@ export const Page = () => {
           floor={floor}
           pos={dive.pos}
           dir={dive.dir}
+          foes={foes}
         />
       </div>
 
@@ -178,6 +189,7 @@ export const Page = () => {
           pos={dive.pos}
           dir={dive.dir}
           icons={save.playerMaps[dive.depth]?.icons ?? []}
+          foes={foes}
           onCellClick={handleCellClick}
         />
       </div>

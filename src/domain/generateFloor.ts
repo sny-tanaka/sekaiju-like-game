@@ -1,5 +1,13 @@
 import { isBossFloor } from '@/data/balance';
-import type { Cell, Dir, FloorMaster, Rng } from '@/domain/types';
+import { ENEMIES } from '@/data/enemies';
+import type { Cell, Dir, EnemyId, FloorMaster, FoeSpawn, Rng } from '@/domain/types';
+
+/** その帯の FOE プール（雑魚と同プール。ボスは除外）。 */
+function FOE_POOL_BY_BAND(band: number): EnemyId[] {
+  return Object.values(ENEMIES)
+    .filter((e) => e.tierBand === band && !e.id.startsWith('enemy_boss'))
+    .map((e) => e.id);
+}
 
 // ============================================================================
 // 階層自動生成（設計書 06 §2.1 / 02 §2）。
@@ -130,13 +138,43 @@ export function generateFloor(depth: number, rng: Rng): FloorMaster {
   cells[entranceY][entranceX].event = { kind: 'stairsDown' }; // 拠点/前階へ戻る入口
   cells[exitY][exitX].event = { kind: 'stairsUp' }; // 次の階へ進む出口
 
+  const band = Math.floor((depth - 1) / 10);
+
+  // ⑤ FOE（徘徊敵）配置（[02 §6]）。ボス階には置かない。入口/出口と入口隣接は避ける。
+  const foeSpawns: FoeSpawn[] = [];
+  if (!isBossFloor(depth)) {
+    const pool = FOE_POOL_BY_BAND(band);
+    const foeCount = 1 + Math.floor(depth / 8);
+    for (let i = 0; i < foeCount && pool.length > 0; i++) {
+      // 入口から少し離れた床セルを抽選
+      let fx = rng.int(width);
+      let fy = rng.int(height);
+      for (let tries = 0; tries < 20; tries++) {
+        fx = rng.int(width);
+        fy = rng.int(height);
+        const ev = cells[fy][fx].event;
+        const farFromEntrance = Math.abs(fx - entranceX) + Math.abs(fy - entranceY) >= 3;
+        if (!ev && farFromEntrance) break;
+      }
+      foeSpawns.push({
+        id: `foe_${i}`,
+        enemyId: rng.pick(pool),
+        startCell: { x: fx, y: fy },
+        patrol: { kind: 'wander' },
+        moveSpeed: 1,
+        sightRange: 3,
+        respawn: false,
+      });
+    }
+  }
+
   return {
     depth,
     width,
     height,
     cells,
-    encounterTable: `band_${Math.floor((depth - 1) / 10)}`,
-    foeSpawns: [], // FOE は Phase 4
+    encounterTable: `band_${band}`,
+    foeSpawns,
     bgmId: isBossFloor(depth) ? 'bgm_boss' : 'bgm_dungeon',
   };
 }

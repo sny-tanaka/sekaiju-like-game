@@ -17,6 +17,7 @@ import type {
   Element,
   EnemyId,
   EquipBonuses,
+  FirstStrike,
   Rng,
   SaveData,
   SkillEffectDef,
@@ -99,8 +100,15 @@ function buildEnemy(enemyId: EnemyId, index: number, depth: number): Combatant {
   };
 }
 
-/** 戦闘を開始し BattleState を生成する。出撃中の編成メンバーが味方になる。 */
-export function startBattle(save: SaveData, enemyIds: EnemyId[]): BattleState {
+/**
+ * 戦闘を開始し BattleState を生成する。出撃中の編成メンバーが味方になる。
+ * firstStrike は FOE 接触時の先手（[03 §10]）。ランダムエンカウントは 'none'。
+ */
+export function startBattle(
+  save: SaveData,
+  enemyIds: EnemyId[],
+  firstStrike: FirstStrike = 'none'
+): BattleState {
   const depth = save.diveState?.depth ?? 1;
   const partyIds = [...save.guild.party.front, ...save.guild.party.back].filter(
     (id): id is string => id !== null
@@ -116,6 +124,7 @@ export function startBattle(save: SaveData, enemyIds: EnemyId[]): BattleState {
     enemies,
     log: [],
     outcome: 'ongoing',
+    firstStrike,
     drops: [],
     consumedItems: [],
   };
@@ -317,8 +326,15 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   const next: BattleState = structuredClone({ ...state, log: [] });
   const cmdByActor = new Map(commands.map((c) => [c.actorId, c]));
 
-  // 逃走（いずれかが flee 指定 → 1回判定）
-  if (commands.some((c) => c.kind === 'flee')) {
+  // 先制/不意打ち（[03 §10]）。ターン1のみ片側が行動不可。
+  const firstStrikeActive = next.turn === 1 && next.firstStrike !== 'none';
+  const skipEnemies = firstStrikeActive && next.firstStrike === 'preemptive';
+  const skipAllies = firstStrikeActive && next.firstStrike === 'ambush';
+  if (skipEnemies) next.log.push({ text: '先制攻撃！ 味方が先手を取った' });
+  if (skipAllies) next.log.push({ text: '不意打ち！ 敵に先手を取られた' });
+
+  // 逃走（いずれかが flee 指定 → 1回判定。不意打ちターンは味方が動けず逃走不可）
+  if (!skipAllies && commands.some((c) => c.kind === 'flee')) {
     const rate = clamp(
       0.5 + (avgAgi(aliveSide(next, 'ally')) - avgAgi(aliveSide(next, 'enemy'))) * 0.02,
       0.1,
@@ -332,25 +348,30 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     next.log.push({ text: '逃げられなかった！' });
   }
 
-  // ガード: 防御コマンドは pdef/mdef を一時上昇（このターン）
-  for (const c of commands) {
-    if (c.kind !== 'guard') continue;
-    const actor = find(next, c.actorId);
-    if (!actor || actor.isDown) continue;
-    addBuff(actor, { stat: 'pdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
-    addBuff(actor, { stat: 'mdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
+  // ガード: 防御コマンドは pdef/mdef を一時上昇（このターン）。不意打ちターンは無効。
+  if (!skipAllies) {
+    for (const c of commands) {
+      if (c.kind !== 'guard') continue;
+      const actor = find(next, c.actorId);
+      if (!actor || actor.isDown) continue;
+      addBuff(actor, { stat: 'pdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
+      addBuff(actor, { stat: 'mdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
+    }
   }
 
-  // 敵AI: 生存敵は生存味方の誰かを通常攻撃
+  // 敵AI: 生存敵は生存味方の誰かを通常攻撃（先制ターンは敵が動けない）
   const enemyCommands = new Map<string, string>(); // enemyId -> targetAllyId
-  for (const e of aliveSide(next, 'enemy')) {
-    const targets = aliveSide(next, 'ally');
-    if (targets.length > 0) enemyCommands.set(e.id, rng.pick(targets).id);
+  if (!skipEnemies) {
+    for (const e of aliveSide(next, 'enemy')) {
+      const targets = aliveSide(next, 'ally');
+      if (targets.length > 0) enemyCommands.set(e.id, rng.pick(targets).id);
+    }
   }
 
-  // 行動順（生存者のみ、AGI 降順・rng タイブレーク）
+  // 行動順（生存者のみ、AGI 降順・rng タイブレーク）。先手側のみ行動するターンは片側を除外。
   const actors = [...next.allies, ...next.enemies]
     .filter((c) => !c.isDown)
+    .filter((c) => !(skipEnemies && c.side === 'enemy') && !(skipAllies && c.side === 'ally'))
     .map((c) => ({ c, agi: c.stats.agi, tie: rng.next() }))
     .sort((a, b) => b.agi - a.agi || b.tie - a.tie)
     .map((x) => x.c);

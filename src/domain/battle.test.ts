@@ -76,6 +76,45 @@ describe('battle: resolveTurn', () => {
   });
 });
 
+describe('battle: 先制/不意打ち（[03 §10]）', () => {
+  test('先制ターンは敵が行動せず味方の HP は減らない', () => {
+    const state = startBattle(diveSave(), ['enemy_slime'], 'preemptive');
+    expect(state.firstStrike).toBe('preemptive');
+    const allyHp = state.allies[0].hp;
+    // 味方は全員防御（攻撃しても倒し切れないよう guard）→ 敵が動かないので被害ゼロ
+    const cmds = state.allies.map((a) => ({ kind: 'guard' as const, actorId: a.id }));
+    const after = resolveTurn(state, cmds, createRng(1));
+    expect(after.allies[0].hp).toBe(allyHp);
+    expect(after.log.some((l) => l.text.includes('先制'))).toBe(true);
+  });
+
+  test('不意打ちターンは味方コマンドが無視され、敵だけが行動する', () => {
+    const state = startBattle(diveSave(), ['enemy_slime'], 'ambush');
+    const enemyHp = state.enemies[0].hp;
+    // 味方は攻撃指定でも不意打ちターンでは行動できない → 敵 HP は満タンのまま
+    const target = state.enemies[0].id;
+    const cmds = state.allies.map((a) => ({
+      kind: 'attack' as const,
+      actorId: a.id,
+      targetId: target,
+    }));
+    const after = resolveTurn(state, cmds, createRng(1));
+    expect(after.enemies[0].hp).toBe(enemyHp);
+    expect(after.log.some((l) => l.text.includes('不意打ち'))).toBe(true);
+  });
+
+  test('先制/不意打ちはターン2以降は通常どおり両者行動する', () => {
+    const state = startBattle(diveSave(), ['enemy_slime'], 'preemptive');
+    const t1 = resolveTurn(state, attackAll(state), createRng(5));
+    // ターン2では敵 AI も動くため、味方が攻撃すれば敵 HP は減り続ける
+    if (t1.outcome === 'ongoing') {
+      const t2 = resolveTurn(t1, attackAll(t1), createRng(5));
+      expect(t2.turn).toBe(3);
+    }
+    expect(t1.turn).toBe(2);
+  });
+});
+
 describe('battle: drops & items', () => {
   test('勝利時にドロップが倉庫・図鑑へ反映される', () => {
     const save = diveSave();

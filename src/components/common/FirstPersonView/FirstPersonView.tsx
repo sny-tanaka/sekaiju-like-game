@@ -9,6 +9,8 @@ type Props = {
   floor: FloorMaster;
   pos: { x: number; y: number };
   dir: Dir;
+  /** 生存中の FOE の現在位置。正面の直線上にいると擬似3Dに重ねて表示する（[02 §6]）。 */
+  foes?: { x: number; y: number; alerted: boolean }[];
   /** 見通す最大マス数。 */
   maxDepth?: number;
   width?: number;
@@ -34,6 +36,7 @@ export const FirstPersonView = ({
   floor,
   pos,
   dir,
+  foes = [],
   maxDepth = 4,
   width = 358,
   height = 200,
@@ -161,8 +164,25 @@ export const FirstPersonView = ({
         ctx.textBaseline = 'middle';
         ctx.fillText(ev.kind === 'stairsUp' ? '▲' : '▼', mx, my + 1);
       }
+
+      // 正面の直線上にいる FOE を重ねて表示（現在地マス k=0 は除く）。
+      if (k > 0 && foes.some((f) => f.x === slice.x && f.y === slice.y)) {
+        const alerted = foes.some((f) => f.x === slice.x && f.y === slice.y && f.alerted);
+        const mx = cx;
+        const my = (near.b + far.b) / 2 - (near.b - far.b) * 0.1;
+        const size = Math.max(14, (near.b - near.t) * 0.22);
+        ctx.fillStyle = alerted ? '#d32f2f' : '#b0533a';
+        ctx.beginPath();
+        ctx.arc(mx, my, size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.floor(size * 1.3)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('!', mx, my + 1);
+      }
     }
-  }, [floor, pos, dir, maxDepth, width, height]);
+  }, [floor, pos, dir, foes, maxDepth, width, height]);
 
   return (
     <canvas

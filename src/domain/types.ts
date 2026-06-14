@@ -267,6 +267,14 @@ export type BattleCommand =
 
 export type BattleOutcome = 'ongoing' | 'win' | 'lose' | 'fled';
 
+/**
+ * 戦闘突入時の先手（[03 §10]）。
+ * - none: 通常（ランダムエンカウントや正面接触）
+ * - preemptive: 先制（味方が初手に1巡先行＝敵はターン1行動不可）
+ * - ambush: 不意打ち（敵が初手に1巡先行＝味方はターン1行動不可）
+ */
+export type FirstStrike = 'none' | 'preemptive' | 'ambush';
+
 export interface BattleLogEntry {
   text: string;
 }
@@ -278,6 +286,8 @@ export interface BattleState {
   enemies: Combatant[];
   log: BattleLogEntry[];
   outcome: BattleOutcome;
+  /** 突入時の先手（[03 §10]）。FOE接触時に preemptive/ambush になる。 */
+  firstStrike: FirstStrike;
   /** 撃破で抽選されたドロップ（勝利時に倉庫・図鑑へ反映）。 */
   drops: { enemyId: EnemyId; itemId: ItemId }[];
   /** 戦闘中に使用して消費したアイテム（終了時に倉庫から減算）。 */
@@ -518,6 +528,18 @@ export interface SummonSnapshot {
   remainingTurns: number;
 }
 
+/**
+ * FOE 接触で発生した戦闘の予約（[02 §6]・[03 §10]）。
+ * 移動解決時に確定し、戦闘画面はランダム抽選ではなくこの敵で戦闘を開始する。
+ * 戦闘終了時に勝利なら該当 FOE を defeated にしてクリアする。
+ */
+export interface PendingFoeBattle {
+  spawnId: string;
+  enemyId: EnemyId;
+  /** 接触方向で決まる先手（[03 §10]）。 */
+  firstStrike: FirstStrike;
+}
+
 export interface DiveState {
   depth: number; // 現在いる階
   pos: { x: number; y: number }; // 現在マス
@@ -525,6 +547,8 @@ export interface DiveState {
   party: DivePartyMember[]; // 出撃中キャラの現在 HP/TP/ゲージ/状態異常
   persistentSummons: SummonSnapshot[];
   encounter: { stepsUntilEncounter: number }; // エンカウント内部値（[02 §5]）
+  /** FOE 接触で予約された戦闘（無ければ null）。戦闘画面が消費する。 */
+  pendingFoeBattle: PendingFoeBattle | null;
 }
 
 // ============================================================================
