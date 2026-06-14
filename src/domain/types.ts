@@ -91,6 +91,48 @@ export type BuffStatTarget = 'patk' | 'pdef' | 'matk' | 'mdef' | 'acc' | 'eva' |
 export interface ActiveAilment {
   type: AilmentType;
   remainingTurns: number;
+  magnitude?: number; // 毒ダメージ量など
+}
+
+/** 強化/弱体（[03 §6.3]）。残りターン制。同 stackGroup は強い方を1つ保持。 */
+export interface ActiveBuff {
+  stat: BuffStatTarget;
+  modifier: number; // 倍率（例 1.3 / 0.7）。1要素あたり 0.5〜1.5 にクランプ
+  remainingTurns: number;
+  stackGroup: string; // 'atkBuff' / 'defDebuff' 等
+}
+
+// ----------------------------------------------------------------------------
+// 戦闘の実行時モデル（[03]）。保存しない（戦闘開始時に生成・終了時に結果を反映）。
+// ----------------------------------------------------------------------------
+
+export type Row = 'front' | 'back';
+export type Side = 'ally' | 'enemy';
+
+export interface Combatant {
+  id: string; // 戦闘内で一意（味方は charId、敵は 'enemy_0' 等）
+  name: string;
+  side: Side;
+  row: Row;
+  stats: Stats; // 装備・成長込みの最終素ステータス（敵はスケール後）
+  equip: EquipBonuses; // 装備の戦闘派生ボーナス（敵は空）
+  hp: number;
+  maxHp: number;
+  tp: number;
+  maxTp: number;
+  buffs: ActiveBuff[];
+  ailments: ActiveAilment[];
+  unionGauge: number; // 0..100
+  isDown: boolean;
+  enemyId?: EnemyId; // 敵のみ
+  /** 敵の属性倍率（弱点1.5 / 耐性0.5 / 無効0。未指定は等倍1.0）。 */
+  resist?: Partial<Record<Element, number>>;
+}
+
+export interface DamageResult {
+  damage: number;
+  hit: boolean;
+  critical: boolean;
 }
 
 // ----------------------------------------------------------------------------
@@ -171,6 +213,67 @@ export interface EnemyMaster {
   baseStats: Stats; // 基準値
   refDepth: number; // 基準階（この階で baseStats 等倍）
   tierBand: number; // 主に出現する10層帯
+  exp: number; // 撃破時の経験値（refDepth 基準。スケールは enemyScale 準拠）
+  gold: number; // 撃破時の所持金
+  attackElement?: PhysElement; // 通常攻撃の物理属性（既定 bash）
+  resist?: Partial<Record<Element, number>>; // 属性倍率（弱点1.5/耐性0.5/無効0）
+}
+
+// ----------------------------------------------------------------------------
+// 戦闘スキル定義（[03 §5]）。マスターデータ（関数値を含むため保存しない）。
+// ----------------------------------------------------------------------------
+
+export type SkillEffectDef =
+  | { kind: 'damage'; power: (lv: number) => number; statBase: 'str' | 'int'; hits?: number }
+  | { kind: 'heal'; amount: (lv: number) => number }
+  | {
+      kind: 'ailment';
+      ailment: AilmentType;
+      chance: (lv: number) => number;
+      turns: number;
+      magnitude?: number;
+    }
+  | {
+      kind: 'buff';
+      stat: BuffStatTarget;
+      modifier: (lv: number) => number;
+      turns: number;
+      stackGroup: string;
+    };
+
+export interface BattleSkillDef {
+  id: SkillId;
+  name: string;
+  tree: 'base' | 'master' | 'race' | 'title';
+  tpCost: (lv: number) => number;
+  element: Element;
+  target: TargetType;
+  effects: SkillEffectDef[];
+}
+
+// ----------------------------------------------------------------------------
+// 戦闘コマンド・状態（実行時。保存しない）
+// ----------------------------------------------------------------------------
+
+export type BattleCommand =
+  | { kind: 'attack'; actorId: string; targetId: string }
+  | { kind: 'skill'; actorId: string; skillId: SkillId; targetId: string }
+  | { kind: 'guard'; actorId: string }
+  | { kind: 'flee'; actorId: string };
+
+export type BattleOutcome = 'ongoing' | 'win' | 'lose' | 'fled';
+
+export interface BattleLogEntry {
+  text: string;
+}
+
+export interface BattleState {
+  turn: number;
+  depth: number;
+  allies: Combatant[];
+  enemies: Combatant[];
+  log: BattleLogEntry[];
+  outcome: BattleOutcome;
 }
 
 export interface ItemMaster {

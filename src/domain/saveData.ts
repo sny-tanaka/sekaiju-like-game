@@ -66,6 +66,10 @@ export function createCharacter(params: {
   const { raceId, classId, name, id } = params;
   if (!RACES[raceId]) throw new Error(`createCharacter: 未定義の種族 "${raceId}"`);
   if (!CLASSES[classId]) throw new Error(`createCharacter: 未定義の職業 "${classId}"`);
+  // 開始スキル: 職業の基本ツリー先頭スキルを Lv1 で習得済みにする（戦闘で即使える）。
+  // 本格的な SP 振り分けは Phase 3。
+  const starterSkillId = CLASSES[classId].skillTree.skills[0]?.skillId;
+  const learnedSkills: Record<string, number> = starterSkillId ? { [starterSkillId]: 1 } : {};
   return {
     id: id ?? generateCharId(),
     name,
@@ -75,7 +79,7 @@ export function createCharacter(params: {
     level: 1,
     exp: 0,
     skillPoints: { total: 0, spent: 0 },
-    learnedSkills: {},
+    learnedSkills,
     equipment: emptyEquipment(),
   };
 }
