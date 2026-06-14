@@ -4,6 +4,8 @@
 
 参照元: 世界樹の迷宮Ⅴ「システム」より「探索・マッピング」「描画パレット」「アイコンパレット」「オートパイロット」「フロアジャンプ」「迷宮内イベント」「エネミーアピアランス」
 
+> ⚠️ **[06 無限タワー構造](./06-tower-progression.md) による上書き**: 本作では迷宮を「上限のない無限階層タワー」とし、各階は **自動生成（初回入場で固定保存）** する（§2 の固定マップ前提は無限タワー向けに読み替える）。**フロアジャンプ（§4.4）は廃止し、10層ごとのワープチェックポイント（06 §5）に統合**。敵は1層ごとにスケールする（06 §3）。矛盾する場合は 06 を優先。
+
 ---
 
 ## 1. 目的・体験
@@ -14,21 +16,31 @@
 
 ## 2. 迷宮データモデル
 
-迷宮は階層（フロア）の集合。各フロアは2Dグリッド（マス目）。プレイヤーは1人称視点（擬似3D）で4方向に移動・回転する。
+迷宮は階層（フロア）の集合。各フロアは2Dグリッド（マス目）。プレイヤーは4方向に移動・回転する。
 
 ```ts
-type Dir = 'N' | 'E' | 'S' | 'W';
+type Dir = 'N' | 'E' | 'S' | 'W';  // 正準定義（[05 §0.5] でも参照）
 
 interface Cell {
-  // 各辺に壁があるか（true=通行不可）。隣接セルと整合させる
+  // 各辺に壁があるか（true=通行不可）。隣接セルと整合させる（A.E === B.W）
   walls: { N: boolean; E: boolean; S: boolean; W: boolean };
   floorType: FloorType;      // 通常 / ダメージ床 / 水辺 / 一方通行 / 暗闇 など
   event?: CellEventRef;      // 階段・宝箱・採集点・イベント・ショートカット等
   passable: boolean;         // そもそも侵入可能か（壁/障害物セル）
 }
 
+// セル上のオブジェクト参照（判別共用体）。実体は各ドキュメントの定義を指す
+type CellEventRef =
+  | { kind: 'stairsUp' }                          // 次の階への上り（[06 §4] ゲート対象）
+  | { kind: 'stairsDown' }                        // 前の階への下り（入口）
+  | { kind: 'chest'; chestId: string; tableId: string }  // 宝箱（開封状態は TowerFloor.openedChests）
+  | { kind: 'gather'; gatherId: string }          // 採集点（[04 §5] GatheringPoint。枯渇は depletedGathers）
+  | { kind: 'event'; eventId: string }            // 迷宮イベント（[02 §7] DungeonEvent。消化は consumedEvents）
+  | { kind: 'cookingSpot'; spotId: string }       // 調理地点（[04 §6]）
+  | { kind: 'shortcut'; shortcutId: string };     // ショートカット（扉/一方通行解除）
+
 interface FloorMaster {
-  id: string;
+  depth: number;             // 正準キー（旧 id: string は廃止。[05 §0.5]）
   width: number;
   height: number;
   cells: Cell[][];           // [y][x]
@@ -38,7 +50,12 @@ interface FloorMaster {
 }
 ```
 
-> 迷宮マスターデータ（壁・イベント配置）は **設計時に固定**。プレイヤーが描く地図はこれとは別の「プレイヤーマップ」レイヤーとして持つ（§4）。
+> ⚠️ **無限タワーでは `FloorMaster` は「設計時固定の手作りマスター」ではなく `generateFloor(depth, rng)` の生成物**（[06 §2](./06-tower-progression.md)）。初回生成後に `TowerFloor.generated` として固定保存され、再訪時はそれを使う。プレイヤーが描く地図は別レイヤー `PlayerMap`（§4）として持つ。
+
+### MVP の描画方針（グラフィックは作り込まない）
+
+- **MVP は 2D 俯瞰のプレイヤーマップを主役**にし、移動もマップ上で行えるようにする。**1人称の擬似3D視界は任意（後回し）**。[README のスコープ方針](./README.md)と整合させ、3D描画に依存しない設計にする。
+- 擬似3Dを入れる場合も「正面 n マス分の壁/通路を簡易描画」程度に留める。
 
 ### 床タイプの例（FloorType）
 
@@ -83,38 +100,33 @@ interface FloorMaster {
 
 ```ts
 interface PlayerMap {
-  floorId: string;
-  floorPaint: (string | null)[][]; // 各マスの色ID
+  depth: number;                   // 正準キー（[05 §0.5]。旧 floorId は廃止）
+  floorPaint: (string | null)[][]; // 各マスの色ID（パレットの色ID参照）
   wallDraw: WallEdge[];            // プレイヤーが引いた壁線
   icons: PlacedIcon[];             // 配置アイコン
   notes: MapNote[];                // テキストメモ
   autopilotRoutes: AutoRoute[];    // 最大5本
 }
 
+// 壁線は「あるセルのどの辺か」で表す（線種・色つき）。隣接セルと重複させない正準化規則：
+// 北/西辺は own、南/東辺は隣接セルの北/西辺として持つ（重複登録を避ける）
+interface WallEdge { x: number; y: number; side: 'N' | 'W'; style?: 'solid' | 'dashed'; colorId?: string; }
 interface PlacedIcon { x: number; y: number; iconId: string; }
+interface MapNote { x: number; y: number; text: string; }        // 最大文字数はUIで制限
 interface AutoRoute {
   colorId: string;
-  points: { x: number; y: number }[]; // 折れ線。方向転換18回まで
+  points: { x: number; y: number }[]; // 折れ線。方向転換18回まで（[02 §4.3]）
 }
 ```
 
-> **設計判断**: プレイヤーマップは迷宮マスター（正解の壁配置）とは独立。両者の差分が「未踏破」。踏破情報（視認したセル）は別途 `Set<cellKey>` で持つ。
+> **設計判断**: プレイヤーマップは生成済み迷宮（正解の壁配置）とは独立。両者の差分が「未踏破」。踏破情報（視認セル）は `SaveData.exploredCells[depth]: string[]`（`cellKey="x,y"`、[05 §0.5](./05-progression-meta.md)）で保持し、メモリ上では `Set<cellKey>` に展開する。
 
-### 4.4 フロアジャンプ
+### 4.4 フロアジャンプ → 廃止（10層ワープに統合）
 
-完成済みフロアの地図を拠点（評議会相当）で提示すると、次フロアへ **迷宮突入時に限り** ワープできる。
+> 🚫 **元ゲームの「マップ完成で次階へジャンプ」は本作では採用しない。** 無限タワーでは「次階へ1階ずつ解放」より、**10層ごとのワープチェックポイント**（[06 §5](./06-tower-progression.md)）の方が構造に合う。階層ボス撃破で第10・20・30…階へのワープが解放され、拠点のワープ装置から飛ぶ。マップ完成度や評議会（ストーリー組織）への提示は条件にしない。
 
-- 解放条件: 当該フロアのマップが「完成」＝次の階への上り階段に到達済み（多少の未踏破セルは許容）。
-- 例: 23Fを完成→24Fへジャンプ可、24F完成→25Fへ、と段階解放。
-- 注意設計: ジャンプ先からの帰還手段（帰還アイテム）の所持確認をUIで促す。
-
-```ts
-interface FloorCompletion {
-  floorId: string;
-  completed: boolean; // 次階段到達で true
-}
-// ジャンプ可能なのは「completed なフロアの次のフロア」
-```
+- 拠点⇄到達済みチェックポイントのワープ仕様は [06 §5](./06-tower-progression.md) を参照。
+- 帰還手段（帰還アイテム）の所持確認をUIで促す設計は引き続き有効。
 
 ---
 
@@ -130,10 +142,16 @@ interface FloorCompletion {
 ```ts
 interface EncounterState {
   stepsUntilEncounter: number; // 内部値（プレイヤーには非公開）
-  gaugeLevel: 0 | 1 | 2 | 3 | 4 | 5; // 表示用5段階
+  totalSteps: number;          // この区間で歩いた数（ゲージ段階の算出に使用）
 }
-function onStep(state, rng): { state: EncounterState; triggered: boolean } { /* ... */ }
+function onStep(state: EncounterState, rng: Rng): { state: EncounterState; triggered: boolean };
 ```
+
+**数値ルール（暫定）**:
+- 区間開始時（戦闘後・階移動・離脱後）に `stepsUntilEncounter = rng.range(8, 16)` を抽選（深層でレンジを狭めて頻度を上げてもよい）。
+- 1歩ごとに `stepsUntilEncounter--`。0でエンカウント発生→区間リセット。
+- **ゲージ5段階表示** = 「消化率」を5分割（例: 残り歩数 / 初期歩数 を 5 段階に量子化）。満タン（残り0直前）でのみ発生し、満タン前は安全。
+- スキル/アイテムで `stepsUntilEncounter` を増減（敵を避ける/呼ぶ）。`diveState.encounter`（[05 §4](./05-progression-meta.md)）に保存し、同一階の移動中もオートセーブで保持される。
 
 ### 5.1 FOE距離ゲージ
 
@@ -157,12 +175,19 @@ function onStep(state, rng): { state: EncounterState; triggered: boolean } { /* 
 ### 6.2 データモデル
 
 ```ts
+type PatrolPattern =
+  | { kind: 'static' }                              // その場で待機（部屋番）
+  | { kind: 'loop'; waypoints: { x: number; y: number }[] } // 経路巡回
+  | { kind: 'wander' }                              // ランダム徘徊
+  | { kind: 'charge'; dir: Dir };                   // 直線突進（壁/プレイヤーまで直進）
+
 interface FoeSpawn {
   id: string;
   enemyId: string;
   startCell: { x: number; y: number };
-  patrol: PatrolPattern;   // 巡回 / 追跡 / 直進突進 など
+  patrol: PatrolPattern;
   moveSpeed: number;       // 1ターンの最大移動マス
+  sightRange: number;      // この距離以内のプレイヤーを感知し alerted へ（追跡開始）
   respawn: boolean;        // 撃破後に復活するか
 }
 
@@ -174,7 +199,15 @@ interface FoeRuntimeState {
 }
 ```
 
-> **設計判断**: FOEの移動は「プレイヤーが1歩動いたら全FOEが1手動く」という **手番制グリッド** で実装するとパズル性が出る。移動ロジックは純関数 `stepFoes(floor, foes, playerPos)` にしてテスト可能にする。
+**移動AI（手番制・確定ルール）**: `stepFoes(floor, foes, playerPos, rng)` を純関数化。
+1. FOEは **プレイヤーが1歩動くたびに `spawnId` 昇順で1体ずつ** 解決（処理順を固定）。
+2. **感知**: 未 alerted のFOEは、プレイヤーが `sightRange` 以内かつ壁で遮られなければ `alerted=true`（追跡へ）。
+3. **追跡（alerted）**: プレイヤー方向へ最短1歩（BFS/貪欲、壁・`passable=false` を考慮）。`moveSpeed` 分まで移動し、途中でプレイヤーセルに到達したら **接触＝戦闘**（接触方向で先制/不意打ち判定、[03 §10](./03-battle-system.md)）。
+4. **非追跡**: `patrol` に従う（loop は次waypointへ、wander はランダム隣接、charge は直進、static は不動）。
+5. **衝突**: FOE同士は同一セルに重ならない（先着優先で停止）。`charge` 中のFOEが別FOEや壁に当たると停止（誘導・ぶつけ合いの基礎）。
+6. **床タイプ**: FOEはダメージ床等の特殊床効果を受けない（プレイヤー専用ギミックとして扱う。MVP簡略化）。
+
+> **設計判断**: 「プレイヤー1歩＝全FOE1手」の手番制でパズル性を出す。乱数（wander等）は `rng` 注入でテスト再現可能に。
 
 ---
 
@@ -238,4 +271,4 @@ interface EventChoice {
 | 迷宮内イベント | ★★ | Phase 2-4 |
 | FOE（徘徊敵） | ★★ | Phase 4 |
 | オートパイロット | ★ | 周回支援。Phase 4-5 |
-| フロアジャンプ | ★ | Phase 5 |
+| ~~フロアジャンプ~~ → 10層ワープ | ★ | 廃止し [06 §5](./06-tower-progression.md) のワープに統合。Phase 3 |

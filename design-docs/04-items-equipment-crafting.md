@@ -4,6 +4,8 @@
 
 参照元: 世界樹の迷宮Ⅴ「システム」より「食材・料理」「鍛冶システム」（および装備・アイテム・採集の一般仕様）
 
+> ⚠️ **[06 無限タワー構造](./06-tower-progression.md) との連携**: 装備・ドロップ・ショップ品揃えは **10層帯（ティア）ごとにスケール** させ、到達階に応じて上位ティアが解放される（06 §8）。キャラのレベル上限が100（[01](./01-character-system.md)）のため、**深層攻略の伸びしろの主役は装備ティアと鍛冶**になる想定（06 §9・項5）。鍛冶+5上限は据え置き、深層用装備はドロップ／ショップで新ティアを供給する。
+
 ---
 
 ## 1. 目的・体験
@@ -27,19 +29,22 @@
 | 貴重品 | 鍵・イベント品 | 売却不可 |
 
 ```ts
+type ItemCategory =
+  | 'consumable' | 'material' | 'drop' | 'ingredient' | 'dish' | 'equipment' | 'valuable';
+
 interface ItemMaster {
-  id: string;
+  id: string;                 // [05 §0.5] "item_xxx"
   name: string;
   category: ItemCategory;
   sellable: boolean;
   stackLimit: number;
   useContext?: ('battle' | 'field')[]; // 使用可能な場面
-  effect?: ItemEffectDef;
+  effects?: SkillEffectDef[]; // 使用効果は [03 §5] の SkillEffectDef を再利用（回復/状態異常治療等）
 }
 interface ItemStack { itemId: string; count: number; }
 ```
 
-> **所持枠の分離**: 食材は通常アイテムと別カウント（上限60）。整理系の種族スキルで上限を拡張できる設計も可（[05](./05-progression-meta.md) の引き継ぎ注意点参照）。
+> **所持枠の分離**: 食材は通常アイテムと別カウント（上限60）。整理系の種族スキルで上限を拡張できる設計も可。※元ゲームにあった「周回（NG+）時に上限超過分が消滅する」注意は、本作に周回が無い（[05 §3](./05-progression-meta.md)）ため不要。上限は通常の所持上限としてのみ扱う。
 
 ---
 
@@ -49,20 +54,29 @@ interface ItemStack { itemId: string; count: number; }
 
 - スロット: **武器 / 防具（複数部位でも単一でも可）/ アクセサリ**。
 - 装備適性は **職業** が規定（[01](./01-character-system.md)）。転職で装備可能種別が変わる。
-- 装備はステータス（ATK/MAT/DEF/MDFなど）を加算し、追加効果（属性耐性・状態異常耐性・スキル付与など）を持つことがある。
+- 装備は **戦闘派生値への加算（`EquipBonuses`：ATK/MAT/DEF/MDF）** と、追加効果（属性耐性・状態異常耐性・スキル付与など）を持つ。素ステ `Stats` を直接いじるのではなく `deriveCombat()`（[05 §0.2](./05-progression-meta.md)・[03 §7](./03-battle-system.md)）に効く。
 - **唯一品**: 入手機会の限られた特別装備。最初から固有能力が解放されている代わりに **鍛冶（強化）ができない**。
+- **ティアスケール**: 装備は10層帯ごとにティアが上がり、深層攻略の主役になる（本章冒頭の ⚠️ 注記・[06 §8](./06-tower-progression.md)）。`tier` フィールドで到達階解放と対応づける。
 
 ```ts
 type WeaponType = 'sword' | 'spear' | 'fist' | 'gun' | 'staff' | string;
 type ArmorType = 'heavy' | 'light' | 'cloth' | string;
 
+// 装備の追加効果（判別共用体）
+type EquipmentEffect =
+  | { kind: 'elementResist'; element: Element; rate: number }   // 0.5=半減 等
+  | { kind: 'ailmentResist'; ailment: AilmentType; rate: number }
+  | { kind: 'statMod'; stat: keyof Stats; value: number }       // 素ステ補正（STR+5 等）
+  | { kind: 'grantSkill'; skillId: string };                    // スキル付与
+
 interface EquipmentMaster {
-  id: string;
+  id: string;                     // "equip_xxx"
   name: string;
   slot: 'weapon' | 'armor' | 'accessory';
+  tier: number;                   // 10層帯ティア（解放階＝tier*10 目安）
   weaponType?: WeaponType;
   armorType?: ArmorType;
-  baseStats: Partial<Stats>;      // ATK/MAT/DEF...
+  bonuses: EquipBonuses;          // [05 §0.2] ATK/MAT/DEF/MDF（＋任意の素ステ補正）
   effects: EquipmentEffect[];     // 耐性・付与スキル等
   hiddenEffects?: EquipmentEffect[]; // 鍛冶で開花する隠し能力（唯一品は最初から解放）
   isUnique: boolean;              // true は鍛冶不可
@@ -143,8 +157,8 @@ interface GatheringPoint {
 - 迷宮内で食料を確保する。**食材・料理は探索時のみ使用可**（戦闘中は使えない）。そのため探索中の回復は、戦闘でも使える消費アイテムより食材・料理を優先するのが定石。
 - 食材は **アイテムと別枠で最大60個**保持。売却不可。
 - 食材はそのままでも食べられるが、迷宮内の **特定地点で調理** するとより効果の高い料理になる。
-- 最初は素材を焼く程度。街の人から **レシピ** を教わると作れる料理が増える。迷宮内の特定NPCに食材を渡すと料理してもらえることも。
-- 入手経路: 採集（釣り/収穫/狩猟）・飼育の副産物・イベント・クエスト報酬。
+- 最初は素材を焼く程度。**レシピ** を解放すると作れる料理が増える。レシピの解放トリガーはストーリー進行ではなく、**到達階・ドロップ・拠点での購入・（任意の）クエスト報酬** など非ストーリー手段にする（[06 §8](./06-tower-progression.md)）。
+- 入手経路: 採集（釣り/収穫/狩猟）・飼育の副産物・迷宮イベント・（任意の）クエスト報酬。
 
 ### 6.2 データモデル
 
@@ -169,9 +183,15 @@ interface CookingSpot { cell: { x: number; y: number }; allowedRecipeIds: string
 - ドロップ素材は装備生産・鍛冶・売却に使う。図鑑のドロップ収集要素にもなる。
 
 ```ts
+// 条件ドロップの成立条件（撃破時の状態で判定）
+type DropCondition =
+  | { kind: 'killedWithAilment'; ailment: AilmentType } // 特定状態異常付与中に撃破
+  | { kind: 'killedWithBind'; part: 'head' | 'arm' | 'leg' } // 部位封じ中に撃破
+  | { kind: 'killedWithElement'; element: Element };    // 特定属性のとどめ
+
 interface DropTable {
-  normal: { itemId: string; rate: number }[];
-  conditional: { itemId: string; condition: DropCondition }[];
+  normal: { itemId: string; rate: number }[];           // rate: 0..1
+  conditional: { itemId: string; condition: DropCondition; rate: number }[];
 }
 ```
 
@@ -180,7 +200,18 @@ interface DropTable {
 ## 8. ショップ・経済
 
 - 街のショップで装備・アイテムを売買。**素材を売ると新しい装備がショップに並ぶ**（探索→売却→品揃え解放）という世界樹定番の経済ループを採用。
-- ショップ在庫・断片/インゴット在庫は周回引き継ぎ対象（[05](./05-progression-meta.md)）。
+- ショップ品揃えは到達階（10層帯ティア）で解放（本章冒頭の ⚠️ 注記・[06 §8](./06-tower-progression.md)）。在庫・断片/インゴットは単一セーブに永続（周回・NG+ は無い、[05 §3](./05-progression-meta.md)）。
+
+```ts
+interface ShopStock {
+  unlockedTier: number;                  // 到達で解放済みの最大ティア
+  // 売却で恒久解放された商品ID（素材を売ると並ぶ）
+  unlockedItemIds: string[];
+  // 在庫数に上限がある商品（消耗品等）。無制限なら省略
+  limitedStock?: Record<string, number>;
+}
+function initialShopStock(): ShopStock; // [05 §4.1] ニューゲーム初期在庫
+```
 
 ---
 
