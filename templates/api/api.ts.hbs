@@ -1,0 +1,9 @@
+import { callApi } from './api';
+
+import { ApiResult } from '@/types/api';
+import { {{pascalCase typeName}} } from '@/types/{{camelCase typeName}}';
+
+export const {{camelCase name}} = async (): Promise<ApiResult<{{pascalCase typeName}}>> => {
+  const { status, result } = await callApi<{{pascalCase typeName}}>('ここにAPIのパスを入れる', 'GET');
+  return { status, result };
+};
