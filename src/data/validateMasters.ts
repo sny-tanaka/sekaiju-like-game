@@ -1,3 +1,4 @@
+import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { MASTERS } from '@/data/index';
 import { SELL_UNLOCKS } from '@/domain/shop';
 import type { SkillTreeDef } from '@/domain/types';
@@ -47,7 +48,7 @@ function checkSkillTree(
 
 export function validateMasters(): ValidationResult {
   const errors: string[] = [];
-  const { races, classes, titles, skills, enemies, items, equipment } = MASTERS;
+  const { races, classes, titles, skills, unionSkills, enemies, items, equipment } = MASTERS;
 
   // ID 命名規約
   checkIdConvention('races', Object.keys(races), errors);
@@ -84,6 +85,38 @@ export function validateMasters(): ValidationResult {
       errors.push(`[races] "${race.id}" の defaultClassId "${race.defaultClassId}" が未定義`);
     }
     checkSkillTree(`races/${race.id}`, race.unionSkillTree, skillIds, errors);
+    // ユニオンツリーのスキルは UNION_SKILLS に効果定義があり、raceId が一致すること（[03 §9]）
+    for (const node of race.unionSkillTree.skills) {
+      const def = unionSkills[node.skillId];
+      if (!def) {
+        errors.push(
+          `[races/${race.id}] ユニオンスキル "${node.skillId}" の効果定義が UNION_SKILLS に無い`
+        );
+      } else if (def.raceId !== race.id) {
+        errors.push(
+          `[races/${race.id}] ユニオンスキル "${node.skillId}" の raceId "${def.raceId}" が不一致`
+        );
+      }
+    }
+  }
+
+  // ユニオンスキル: ID 規約・キー一致・人数/消費の妥当性
+  checkIdConvention('unionSkills', Object.keys(unionSkills), errors);
+  for (const [key, def] of Object.entries(unionSkills)) {
+    if (key !== def.id) errors.push(`[unionSkills] キー "${key}" と id "${def.id}" が不一致`);
+    if (!(def.id in skills)) errors.push(`[unionSkills] "${def.id}" が skills に未定義`);
+    if (def.requiredParticipants < 1) {
+      errors.push(`[unionSkills] "${def.id}" の requiredParticipants が 1 未満`);
+    }
+    if (def.gaugeCostPerParticipant < 0 || def.gaugeCostPerParticipant > 100) {
+      errors.push(`[unionSkills] "${def.id}" の gaugeCostPerParticipant が 0..100 外`);
+    }
+    // ユニオンは通常スキル一覧（BATTLE_SKILLS）に混入してはならない（別枠コマンドのため）
+    if (def.id in BATTLE_SKILLS) {
+      errors.push(
+        `[unionSkills] "${def.id}" が BATTLE_SKILLS にも存在（通常スキルとして撃ててしまう）`
+      );
+    }
   }
 
   // 職業: スキルツリー / 称号オプションが存在し、親職業が一致するか

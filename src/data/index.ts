@@ -5,6 +5,7 @@ import { ITEMS } from '@/data/items';
 import { RACES } from '@/data/races';
 import { SKILLS } from '@/data/skills';
 import { TITLES } from '@/data/titles';
+import { UNION_SKILLS } from '@/data/unionSkills';
 
 export { BALANCE } from '@/data/balance';
 export { CLASSES } from '@/data/classes';
@@ -14,6 +15,7 @@ export { ITEMS } from '@/data/items';
 export { RACES } from '@/data/races';
 export { SKILLS } from '@/data/skills';
 export { TITLES } from '@/data/titles';
+export { UNION_SKILLS } from '@/data/unionSkills';
 
 /** 全マスターデータの集約。validateMasters や起動時参照に使う。 */
 export const MASTERS = {
@@ -21,6 +23,7 @@ export const MASTERS = {
   classes: CLASSES,
   titles: TITLES,
   skills: SKILLS,
+  unionSkills: UNION_SKILLS,
   enemies: ENEMIES,
   items: ITEMS,
   equipment: EQUIPMENT,

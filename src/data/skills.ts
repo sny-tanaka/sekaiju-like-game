@@ -46,10 +46,40 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
     name: '拡散射撃',
     description: '敵1列に射撃ダメージ。',
   },
-  // 種族（ユニオン系の枠）
+  skill_leg_snipe: {
+    id: 'skill_leg_snipe',
+    name: '脚封じの矢',
+    description: '射撃ダメージを与え、確率で脚を封じる（回避低下・逃走不可）。',
+  },
+  skill_arm_snipe: {
+    id: 'skill_arm_snipe',
+    name: '腕封じの矢',
+    description: '射撃ダメージを与え、確率で腕を封じる（通常攻撃・物理スキル不可）。',
+  },
+  skill_head_snipe: {
+    id: 'skill_head_snipe',
+    name: '頭封じの矢',
+    description: '射撃ダメージを与え、確率で頭を封じる（魔法・補助スキル不可）。',
+  },
+  // 種族ユニオンスキル（効果は data/unionSkills.ts）
   skill_union_rally: {
     id: 'skill_union_rally',
-    name: 'ラリー',
-    description: '味方全体を鼓舞するユニオンスキル。',
+    name: '結束の鬨',
+    description: '味方全体を大回復し攻撃力を高めるユニオンスキル（ヒト）。',
+  },
+  skill_union_smash: {
+    id: 'skill_union_smash',
+    name: '豪砕',
+    description: '敵全体に強力な壊打を与えるユニオンスキル（ガロン・2名）。',
+  },
+  skill_union_nova: {
+    id: 'skill_union_nova',
+    name: '魔光爆裂',
+    description: '敵全体に大きな火属性魔法を与えるユニオンスキル（ピクス・2名）。',
+  },
+  skill_union_fang: {
+    id: 'skill_union_fang',
+    name: '連牙',
+    description: '単体に貫通3連撃を浴びせるユニオンスキル（テリアン）。',
   },
 };
