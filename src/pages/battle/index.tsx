@@ -5,15 +5,21 @@ import styles from './style.module.scss';
 
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
+import { ITEMS } from '@/data/items';
 import { SKILLS } from '@/data/skills';
 import { applyBattleResult, battleRewards, resolveTurn, startBattle } from '@/domain/battle';
 import { returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
+import { itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
-import type { BattleCommand, BattleState, Combatant, Rng, SkillId } from '@/domain/types';
+import type { BattleCommand, BattleState, Combatant, ItemId, Rng, SkillId } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 
-type AllyCmd = { kind: 'attack' } | { kind: 'guard' } | { kind: 'skill'; skillId: SkillId };
+type AllyCmd =
+  | { kind: 'attack' }
+  | { kind: 'guard' }
+  | { kind: 'skill'; skillId: SkillId }
+  | { kind: 'item'; itemId: ItemId };
 
 // 戦闘（[03]）。一括入力型ターン制。本家に倣い、味方は前衛/後衛の2段で表示し、
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
@@ -25,6 +31,7 @@ export const Page = () => {
   const [commands, setCommands] = useState<Record<string, AllyCmd>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [skillMenu, setSkillMenu] = useState(false);
+  const [itemMenu, setItemMenu] = useState(false);
   const [targetId, setTargetId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -64,6 +71,7 @@ export const Page = () => {
       const nextCommands = { ...commands, [charId]: cmd };
       setCommands(nextCommands);
       setSkillMenu(false);
+      setItemMenu(false);
       // 次の未入力キャラへ
       const next = aliveAllies.find((a) => a.id !== charId && !nextCommands[a.id]);
       setActiveId(next ? next.id : null);
@@ -88,6 +96,7 @@ export const Page = () => {
   const resetInput = useCallback(() => {
     setCommands({});
     setSkillMenu(false);
+    setItemMenu(false);
     setActiveId(aliveAllies[0]?.id ?? null);
   }, [aliveAllies]);
 
@@ -99,12 +108,15 @@ export const Page = () => {
       if (c.kind === 'guard') return { kind: 'guard', actorId: a.id };
       if (c.kind === 'skill')
         return { kind: 'skill', actorId: a.id, skillId: c.skillId, targetId: tgt };
+      if (c.kind === 'item')
+        return { kind: 'item', actorId: a.id, itemId: c.itemId, targetId: a.id };
       return { kind: 'attack', actorId: a.id, targetId: tgt };
     });
     const nextState = resolveTurn(state, list, rngRef.current);
     setState(nextState);
     setCommands({});
     setSkillMenu(false);
+    setItemMenu(false);
     setActiveId(null);
   }, [state, commands, targetId, aliveAllies, aliveEnemies]);
 
@@ -135,11 +147,26 @@ export const Page = () => {
     );
   };
 
+  // 戦闘で使えるアイテム（倉庫所持 − 既消費 − このターンの予約分 > 0）
+  const battleItems = (): { id: ItemId; remaining: number }[] => {
+    const pending = (id: ItemId) =>
+      Object.values(commands).filter((c) => c.kind === 'item' && c.itemId === id).length;
+    const consumed = (id: ItemId) => state.consumedItems.filter((x) => x === id).length;
+    return save.guild.storage
+      .filter((s) => ITEMS[s.itemId]?.useContext?.includes('battle'))
+      .map((s) => ({
+        id: s.itemId,
+        remaining: itemCount(save, s.itemId) - consumed(s.itemId) - pending(s.itemId),
+      }))
+      .filter((x) => x.remaining > 0);
+  };
+
   const cmdLabel = (a: Combatant): string => {
     const c = commands[a.id];
     if (!c) return '';
     if (c.kind === 'attack') return '攻撃';
     if (c.kind === 'guard') return '防御';
+    if (c.kind === 'item') return ITEMS[c.itemId]?.name ?? 'どうぐ';
     return BATTLE_SKILLS[c.skillId]?.name ?? 'スキル';
   };
 
@@ -161,6 +188,7 @@ export const Page = () => {
       onClick={() => {
         setActiveId(a.id);
         setSkillMenu(false);
+        setItemMenu(false);
       }}
     >
       <div className={styles.cardName}>
@@ -280,6 +308,34 @@ export const Page = () => {
                     もどる
                   </button>
                 </div>
+              ) : itemMenu ? (
+                <div className={styles.skillList}>
+                  {battleItems().map(({ id, remaining }) => (
+                    <button
+                      type="button"
+                      key={id}
+                      className={styles.skillBtn}
+                      onClick={() => assign(active.id, { kind: 'item', itemId: id })}
+                    >
+                      <span className={styles.skillTop}>
+                        <span className={styles.skillName}>
+                          {ITEMS[id].name} ×{remaining}
+                        </span>
+                      </span>
+                      <span className={styles.skillDesc}>{ITEMS[id].description}</span>
+                    </button>
+                  ))}
+                  {battleItems().length === 0 ? (
+                    <div className={styles.empty}>使える道具がない</div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={styles.menuBack}
+                    onClick={() => setItemMenu(false)}
+                  >
+                    もどる
+                  </button>
+                </div>
               ) : (
                 <div className={styles.menu}>
                   <button
@@ -303,6 +359,14 @@ export const Page = () => {
                     onClick={() => setSkillMenu(true)}
                   >
                     スキル
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.menuBtn}
+                    disabled={battleItems().length === 0}
+                    onClick={() => setItemMenu(true)}
+                  >
+                    どうぐ
                   </button>
                   <button
                     type="button"

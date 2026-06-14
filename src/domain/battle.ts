@@ -2,7 +2,9 @@ import { BALANCE, canGainExp, enemyScale, expToNext } from '@/data/balance';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { ENEMIES } from '@/data/enemies';
 import { EQUIPMENT } from '@/data/equipment';
+import { ITEMS } from '@/data/items';
 import { computeDamage, effectiveEnemyStats } from '@/domain/combat';
+import { addItem, removeItem } from '@/domain/inventory';
 import { computeBaseStats } from '@/domain/stats';
 import type {
   ActiveAilment,
@@ -107,7 +109,16 @@ export function startBattle(save: SaveData, enemyIds: EnemyId[]): BattleState {
     .map((id) => buildAlly(save, id))
     .filter((c): c is Combatant => c !== null);
   const enemies = enemyIds.map((id, i) => buildEnemy(id, i, depth));
-  return { turn: 1, depth, allies, enemies, log: [], outcome: 'ongoing' };
+  return {
+    turn: 1,
+    depth,
+    allies,
+    enemies,
+    log: [],
+    outcome: 'ongoing',
+    drops: [],
+    consumedItems: [],
+  };
 }
 
 // ---- 効果適用ヘルパ -------------------------------------------------------
@@ -380,6 +391,19 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         for (const effect of def.effects) {
           applySkillEffect(next, actor, effect, def.element, level, targets, rng);
         }
+      } else if (cmd.kind === 'item') {
+        const item = ITEMS[cmd.itemId];
+        if (!item || !item.useContext?.includes('battle')) continue;
+        const target = find(next, cmd.targetId) ?? actor;
+        for (const eff of item.effects ?? []) {
+          if (eff.kind === 'heal') {
+            target.hp = clamp(target.hp + eff.amount(1), 0, target.maxHp);
+          } else if (eff.kind === 'restoreTp') {
+            target.tp = clamp(target.tp + eff.amount(1), 0, target.maxTp);
+          }
+        }
+        next.consumedItems.push(cmd.itemId);
+        next.log.push({ text: `${actor.name} は ${item.name} を使った` });
       }
     }
     // 途中勝敗チェック
@@ -407,6 +431,19 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     c.ailments = c.ailments
       .map((a) => ({ ...a, remainingTurns: a.remainingTurns - 1 }))
       .filter((a) => a.remainingTurns > 0);
+  }
+
+  // このターンに新たに倒した敵のドロップを抽選（[04 §7]）
+  for (const e of next.enemies) {
+    if (!e.isDown || !e.enemyId) continue;
+    const wasDown = state.enemies.find((se) => se.id === e.id)?.isDown ?? false;
+    if (wasDown) continue; // 既に倒れていた敵は対象外
+    for (const d of ENEMIES[e.enemyId].drops ?? []) {
+      if (rng.next() < d.rate) {
+        next.drops.push({ enemyId: e.enemyId, itemId: d.itemId });
+        next.log.push({ text: `${e.name} は ${ITEMS[d.itemId]?.name ?? d.itemId} を落とした` });
+      }
+    }
   }
 
   next.turn += 1;
@@ -489,12 +526,25 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     const partyIds = new Set(party.map((p) => p.charId));
     const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
     members = members.map((m) => (partyIds.has(m.id) ? grantExpToChar(m, share) : m));
+    // 図鑑: 入手したドロップを記録
+    for (const d of state.drops) {
+      const prev = monsters[d.enemyId];
+      if (prev && !prev.dropsFound.includes(d.itemId)) {
+        monsters[d.enemyId] = { ...prev, dropsFound: [...prev.dropsFound, d.itemId] };
+      }
+    }
   }
 
-  return {
+  let next: SaveData = {
     ...save,
     guild: { ...save.guild, members, gold, bestiary },
     bestiary,
     diveState: { ...save.diveState, party },
   };
+
+  // 倉庫: 戦闘で使ったアイテムを減算（勝敗問わず）
+  for (const id of state.consumedItems) next = removeItem(next, id, 1);
+  // 倉庫: 勝利時のみドロップを加算
+  if (win) for (const d of state.drops) next = addItem(next, d.itemId, 1);
+  return next;
 }

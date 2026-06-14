@@ -217,6 +217,8 @@ export interface EnemyMaster {
   gold: number; // 撃破時の所持金
   attackElement?: PhysElement; // 通常攻撃の物理属性（既定 bash）
   resist?: Partial<Record<Element, number>>; // 属性倍率（弱点1.5/耐性0.5/無効0）
+  /** 通常ドロップ（[04 §7]）。rate=0..1。撃破時に rng で抽選。 */
+  drops?: { itemId: ItemId; rate: number }[];
 }
 
 // ----------------------------------------------------------------------------
@@ -259,6 +261,7 @@ export interface BattleSkillDef {
 export type BattleCommand =
   | { kind: 'attack'; actorId: string; targetId: string }
   | { kind: 'skill'; actorId: string; skillId: SkillId; targetId: string }
+  | { kind: 'item'; actorId: string; itemId: ItemId; targetId: string }
   | { kind: 'guard'; actorId: string }
   | { kind: 'flee'; actorId: string };
 
@@ -275,6 +278,10 @@ export interface BattleState {
   enemies: Combatant[];
   log: BattleLogEntry[];
   outcome: BattleOutcome;
+  /** 撃破で抽選されたドロップ（勝利時に倉庫・図鑑へ反映）。 */
+  drops: { enemyId: EnemyId; itemId: ItemId }[];
+  /** 戦闘中に使用して消費したアイテム（終了時に倉庫から減算）。 */
+  consumedItems: ItemId[];
 }
 
 export type ItemCategory = 'consumable' | 'material' | 'drop' | 'valuable';

@@ -42,11 +42,32 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
     useContext: ['field'],
     // 帰還処理は使用側で item id 判定して実行（special 効果）
   },
-  // 売却用素材（ドロップ等。Phase 4 で生産に使用）
+  // 売却用素材（ドロップ。売ると関連装備がショップに並ぶ [04 §8]）
   item_slime_jelly: {
     id: 'item_slime_jelly',
     name: 'スライムゼリー',
-    description: 'スライムの素材。売却できる。',
+    description: 'スライムの素材。売ると新しい装備が並ぶことがある。',
+    category: 'material',
+    buyPrice: 0,
+  },
+  item_rat_tail: {
+    id: 'item_rat_tail',
+    name: 'ねずみのしっぽ',
+    description: 'おおねずみの素材。売ると新しい装備が並ぶことがある。',
+    category: 'material',
+    buyPrice: 0,
+  },
+  item_bat_wing: {
+    id: 'item_bat_wing',
+    name: 'コウモリの翼',
+    description: 'どうくつコウモリの素材。売ると新しい装備が並ぶことがある。',
+    category: 'material',
+    buyPrice: 0,
+  },
+  item_golem_core: {
+    id: 'item_golem_core',
+    name: 'ゴーレムの核',
+    description: '門番のゴーレムの素材。売ると強力な装備が並ぶ。',
     category: 'material',
     buyPrice: 0,
   },
