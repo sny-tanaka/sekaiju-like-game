@@ -45,3 +45,9 @@ body {
 body {
   background-color: var.$bg-base;
 }
+
+// 各ページ（.layout は height:100%）がビューポート全高を使えるよう #root を全高にする。
+// これにより戦闘ログの flex:1 や各画面の margin-top:auto が画面下端まで届く。
+#root {
+  height: 100%;
+}

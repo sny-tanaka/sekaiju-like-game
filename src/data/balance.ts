@@ -19,8 +19,25 @@ export const BALANCE = {
   CRIT_MULT: 1.5,
   WEAK_MULT: 1.5,
   RESIST_MULT: 0.5,
-  BACK_ROW_MELEE_MULT: 0.7, // 後衛の近接被弾/与弾減衰
+  BACK_ROW_MELEE_MULT: 0.7, // 後衛の近接被弾/与弾減衰（攻撃側・防御側で独立に乗算）
   DMG_VARIANCE: [0.95, 1.05] as const,
+  // 命中（物理。[03 §7]）: hit = clamp(BASE_HIT + (acc-eva)*HIT_AGI_K - 盲目, HIT_MIN, 1)
+  BASE_HIT: 0.9,
+  HIT_AGI_K: 0.01,
+  HIT_MIN: 0.3,
+  BLIND_ACC_PENALTY: 0.5,
+  // クリティカル（[03 §7]）
+  CRIT_BASE: 0.05,
+  CRIT_LUC_K: 0.005,
+  CRIT_MIN: 0.02,
+  CRIT_MAX: 0.5,
+  // 状態異常（[03 §6.2]）
+  AILMENT_LUC_K: 0.01,
+  AILMENT_MAX: 0.95,
+  PARALYSIS_SKIP: 0.3, // 麻痺で行動不能になる確率
+  POISON_HP_RATIO: 0.05, // 毒の毎ターン割合ダメージ（magnitude 未指定時）
+  // TP 自然回復（[03 §2] ターン終了処理）: 毎ターン maxTp の割合だけ回復
+  TP_REGEN_RATIO: 0.05,
   // ユニオン（[03 §9]）
   UNION_GAIN_PER_ACTION: [5, 15] as const,
   UNION_GAIN_ON_WIN: 15,

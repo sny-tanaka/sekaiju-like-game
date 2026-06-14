@@ -1,0 +1,38 @@
+@use 'variables' as var;
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  width: 26px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.track {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background-color: var.$gray;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.value {
+  font-size: 11px;
+  width: 56px;
+  flex-shrink: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
