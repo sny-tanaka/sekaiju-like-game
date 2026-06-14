@@ -1,115 +1,95 @@
-# pwa-template
+# sekaiju-like-game
 
-GitHub Pages で公開する SPA / PWA のテンプレートです。
+世界樹ライク — ダンジョン探索 RPG 風のゲーム。
+GitHub Pages で公開する SPA / PWA。
 
-- **Vite 6** + **React 19** + **TypeScript 5**
-- **React Router 7**（サブパス公開対応）
-- **vite-plugin-pwa** でマニフェスト + Service Worker（Workbox）を自動生成
-- ビルド成果物を `docs/` に出力 → GitHub Pages の `Deploy from a branch / docs` をそのまま使う前提
-- ESLint v9 (flat config) + Prettier + Husky v9 + lint-staged
-- **Vitest** + Testing Library
-- `plop` によるコード雛形ジェネレータ（component / page / logic / api / type）
+- 公開 URL: https://&lt;user&gt;.github.io/sekaiju-like-game/
+- フレームワーク: Vite 6 + React 19 + TypeScript 5
+- ルーティング: React Router 7（サブパス公開対応）
+- スタイル: Sass (SCSS module)
+- テスト: Vitest + Testing Library
+- PWA: `vite-plugin-pwa` + Workbox（マニフェスト + Service Worker を自動生成）
 
-## 使い方
+> ゲーム本体はこれから実装します。現状はフレームワーク（PWA / 自動バージョン bump / 更新通知 / コード雛形ジェネレータ等）が整った状態です。
 
-このリポジトリを **テンプレートとして clone** して、`__APP_NAME__` などのプレースホルダを書き換えてください。
+## セットアップ
 
-### 1. リポジトリを作る
-
-GitHub の `Use this template` で新規リポジトリを作るか、`git clone` 後に `git remote set-url origin` で差し替えてください。
-
-### 2. プレースホルダを置換する
-
-以下のプレースホルダがソース全体に埋め込んであります。**必ず全て置換してから push してください**。
-
-| プレースホルダ | 用途 | 例 |
-| --- | --- | --- |
-| `__APP_NAME__` | `package.json` の `name`、`<title>`、PWA の `name`、トップページの見出し | `My PWA App` |
-| `__APP_SHORT_NAME__` | PWA の `short_name`（ホーム画面のアイコン下に出る短い名前。12 文字以内推奨） | `MyPWA` |
-| `__APP_DESCRIPTION__` | `<meta description>` と PWA の `description` | `自分用のメモ PWA` |
-| `__REPO_NAME__` | GitHub のリポジトリ名。Vite の `base`、PWA の `start_url` / `scope`、`BrowserRouter` の `basename` に使用。**GitHub Pages のサブパス（`https://<user>.github.io/<repo>/`）と一致させること** | `my-pwa` |
-
-ワンライナーで置換する場合（macOS の `sed`）：
-
-```bash
-APP_NAME="My PWA App"
-APP_SHORT_NAME="MyPWA"
-APP_DESCRIPTION="自分用のメモ PWA"
-REPO_NAME="my-pwa"
-
-grep -rl '__APP_NAME__' . --exclude-dir=node_modules --exclude-dir=.git \
-  | xargs sed -i '' "s|__APP_NAME__|${APP_NAME}|g"
-grep -rl '__APP_SHORT_NAME__' . --exclude-dir=node_modules --exclude-dir=.git \
-  | xargs sed -i '' "s|__APP_SHORT_NAME__|${APP_SHORT_NAME}|g"
-grep -rl '__APP_DESCRIPTION__' . --exclude-dir=node_modules --exclude-dir=.git \
-  | xargs sed -i '' "s|__APP_DESCRIPTION__|${APP_DESCRIPTION}|g"
-grep -rl '__REPO_NAME__' . --exclude-dir=node_modules --exclude-dir=.git \
-  | xargs sed -i '' "s|__REPO_NAME__|${REPO_NAME}|g"
-```
-
-`package.json` の `name` には英小文字 + ハイフンしか使えないので、`__APP_NAME__` を表示用名称（日本語可）にしたい場合は手で個別に書き分けてください。
-
-### 3. アイコン画像を差し替える
-
-`public/` に以下のファイルを置く必要があります（テンプレートには含まれていません）：
-
-- `favicon.ico`（マルチサイズ: 16 / 24 / 32 / 64）
-- `icon-192.png`（192×192）
-- `icon-512.png`（512×512、PWA splash 用 / maskable 兼用）
-
-ファイル名やパスを変える場合は `vite.config.ts` の `manifest.icons` と `includeAssets` も合わせて変更してください。
-
-### 4. インストール
+Node 22 系（`.node-version` で固定）。Yarn 1（classic）。
 
 ```bash
 yarn install
 ```
 
-`preinstall` フックで `.node-version` (`22.11.0`) と一致するか確認します。一致しない場合は `nodenv` / `volta` などで合わせてください。
+`preinstall` で `.node-version` と一致するか Node バージョンチェックが走ります。
 
-### 5. 開発
-
-```bash
-yarn dev
-```
-
-http://localhost:5173 で起動します。
-
-> Service Worker は **本番ビルドのみ有効**です（`vite.config.ts` の `devOptions.enabled: false`）。dev で SW をテストしたい場合は `true` に変更し、確認後は必ず元に戻すこと。古いキャッシュが返って "変更が反映されない" 事故になります。
-
-### 6. テスト・Lint
+## 開発
 
 ```bash
-yarn test           # Vitest（一回実行）
-yarn test:watch     # Vitest watch モード
-yarn lint           # ESLint チェック
-yarn fix            # ESLint 自動修正
-yarn format         # Prettier 適用
-yarn format:check   # Prettier チェックのみ
+yarn dev          # http://localhost:5173/sekaiju-like-game/ で起動
+yarn test         # Vitest（一回実行）
+yarn test:watch   # Vitest watch モード
+yarn lint         # ESLint
+yarn fix          # ESLint 自動修正
+yarn format       # Prettier 適用
+yarn format:check # Prettier チェックのみ
 ```
+
+> Service Worker は **本番ビルドのみ有効**です（`vite.config.ts` の `devOptions.enabled: false`）。古い SW がキャッシュを返して "変更が反映されない" 事故を避けるため。dev で SW をテストしたい場合は `true` に変更し、確認後は必ず元に戻すこと。
 
 `pre-commit` フックで `yarn fix` と `yarn lint-staged` が走ります（Husky v9）。
 
-### 7. ビルド & GitHub Pages デプロイ
+## ビルド & GitHub Pages デプロイ
 
 ```bash
 yarn build
 ```
 
-`docs/` にビルド成果物 + Service Worker (`sw.js`) + `manifest.webmanifest` が出力されます。`docs/` も含めてコミットして push すれば、GitHub の Settings → Pages で `Deploy from a branch` / `main` / `/docs` を選んでおくだけで公開されます。
+実行内容:
 
-> **Tip**: `vite.config.ts` の `BASE` と `src/main.tsx` の `basename` がリポジトリ名（サブパス）と一致しないと、JS / CSS / 画像 / SW スコープが全て壊れます。先に GitHub にリポジトリを作って名前を確定させてから `__REPO_NAME__` を置換するのが安全です。
+1. `scripts/bump-patch-version.mjs` で `package.json` の patch を 1 つ上げる（git tag/コミットはしない）
+2. `tsc -b` で型チェック
+3. `vite build` で `docs/` に成果物を出力（`sw.js`、`manifest.webmanifest` などのプリキャッシュ）
+
+ビルド時の `package.json` の version は `vite.config.ts` の `define` 経由で `__APP_VERSION__` として注入されます。
+
+その後 `package.json` と `docs/` をまとめてコミット → push。GitHub の Settings → Pages で `Deploy from a branch / main / /docs` を選んでおけば自動公開されます。
+
+> `vite.config.ts` の `BASE`（`/sekaiju-like-game/`）と `src/main.tsx` の `basename`、`package.json` の `name` はリポジトリ名と一致している必要があります。サブパスがずれると JS / CSS / 画像 / SW スコープが全て壊れます。
+
+### PWA の更新通知
+
+`registerType: 'prompt'` 設定なので、新しいビルドが見つかっても自動では適用されません。
+更新検出・手動チェック・適用をまとめて扱う [`useAppUpdate`](src/hooks/useAppUpdate.ts) フックと、画面下に「新しいバージョンがあります／更新」のトーストを出す [`AppUpdater`](src/components/AppUpdater/AppUpdater.tsx) コンポーネントを用意しています。アプリのレイアウトで以下のように 1 度だけマウントして使います:
+
+```tsx
+const { banner, checkForUpdate, isChecking, applyUpdate } = useAppUpdate();
+// ...
+<AppUpdater banner={banner} onApply={applyUpdate} />
+```
+
+ユーザーが更新ボタンを押すと `skipWaiting` → `clientsClaim` → ページ再読み込みが走り、最新ビルドに切り替わります。定期的なバックグラウンドチェックは行いません（必要なら `useRegisterSW({ onRegisteredSW })` の callback で `setInterval(() => registration.update(), N)` を追加するだけ）。
+
+## アイコン画像
+
+`public/` に以下のアイコンを置きます:
+
+- `favicon.ico`（ブラウザタブ用。`index.html` の `<link rel="icon">` で参照）
+- `icon-192.png`（192×192）
+- `icon-512.png`（512×512、PWA splash 用 / maskable 兼用）
+
+ファイル名やパスを変える場合は `index.html` の `<link rel="icon">`、`vite.config.ts` の `manifest.icons` と `includeAssets` も合わせて変更してください。
 
 ## コード雛形ジェネレータ（plop）
 
 ```bash
 yarn plop component   # src/components/<dir>/<Name>/{Name.tsx, style.module.scss[, Name.stories.ts]}
 yarn plop page        # src/pages/<dir>/{index.tsx, style.module.scss}
-yarn plop logic       # src/logics/<name>/{<name>.tsx, <name>.test.ts}
-yarn plop api         # src/api/<name>.ts と src/types/<typeName>.ts
+yarn plop logic       # src/logics/<name>/{<name>.ts, <name>.test.ts}
+yarn plop api         # src/api/<name>.ts + src/types/<typeName>.ts
+yarn plop type        # src/types/<name>.ts
 ```
 
-雛形は `templates/*.hbs` を編集すればプロジェクトの作法に合わせられます。
+雛形本体は `templates/*.hbs`。
 
 ## ディレクトリ構成
 
@@ -119,17 +99,27 @@ yarn plop api         # src/api/<name>.ts と src/types/<typeName>.ts
 ├── .github/
 │   └── pull_request_template.md
 ├── public/
-│   └── robots.txt           # アイコン類はここに置く（templates 外）
+│   ├── favicon.ico                   # ブラウザタブ用 favicon
+│   ├── icon-192.png / icon-512.png   # PWA アイコン
+│   └── robots.txt
+├── scripts/
+│   └── bump-patch-version.mjs        # build 前に package.json の patch を +1
 ├── src/
-│   ├── main.tsx             # エントリポイント (BrowserRouter basename="/__REPO_NAME__")
+│   ├── main.tsx             # エントリポイント (BrowserRouter basename="/sekaiju-like-game")
 │   ├── App.tsx              # 最小ルーティング（Home + NotFound）
+│   ├── index.scss           # グローバル reset
 │   ├── _variables.scss      # SCSS 変数とブレークポイント mixin
+│   ├── components/
+│   │   └── AppUpdater/      # PWA 更新トーストバナー
+│   ├── hooks/
+│   │   └── useAppUpdate.ts  # SW 更新検出 / 手動チェック / 適用
 │   ├── pages/
 │   │   ├── home/
 │   │   └── not-found/
 │   ├── setupTests.ts        # Vitest 用セットアップ (jest-dom)
 │   └── vite-env.d.ts
 ├── templates/               # plop の hbs 雛形
+├── docs/                    # ビルド出力（GitHub Pages 公開元）
 ├── index.html               # Vite のエントリ HTML（ルート直下）
 ├── vite.config.ts           # Vite + PWA + Vitest 設定
 ├── eslint.config.js         # ESLint v9 flat config
@@ -139,9 +129,9 @@ yarn plop api         # src/api/<name>.ts と src/types/<typeName>.ts
 └── check-node-version.sh    # preinstall で実行
 ```
 
-## SCSS の import について
+## SCSS の import
 
-Vite の `css.preprocessorOptions.scss.loadPaths` に `src/` を入れているので、変数モジュールは下記のように **prefix なし**で参照できます：
+`src/` を SCSS の load path に入れているので、変数モジュールは prefix なしで `@use` できます：
 
 ```scss
 @use 'variables' as var;
@@ -151,12 +141,4 @@ Vite の `css.preprocessorOptions.scss.loadPaths` に `src/` を入れている�
 }
 ```
 
-別ファイルを参照する場合は通常通り相対パス or `@/...` 形式（後者は `src/` 直下からの絶対パス的に解決）を使ってください。
-
-## TODO
-
-テンプレ利用者が必要に応じて追加する機能：
-
-- [ ] CI（GitHub Actions）：`yarn lint` / `yarn test` / `yarn build` をプルリクで自動実行
-- [ ] Storybook：`templates/component/component.stories.ts.hbs` がある前提なので、必要なら導入
-- [ ] PWA インストールプロンプト UI：`vite-plugin-pwa` の `useRegisterSW` フックを使って "新しいバージョンが利用可能" のトーストを出すなど
+別ファイルを参照する場合は通常通り相対パス or `@/...` 形式を使ってください。

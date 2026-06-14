@@ -1,0 +1,34 @@
+// 最低限のリセット。body のデフォルト margin で 100dvh とずれるのを防ぐ。
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  // スマホで縦にスクロールできてしまう（コンテンツが画面に収まっていても rubber-band で動く）
+  // のを完全に抑止する。
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  // ゲームなので文字選択 / コピー / iOS の長押しメニューを禁止する。
+  // ・user-select: スコア等のテキストを長押し / ドラッグで選択させない
+  // ・-webkit-touch-callout: iOS で長押し時に出るリンク / 画像メニューを抑止
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  // Android Chrome / デスクトップ Chrome 系でタップ時に発生する半透明青のハイライトを抑止。
+  // ゲーム盤面のような大きな pointer 要素全体が一瞬青くフラッシュする現象が出る。
+  // iOS Safari は自前のフォーカス制御があるので元々目立たないが、明示しておけば全環境で
+  // 統一できる。
+  -webkit-tap-highlight-color: transparent;
+}
+
+// .layout は 100svh (最小ビューポート) なので URL バー収納時に layout の下に
+// 隙間が出る。隙間を layout のグラデ末端色で塗って繋ぎ目を消す。
+body {
+  background-color: #f1e7ff;
+}
