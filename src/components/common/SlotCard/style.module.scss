@@ -1,0 +1,109 @@
+@use 'variables' as var;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var.$gray;
+  border-radius: 14px;
+  background-color: var.$white;
+  color: var.$text-dark;
+  box-shadow: 0 2px 6px var.$shadow-light;
+}
+
+.empty {
+  border-style: dashed;
+  background-color: transparent;
+}
+
+.corrupted {
+  border-color: #e57373;
+  background-color: #fff5f5;
+}
+
+.header {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.guildName {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.emptyText {
+  padding: 8px 0;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.corruptedText {
+  padding: 4px 0;
+  font-size: 14px;
+  color: #c62828;
+  font-weight: 700;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin: 0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  dt {
+    font-size: 11px;
+    opacity: 0.6;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.primaryAction {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  border-radius: 10px;
+  background-color: var.$primary;
+  color: var.$white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.subAction {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: var.$white;
+  color: var.$text-dark;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
