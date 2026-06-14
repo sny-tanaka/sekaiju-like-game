@@ -18,6 +18,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     gold: 4,
     attackElement: 'bash',
     resist: { fire: 1.5, ice: 0.5 }, // 火に弱く氷に強い
+    drops: [{ itemId: 'item_slime_jelly', rate: 0.6 }],
   },
   enemy_giant_rat: {
     id: 'enemy_giant_rat',
@@ -28,6 +29,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     exp: 5,
     gold: 5,
     attackElement: 'slash',
+    drops: [{ itemId: 'item_rat_tail', rate: 0.5 }],
   },
   enemy_cave_bat: {
     id: 'enemy_cave_bat',
@@ -39,6 +41,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     gold: 3,
     attackElement: 'pierce',
     resist: { volt: 1.5 },
+    drops: [{ itemId: 'item_bat_wing', rate: 0.5 }],
   },
   // 第10階ボス（[06 §4]）の暫定枠。
   enemy_boss_gatekeeper: {
@@ -51,5 +54,6 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     gold: 200,
     attackElement: 'bash',
     resist: { slash: 0.5, pierce: 0.5, ice: 1.5 }, // 物理に硬く氷に弱い
+    drops: [{ itemId: 'item_golem_core', rate: 1 }],
   },
 };

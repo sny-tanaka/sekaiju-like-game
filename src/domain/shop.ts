@@ -23,6 +23,17 @@ export function unlockedTier(save: SaveData): number {
   return Math.max(0, Math.floor(save.towerState.record.deepestReached / 10));
 }
 
+/**
+ * 素材を売ると並ぶ装備（[04 §8]）。素材 ID → 解放される装備 ID。
+ * 売却すると shopStock.unlockedItemIds に恒久追加され、ティア未到達でも購入できる。
+ */
+export const SELL_UNLOCKS: Record<ItemId, ItemId[]> = {
+  item_slime_jelly: ['equip_slime_shield'],
+  item_rat_tail: ['equip_rat_dagger'],
+  item_bat_wing: ['equip_bat_cloak'],
+  item_golem_core: ['equip_golem_blade'],
+};
+
 const equipNote = (id: ItemId): string => {
   const b = EQUIPMENT[id].bonuses;
   const parts: string[] = [];
@@ -34,17 +45,16 @@ const equipNote = (id: ItemId): string => {
 };
 
 /**
- * 購入できる商品一覧（消費アイテム＋解放ティア以下の装備）。
- * TODO(Phase 4): 設計 04 §8 の「素材を売ると装備が並ぶ」恒久解放ループ
- *   （shopStock.unlockedItemIds）を実装する。現状は到達階ティアのみで解放。
+ * 購入できる商品一覧（消費アイテム＋解放ティア以下の装備＋素材売却で解放済みの装備）。
  */
 export function shopCatalog(save: SaveData): ShopEntry[] {
   const tier = unlockedTier(save);
+  const unlockedIds = new Set(save.shopStock.unlockedItemIds);
   const items: ShopEntry[] = Object.values(ITEMS)
     .filter((it) => it.buyPrice > 0)
     .map((it) => ({ id: it.id, name: it.name, price: it.buyPrice, kind: 'item' }));
   const equips: ShopEntry[] = Object.values(EQUIPMENT)
-    .filter((eq) => eq.tier <= tier)
+    .filter((eq) => eq.tier <= tier || unlockedIds.has(eq.id))
     .map((eq) => ({
       id: eq.id,
       name: eq.name,
@@ -53,6 +63,11 @@ export function shopCatalog(save: SaveData): ShopEntry[] {
       note: equipNote(eq.id),
     }));
   return [...equips, ...items];
+}
+
+/** 素材売却で解放される装備 ID（無ければ空）。 */
+export function unlocksFromSelling(itemId: ItemId): ItemId[] {
+  return SELL_UNLOCKS[itemId] ?? [];
 }
 
 /** 購入価格（ITEMS / EQUIPMENT 共通）。存在しなければ null。 */
@@ -76,11 +91,20 @@ export function buy(save: SaveData, id: ItemId): SaveData {
   return { ...next, guild: { ...next.guild, gold: next.guild.gold - price } };
 }
 
-/** 売却: 倉庫から qty 個売って所持金を得る。 */
+/** 売却: 倉庫から qty 個売って所持金を得る。素材なら関連装備を恒久解放する。 */
 export function sell(save: SaveData, id: ItemId, qty = 1): SaveData {
   const have = save.guild.storage.find((s) => s.itemId === id)?.qty ?? 0;
   if (have < qty) return save;
   const gain = sellPriceOf(id) * qty;
   const next = removeItem(save, id, qty);
-  return { ...next, guild: { ...next.guild, gold: next.guild.gold + gain } };
+  // 素材売却での品揃え解放（[04 §8]）
+  const newlyUnlocked = unlocksFromSelling(id).filter(
+    (eid) => !next.shopStock.unlockedItemIds.includes(eid)
+  );
+  const unlockedItemIds = [...next.shopStock.unlockedItemIds, ...newlyUnlocked];
+  return {
+    ...next,
+    guild: { ...next.guild, gold: next.guild.gold + gain },
+    shopStock: { ...next.shopStock, unlockedItemIds },
+  };
 }

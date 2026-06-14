@@ -51,4 +51,15 @@ describe('shop', () => {
     const save = richSave(0);
     expect(sell(save, 'item_potion', 1)).toBe(save);
   });
+
+  test('素材を売ると関連装備がショップに並ぶ（恒久解放）', () => {
+    let save = createInitialSaveData('g');
+    // 第1帯では tier1 の equip_slime_shield は並ばない
+    expect(shopCatalog(save).some((e) => e.id === 'equip_slime_shield')).toBe(false);
+    // スライムゼリーを入手して売却
+    save = { ...save, guild: { ...save.guild, storage: [{ itemId: 'item_slime_jelly', qty: 1 }] } };
+    save = sell(save, 'item_slime_jelly', 1);
+    expect(save.shopStock.unlockedItemIds).toContain('equip_slime_shield');
+    expect(shopCatalog(save).some((e) => e.id === 'equip_slime_shield')).toBe(true);
+  });
 });
