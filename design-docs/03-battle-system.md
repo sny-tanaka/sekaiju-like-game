@@ -222,6 +222,12 @@ interface Summon {
 }
 ```
 
+> **MVP 実装メモ（Phase 4-4b・実装済み）**: 召喚を実装。
+> - 召喚体は `Combatant`（`isSummon:true` / `summonKind` / `ownerId`）として `BattleState.summons` に持ち、最前列の壁/攻撃役。同時最大3体。**味方の全滅判定には数えない**（パーティ全滅＝lose）。
+> - 行動: `actsOnTurn` の個体は毎ターン生存敵を1体自律攻撃（属性は `SummonMaster.attackElement`）。壁専用個体（石像）は攻撃しない。敵AIは召喚体も攻撃対象に含める（壁機能）。`buffImmune` の個体は強化弱体・状態異常を受けない。
+> - 種別マスターは `data/summons.ts`（`SUMMONS`）。スキル効果 `{kind:'summon', summonKind}` で `BATTLE_SKILLS` から召喚（狩人=狼 / 守護兵=石像 / 魔導士=使い魔）。
+> - 持ち越し: `persistsAfterBattle` の個体は勝利/逃走後に `diveState.persistentSummons`（`{summonKind, ownerId, hp}`）へ保存し次戦闘で復元。**拠点帰還で diveState ごと消える**（`persistsOutOfDungeon` は MVP 未使用）。
+
 ---
 
 ## 9. ユニオンスキル（必殺技）

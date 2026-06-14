@@ -27,6 +27,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
       skills: [
         { skillId: 'skill_shield_bash', maxLevel: 5 },
         { skillId: 'skill_provoke', maxLevel: 3 },
+        { skillId: 'skill_summon_bulwark', maxLevel: 3 },
       ],
     },
     equipableWeaponTypes: ['spear', 'sword'],
@@ -44,6 +45,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 5,
           requires: [{ skillId: 'skill_fire_bolt', level: 1 }],
         },
+        { skillId: 'skill_summon_familiar', maxLevel: 2 },
       ],
     },
     equipableWeaponTypes: ['staff'],
@@ -64,6 +66,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'skill_aimed_shot', level: 1 }],
         },
+        { skillId: 'skill_summon_wolf', maxLevel: 3 },
       ],
     },
     equipableWeaponTypes: ['bow', 'fist'],

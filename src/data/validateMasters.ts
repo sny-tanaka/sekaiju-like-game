@@ -48,7 +48,8 @@ function checkSkillTree(
 
 export function validateMasters(): ValidationResult {
   const errors: string[] = [];
-  const { races, classes, titles, skills, unionSkills, enemies, items, equipment } = MASTERS;
+  const { races, classes, titles, skills, unionSkills, summons, enemies, items, equipment } =
+    MASTERS;
 
   // ID 命名規約
   checkIdConvention('races', Object.keys(races), errors);
@@ -116,6 +117,20 @@ export function validateMasters(): ValidationResult {
       errors.push(
         `[unionSkills] "${def.id}" が BATTLE_SKILLS にも存在（通常スキルとして撃ててしまう）`
       );
+    }
+  }
+
+  // 召喚体（[03 §8]）: ID 規約・キー一致
+  checkIdConvention('summons', Object.keys(summons), errors);
+  for (const [key, s] of Object.entries(summons)) {
+    if (key !== s.id) errors.push(`[summons] キー "${key}" と id "${s.id}" が不一致`);
+  }
+  // 召喚スキルの summonKind が実在するか（BATTLE_SKILLS の summon 効果）
+  for (const def of Object.values(BATTLE_SKILLS)) {
+    for (const eff of def.effects) {
+      if (eff.kind === 'summon' && !(eff.summonKind in summons)) {
+        errors.push(`[battleSkills] "${def.id}" の召喚 "${eff.summonKind}" が未定義`);
+      }
     }
   }
 

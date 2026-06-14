@@ -3,8 +3,9 @@ import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { ENEMIES } from '@/data/enemies';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
+import { SUMMONS } from '@/data/summons';
 import { UNION_SKILLS } from '@/data/unionSkills';
-import { computeDamage, effectiveEnemyStats } from '@/domain/combat';
+import { computeDamage, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computeBaseStats } from '@/domain/stats';
 import type {
@@ -23,8 +24,12 @@ import type {
   Rng,
   SaveData,
   SkillEffectDef,
+  SummonKind,
   TargetType,
 } from '@/domain/types';
+
+/** 召喚体の同時最大数（[03 §8]）。 */
+const MAX_SUMMONS = 3;
 
 // ============================================================================
 // ターン制戦闘エンジン（設計書 03）。すべて純関数・乱数注入でテスト再現可能。
@@ -117,6 +122,38 @@ function buildEnemy(enemyId: EnemyId, index: number, depth: number): Combatant {
   };
 }
 
+/** 召喚体の戦闘員を組む（[03 §8]・出現階でスケール）。味方側・最前列扱い。 */
+function buildSummon(
+  kind: SummonKind,
+  depth: number,
+  ownerId: string,
+  instanceId: string,
+  hp?: number
+): Combatant {
+  const m = SUMMONS[kind];
+  const stats = scaleStats(m.baseStats, enemyScale(depth, m.refDepth));
+  const cur = hp ?? stats.hp;
+  return {
+    id: instanceId,
+    name: m.name,
+    side: 'ally',
+    row: 'front',
+    stats,
+    equip: {},
+    hp: cur,
+    maxHp: stats.hp,
+    tp: 0,
+    maxTp: 0,
+    buffs: [],
+    ailments: [],
+    unionGauge: 0,
+    isDown: cur <= 0,
+    isSummon: true,
+    summonKind: kind,
+    ownerId,
+  };
+}
+
 /**
  * 戦闘を開始し BattleState を生成する。出撃中の編成メンバーが味方になる。
  * firstStrike は FOE 接触時の先手（[03 §10]）。ランダムエンカウントは 'none'。
@@ -134,11 +171,18 @@ export function startBattle(
     .map((id) => buildAlly(save, id))
     .filter((c): c is Combatant => c !== null);
   const enemies = enemyIds.map((id, i) => buildEnemy(id, i, depth));
+  // 戦闘をまたいで残る召喚体（[03 §8]）を復元する。
+  const summons = (save.diveState?.persistentSummons ?? [])
+    .map((snap, i) =>
+      buildSummon(snap.summonKind, depth, snap.ownerId, `summon_persist_${i}`, snap.hp)
+    )
+    .filter((s) => !s.isDown);
   return {
     turn: 1,
     depth,
     allies,
     enemies,
+    summons,
     log: [],
     outcome: 'ongoing',
     firstStrike,
@@ -152,9 +196,20 @@ export function startBattle(
 const aliveSide = (state: BattleState, side: 'ally' | 'enemy') =>
   (side === 'ally' ? state.allies : state.enemies).filter((c) => !c.isDown);
 
+/** 生存中の召喚体（[03 §8]）。最前列の壁/攻撃役。 */
+const aliveSummons = (state: BattleState) => state.summons.filter((c) => !c.isDown);
+
 function find(state: BattleState, id: string): Combatant | undefined {
-  return state.allies.find((c) => c.id === id) ?? state.enemies.find((c) => c.id === id);
+  return (
+    state.allies.find((c) => c.id === id) ??
+    state.enemies.find((c) => c.id === id) ??
+    state.summons.find((c) => c.id === id)
+  );
 }
+
+/** 召喚体で強化弱体が無効な個体か（[03 §8] buffImmune）。 */
+const isBuffImmune = (c: Combatant): boolean =>
+  !!c.isSummon && !!c.summonKind && SUMMONS[c.summonKind]?.buffImmune;
 
 const elementMult = (target: Combatant, element: Element): number => target.resist?.[element] ?? 1;
 
@@ -173,6 +228,7 @@ function gainUnion(c: Combatant, amount: number): void {
 }
 
 function addBuff(target: Combatant, buff: ActiveBuff): void {
+  if (isBuffImmune(target)) return; // buffImmune な召喚体には効かない（[03 §8]）
   // 同 (stat, stackGroup) は1つに（リフレッシュ）
   target.buffs = target.buffs.filter(
     (b) => !(b.stat === buff.stat && b.stackGroup === buff.stackGroup)
@@ -181,6 +237,7 @@ function addBuff(target: Combatant, buff: ActiveBuff): void {
 }
 
 function applyAilment(target: Combatant, a: ActiveAilment): void {
+  if (isBuffImmune(target)) return; // buffImmune な召喚体には状態異常も効かない（[03 §8]）
   const existing = target.ailments.find((x) => x.type === a.type);
   if (existing) {
     existing.remainingTurns = Math.max(existing.remainingTurns, a.remainingTurns);
@@ -201,6 +258,7 @@ function ailmentChance(base: number, attacker: Combatant, defender: Combatant): 
 /**
  * target 種別から対象 Combatant を解決する（通常スキル・ユニオン共通）。
  * allyOne は actor と同陣営、enemyOne/Row は敵陣営に限定する（誤対象＝味方を攻撃/敵を回復 を防ぐ）。
+ * allyAll は味方側のとき召喚体も含む（[03 §8]：召喚体はバフ/回復対象になりうる。buffImmune 個体は addBuff 側で弾く）。
  * 対象 ID が不正なら安全側にフォールバック（単体回復＝自分 / 単体攻撃＝生存敵の先頭）。
  */
 function resolveTargets(
@@ -214,7 +272,9 @@ function resolveTargets(
     case 'self':
       return [actor];
     case 'allyAll':
-      return aliveSide(state, actor.side);
+      return actor.side === 'ally'
+        ? [...aliveSide(state, 'ally'), ...aliveSummons(state)]
+        : aliveSide(state, 'enemy');
     case 'allyOne': {
       const t = find(state, targetId);
       return t && t.side === actor.side ? [t] : [actor];
@@ -315,6 +375,18 @@ function applySkillEffect(
       }
       break;
     }
+    case 'summon': {
+      if (actor.side !== 'ally') break; // 召喚は味方専用（敵が summon 効果を持っても味方側を生まない）
+      if (aliveSummons(state).length >= MAX_SUMMONS) {
+        state.log.push({ text: 'これ以上は召喚できない' });
+        break;
+      }
+      const id = `summon_${state.turn}_${state.summons.length}`;
+      const s = buildSummon(effect.summonKind, state.depth, actor.id, id);
+      state.summons.push(s);
+      state.log.push({ text: `${actor.name} は ${s.name} を召喚した！` });
+      break;
+    }
     default:
       break;
   }
@@ -325,7 +397,9 @@ function basicAttack(state: BattleState, actor: Combatant, target: Combatant, rn
   if (target.isDown) return;
   const element: Element = actor.enemyId
     ? (ENEMIES[actor.enemyId].attackElement ?? 'bash')
-    : 'bash';
+    : actor.isSummon && actor.summonKind
+      ? (SUMMONS[actor.summonKind]?.attackElement ?? 'bash')
+      : 'bash';
   const res = computeDamage(
     actor,
     target,
@@ -466,17 +540,19 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     }
   }
 
-  // 敵AI: 生存敵は生存味方の誰かを通常攻撃（先制ターンは敵が動けない）
-  const enemyCommands = new Map<string, string>(); // enemyId -> targetAllyId
+  // 敵AI: 生存敵は生存味方/召喚体の誰かを通常攻撃（先制ターンは敵が動けない）。
+  // 召喚体は最前列の壁として攻撃対象に含める（[03 §8]）。
+  const enemyCommands = new Map<string, string>(); // enemyId -> targetId
   if (!skipEnemies) {
     for (const e of aliveSide(next, 'enemy')) {
-      const targets = aliveSide(next, 'ally');
+      const targets = [...aliveSummons(next), ...aliveSide(next, 'ally')];
       if (targets.length > 0) enemyCommands.set(e.id, rng.pick(targets).id);
     }
   }
 
   // 行動順（生存者のみ、AGI 降順・rng タイブレーク）。先手側のみ行動するターンは片側を除外。
-  const actors = [...next.allies, ...next.enemies]
+  // 召喚体は味方側として扱う（不意打ちターンは行動不可）。
+  const actors = [...next.allies, ...next.enemies, ...next.summons]
     .filter((c) => !c.isDown)
     .filter((c) => !(skipEnemies && c.side === 'enemy') && !(skipAllies && c.side === 'ally'))
     .map((c) => ({ c, agi: c.stats.agi, tie: rng.next() }))
@@ -489,6 +565,17 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     // 麻痺: 30% で行動不能
     if (isParalyzed(actor) && rng.next() < BALANCE.PARALYSIS_SKIP) {
       next.log.push({ text: `${actor.name} は麻痺で動けない` });
+      continue;
+    }
+
+    // 召喚体（[03 §8]）: actsOnTurn なら生存敵を1体自律攻撃。壁のみの個体は行動しない。
+    if (actor.isSummon) {
+      const m = actor.summonKind ? SUMMONS[actor.summonKind] : undefined;
+      if (m?.actsOnTurn) {
+        const enemies = aliveSide(next, 'enemy');
+        if (enemies.length > 0) basicAttack(next, actor, rng.pick(enemies), rng);
+      }
+      if (aliveSide(next, 'enemy').length === 0) break;
       continue;
     }
 
@@ -556,8 +643,8 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (aliveSide(next, 'enemy').length === 0 || aliveSide(next, 'ally').length === 0) break;
   }
 
-  // ターン終了処理: 毒ダメージ → TP自然回復 → バフ/状態異常の残ターン減算
-  for (const c of [...next.allies, ...next.enemies]) {
+  // ターン終了処理: 毒ダメージ → TP自然回復 → バフ/状態異常の残ターン減算（召喚体も含む）
+  for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
     if (c.isDown) continue;
     const poison = c.ailments.find((a) => a.type === 'poison');
     if (poison) {
@@ -566,7 +653,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       next.log.push({ text: `${c.name} は毒で ${dmg} のダメージ` });
     }
   }
-  for (const c of [...next.allies, ...next.enemies]) {
+  for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
     if (!c.isDown && c.maxTp > 0) {
       // TP 自然回復（[03 §2]）。TP枯渇での詰みを防ぐ。
       c.tp = Math.min(c.maxTp, c.tp + Math.ceil(c.maxTp * BALANCE.TP_REGEN_RATIO));
@@ -591,6 +678,10 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       }
     }
   }
+
+  // 倒れた召喚体は盤面から除去する（屍の蓄積・UI への残留を防ぐ。[03 §8]）。
+  // ※ ID は `summon_${turn}_${idx}` でターン番号を含むため、除去で配列が縮んでも次ターン以降と衝突しない。
+  next.summons = next.summons.filter((s) => !s.isDown);
 
   next.turn += 1;
   if (aliveSide(next, 'enemy').length === 0) next.outcome = 'win';
@@ -683,11 +774,17 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     members = members.map((m) => (partyIds.has(m.id) ? grantExpToChar(m, share) : m));
   }
 
+  // 戦闘をまたいで残る召喚体（[03 §8]）: 生存かつ persistsAfterBattle のみ次戦闘へ持ち越す。
+  // 戦闘限りの召喚体・戦闘不能の召喚体は破棄。拠点帰還で diveState ごと消える。
+  const persistentSummons = state.summons
+    .filter((s) => !s.isDown && s.summonKind && SUMMONS[s.summonKind]?.persistsAfterBattle)
+    .map((s) => ({ summonKind: s.summonKind as SummonKind, ownerId: s.ownerId ?? '', hp: s.hp }));
+
   let next: SaveData = {
     ...save,
     guild: { ...save.guild, members, gold, bestiary },
     bestiary,
-    diveState: { ...save.diveState, party },
+    diveState: { ...save.diveState, party, persistentSummons },
   };
 
   // 倉庫: 戦闘で使ったアイテムを減算（勝敗問わず）

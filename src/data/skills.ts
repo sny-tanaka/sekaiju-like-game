@@ -61,6 +61,22 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
     name: '頭封じの矢',
     description: '射撃ダメージを与え、確率で頭を封じる（魔法・補助スキル不可）。',
   },
+  // 召喚スキル（[03 §8]）
+  skill_summon_wolf: {
+    id: 'skill_summon_wolf',
+    name: '狼を召喚',
+    description: '自律して敵を攻撃する召喚獣・狼を最前列に呼ぶ（戦闘限り）。',
+  },
+  skill_summon_bulwark: {
+    id: 'skill_summon_bulwark',
+    name: '石像を召喚',
+    description: '敵の攻撃を引き受ける高耐久の石像を最前列に呼ぶ（戦闘限り）。',
+  },
+  skill_summon_familiar: {
+    id: 'skill_summon_familiar',
+    name: '使い魔を召喚',
+    description: '自律攻撃する使い魔を呼ぶ。戦闘をまたいで残る（拠点帰還で消える）。',
+  },
   // 種族ユニオンスキル（効果は data/unionSkills.ts）
   skill_union_rally: {
     id: 'skill_union_rally',

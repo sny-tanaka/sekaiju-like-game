@@ -130,6 +130,34 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
       { kind: 'ailment', ailment: 'headBind', chance: (lv) => 0.35 + 0.05 * lv, turns: 3 },
     ],
   },
+  // 召喚スキル（[03 §8]）。対象は self（最前列へ設置）。
+  skill_summon_wolf: {
+    id: 'skill_summon_wolf',
+    name: '狼を召喚',
+    tree: 'base',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'self',
+    effects: [{ kind: 'summon', summonKind: 'summon_wolf' }],
+  },
+  skill_summon_bulwark: {
+    id: 'skill_summon_bulwark',
+    name: '石像を召喚',
+    tree: 'base',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'self',
+    effects: [{ kind: 'summon', summonKind: 'summon_bulwark' }],
+  },
+  skill_summon_familiar: {
+    id: 'skill_summon_familiar',
+    name: '使い魔を召喚',
+    tree: 'base',
+    tpCost: (lv) => 7 + lv,
+    element: 'almighty',
+    target: 'self',
+    effects: [{ kind: 'summon', summonKind: 'summon_familiar' }],
+  },
 };
 
 /** 戦闘効果を持つスキルか。 */
