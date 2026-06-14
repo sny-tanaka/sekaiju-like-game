@@ -5,6 +5,7 @@ import styles from './style.module.scss';
 
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
+import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
 import { goDeeper, goShallower, moveStep, returnToTown, stairsAt, turnTo } from '@/domain/dive';
 import { gaugeLevel } from '@/domain/encounter';
 import { DELTA, turnBack, turnLeft, turnRight } from '@/domain/movement';
@@ -113,6 +114,14 @@ export const Page = () => {
           帰還
         </button>
       </header>
+
+      <div className={styles.fpvWrap}>
+        <FirstPersonView
+          floor={floor}
+          pos={dive.pos}
+          dir={dive.dir}
+        />
+      </div>
 
       <div className={styles.mapWrap}>
         <DungeonMap
