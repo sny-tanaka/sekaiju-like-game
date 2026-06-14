@@ -14,6 +14,8 @@ type Props = {
   dir: Dir;
   /** プレイヤーが手動配置したアイコン。 */
   icons?: PlacedIcon[];
+  /** 生存中の FOE（徘徊敵）の現在位置。探索済みセルのみ自動表示する（[02 §6]）。 */
+  foes?: { x: number; y: number; alerted: boolean }[];
   /** 1セルの最大ピクセル（画面幅に合わせて縮む）。 */
   maxCell?: number;
   /** セルタップで隣接1歩移動などに使う。 */
@@ -28,6 +30,8 @@ const COLORS = {
   player: '#2196f3',
   stairsUp: '#e8923a', // 次階へ（上り）
   stairsDown: '#7aa2d6', // 前階/拠点へ（下り）
+  foe: '#b0533a', // 徘徊敵（未感知）
+  foeAlert: '#d32f2f', // 徘徊敵（追跡中）
 };
 
 // 2D 俯瞰のプレイヤーマップ（02 §4 / MVP の主役ビュー）。
@@ -38,6 +42,7 @@ export const DungeonMap = ({
   pos,
   dir,
   icons = [],
+  foes = [],
   maxCell = 26,
   onCellClick,
 }: Props) => {
@@ -118,6 +123,22 @@ export const DungeonMap = ({
       ctx.fillText(mapIconSymbol(ic.iconId), ic.x * cell + cell / 2, ic.y * cell + cell / 2 + 1);
     }
 
+    // FOE（徘徊敵）: 探索済みセルのみ自動表示（[02 §6]）。alerted は強調色。
+    for (const f of foes) {
+      if (!exploredSet.has(`${f.x},${f.y}`)) continue;
+      const fx = f.x * cell + cell / 2;
+      const fy = f.y * cell + cell / 2;
+      ctx.fillStyle = f.alerted ? COLORS.foeAlert : COLORS.foe;
+      ctx.beginPath();
+      ctx.arc(fx, fy, cell * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.floor(cell * 0.5)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('!', fx, fy + 1);
+    }
+
     // プレイヤー（向きに合わせた三角形）
     const cx = pos.x * cell + cell / 2;
     const cy = pos.y * cell + cell / 2;
@@ -131,7 +152,7 @@ export const DungeonMap = ({
     ctx.lineTo(cx + Math.cos(a - 2.5) * r, cy + Math.sin(a - 2.5) * r);
     ctx.closePath();
     ctx.fill();
-  }, [floor, explored, pos, dir, icons, cell, w, h]);
+  }, [floor, explored, pos, dir, icons, foes, cell, w, h]);
 
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
     if (!onCellClick) return;
