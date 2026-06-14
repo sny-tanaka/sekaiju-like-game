@@ -22,7 +22,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     name: 'ガロン',
     baseStatsAtLv1: { hp: 55, tp: 12, str: 11, vit: 11, agi: 5, int: 4, mnd: 6, luc: 6 },
     statGrowth: { hp: 12, tp: 2, str: 3, vit: 3, agi: 1, int: 1, mnd: 2, luc: 2 },
-    unionSkillTree: { skills: [{ skillId: 'skill_union_rally', maxLevel: 3 }] },
+    unionSkillTree: { skills: [{ skillId: 'skill_union_smash', maxLevel: 3 }] },
     defaultClassId: 'class_guardian',
   },
   // 魔法特化の小型種
@@ -31,7 +31,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     name: 'ピクス',
     baseStatsAtLv1: { hp: 28, tp: 32, str: 4, vit: 5, agi: 9, int: 12, mnd: 11, luc: 7 },
     statGrowth: { hp: 5, tp: 7, str: 1, vit: 1, agi: 2, int: 3, mnd: 3, luc: 2 },
-    unionSkillTree: { skills: [{ skillId: 'skill_union_rally', maxLevel: 3 }] },
+    unionSkillTree: { skills: [{ skillId: 'skill_union_nova', maxLevel: 3 }] },
     defaultClassId: 'class_mage',
   },
   // 獣使い種
@@ -40,7 +40,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     name: 'テリアン',
     baseStatsAtLv1: { hp: 38, tp: 18, str: 9, vit: 7, agi: 11, int: 6, mnd: 6, luc: 9 },
     statGrowth: { hp: 7, tp: 3, str: 2, vit: 2, agi: 3, int: 1, mnd: 1, luc: 3 },
-    unionSkillTree: { skills: [{ skillId: 'skill_union_rally', maxLevel: 3 }] },
+    unionSkillTree: { skills: [{ skillId: 'skill_union_fang', maxLevel: 3 }] },
     defaultClassId: 'class_ranger',
   },
 };

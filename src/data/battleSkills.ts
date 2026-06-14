@@ -93,15 +93,42 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     target: 'enemyAll',
     effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 0.8 + 0.12 * lv }],
   },
-  // 種族ユニオン枠（Phase 4 で本実装。MVP は簡易回復）
-  skill_union_rally: {
-    id: 'skill_union_rally',
-    name: 'ラリー',
-    tree: 'race',
-    tpCost: () => 0,
-    element: 'almighty',
-    target: 'allyAll',
-    effects: [{ kind: 'heal', amount: (lv) => 10 + 5 * lv }],
+  // 狩人: 部位封じの矢（[03 §6]）。物理ダメージ＋確率で対応部位をバインド。
+  skill_leg_snipe: {
+    id: 'skill_leg_snipe',
+    name: '脚封じの矢',
+    tree: 'base',
+    tpCost: (lv) => 4 + lv,
+    element: 'pierce',
+    target: 'enemyOne',
+    effects: [
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.15 * lv },
+      { kind: 'ailment', ailment: 'legBind', chance: (lv) => 0.35 + 0.05 * lv, turns: 3 },
+    ],
+  },
+  skill_arm_snipe: {
+    id: 'skill_arm_snipe',
+    name: '腕封じの矢',
+    tree: 'base',
+    tpCost: (lv) => 4 + lv,
+    element: 'pierce',
+    target: 'enemyOne',
+    effects: [
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.15 * lv },
+      { kind: 'ailment', ailment: 'armBind', chance: (lv) => 0.35 + 0.05 * lv, turns: 3 },
+    ],
+  },
+  skill_head_snipe: {
+    id: 'skill_head_snipe',
+    name: '頭封じの矢',
+    tree: 'base',
+    tpCost: (lv) => 4 + lv,
+    element: 'pierce',
+    target: 'enemyOne',
+    effects: [
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.15 * lv },
+      { kind: 'ailment', ailment: 'headBind', chance: (lv) => 0.35 + 0.05 * lv, turns: 3 },
+    ],
   },
 };
 

@@ -3,7 +3,7 @@ import { startDive } from '@/domain/dive';
 import { addItem, itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
-import type { BattleCommand, BattleState, SaveData } from '@/domain/types';
+import type { ActiveAilment, BattleCommand, BattleState, SaveData } from '@/domain/types';
 
 function diveSave(): SaveData {
   let save = createInitialSaveData('戦闘ギルド');
@@ -112,6 +112,232 @@ describe('battle: 先制/不意打ち（[03 §10]）', () => {
       expect(t2.turn).toBe(3);
     }
     expect(t1.turn).toBe(2);
+  });
+});
+
+// 2人パーティ（ユニオン協力者テスト用）。
+function diveSave2(): SaveData {
+  let save = createInitialSaveData('戦闘ギルド');
+  save = addCharacterToGuild(
+    save,
+    createCharacter({ raceId: 'race_garon', classId: 'class_warrior', name: '戦士' })
+  );
+  save = addCharacterToGuild(
+    save,
+    createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: '剣士' })
+  );
+  return startDive(save, 1);
+}
+
+// 指定 side / index の戦闘員に状態異常を付与した新 state。
+function withAilment(
+  state: BattleState,
+  side: 'allies' | 'enemies',
+  idx: number,
+  type: ActiveAilment['type']
+): BattleState {
+  const list = state[side].map((c, i) =>
+    i === idx ? { ...c, ailments: [...c.ailments, { type, remainingTurns: 3 }] } : c
+  );
+  return { ...state, [side]: list };
+}
+
+// ゲージを設定した新 state（味方）。
+function withGauge(state: BattleState, idx: number, gauge: number): BattleState {
+  return {
+    ...state,
+    allies: state.allies.map((c, i) => (i === idx ? { ...c, unionGauge: gauge } : c)),
+  };
+}
+
+describe('battle: バインド（部位封じ・[03 §6]）', () => {
+  test('腕封じの敵は通常攻撃できない（味方は無傷）', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const allyHp = base.allies[0].hp;
+    const state = withAilment(base, 'enemies', 0, 'armBind');
+    // 味方は防御（敵の行動のみ観測）
+    const after = resolveTurn(
+      state,
+      [{ kind: 'guard', actorId: state.allies[0].id }],
+      createRng(1)
+    );
+    expect(after.allies[0].hp).toBe(allyHp);
+    expect(after.log.some((l) => l.text.includes('腕を封じ'))).toBe(true);
+  });
+
+  test('腕封じの味方は通常攻撃できない（敵は無傷）', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const enemyHp = base.enemies[0].hp;
+    const state = withAilment(base, 'allies', 0, 'armBind');
+    const after = resolveTurn(
+      state,
+      [{ kind: 'attack', actorId: state.allies[0].id, targetId: state.enemies[0].id }],
+      createRng(1)
+    );
+    expect(after.enemies[0].hp).toBe(enemyHp);
+    expect(after.log.some((l) => l.text.includes('腕を封じ'))).toBe(true);
+  });
+
+  test('頭封じの味方は魔法スキルを使えない', () => {
+    // 魔導士（火魔法 statBase int）に頭封じ
+    let save = createInitialSaveData('g');
+    save = addCharacterToGuild(
+      save,
+      createCharacter({ raceId: 'race_pix', classId: 'class_mage', name: '魔' })
+    );
+    save = startDive(save, 1);
+    // スキルを習得させる
+    const mage = save.guild.members[0];
+    save = {
+      ...save,
+      guild: {
+        ...save.guild,
+        members: [{ ...mage, learnedSkills: { ...mage.learnedSkills, skill_fire_bolt: 1 } }],
+      },
+    };
+    const base = startBattle(save, ['enemy_slime']);
+    const enemyHp = base.enemies[0].hp;
+    const state = withAilment(base, 'allies', 0, 'headBind');
+    const after = resolveTurn(
+      state,
+      [
+        {
+          kind: 'skill',
+          actorId: state.allies[0].id,
+          skillId: 'skill_fire_bolt',
+          targetId: state.enemies[0].id,
+        },
+      ],
+      createRng(1)
+    );
+    expect(after.enemies[0].hp).toBe(enemyHp);
+    expect(after.log.some((l) => l.text.includes('頭を封じ'))).toBe(true);
+  });
+
+  test('脚封じの味方は逃走できない', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const state = withAilment(base, 'allies', 0, 'legBind');
+    const after = resolveTurn(state, [{ kind: 'flee', actorId: state.allies[0].id }], createRng(1));
+    expect(after.outcome).not.toBe('fled');
+    expect(after.log.some((l) => l.text.includes('脚を封じ'))).toBe(true);
+  });
+});
+
+describe('battle: ユニオンスキル（[03 §9]）', () => {
+  test('ゲージ100%でユニオン発動、ゲージ消費＆効果適用', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    // HP を減らし、ゲージ満タンに
+    let state: BattleState = withGauge(base, 0, 100);
+    state = { ...state, allies: state.allies.map((a) => ({ ...a, hp: 1 })) };
+    const actor = state.allies[0];
+    const after = resolveTurn(
+      state,
+      [
+        {
+          kind: 'union',
+          actorId: actor.id,
+          unionSkillId: 'skill_union_rally',
+          participantIds: [actor.id],
+          targetId: actor.id,
+        },
+      ],
+      createRng(1)
+    );
+    // 回復された／ゲージが消費された
+    expect(after.allies[0].hp).toBeGreaterThan(1);
+    expect(after.allies[0].unionGauge).toBeLessThan(100);
+    expect(after.log.some((l) => l.text.includes('ユニオン'))).toBe(true);
+  });
+
+  test('ゲージ不足ではユニオン不発', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const state = withGauge(base, 0, 50);
+    const actor = state.allies[0];
+    const after = resolveTurn(
+      state,
+      [
+        {
+          kind: 'union',
+          actorId: actor.id,
+          unionSkillId: 'skill_union_rally',
+          participantIds: [actor.id],
+          targetId: actor.id,
+        },
+      ],
+      createRng(1)
+    );
+    expect(after.allies[0].unionGauge).toBe(50); // 消費されない
+    expect(after.log.some((l) => l.text.includes('ゲージが足りない'))).toBe(true);
+  });
+
+  test('ユニオンは通常行動を消費しない（同ターンに攻撃もできる）', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const enemyHp = base.enemies[0].hp;
+    const state = withGauge(base, 0, 100);
+    const actor = state.allies[0];
+    const after = resolveTurn(
+      state,
+      [
+        {
+          kind: 'union',
+          actorId: actor.id,
+          unionSkillId: 'skill_union_rally', // 味方回復（敵に無関係）
+          participantIds: [actor.id],
+          targetId: actor.id,
+        },
+        { kind: 'attack', actorId: actor.id, targetId: state.enemies[0].id },
+      ],
+      createRng(3)
+    );
+    // 通常攻撃も解決されて敵 HP が減っている
+    expect(after.enemies[0].hp).toBeLessThan(enemyHp);
+  });
+
+  test('協力人数が必要なユニオンは人数不足だと不発', () => {
+    // 豪砕（requiredParticipants 2）を 1 人で撃つ
+    const base = startBattle(diveSave(), ['enemy_slime', 'enemy_giant_rat']);
+    const state = withGauge(base, 0, 100);
+    const actor = state.allies[0];
+    const after = resolveTurn(
+      state,
+      [
+        {
+          kind: 'union',
+          actorId: actor.id,
+          unionSkillId: 'skill_union_smash',
+          participantIds: [actor.id],
+          targetId: state.enemies[0].id,
+        },
+      ],
+      createRng(1)
+    );
+    expect(after.allies[0].unionGauge).toBe(100); // 消費されない
+    expect(after.log.some((l) => l.text.includes('人数が足りない'))).toBe(true);
+  });
+
+  test('2人ユニオンは両者からゲージを消費して発動', () => {
+    const base = startBattle(diveSave2(), ['enemy_slime']);
+    let state = withGauge(base, 0, 100);
+    state = withGauge(state, 1, 60);
+    const [a0, a1] = state.allies;
+    const enemyHp = state.enemies[0].hp;
+    const after = resolveTurn(
+      state,
+      [
+        {
+          kind: 'union',
+          actorId: a0.id,
+          unionSkillId: 'skill_union_smash',
+          participantIds: [a0.id, a1.id],
+          targetId: state.enemies[0].id,
+        },
+      ],
+      createRng(2)
+    );
+    // 50 ずつ消費（発動者 100→50、協力者 60→10）
+    expect(after.allies[0].unionGauge).toBe(50);
+    expect(after.allies[1].unionGauge).toBe(10);
+    expect(after.enemies[0].hp).toBeLessThan(enemyHp);
   });
 });
 

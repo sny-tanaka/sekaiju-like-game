@@ -189,6 +189,42 @@
   opacity: 0.75;
 }
 
+// ---- ユニオン ----
+.unionBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background-color: #fff3e0;
+  border: 1px solid #ffb74d;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e65100;
+}
+
+.unionCancel {
+  padding: 2px 10px;
+  border: 1px solid #ffb74d;
+  border-radius: 8px;
+  background-color: var.$white;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.unionHint {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e65100;
+}
+
+.unionBtn {
+  color: #e65100;
+  border-color: #ffb74d;
+  background-color: #fff3e0;
+}
+
 .cmdHead {
   font-size: 14px;
   font-weight: 800;

@@ -81,6 +81,7 @@ export function deriveCombat(
 }
 
 const isBlind = (c: Combatant) => c.ailments.some((a) => a.type === 'blind');
+const isLegBound = (c: Combatant) => c.ailments.some((a) => a.type === 'legBind');
 
 /**
  * 物理/魔法スキル1ヒットのダメージを算出（[03 §7]）。
@@ -108,8 +109,10 @@ export function computeDamage(
   let hit = true;
   if (isPhysical) {
     const blind = isBlind(attacker) ? BALANCE.BLIND_ACC_PENALTY : 0;
+    // 脚封じ（legBind）は回避をほぼ無効化する（[03 §6]）。
+    const eva = isLegBound(defender) ? 0 : defD.eva;
     const hitChance = clamp(
-      BALANCE.BASE_HIT + (atkD.acc - defD.eva) * BALANCE.HIT_AGI_K - blind,
+      BALANCE.BASE_HIT + (atkD.acc - eva) * BALANCE.HIT_AGI_K - blind,
       BALANCE.HIT_MIN,
       1.0
     );

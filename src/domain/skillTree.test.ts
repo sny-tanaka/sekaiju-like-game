@@ -43,8 +43,8 @@ describe('skillTree', () => {
     expect(canLearnSkill(c, 'skill_fire_bolt')).toBe(false);
   });
 
-  test('種族のユニオンスキルツリーも習得対象', () => {
+  test('種族のユニオンスキルツリーも習得対象（ピクスは魔光爆裂）', () => {
     const c = mage(3);
-    expect(canLearnSkill(c, 'skill_union_rally')).toBe(true);
+    expect(canLearnSkill(c, 'skill_union_nova')).toBe(true);
   });
 });

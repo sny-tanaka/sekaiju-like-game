@@ -57,6 +57,13 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
       skills: [
         { skillId: 'skill_aimed_shot', maxLevel: 5 },
         { skillId: 'skill_spread_shot', maxLevel: 5 },
+        { skillId: 'skill_leg_snipe', maxLevel: 3 },
+        { skillId: 'skill_arm_snipe', maxLevel: 3 },
+        {
+          skillId: 'skill_head_snipe',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_aimed_shot', level: 1 }],
+        },
       ],
     },
     equipableWeaponTypes: ['bow', 'fist'],

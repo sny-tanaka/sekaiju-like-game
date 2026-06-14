@@ -3,12 +3,14 @@ import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { ENEMIES } from '@/data/enemies';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
+import { UNION_SKILLS } from '@/data/unionSkills';
 import { computeDamage, effectiveEnemyStats } from '@/domain/combat';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computeBaseStats } from '@/domain/stats';
 import type {
   ActiveAilment,
   ActiveBuff,
+  AilmentType,
   BattleCommand,
   BattleSkillDef,
   BattleState,
@@ -21,6 +23,7 @@ import type {
   Rng,
   SaveData,
   SkillEffectDef,
+  TargetType,
 } from '@/domain/types';
 
 // ============================================================================
@@ -30,6 +33,20 @@ import type {
 // ============================================================================
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+/** 状態異常の表示名（ログ用）。 */
+const AILMENT_LABEL: Record<AilmentType, string> = {
+  poison: '毒',
+  paralysis: '麻痺',
+  sleep: '睡眠',
+  confusion: '混乱',
+  curse: '呪い',
+  blind: '盲目',
+  instantDeath: '即死',
+  headBind: '頭封じ',
+  armBind: '腕封じ',
+  legBind: '脚封じ',
+};
 
 /** 装備のフラットボーナスを合算（[04]）。 */
 function aggregateEquip(char: Character): EquipBonuses {
@@ -181,30 +198,46 @@ function ailmentChance(base: number, attacker: Combatant, defender: Combatant): 
   );
 }
 
-function skillTargets(
+/**
+ * target 種別から対象 Combatant を解決する（通常スキル・ユニオン共通）。
+ * allyOne は actor と同陣営、enemyOne/Row は敵陣営に限定する（誤対象＝味方を攻撃/敵を回復 を防ぐ）。
+ * 対象 ID が不正なら安全側にフォールバック（単体回復＝自分 / 単体攻撃＝生存敵の先頭）。
+ */
+function resolveTargets(
   state: BattleState,
   actor: Combatant,
-  def: BattleSkillDef,
+  target: TargetType,
   targetId: string
 ): Combatant[] {
-  switch (def.target) {
+  const oppSide = actor.side === 'ally' ? 'enemy' : 'ally';
+  switch (target) {
     case 'self':
       return [actor];
     case 'allyAll':
       return aliveSide(state, actor.side);
     case 'allyOne': {
       const t = find(state, targetId);
-      return t ? [t] : [];
+      return t && t.side === actor.side ? [t] : [actor];
     }
     case 'enemyAll':
-      return aliveSide(state, actor.side === 'ally' ? 'enemy' : 'ally');
+      return aliveSide(state, oppSide);
     case 'enemyRow':
     case 'enemyOne':
     default: {
       const t = find(state, targetId);
-      return t ? [t] : [];
+      if (t && t.side === oppSide && !t.isDown) return [t];
+      return aliveSide(state, oppSide).slice(0, 1);
     }
   }
+}
+
+function skillTargets(
+  state: BattleState,
+  actor: Combatant,
+  def: BattleSkillDef,
+  targetId: string
+): Combatant[] {
+  return resolveTargets(state, actor, def.target, targetId);
 }
 
 function applySkillEffect(
@@ -277,7 +310,7 @@ function applySkillEffect(
             remainingTurns: effect.turns,
             magnitude: effect.magnitude,
           });
-          state.log.push({ text: `${target.name} は${effect.ailment}になった` });
+          state.log.push({ text: `${target.name} は${AILMENT_LABEL[effect.ailment]}になった` });
         }
       }
       break;
@@ -316,6 +349,66 @@ const avgAgi = (cs: Combatant[]) =>
 
 const isParalyzed = (c: Combatant) => c.ailments.some((a) => a.type === 'paralysis');
 
+// バインド（部位封じ・[03 §6]）。
+const hasAilment = (c: Combatant, t: AilmentType) => c.ailments.some((a) => a.type === t);
+const isArmBound = (c: Combatant) => hasAilment(c, 'armBind');
+const isHeadBound = (c: Combatant) => hasAilment(c, 'headBind');
+const isLegBound = (c: Combatant) => hasAilment(c, 'legBind');
+
+/**
+ * スキルが「腕」を使う物理スキルか（str ダメージ効果を含む）。それ以外は「頭」系（魔法/補助/回復）
+ * とみなす（[03 §6] の MVP 分類。本来は部位タグだが、効果から推定する）。
+ * - 腕封じ: 通常攻撃と腕系スキルを封じる
+ * - 頭封じ: 頭系（魔法/補助）スキルを封じる
+ * - 脚封じ: 回避ほぼ0・逃走不可（combat.ts / resolveTurn で処理）
+ */
+function skillUsesArm(def: BattleSkillDef): boolean {
+  return def.effects.some((e) => e.kind === 'damage' && e.statBase === 'str');
+}
+
+/**
+ * ユニオンスキルを解決する（[03 §9]）。ターン冒頭に処理。通常行動は消費しない。
+ * 発動者ゲージ100%が条件。発動者を含む requiredParticipants 人から gaugeCostPerParticipant を消費。
+ */
+function resolveUnion(
+  state: BattleState,
+  cmd: Extract<BattleCommand, { kind: 'union' }>,
+  rng: Rng
+): void {
+  const def = UNION_SKILLS[cmd.unionSkillId];
+  if (!def) return;
+  const activator = find(state, cmd.actorId);
+  if (!activator || activator.isDown || activator.side !== 'ally') return;
+  if (activator.unionGauge < 100) {
+    state.log.push({ text: `${activator.name} はユニオンゲージが足りない` });
+    return;
+  }
+  // 参加者（発動者を必ず含む）。生存中の味方のみ。
+  const ids = new Set(cmd.participantIds);
+  ids.add(activator.id);
+  const participants = [...ids]
+    .map((id) => find(state, id))
+    .filter((c): c is Combatant => !!c && !c.isDown && c.side === 'ally');
+  if (participants.length < def.requiredParticipants) {
+    state.log.push({ text: `${activator.name} の${def.name}は参加人数が足りない` });
+    return;
+  }
+  // 発動者を先頭に、必要人数ぶんゲージを消費する。
+  const payers = [activator, ...participants.filter((p) => p.id !== activator.id)].slice(
+    0,
+    def.requiredParticipants
+  );
+  for (const p of payers) {
+    p.unionGauge = clamp(p.unionGauge - def.gaugeCostPerParticipant, 0, 100);
+  }
+  state.log.push({ text: `ユニオン！ ${activator.name} の${def.name}！` });
+  const level = 1; // MVP は Lv1 運用
+  const targets = resolveTargets(state, activator, def.target, cmd.targetId);
+  for (const effect of def.effects) {
+    applySkillEffect(state, activator, effect, def.element, level, targets, rng);
+  }
+}
+
 /**
  * 1ターンを解決する（純関数）。味方コマンド＋敵AI(通常攻撃) を AGI 順に処理。
  * 乱数は注入。新しい BattleState を返す（入力は変更しない）。
@@ -324,7 +417,8 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   if (state.outcome !== 'ongoing') return state;
   // ディープコピー（純粋性のため）
   const next: BattleState = structuredClone({ ...state, log: [] });
-  const cmdByActor = new Map(commands.map((c) => [c.actorId, c]));
+  // 通常行動のコマンド表（ユニオンは別枠なので除外する）。
+  const cmdByActor = new Map(commands.filter((c) => c.kind !== 'union').map((c) => [c.actorId, c]));
 
   // 先制/不意打ち（[03 §10]）。ターン1のみ片側が行動不可。
   const firstStrikeActive = next.turn === 1 && next.firstStrike !== 'none';
@@ -333,19 +427,32 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   if (skipEnemies) next.log.push({ text: '先制攻撃！ 味方が先手を取った' });
   if (skipAllies) next.log.push({ text: '不意打ち！ 敵に先手を取られた' });
 
-  // 逃走（いずれかが flee 指定 → 1回判定。不意打ちターンは味方が動けず逃走不可）
-  if (!skipAllies && commands.some((c) => c.kind === 'flee')) {
-    const rate = clamp(
-      0.5 + (avgAgi(aliveSide(next, 'ally')) - avgAgi(aliveSide(next, 'enemy'))) * 0.02,
-      0.1,
-      0.95
-    );
-    if (rng.next() < rate) {
-      next.log.push({ text: 'うまく逃げ切れた！' });
-      next.outcome = 'fled';
-      return next;
+  // ユニオンスキル（[03 §9]）: 通常行動とは別枠でターン冒頭に解決する。不意打ちターンは不可。
+  if (!skipAllies) {
+    for (const c of commands) {
+      if (c.kind === 'union') resolveUnion(next, c, rng);
     }
-    next.log.push({ text: '逃げられなかった！' });
+  }
+
+  // 逃走（いずれかが flee 指定 → 1回判定。不意打ちターンは味方が動けず逃走不可）
+  const fleeCmd = commands.find((c) => c.kind === 'flee');
+  if (!skipAllies && fleeCmd && next.outcome === 'ongoing') {
+    const fleer = find(next, fleeCmd.actorId);
+    if (fleer && isLegBound(fleer)) {
+      next.log.push({ text: `${fleer.name} は脚を封じられて逃げられない` });
+    } else {
+      const rate = clamp(
+        0.5 + (avgAgi(aliveSide(next, 'ally')) - avgAgi(aliveSide(next, 'enemy'))) * 0.02,
+        0.1,
+        0.95
+      );
+      if (rng.next() < rate) {
+        next.log.push({ text: 'うまく逃げ切れた！' });
+        next.outcome = 'fled';
+        return next;
+      }
+      next.log.push({ text: '逃げられなかった！' });
+    }
   }
 
   // ガード: 防御コマンドは pdef/mdef を一時上昇（このターン）。不意打ちターンは無効。
@@ -385,7 +492,12 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       continue;
     }
 
+    // 腕封じ（armBind）: 通常攻撃が不可（味方・敵共通。[03 §6]）
     if (actor.side === 'enemy') {
+      if (isArmBound(actor)) {
+        next.log.push({ text: `${actor.name} は腕を封じられて攻撃できない` });
+        continue;
+      }
       const targetId = enemyCommands.get(actor.id);
       const target = targetId ? find(next, targetId) : undefined;
       const t = target && !target.isDown ? target : aliveSide(next, 'ally')[0];
@@ -394,12 +506,25 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       const cmd = cmdByActor.get(actor.id);
       if (!cmd || cmd.kind === 'guard' || cmd.kind === 'flee') continue;
       if (cmd.kind === 'attack') {
+        if (isArmBound(actor)) {
+          next.log.push({ text: `${actor.name} は腕を封じられて攻撃できない` });
+          continue;
+        }
         const target = find(next, cmd.targetId);
         const t = target && !target.isDown ? target : aliveSide(next, 'enemy')[0];
         if (t) basicAttack(next, actor, t, rng);
       } else if (cmd.kind === 'skill') {
         const def = BATTLE_SKILLS[cmd.skillId];
         if (!def) continue;
+        // 部位封じでスキル不可（腕系スキル＝armBind / 頭系スキル＝headBind。[03 §6]）
+        if (skillUsesArm(def) && isArmBound(actor)) {
+          next.log.push({ text: `${actor.name} は腕を封じられてスキルを使えない` });
+          continue;
+        }
+        if (!skillUsesArm(def) && isHeadBound(actor)) {
+          next.log.push({ text: `${actor.name} は頭を封じられてスキルを使えない` });
+          continue;
+        }
         const level = 1; // 習得 Lv は呼び出し側で検証済み前提（MVP は Lv1 運用）
         const cost = def.tpCost(level);
         if (actor.tp < cost) {

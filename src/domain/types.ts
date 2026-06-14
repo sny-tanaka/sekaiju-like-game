@@ -254,6 +254,24 @@ export interface BattleSkillDef {
   effects: SkillEffectDef[];
 }
 
+/**
+ * ユニオンスキル定義（[03 §9]）。種族固有の必殺技。ユニオンゲージを消費。
+ * 発動者はゲージ100%が条件。requiredParticipants 人（発動者含む）を選び、
+ * 各自から gaugeCostPerParticipant を消費する（協力者は100%でなくてよい）。
+ * 通常行動とは別枠で、宣言したターンの冒頭に解決する（行動を消費しない）。
+ */
+export interface UnionSkillDef {
+  id: SkillId;
+  name: string;
+  description: string;
+  raceId: RaceId; // 種族固有
+  requiredParticipants: number; // 発動者を含む必要人数
+  gaugeCostPerParticipant: number; // 各参加者から消費するゲージ
+  element: Element;
+  target: TargetType;
+  effects: SkillEffectDef[];
+}
+
 // ----------------------------------------------------------------------------
 // 戦闘コマンド・状態（実行時。保存しない）
 // ----------------------------------------------------------------------------
@@ -263,7 +281,15 @@ export type BattleCommand =
   | { kind: 'skill'; actorId: string; skillId: SkillId; targetId: string }
   | { kind: 'item'; actorId: string; itemId: ItemId; targetId: string }
   | { kind: 'guard'; actorId: string }
-  | { kind: 'flee'; actorId: string };
+  | { kind: 'flee'; actorId: string }
+  | {
+      // ユニオンスキル（[03 §9]）。通常行動とは別枠でターン冒頭に解決する。
+      kind: 'union';
+      actorId: string; // 発動者（ゲージ100%が条件）
+      unionSkillId: SkillId;
+      participantIds: string[]; // 発動者を含む参加者（各自からゲージ消費）
+      targetId: string;
+    };
 
 export type BattleOutcome = 'ongoing' | 'win' | 'lose' | 'fled';
 
