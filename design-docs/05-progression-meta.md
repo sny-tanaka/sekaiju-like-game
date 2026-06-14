@@ -151,14 +151,15 @@ interface BestiaryState {
 本作はフロントエンドのみのSPA/PWAなので、サーバを持たずクライアントに永続化する。
 
 - **保存先**: 大きめのゲーム状態（セーブデータ・図鑑・全フロアの地図）は **IndexedDB**。設定など軽量データは localStorage。
-- **複数スロット**: セーブスロットを複数持てる構造にする（スロットUIは [07 §6](./07-screens-ux.md)）。
+- **セーブは1つ（確定・ユーザー決定）**: 複数スロットは持たない。IndexedDB の固定キー1件で管理する。タイトルでは「つづきから」で読込、「最初から」は既存データがあれば**確認ダイアログ**を挟んで上書き（スロットUIは [07 §6](./07-screens-ux.md)）。
 - **オートセーブ**: 後述の契機で自動保存。手動セーブも可（任意）。
 - PWA: Service Worker でオフライン起動可能にし、ネット接続なしでもプレイ・セーブできる（本リポジトリの `vite-plugin-pwa` を活用）。
 
 ```ts
 interface SaveData {
   schemaVersion: number;   // SaveData の論理バージョン（migration 用、IndexedDB のDBバージョンとは別物）
-  savedAt: number;         // epoch ms（スタンプはワークフロー外で付与）
+  savedAt: number;         // epoch ms（スタンプは永続化層で付与）
+  masterSeed: number;      // このセーブ固有の乱数マスターシード（不変）。階生成・戦闘は createRng(masterSeed).fork(...) で派生（§0.4）
   settings: GameSettings;  // オートマップ/音量等（§4.2）。localStorage と二重持ちでも可
   guild: Guild;            // [01]
   // タワー進行（ストーリー/クリアの代替）
@@ -203,26 +204,28 @@ interface DivePartyMember {
 ### 4.1 ニューゲーム初期化
 
 ```ts
-// 新規セーブの初期状態。Phase 0 で最初に必要
-function createInitialSaveData(guildName: string, starterParty: Character[]): SaveData {
+// 新規セーブの初期状態。Phase 0 で最初に必要。
+// 団員は 0 人で開始し、プレイヤーが拠点ギルドで作成する（ユーザー決定）。
+function createInitialSaveData(guildName: string): SaveData {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    savedAt: /* 呼び出し側でスタンプ */ 0,
+    savedAt: 0,                // 永続化層でスタンプ
+    masterSeed: randomSeed(),  // セーブ固有の乱数シード（§0.4）
     settings: DEFAULT_SETTINGS,
-    guild: { name: guildName, gold: STARTING_GOLD, members: starterParty,
-             party: defaultFormation(starterParty), storage: [], bestiary: emptyBestiary() },
+    guild: { name: guildName, gold: STARTING_GOLD, members: [],
+             party: emptyFormation(), storage: [], bestiary: emptyBestiary() },
     towerState: { floors: {}, bossGates: {}, warp: { unlockedCheckpoints: [] }, record: emptyTowerRecord() },
     diveState: null,           // 開始時は拠点
     bestiary: emptyBestiary(),
     playerMaps: {}, exploredCells: {},
     forgeInventory: { fragments: {}, ingots: { copper: 0, silver: 0, gold: 0 } },
-    shopStock: initialShopStock(), flags: {},
+    shopStock: { unlockedTiers: [0] }, flags: {},
   };
 }
 ```
 
-- **初期パーティの方針（要確定の暫定）**: 初回起動フロー（[07 §4](./07-screens-ux.md)）でギルド名を入力し、**最低限の初期パーティ（例: 既定職業4キャラを自動生成）** を配ってから第1階へ。フルキャラメイクを最初に強制すると離脱要因になるため、自動生成→後で自由に作り直し（転職/転生）を推奨。
-- `STARTING_GOLD` / スターター構成 / `initialShopStock` の具体数値は要確定（MVPでは少額＋初級装備）。
+- **初期パーティの方針（確定・ユーザー決定）**: 初回は **団員 0 人**で開始する。初回起動フロー（[07 §4](./07-screens-ux.md)）ではギルド名のみ入力し、その後 **拠点のギルドでプレイヤーが種族・職業を選んでキャラを作成**する（[01 §2](./01-character-system.md)）。団員が 0 人の間はギルドメニュー以外（ダイブ・ショップ等）は使えない。
+- **出撃パーティは最大5人**（前衛3＋後衛2、[01 §9](./01-character-system.md)）。**`STARTING_GOLD = 500`（確定）**。作成直後のキャラは装備なし（ショップ/ドロップで整える）。`initialShopStock` は MVP では未実装（解放ティアのみ保持）。
 
 ### 4.2 設定 `GameSettings` とマイグレーション
 

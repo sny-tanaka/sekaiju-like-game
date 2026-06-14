@@ -74,6 +74,7 @@ interface RaceMaster {
   statGrowth: StatGrowth;       // Lvごとの各能力上昇量
   baseStatsAtLv1: Stats;
   unionSkillTree: SkillTreeDef; // 種族固有（ユニオンスキル含む）
+  defaultClassId: ClassId;      // 推奨/既定の職業（任意。種族・職業は作成時に自由選択するため、UI の初期値程度の意味）
 }
 ```
 
