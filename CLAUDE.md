@@ -31,6 +31,10 @@
 - クラウド実行環境でヘッドレス Chrome を使ってスクリーンショットを撮る手順は
   [dev-docs/screenshot-setup.md](./dev-docs/screenshot-setup.md) を参照してください。
   - プリインストール済み Chromium（`/opt/pw-browsers`）を使うこと（`npx playwright install` は基本ブロックされます）。
+  - **必ず Noto Sans JP で撮ること**（フォールバックフォントで撮らない）。本環境は HTTPS を傍受しており
+    Google Fonts CDN が証明書エラーで遮断されるため、撮影時は次の2点を必ず行う:
+    1. `browser.newContext({ ignoreHTTPSErrors: true })` で証明書エラーを無視する。
+    2. スクショ前に `await page.evaluate(() => document.fonts.ready)` でフォント読込完了を待つ。
 
 ## レビュー
 

@@ -32,6 +32,14 @@ Claude Code のクラウド実行環境（リモート実行環境）で、ヘ�
 3. **モジュール解決**: スクリプトをリポジトリ外（`/tmp`）に置くと `node_modules` を解決できない。
    - 絶対パスで `require('/path/to/repo/node_modules/playwright-core')` する、
      またはスクリプトをリポジトリ配下に置いて実行する。
+4. **Web フォント（Noto Sans JP）がフォールバックになる**: 本環境は HTTPS を独自証明書で
+   傍受しており、Google Fonts CDN（`fonts.googleapis.com` / `fonts.gstatic.com`）への接続が
+   `net::ERR_CERT_AUTHORITY_INVALID` で失敗する。その結果、スクショだけ Noto Sans JP ではなく
+   システムのフォールバックフォントで写ってしまう（**本番=実ブラウザでは正しく Noto になる**）。
+   - **対策（必須）**: 撮影時は必ず以下の2点を行う。
+     1. `browser.newContext({ ignoreHTTPSErrors: true })` で証明書エラーを無視し CDN を通す。
+     2. スクショ前に `await page.evaluate(() => document.fonts.ready)` で **Web フォントの
+        ロード完了を待つ**（`display=swap` のフォールバック→Noto 差し替えを待たないと混ざる）。
 
 ---
 
@@ -81,16 +89,22 @@ const BASE = 'http://localhost:5173/sekaiju-like-game';
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, // スマホ相当
     deviceScaleFactor: 2,
+    ignoreHTTPSErrors: true, // ★ CDN（Google Fonts）の証明書傍受を回避＝Noto Sans JP を通す
   });
   const page = await ctx.newPage();
 
   await page.goto(`${BASE}/title`, { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready); // ★ Web フォントのロード完了を待つ
+  await page.waitForTimeout(300); // 念のため差し替えの安定待ち
   await page.screenshot({ path: '/tmp/shot-title.png' }); // 出力はリポジトリ外
 
   await browser.close();
   console.log('SHOTS_DONE');
 })().catch((e) => { console.error(e); process.exit(1); });
 ```
+
+> 撮影後、`document.fonts` に `status === 'loaded'` の face が複数あれば Noto Sans JP が
+> 効いている証拠。0 件ならフォールバック表示になっているので上記2点を見直すこと。
 
 ```bash
 node /tmp/shot.cjs
