@@ -87,8 +87,8 @@ export const Page = () => {
         />
         <MenuButton
           label="ショップ"
-          description="装備・アイテム売買（Phase 3）"
-          disabled
+          description="装備・アイテム売買"
+          onClick={() => navigate('/shop')}
         />
         <MenuButton
           label="鍛冶屋"

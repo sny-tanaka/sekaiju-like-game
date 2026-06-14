@@ -3,12 +3,20 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
-import { GUILD_MEMBER_LIMIT } from '@/data/balance';
+import { GUILD_MEMBER_LIMIT, PARTY_MAX } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { RACES } from '@/data/races';
+import { formationCount, placeInRow, removeFromFormation } from '@/domain/formation';
 import { addCharacterToGuild, createCharacter } from '@/domain/saveData';
-import type { ClassId, RaceId } from '@/domain/types';
+import type { ClassId, RaceId, SaveData } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+
+type Pos = '前衛' | '後衛' | '控え';
+function positionOf(save: SaveData, charId: string): Pos {
+  if (save.guild.party.front.includes(charId)) return '前衛';
+  if (save.guild.party.back.includes(charId)) return '後衛';
+  return '控え';
+}
 
 // ギルド管理（[01 §9]）。Phase 0 では最小限のキャラ作成と一覧のみ。
 // 編成・転職・スキル振りは Phase 3 で拡張する。
@@ -110,22 +118,62 @@ export const Page = () => {
       </section>
 
       <section className={styles.list}>
-        <h2 className={styles.sectionTitle}>団員一覧</h2>
+        <h2 className={styles.sectionTitle}>
+          団員一覧{' '}
+          <span className={styles.count}>
+            （出撃 {formationCount(save)} / {PARTY_MAX}）
+          </span>
+        </h2>
         {members.length === 0 ? (
           <p className={styles.empty}>まだ冒険者がいません。</p>
         ) : (
           <ul className={styles.members}>
-            {members.map((m) => (
-              <li
-                key={m.id}
-                className={styles.member}
-              >
-                <span className={styles.memberName}>{m.name}</span>
-                <span className={styles.memberSub}>
-                  {RACES[m.raceId]?.name} / {CLASSES[m.classId]?.name} / Lv{m.level}
-                </span>
-              </li>
-            ))}
+            {members.map((m) => {
+              const pos = positionOf(save, m.id);
+              return (
+                <li
+                  key={m.id}
+                  className={styles.member}
+                >
+                  <button
+                    type="button"
+                    className={styles.memberMain}
+                    onClick={() => navigate(`/guild/char/${m.id}`)}
+                  >
+                    <span className={styles.memberName}>
+                      {m.name}
+                      <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>{pos}</span>
+                    </span>
+                    <span className={styles.memberSub}>
+                      {RACES[m.raceId]?.name} / {CLASSES[m.classId]?.name} / Lv{m.level} ›
+                    </span>
+                  </button>
+                  <div className={styles.posBtns}>
+                    <button
+                      type="button"
+                      className={`${styles.posBtn} ${pos === '前衛' ? styles.posBtnActive : ''}`}
+                      onClick={() => void applyAndPersist((s) => placeInRow(s, m.id, 'front'))}
+                    >
+                      前
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.posBtn} ${pos === '後衛' ? styles.posBtnActive : ''}`}
+                      onClick={() => void applyAndPersist((s) => placeInRow(s, m.id, 'back'))}
+                    >
+                      後
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.posBtn} ${pos === '控え' ? styles.posBtnActive : ''}`}
+                      onClick={() => void applyAndPersist((s) => removeFromFormation(s, m.id))}
+                    >
+                      控
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

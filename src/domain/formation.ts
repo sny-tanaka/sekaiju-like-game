@@ -43,3 +43,26 @@ export function setSlot(save: SaveData, row: Row, idx: number, charId: string | 
 
   return { ...save, guild: { ...save.guild, party: { front, back } } };
 }
+
+/** charId を編成から外して控えにする。 */
+export function removeFromFormation(save: SaveData, charId: string): SaveData {
+  const front = save.guild.party.front.map((id) => (id === charId ? null : id));
+  const back = save.guild.party.back.map((id) => (id === charId ? null : id));
+  return { ...save, guild: { ...save.guild, party: { front, back } } };
+}
+
+/** charId を指定列の最初の空きスロットへ入れる。空きが無ければ変更しない。 */
+export function placeInRow(save: SaveData, charId: string, row: Row): SaveData {
+  if (!save.guild.members.some((m) => m.id === charId)) return save;
+  const slots = row === 'front' ? save.guild.party.front : save.guild.party.back;
+  // すでにその列に居れば何もしない
+  if (slots.includes(charId)) return save;
+  const cleared = removeFromFormation(save, charId);
+  const target = row === 'front' ? cleared.guild.party.front : cleared.guild.party.back;
+  let idx = target.indexOf(null);
+  if (idx < 0) {
+    if (target.length < slotLen(row)) idx = target.length;
+    else return save; // 満員
+  }
+  return setSlot(cleared, row, idx, charId);
+}

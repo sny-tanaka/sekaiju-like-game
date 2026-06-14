@@ -3,7 +3,9 @@ import { Navigate, Route, Routes } from 'react-router';
 import { Page as BattlePage } from '@/pages/battle';
 import { Page as DungeonPage } from '@/pages/dungeon';
 import { Page as GuildPage } from '@/pages/guild';
+import { Page as GuildCharPage } from '@/pages/guild-char';
 import { Page as NotFoundPage } from '@/pages/not-found';
+import { Page as ShopPage } from '@/pages/shop';
 import { Page as TitlePage } from '@/pages/title';
 import { Page as TownPage } from '@/pages/town';
 
@@ -31,6 +33,14 @@ function App() {
       <Route
         path="/guild"
         element={<GuildPage />}
+      />
+      <Route
+        path="/guild/char/:id"
+        element={<GuildCharPage />}
+      />
+      <Route
+        path="/shop"
+        element={<ShopPage />}
       />
       <Route
         path="/dungeon"
