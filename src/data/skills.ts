@@ -504,7 +504,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_cleanse_draft: {
     id: 'skill_cleanse_draft',
     name: '解毒の秘薬',
-    description: '味方1人の状態異常を治療する。',
+    description: '味方全体の状態異常を治療する。',
   },
   skill_counter_throw: {
     id: 'skill_counter_throw',

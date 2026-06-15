@@ -590,9 +590,9 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_cleanse_draft',
     name: '解毒の秘薬',
     tree: 'title',
-    tpCost: (lv) => 3 + lv,
+    tpCost: (lv) => 4 + lv,
     element: 'almighty',
-    target: 'allyOne',
+    target: 'allyAll',
     effects: [{ kind: 'cleanse' }],
   },
   skill_counter_throw: {

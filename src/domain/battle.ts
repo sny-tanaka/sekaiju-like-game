@@ -289,8 +289,10 @@ function consumeBarrier(target: Combatant, dmg: number, log: BattleState['log'])
 }
 
 /**
- * 物理/魔法1ヒットを解決する（[03 §7]）。命中判定→障壁→ダメージ→ユニオン→反応（反撃/連携）。
- * isReaction=true（反撃/追撃由来）の場合は連鎖を防ぐため反応を再発火しない。
+ * 物理/魔法1ヒットを解決する（[03 §7]）。命中判定→障壁→ダメージ→ユニオン。
+ * 反応（反撃/連携追撃）は発火しない。呼び出し側が「行動（スキル/通常攻撃）単位」で
+ * 対象ごとに1回だけ triggerReactions を呼ぶ（多段ヒットでの過剰発動を防ぐ。[03 §6.5]）。
+ * 返り値: 命中したか・実ダメージ。
  */
 function strikeOnce(
   state: BattleState,
@@ -298,9 +300,9 @@ function strikeOnce(
   target: Combatant,
   p: { statBase: 'str' | 'int'; power: number; element: Element },
   rng: Rng,
-  opts: { isReaction?: boolean; actorUnion?: number } = {}
-): void {
-  if (target.isDown) return;
+  opts: { actorUnion?: number } = {}
+): { hit: boolean; dealt: number } {
+  if (target.isDown) return { hit: false, dealt: 0 };
   const res = computeDamage(
     actor,
     target,
@@ -314,23 +316,26 @@ function strikeOnce(
   );
   if (!res.hit) {
     state.log.push({ text: `${actor.name} の攻撃は外れた` });
-    return;
+    return { hit: false, dealt: 0 };
   }
   const dealt = consumeBarrier(target, res.damage, state.log);
   dealDamage(target, dealt, state.log);
   if (opts.actorUnion) gainUnion(actor, opts.actorUnion);
   gainUnion(target, 5);
-  state.log.push({
-    text: `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
-  });
-  if (!opts.isReaction) triggerReactions(state, actor, target, p.element, dealt, rng);
+  // 障壁で全吸収（dealt=0）した場合はダメージログを省く（「障壁で防いだ」は consumeBarrier で出力済み）。
+  if (dealt > 0) {
+    state.log.push({
+      text: `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
+    });
+  }
+  return { hit: true, dealt };
 }
 
 /**
- * 被弾に対する反応を解決する（[03 §6.5]）。
+ * 被弾に対する反応を「行動（スキル/通常攻撃）×対象」単位で1回解決する（[03 §6.5]）。
  * - 反撃（counter）: 被弾した target が生存し攻撃者と敵対していれば確率で反撃。
  * - 連携追撃（chase）: 攻撃側の味方が同属性 chase を持つなら、被弾した敵へ追撃。
- * いずれも isReaction=true で発火するため連鎖はしない。
+ * 反応由来の追加打（strikeOnce）はここからは反応を再発火しないため連鎖しない。
  */
 function triggerReactions(
   state: BattleState,
@@ -352,10 +357,7 @@ function triggerReactions(
         target,
         attacker,
         { statBase: st.statBase, power: st.power, element: el },
-        rng,
-        {
-          isReaction: true,
-        }
+        rng
       );
       if (attacker.isDown) break;
     }
@@ -373,10 +375,7 @@ function triggerReactions(
           ch,
           target,
           { statBase: st.statBase, power: st.power, element: st.element },
-          rng,
-          {
-            isReaction: true,
-          }
+          rng
         );
       }
     }
@@ -452,10 +451,24 @@ function applySkillEffect(
       const power = effect.power(level);
       for (const target of targets) {
         if (target.isDown) continue;
+        let landed = false;
+        let total = 0;
         for (let h = 0; h < hits; h++) {
           if (target.isDown) break;
-          strikeOnce(state, actor, target, { statBase: effect.statBase, power, element }, rng);
+          const r = strikeOnce(
+            state,
+            actor,
+            target,
+            { statBase: effect.statBase, power, element },
+            rng
+          );
+          if (r.hit) {
+            landed = true;
+            total += r.dealt;
+          }
         }
+        // 反応は「スキル×対象」単位で1回（多段でも追撃/反撃は1回。[03 §6.5]）。
+        if (landed) triggerReactions(state, actor, target, element, total, rng);
       }
       break;
     }
@@ -580,7 +593,11 @@ function basicAttack(state: BattleState, actor: Combatant, target: Combatant, rn
     : actor.isSummon && actor.summonKind
       ? (SUMMONS[actor.summonKind]?.attackElement ?? 'bash')
       : 'bash';
-  strikeOnce(state, actor, target, { statBase: 'str', power: 1, element }, rng, { actorUnion: 5 });
+  const r = strikeOnce(state, actor, target, { statBase: 'str', power: 1, element }, rng, {
+    actorUnion: 5,
+  });
+  // 通常攻撃は単発なのでヒット時に1回だけ反応を判定する（[03 §6.5]）。
+  if (r.hit) triggerReactions(state, actor, target, element, r.dealt, rng);
 }
 
 const avgAgi = (cs: Combatant[]) =>
