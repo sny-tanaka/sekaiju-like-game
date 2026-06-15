@@ -97,8 +97,8 @@ export const Page = () => {
         />
         <MenuButton
           label="図鑑 / 記録"
-          description="到達記録・図鑑（Phase 4-5）"
-          disabled
+          description="到達記録・モンスター図鑑"
+          onClick={() => navigate('/codex')}
         />
       </main>
 

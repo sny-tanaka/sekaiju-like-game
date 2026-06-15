@@ -2,6 +2,7 @@ import { type Meta, type StoryObj } from '@storybook/react-vite';
 
 import { FirstPersonView } from './FirstPersonView';
 
+import { BAND_THEMES } from '@/data/bandTheme';
 import { castView } from '@/domain/firstPersonView';
 import { findEventCell, generateFloor } from '@/domain/generateFloor';
 import { openDirs } from '@/domain/movement';
@@ -38,3 +39,8 @@ export const FoeAhead: StoryObj<T> = {
     foes: [{ x: foeAhead.x, y: foeAhead.y, alerted: true }],
   },
 };
+
+// 帯テーマ（[06 §8]）: 10層帯ごとに配色が変わる。
+export const ThemeCavern: StoryObj<T> = { args: { dir: facing, theme: BAND_THEMES[1] } };
+export const ThemeVolcano: StoryObj<T> = { args: { dir: facing, theme: BAND_THEMES[2] } };
+export const ThemeIce: StoryObj<T> = { args: { dir: facing, theme: BAND_THEMES[3] } };

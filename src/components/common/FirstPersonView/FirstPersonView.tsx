@@ -5,12 +5,24 @@ import styles from './style.module.scss';
 import { castView } from '@/domain/firstPersonView';
 import type { Dir, FloorMaster } from '@/domain/types';
 
+/** 帯テーマで切り替える配色（[06 §8]）。未指定は既定（樹海）。 */
+export type ViewTheme = {
+  sky: string;
+  ceiling: string;
+  floor: string;
+  wall: string;
+  frontWall: string;
+  outline: string;
+};
+
 type Props = {
   floor: FloorMaster;
   pos: { x: number; y: number };
   dir: Dir;
   /** 生存中の FOE の現在位置。正面の直線上にいると擬似3Dに重ねて表示する（[02 §6]）。 */
   foes?: { x: number; y: number; alerted: boolean }[];
+  /** 帯ごとの配色テーマ（[06 §8]）。 */
+  theme?: ViewTheme;
   /** 見通す最大マス数。 */
   maxDepth?: number;
   width?: number;
@@ -37,6 +49,7 @@ export const FirstPersonView = ({
   pos,
   dir,
   foes = [],
+  theme,
   maxDepth = 4,
   width = 358,
   height = 200,
@@ -44,6 +57,8 @@ export const FirstPersonView = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    // テーマ未指定なら既定色（樹海）。
+    const C = { ...COLORS, ...(theme ?? {}) };
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
@@ -71,7 +86,7 @@ export const FirstPersonView = ({
       ctx.fillStyle = fill;
       ctx.fill();
       if (stroke) {
-        ctx.strokeStyle = COLORS.outline;
+        ctx.strokeStyle = C.outline;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
@@ -79,7 +94,7 @@ export const FirstPersonView = ({
     const darken = (k: number) => `rgba(0,0,0,${Math.min(0.5, k * 0.13)})`;
 
     // 背景（空/床の地色）
-    ctx.fillStyle = COLORS.sky;
+    ctx.fillStyle = C.sky;
     ctx.fillRect(0, 0, W, H);
 
     // 奥から手前へ描く（手前が上に重なる）
@@ -96,7 +111,7 @@ export const FirstPersonView = ({
           [far.r, far.t],
           [far.l, far.t],
         ],
-        COLORS.ceiling
+        C.ceiling
       );
       quad(
         [
@@ -105,7 +120,7 @@ export const FirstPersonView = ({
           [far.r, far.b],
           [far.l, far.b],
         ],
-        COLORS.floor
+        C.floor
       );
 
       // 左壁 / 右壁（開口なら奥が見える暗色、壁なら壁色）
@@ -116,7 +131,7 @@ export const FirstPersonView = ({
           [far.l, far.b],
           [near.l, near.b],
         ],
-        slice.leftOpen ? COLORS.sky : COLORS.wall,
+        slice.leftOpen ? C.sky : C.wall,
         true
       );
       quad(
@@ -126,7 +141,7 @@ export const FirstPersonView = ({
           [far.r, far.b],
           [near.r, near.b],
         ],
-        slice.rightOpen ? COLORS.sky : COLORS.wall,
+        slice.rightOpen ? C.sky : C.wall,
         true
       );
 
@@ -139,7 +154,7 @@ export const FirstPersonView = ({
             [far.r, far.b],
             [far.l, far.b],
           ],
-          COLORS.frontWall,
+          C.frontWall,
           true
         );
       }
@@ -182,7 +197,7 @@ export const FirstPersonView = ({
         ctx.fillText('!', mx, my + 1);
       }
     }
-  }, [floor, pos, dir, foes, maxDepth, width, height]);
+  }, [floor, pos, dir, foes, theme, maxDepth, width, height]);
 
   return (
     <canvas

@@ -6,6 +6,7 @@ import styles from './style.module.scss';
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
+import { bandThemeFor } from '@/data/bandTheme';
 import { GATHER_TYPES } from '@/data/gather';
 import { ITEMS } from '@/data/items';
 import { MAP_ICONS } from '@/data/mapIcons';
@@ -202,7 +203,9 @@ export const Page = () => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
-        <div className={styles.depth}>{dive.depth}F</div>
+        <div className={styles.depth}>
+          {dive.depth}F <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
+        </div>
         <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
         <button
           type="button"
@@ -226,6 +229,7 @@ export const Page = () => {
           pos={dive.pos}
           dir={dive.dir}
           foes={foes}
+          theme={bandThemeFor(dive.depth)}
         />
       </div>
 

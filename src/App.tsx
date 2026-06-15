@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router';
 
 import { Page as BattlePage } from '@/pages/battle';
+import { Page as CodexPage } from '@/pages/codex';
 import { Page as DungeonPage } from '@/pages/dungeon';
 import { Page as ForgePage } from '@/pages/forge';
 import { Page as GuildPage } from '@/pages/guild';
@@ -46,6 +47,10 @@ function App() {
       <Route
         path="/forge"
         element={<ForgePage />}
+      />
+      <Route
+        path="/codex"
+        element={<CodexPage />}
       />
       <Route
         path="/dungeon"
