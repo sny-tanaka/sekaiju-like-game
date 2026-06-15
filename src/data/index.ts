@@ -3,6 +3,7 @@ import { ENEMIES } from '@/data/enemies';
 import { EQUIPMENT } from '@/data/equipment';
 import { GATHER_TYPES } from '@/data/gather';
 import { ITEMS } from '@/data/items';
+import { PASSIVE_SKILLS } from '@/data/passives';
 import { RACES } from '@/data/races';
 import { RECIPES } from '@/data/recipes';
 import { SKILLS } from '@/data/skills';
@@ -16,6 +17,7 @@ export { ENEMIES } from '@/data/enemies';
 export { EQUIPMENT } from '@/data/equipment';
 export { GATHER_TYPES } from '@/data/gather';
 export { ITEMS } from '@/data/items';
+export { PASSIVE_SKILLS } from '@/data/passives';
 export { RACES } from '@/data/races';
 export { RECIPES } from '@/data/recipes';
 export { SKILLS } from '@/data/skills';
@@ -29,6 +31,7 @@ export const MASTERS = {
   classes: CLASSES,
   titles: TITLES,
   skills: SKILLS,
+  passiveSkills: PASSIVE_SKILLS,
   unionSkills: UNION_SKILLS,
   summons: SUMMONS,
   gatherTypes: GATHER_TYPES,

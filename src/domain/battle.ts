@@ -8,6 +8,7 @@ import { UNION_SKILLS } from '@/data/unionSkills';
 import { computeDamage, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { forgeBonusFor } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
+import { computePassiveMods } from '@/domain/passives';
 import { computeBaseStats } from '@/domain/stats';
 import type {
   ActiveAilment,
@@ -18,6 +19,7 @@ import type {
   BattleState,
   Character,
   Combatant,
+  CombatState,
   Element,
   EnemyId,
   EquipBonuses,
@@ -81,6 +83,10 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
   if (!char) return null;
   const member = save.diveState?.party.find((p) => p.charId === charId);
   const stats = computeBaseStats(char);
+  // パッシブ常時効果（[03 §5.4]）。最大HP/TP はここで反映し、攻防系は Combatant.passive 経由で派生計算に乗せる。
+  const passive = computePassiveMods(char);
+  const maxHp = Math.round(stats.hp * (passive.maxHp ?? 1));
+  const maxTp = Math.round(stats.tp * (passive.maxTp ?? 1));
   const front = save.guild.party.front.includes(charId);
   return {
     id: charId,
@@ -89,12 +95,14 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
     row: front ? 'front' : 'back',
     stats,
     equip: aggregateEquip(char),
-    hp: member ? member.hp : stats.hp,
-    maxHp: stats.hp,
-    tp: member ? member.tp : stats.tp,
-    maxTp: stats.tp,
+    hp: member ? Math.min(member.hp, maxHp) : maxHp,
+    maxHp,
+    tp: member ? Math.min(member.tp, maxTp) : maxTp,
+    maxTp,
     buffs: [],
     ailments: member ? [...member.ailments] : [],
+    states: [],
+    passive,
     unionGauge: member?.unionGauge ?? 0,
     isDown: member ? member.hp <= 0 : false,
   };
@@ -253,6 +261,128 @@ function applyAilment(target: Combatant, a: ActiveAilment): void {
   target.ailments.push(a);
 }
 
+/** 反応系の戦闘状態を付与する（[03 §6.5]）。同種は1つに（リフレッシュ）。buffImmune 個体には効かない。 */
+function addState(target: Combatant, st: CombatState): void {
+  if (isBuffImmune(target)) return;
+  target.states = [...(target.states ?? []).filter((s) => s.kind !== st.kind), st];
+}
+
+/** 同陣営の味方（味方側なら召喚体も含む）。連携追撃の発動者探索に使う。 */
+function sameSide(state: BattleState, c: Combatant): Combatant[] {
+  return c.side === 'ally'
+    ? [...aliveSide(state, 'ally'), ...aliveSummons(state)]
+    : aliveSide(state, 'enemy');
+}
+
+/**
+ * 障壁（[03 §6.5]）。被弾ダメージを総量 absorb まで肩代わりする。残量を消費し、尽きたら解除。
+ * 返り値は障壁適用後の実ダメージ。
+ */
+function consumeBarrier(target: Combatant, dmg: number, log: BattleState['log']): number {
+  const st = (target.states ?? []).find((s) => s.kind === 'barrier' && s.absorb > 0);
+  if (!st || st.kind !== 'barrier') return dmg;
+  const absorbed = Math.min(st.absorb, dmg);
+  st.absorb -= absorbed;
+  if (absorbed > 0) log.push({ text: `${target.name} は障壁で ${absorbed} のダメージを防いだ` });
+  if (st.absorb <= 0) target.states = (target.states ?? []).filter((s) => s !== st);
+  return dmg - absorbed;
+}
+
+/**
+ * 物理/魔法1ヒットを解決する（[03 §7]）。命中判定→障壁→ダメージ→ユニオン→反応（反撃/連携）。
+ * isReaction=true（反撃/追撃由来）の場合は連鎖を防ぐため反応を再発火しない。
+ */
+function strikeOnce(
+  state: BattleState,
+  actor: Combatant,
+  target: Combatant,
+  p: { statBase: 'str' | 'int'; power: number; element: Element },
+  rng: Rng,
+  opts: { isReaction?: boolean; actorUnion?: number } = {}
+): void {
+  if (target.isDown) return;
+  const res = computeDamage(
+    actor,
+    target,
+    {
+      statBase: p.statBase,
+      power: p.power,
+      element: p.element,
+      elementMultiplier: elementMult(target, p.element),
+    },
+    rng
+  );
+  if (!res.hit) {
+    state.log.push({ text: `${actor.name} の攻撃は外れた` });
+    return;
+  }
+  const dealt = consumeBarrier(target, res.damage, state.log);
+  dealDamage(target, dealt, state.log);
+  if (opts.actorUnion) gainUnion(actor, opts.actorUnion);
+  gainUnion(target, 5);
+  state.log.push({
+    text: `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
+  });
+  if (!opts.isReaction) triggerReactions(state, actor, target, p.element, dealt, rng);
+}
+
+/**
+ * 被弾に対する反応を解決する（[03 §6.5]）。
+ * - 反撃（counter）: 被弾した target が生存し攻撃者と敵対していれば確率で反撃。
+ * - 連携追撃（chase）: 攻撃側の味方が同属性 chase を持つなら、被弾した敵へ追撃。
+ * いずれも isReaction=true で発火するため連鎖はしない。
+ */
+function triggerReactions(
+  state: BattleState,
+  attacker: Combatant,
+  target: Combatant,
+  element: Element,
+  dealt: number,
+  rng: Rng
+): void {
+  // 反撃: target → attacker
+  if (!target.isDown && !attacker.isDown && target.side !== attacker.side) {
+    for (const st of target.states ?? []) {
+      if (st.kind !== 'counter') continue;
+      if (rng.next() >= st.chance) continue;
+      state.log.push({ text: `${target.name} の反撃！` });
+      const el: Element = st.statBase === 'str' ? 'bash' : 'almighty';
+      strikeOnce(
+        state,
+        target,
+        attacker,
+        { statBase: st.statBase, power: st.power, element: el },
+        rng,
+        {
+          isReaction: true,
+        }
+      );
+      if (attacker.isDown) break;
+    }
+  }
+  // 連携追撃: 攻撃側の味方 chase 持ち → 被弾した敵
+  if (dealt > 0 && target.side !== attacker.side) {
+    for (const ch of sameSide(state, attacker)) {
+      if (ch.id === attacker.id || ch.isDown || target.isDown) continue;
+      for (const st of ch.states ?? []) {
+        if (st.kind !== 'chase') continue;
+        if (st.element !== element && st.element !== 'almighty' && element !== 'almighty') continue;
+        state.log.push({ text: `${ch.name} の連携追撃！` });
+        strikeOnce(
+          state,
+          ch,
+          target,
+          { statBase: st.statBase, power: st.power, element: st.element },
+          rng,
+          {
+            isReaction: true,
+          }
+        );
+      }
+    }
+  }
+}
+
 /** 状態異常の付与確率（[03 §6.2]）。 */
 function ailmentChance(base: number, attacker: Combatant, defender: Combatant): number {
   return clamp(
@@ -319,29 +449,12 @@ function applySkillEffect(
   switch (effect.kind) {
     case 'damage': {
       const hits = effect.hits ?? 1;
+      const power = effect.power(level);
       for (const target of targets) {
         if (target.isDown) continue;
         for (let h = 0; h < hits; h++) {
-          const res = computeDamage(
-            actor,
-            target,
-            {
-              statBase: effect.statBase,
-              power: effect.power(level),
-              element,
-              elementMultiplier: elementMult(target, element),
-            },
-            rng
-          );
-          if (res.hit) {
-            dealDamage(target, res.damage, state.log);
-            gainUnion(target, 5);
-            state.log.push({
-              text: `${actor.name} の攻撃！ ${target.name} に ${res.damage} ダメージ${res.critical ? '（会心）' : ''}`,
-            });
-          } else {
-            state.log.push({ text: `${actor.name} の攻撃は外れた` });
-          }
+          if (target.isDown) break;
+          strikeOnce(state, actor, target, { statBase: effect.statBase, power, element }, rng);
         }
       }
       break;
@@ -394,12 +507,72 @@ function applySkillEffect(
       state.log.push({ text: `${actor.name} は ${s.name} を召喚した！` });
       break;
     }
+    case 'counter': {
+      for (const target of targets) {
+        if (target.isDown) continue;
+        addState(target, {
+          kind: 'counter',
+          chance: effect.chance(level),
+          power: effect.power(level),
+          statBase: effect.statBase,
+          remainingTurns: effect.turns,
+        });
+      }
+      state.log.push({ text: `${actor.name} は反撃の構えを取った` });
+      break;
+    }
+    case 'chase': {
+      for (const target of targets) {
+        if (target.isDown) continue;
+        addState(target, {
+          kind: 'chase',
+          element, // このスキルの属性に反応して追撃する
+          power: effect.power(level),
+          statBase: effect.statBase,
+          remainingTurns: effect.turns,
+        });
+      }
+      state.log.push({ text: `${actor.name} は連携の構えを取った` });
+      break;
+    }
+    case 'decoy': {
+      for (const target of targets) {
+        if (target.isDown) continue;
+        addState(target, {
+          kind: 'decoy',
+          weight: effect.weight(level),
+          remainingTurns: effect.turns,
+        });
+      }
+      state.log.push({ text: `${actor.name} は敵の注意を引きつけた` });
+      break;
+    }
+    case 'barrier': {
+      for (const target of targets) {
+        if (target.isDown) continue;
+        addState(target, {
+          kind: 'barrier',
+          absorb: effect.absorb(level),
+          remainingTurns: effect.turns,
+        });
+      }
+      state.log.push({ text: `${actor.name} は守りの障壁を張った` });
+      break;
+    }
+    case 'cleanse': {
+      for (const target of targets) {
+        if (target.isDown || target.ailments.length === 0) continue;
+        target.ailments = [];
+        state.log.push({ text: `${target.name} の状態異常が治療された` });
+      }
+      break;
+    }
     default:
       break;
   }
 }
 
-/** 通常攻撃（物理・武器属性 or 素手 bash）。 */
+/** 通常攻撃（物理・武器属性 or 素手 bash）。反撃/連携追撃の対象になる（[03 §6.5]）。 */
 function basicAttack(state: BattleState, actor: Combatant, target: Combatant, rng: Rng): void {
   if (target.isDown) return;
   const element: Element = actor.enemyId
@@ -407,26 +580,25 @@ function basicAttack(state: BattleState, actor: Combatant, target: Combatant, rn
     : actor.isSummon && actor.summonKind
       ? (SUMMONS[actor.summonKind]?.attackElement ?? 'bash')
       : 'bash';
-  const res = computeDamage(
-    actor,
-    target,
-    { statBase: 'str', power: 1, element, elementMultiplier: elementMult(target, element) },
-    rng
-  );
-  if (res.hit) {
-    dealDamage(target, res.damage, state.log);
-    gainUnion(actor, 5);
-    gainUnion(target, 5);
-    state.log.push({
-      text: `${actor.name} の攻撃！ ${target.name} に ${res.damage} ダメージ${res.critical ? '（会心）' : ''}`,
-    });
-  } else {
-    state.log.push({ text: `${actor.name} の攻撃は外れた` });
-  }
+  strikeOnce(state, actor, target, { statBase: 'str', power: 1, element }, rng, { actorUnion: 5 });
 }
 
 const avgAgi = (cs: Combatant[]) =>
   cs.length === 0 ? 0 : cs.reduce((s, c) => s + c.stats.agi, 0) / cs.length;
+
+/** 挑発（decoy・[03 §6.5]）を加味した敵のターゲット抽選。重みは基本1＋decoy 合計。 */
+function pickByDecoy(targets: Combatant[], rng: Rng): Combatant {
+  const weights = targets.map(
+    (t) => 1 + (t.states ?? []).reduce((a, s) => a + (s.kind === 'decoy' ? s.weight : 0), 0)
+  );
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = rng.next() * total;
+  for (let i = 0; i < targets.length; i++) {
+    r -= weights[i];
+    if (r < 0) return targets[i];
+  }
+  return targets[targets.length - 1];
+}
 
 const isParalyzed = (c: Combatant) => c.ailments.some((a) => a.type === 'paralysis');
 const isAsleep = (c: Combatant) => c.ailments.some((a) => a.type === 'sleep');
@@ -554,7 +726,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   if (!skipEnemies) {
     for (const e of aliveSide(next, 'enemy')) {
       const targets = [...aliveSummons(next), ...aliveSide(next, 'ally')];
-      if (targets.length > 0) enemyCommands.set(e.id, rng.pick(targets).id);
+      if (targets.length > 0) enemyCommands.set(e.id, pickByDecoy(targets, rng).id);
     }
   }
 
@@ -677,6 +849,12 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     c.ailments = c.ailments
       .map((a) => ({ ...a, remainingTurns: a.remainingTurns - 1 }))
       .filter((a) => a.remainingTurns > 0);
+    // 反応系の戦闘状態（反撃/連携/挑発/障壁）も残ターンで減衰する（[03 §6.5]）。
+    if (c.states && c.states.length > 0) {
+      c.states = c.states
+        .map((s) => ({ ...s, remainingTurns: s.remainingTurns - 1 }))
+        .filter((s) => s.remainingTurns > 0);
+    }
   }
 
   // このターンに新たに倒した敵のドロップを抽選（[04 §7]）

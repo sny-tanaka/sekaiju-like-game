@@ -53,7 +53,11 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: () => 3,
     element: 'almighty',
     target: 'self',
-    effects: [{ kind: 'buff', stat: 'pdef', modifier: () => 1.3, turns: 2, stackGroup: 'defBuff' }],
+    // 物理防御を高めつつ、敵の攻撃を自身へ引きつける（挑発＝decoy。[03 §6.5]）。
+    effects: [
+      { kind: 'buff', stat: 'pdef', modifier: () => 1.3, turns: 2, stackGroup: 'defBuff' },
+      { kind: 'decoy', weight: (lv) => 2 + lv, turns: 2 },
+    ],
   },
   // 魔導士
   skill_fire_bolt: {
@@ -350,6 +354,261 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
         modifier: (lv) => 0.8 - 0.03 * lv,
         turns: 3,
         stackGroup: 'matkDebuff',
+      },
+    ],
+  },
+
+  // ============================================================================
+  // Phase 6-2b: スキル類型のエンジン拡張（連携追撃 / 反撃 / 障壁 / 治療など）
+  // ============================================================================
+
+  // ---- 戦士（連携・反攻） ----
+  skill_chain_slash: {
+    id: 'skill_chain_slash',
+    name: '連刃の構え',
+    tree: 'master',
+    tpCost: () => 5,
+    element: 'slash', // この属性のダメージに反応して追撃する
+    target: 'self',
+    effects: [{ kind: 'chase', statBase: 'str', power: (lv) => 0.6 + 0.1 * lv, turns: 3 }],
+  },
+  skill_riposte: {
+    id: 'skill_riposte',
+    name: '反攻の構え',
+    tree: 'master',
+    tpCost: () => 5,
+    element: 'almighty',
+    target: 'self',
+    effects: [
+      {
+        kind: 'counter',
+        chance: (lv) => 0.4 + 0.05 * lv,
+        power: (lv) => 1.0 + 0.1 * lv,
+        statBase: 'str',
+        turns: 3,
+      },
+    ],
+  },
+
+  // ---- 守護兵（守りの障壁・反撃） ----
+  skill_line_guard: {
+    id: 'skill_line_guard',
+    name: 'ラインガード',
+    tree: 'master',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [{ kind: 'barrier', absorb: (lv) => 30 + 15 * lv, turns: 2 }],
+  },
+  skill_counter_guard: {
+    id: 'skill_counter_guard',
+    name: 'カウンターガード',
+    tree: 'master',
+    tpCost: () => 5,
+    element: 'almighty',
+    target: 'self',
+    effects: [
+      {
+        kind: 'counter',
+        chance: (lv) => 0.5 + 0.04 * lv,
+        power: (lv) => 1.1 + 0.1 * lv,
+        statBase: 'str',
+        turns: 3,
+      },
+    ],
+  },
+
+  // ---- 魔導士（属性殲滅） ----
+  skill_fire_storm: {
+    id: 'skill_fire_storm',
+    name: 'ファイアストーム',
+    tree: 'master',
+    tpCost: (lv) => 6 + lv,
+    element: 'fire',
+    target: 'enemyAll',
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 0.9 + 0.15 * lv }],
+  },
+
+  // ---- 狩人（救護） ----
+  skill_first_aid: {
+    id: 'skill_first_aid',
+    name: '救護指示',
+    tree: 'master',
+    tpCost: (lv) => 4 + lv,
+    element: 'almighty',
+    target: 'allyOne',
+    effects: [{ kind: 'heal', amount: (lv) => 30 + 15 * lv }],
+  },
+
+  // ---- 薬師（治療・スモーク） ----
+  skill_refresh_herb: {
+    id: 'skill_refresh_herb',
+    name: 'リフレシュハーブ',
+    tree: 'master',
+    tpCost: (lv) => 5 + lv,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [{ kind: 'cleanse' }],
+  },
+  skill_poison_smoke: {
+    id: 'skill_poison_smoke',
+    name: 'ポイズンスモーク',
+    tree: 'master',
+    tpCost: (lv) => 5 + lv,
+    element: 'almighty',
+    target: 'enemyAll',
+    effects: [{ kind: 'ailment', ailment: 'poison', chance: (lv) => 0.4 + 0.04 * lv, turns: 3 }],
+  },
+
+  // ---- 剣舞士（守りの舞・癒しの歌） ----
+  skill_guard_dance: {
+    id: 'skill_guard_dance',
+    name: '守りの舞',
+    tree: 'master',
+    tpCost: () => 6,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'pdef',
+        modifier: (lv) => 1.2 + 0.05 * lv,
+        turns: 3,
+        stackGroup: 'defBuff',
+      },
+    ],
+  },
+  skill_healing_song: {
+    id: 'skill_healing_song',
+    name: '癒しの歌',
+    tree: 'master',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [{ kind: 'heal', amount: (lv) => 18 + 10 * lv }],
+  },
+
+  // ---- 拳聖（封じ拳・反撃） ----
+  skill_arm_break: {
+    id: 'skill_arm_break',
+    name: 'アームブレイク',
+    tree: 'master',
+    tpCost: (lv) => 4 + lv,
+    element: 'bash',
+    target: 'enemyOne',
+    effects: [
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.15 * lv },
+      { kind: 'ailment', ailment: 'armBind', chance: (lv) => 0.4 + 0.05 * lv, turns: 3 },
+    ],
+  },
+  skill_cross_counter: {
+    id: 'skill_cross_counter',
+    name: 'クロスカウンター',
+    tree: 'master',
+    tpCost: () => 5,
+    element: 'almighty',
+    target: 'self',
+    effects: [
+      {
+        kind: 'counter',
+        chance: (lv) => 0.5 + 0.04 * lv,
+        power: (lv) => 1.3 + 0.1 * lv,
+        statBase: 'str',
+        turns: 3,
+      },
+    ],
+  },
+
+  // ---- 呪術士（盲目・防弱） ----
+  skill_blind_hex: {
+    id: 'skill_blind_hex',
+    name: '盲目の呪',
+    tree: 'master',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'enemyAll',
+    effects: [{ kind: 'ailment', ailment: 'blind', chance: (lv) => 0.35 + 0.03 * lv, turns: 3 }],
+  },
+  skill_armor_hex: {
+    id: 'skill_armor_hex',
+    name: '鎧弱の呪',
+    tree: 'master',
+    tpCost: (lv) => 5 + lv,
+    element: 'almighty',
+    target: 'enemyOne',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'pdef',
+        modifier: (lv) => 0.8 - 0.03 * lv,
+        turns: 3,
+        stackGroup: 'pdefDebuff',
+      },
+    ],
+  },
+
+  // ---- 降霊術士（死霊召喚・障壁・爆裂） ----
+  skill_call_wraith: {
+    id: 'skill_call_wraith',
+    name: '死霊召喚',
+    tree: 'base',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'self',
+    effects: [{ kind: 'summon', summonKind: 'summon_wraith' }],
+  },
+  skill_soul_barrier: {
+    id: 'skill_soul_barrier',
+    name: '無慈悲な盾',
+    tree: 'base',
+    tpCost: (lv) => 5 + lv,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [{ kind: 'barrier', absorb: (lv) => 25 + 12 * lv, turns: 2 }],
+  },
+  skill_call_sentinel: {
+    id: 'skill_call_sentinel',
+    name: '亡者の壁',
+    tree: 'master',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'self',
+    effects: [{ kind: 'summon', summonKind: 'summon_revenant' }],
+  },
+  skill_soul_burst: {
+    id: 'skill_soul_burst',
+    name: '死霊爆裂',
+    tree: 'master',
+    tpCost: (lv) => 7 + lv,
+    element: 'almighty',
+    target: 'enemyAll',
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 0.9 + 0.15 * lv }],
+  },
+
+  // ---- 称号アクティブ（第2ツリー） ----
+  skill_cleanse_draft: {
+    id: 'skill_cleanse_draft',
+    name: '解毒の秘薬',
+    tree: 'title',
+    tpCost: (lv) => 3 + lv,
+    element: 'almighty',
+    target: 'allyOne',
+    effects: [{ kind: 'cleanse' }],
+  },
+  skill_counter_throw: {
+    id: 'skill_counter_throw',
+    name: '当て身投げ',
+    tree: 'title',
+    tpCost: () => 5,
+    element: 'almighty',
+    target: 'self',
+    effects: [
+      {
+        kind: 'counter',
+        chance: (lv) => 0.45 + 0.05 * lv,
+        power: (lv) => 1.2 + 0.1 * lv,
+        statBase: 'str',
+        turns: 3,
       },
     ],
   },

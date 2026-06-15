@@ -17,6 +17,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     raceSkillTree: {
       skills: [
         { skillId: 'skill_union_rally', maxLevel: 3 },
+        { skillId: 'passive_race_human_adapt', maxLevel: 3 },
         { skillId: 'skill_mining', maxLevel: 1 },
         { skillId: 'skill_gathering', maxLevel: 1 },
       ],
@@ -33,6 +34,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     raceSkillTree: {
       skills: [
         { skillId: 'skill_union_smash', maxLevel: 3 },
+        { skillId: 'passive_race_garon_might', maxLevel: 3 },
         { skillId: 'skill_logging', maxLevel: 1 },
         { skillId: 'skill_hunting', maxLevel: 1 },
       ],
@@ -49,6 +51,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     raceSkillTree: {
       skills: [
         { skillId: 'skill_union_nova', maxLevel: 3 },
+        { skillId: 'passive_race_pix_focus', maxLevel: 3 },
         { skillId: 'skill_gathering', maxLevel: 1 },
         { skillId: 'skill_harvest', maxLevel: 1 },
       ],
@@ -65,6 +68,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     raceSkillTree: {
       skills: [
         { skillId: 'skill_union_fang', maxLevel: 3 },
+        { skillId: 'passive_race_therian_swift', maxLevel: 3 },
         { skillId: 'skill_fishing', maxLevel: 1 },
         { skillId: 'skill_hunting', maxLevel: 1 },
         { skillId: 'skill_harvest', maxLevel: 1 },
@@ -82,6 +86,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     raceSkillTree: {
       skills: [
         { skillId: 'skill_union_moonlight', maxLevel: 3 },
+        { skillId: 'passive_race_lunar_grace', maxLevel: 3 },
         { skillId: 'skill_gathering', maxLevel: 1 },
         { skillId: 'skill_harvest', maxLevel: 1 },
       ],
@@ -98,6 +103,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
     raceSkillTree: {
       skills: [
         { skillId: 'skill_union_quake', maxLevel: 3 },
+        { skillId: 'passive_race_golan_fortitude', maxLevel: 3 },
         { skillId: 'skill_mining', maxLevel: 1 },
         { skillId: 'skill_logging', maxLevel: 1 },
       ],

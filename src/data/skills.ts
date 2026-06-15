@@ -199,4 +199,316 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
     name: '魔弱の呪',
     description: '単体の魔法攻撃力を下げる。',
   },
+
+  // ============================================================================
+  // Phase 6-2b: パッシブ・連携追撃・反撃・障壁・治療などの追加スキル
+  // ============================================================================
+
+  // ---- 種族パッシブ ----
+  passive_race_human_adapt: {
+    id: 'passive_race_human_adapt',
+    name: '適応力',
+    description: '最大HPと命中が上昇する（常時）。',
+  },
+  passive_race_garon_might: {
+    id: 'passive_race_garon_might',
+    name: '剛力',
+    description: '物理攻撃力と最大HPが上昇する（常時）。',
+  },
+  passive_race_pix_focus: {
+    id: 'passive_race_pix_focus',
+    name: '魔力集中',
+    description: '魔法攻撃力と最大TPが上昇する（常時）。',
+  },
+  passive_race_therian_swift: {
+    id: 'passive_race_therian_swift',
+    name: '俊足',
+    description: '命中と回避が上昇する（常時）。',
+  },
+  passive_race_lunar_grace: {
+    id: 'passive_race_lunar_grace',
+    name: '月の加護',
+    description: '魔法防御と最大TPが上昇する（常時）。',
+  },
+  passive_race_golan_fortitude: {
+    id: 'passive_race_golan_fortitude',
+    name: '頑健',
+    description: '物理防御と最大HPが上昇する（常時）。',
+  },
+
+  // ---- 職業パッシブ ----
+  passive_warrior_blade_mastery: {
+    id: 'passive_warrior_blade_mastery',
+    name: '剣の心得',
+    description: '剣を装備中、物理攻撃力が上昇する（常時）。',
+  },
+  passive_warrior_phys_boost: {
+    id: 'passive_warrior_phys_boost',
+    name: '剛腕',
+    description: '物理攻撃力が上昇する（常時）。',
+  },
+  passive_guardian_shield_mastery: {
+    id: 'passive_guardian_shield_mastery',
+    name: '盾の心得',
+    description: '物理防御が上昇する（常時）。',
+  },
+  passive_guardian_hp_boost: {
+    id: 'passive_guardian_hp_boost',
+    name: '頑強',
+    description: '最大HPが上昇する（常時）。',
+  },
+  passive_mage_staff_mastery: {
+    id: 'passive_mage_staff_mastery',
+    name: '杖の心得',
+    description: '杖を装備中、魔法攻撃力が上昇する（常時）。',
+  },
+  passive_mage_tp_boost: {
+    id: 'passive_mage_tp_boost',
+    name: '精神統一',
+    description: '最大TPが上昇する（常時）。',
+  },
+  passive_ranger_bow_mastery: {
+    id: 'passive_ranger_bow_mastery',
+    name: '弓の心得',
+    description: '弓を装備中、物理攻撃力が上昇する（常時）。',
+  },
+  passive_ranger_agi_boost: {
+    id: 'passive_ranger_agi_boost',
+    name: '機敏',
+    description: '命中と回避が上昇する（常時）。',
+  },
+  passive_medic_tp_boost: {
+    id: 'passive_medic_tp_boost',
+    name: '薬学の知識',
+    description: '最大TPが上昇する（常時）。',
+  },
+  passive_medic_mdef_boost: {
+    id: 'passive_medic_mdef_boost',
+    name: '抗体',
+    description: '魔法防御が上昇する（常時）。',
+  },
+  passive_dancer_agi_boost: {
+    id: 'passive_dancer_agi_boost',
+    name: '舞踏の足捌き',
+    description: '回避と命中が上昇する（常時）。',
+  },
+  passive_dancer_tp_boost: {
+    id: 'passive_dancer_tp_boost',
+    name: '高揚',
+    description: '最大TPが上昇する（常時）。',
+  },
+  passive_monk_fist_mastery: {
+    id: 'passive_monk_fist_mastery',
+    name: '拳の心得',
+    description: '拳を装備中、物理攻撃力が上昇する（常時）。',
+  },
+  passive_monk_crit_boost: {
+    id: 'passive_monk_crit_boost',
+    name: '練達',
+    description: 'クリティカル率が上昇する（常時）。',
+  },
+  passive_hexer_matk_boost: {
+    id: 'passive_hexer_matk_boost',
+    name: '呪詛',
+    description: '魔法攻撃力が上昇する（常時）。',
+  },
+  passive_hexer_mdef_boost: {
+    id: 'passive_hexer_mdef_boost',
+    name: '瘴気の衣',
+    description: '魔法防御が上昇する（常時）。',
+  },
+  passive_summoner_staff_mastery: {
+    id: 'passive_summoner_staff_mastery',
+    name: '霊媒の心得',
+    description: '杖を装備中、魔法攻撃力が上昇する（常時）。',
+  },
+  passive_summoner_tp_boost: {
+    id: 'passive_summoner_tp_boost',
+    name: '死霊術の知識',
+    description: '最大TPが上昇する（常時）。',
+  },
+
+  // ---- 称号パッシブ ----
+  passive_title_berserker: {
+    id: 'passive_title_berserker',
+    name: '狂気の力',
+    description: '物理攻撃力とクリティカル率が上昇する（常時）。',
+  },
+  passive_title_sentinel: {
+    id: 'passive_title_sentinel',
+    name: '警戒',
+    description: '物理防御と命中が上昇する（常時）。',
+  },
+  passive_title_bulwark: {
+    id: 'passive_title_bulwark',
+    name: '鉄壁',
+    description: '物理防御と最大HPが上昇する（常時）。',
+  },
+  passive_title_vanguard: {
+    id: 'passive_title_vanguard',
+    name: '突撃',
+    description: '物理攻撃力が大きく上昇する（常時）。',
+  },
+  passive_title_pyromancer: {
+    id: 'passive_title_pyromancer',
+    name: '業火',
+    description: '魔法攻撃力が大きく上昇する（常時）。',
+  },
+  passive_title_sage: {
+    id: 'passive_title_sage',
+    name: '英知',
+    description: '最大TPと魔法防御が上昇する（常時）。',
+  },
+  passive_title_sniper: {
+    id: 'passive_title_sniper',
+    name: '精密射撃',
+    description: 'クリティカル率と命中が上昇する（常時）。',
+  },
+  passive_title_tracker: {
+    id: 'passive_title_tracker',
+    name: '隠密',
+    description: '回避が大きく上昇する（常時）。',
+  },
+  passive_title_saint: {
+    id: 'passive_title_saint',
+    name: '慈愛',
+    description: '最大TPと魔法防御が上昇する（常時）。',
+  },
+  passive_title_blade_dancer: {
+    id: 'passive_title_blade_dancer',
+    name: '剣の舞',
+    description: '物理攻撃力と回避が上昇する（常時）。',
+  },
+  passive_title_muse: {
+    id: 'passive_title_muse',
+    name: '詩心',
+    description: '最大TPが大きく上昇する（常時）。',
+  },
+  passive_title_zen: {
+    id: 'passive_title_zen',
+    name: '不動',
+    description: '物理防御と最大HPが上昇する（常時）。',
+  },
+  passive_title_plague: {
+    id: 'passive_title_plague',
+    name: '疫病',
+    description: '魔法攻撃力が大きく上昇する（常時）。',
+  },
+  passive_title_warlock: {
+    id: 'passive_title_warlock',
+    name: '魔道の極み',
+    description: '魔法攻撃力とクリティカル率が上昇する（常時）。',
+  },
+  passive_title_necromancer: {
+    id: 'passive_title_necromancer',
+    name: '降霊',
+    description: '魔法攻撃力と最大TPが上昇する（常時）。',
+  },
+  passive_title_puppeteer: {
+    id: 'passive_title_puppeteer',
+    name: '傀儡操糸',
+    description: '最大HPと最大TPが上昇する（常時）。',
+  },
+
+  // ---- 追加アクティブスキル ----
+  skill_chain_slash: {
+    id: 'skill_chain_slash',
+    name: '連刃の構え',
+    description: '味方が斬属性で敵を攻撃した時、追撃する構えを取る（数ターン）。',
+  },
+  skill_riposte: {
+    id: 'skill_riposte',
+    name: '反攻の構え',
+    description: '敵の攻撃を受けた時、確率で反撃する構えを取る（数ターン）。',
+  },
+  skill_line_guard: {
+    id: 'skill_line_guard',
+    name: 'ラインガード',
+    description: '味方全体に、被弾を肩代わりする障壁を張る（数ターン）。',
+  },
+  skill_counter_guard: {
+    id: 'skill_counter_guard',
+    name: 'カウンターガード',
+    description: '敵の攻撃を受けた時、高確率で反撃する構えを取る（数ターン）。',
+  },
+  skill_fire_storm: {
+    id: 'skill_fire_storm',
+    name: 'ファイアストーム',
+    description: '敵全体に火属性魔法ダメージ。',
+  },
+  skill_first_aid: {
+    id: 'skill_first_aid',
+    name: '救護指示',
+    description: '味方1人のHPを回復する。',
+  },
+  skill_refresh_herb: {
+    id: 'skill_refresh_herb',
+    name: 'リフレシュハーブ',
+    description: '味方全体の状態異常を治療する。',
+  },
+  skill_poison_smoke: {
+    id: 'skill_poison_smoke',
+    name: 'ポイズンスモーク',
+    description: '敵全体を確率で毒にする。',
+  },
+  skill_guard_dance: {
+    id: 'skill_guard_dance',
+    name: '守りの舞',
+    description: '味方全体の物理防御を高める。',
+  },
+  skill_healing_song: {
+    id: 'skill_healing_song',
+    name: '癒しの歌',
+    description: '味方全体のHPを小回復する。',
+  },
+  skill_arm_break: {
+    id: 'skill_arm_break',
+    name: 'アームブレイク',
+    description: '単体に壊打ダメージを与え、確率で腕を封じる。',
+  },
+  skill_cross_counter: {
+    id: 'skill_cross_counter',
+    name: 'クロスカウンター',
+    description: '敵の攻撃を受けた時、高確率で強烈な反撃を行う構えを取る（数ターン）。',
+  },
+  skill_blind_hex: {
+    id: 'skill_blind_hex',
+    name: '盲目の呪',
+    description: '敵全体を確率で盲目にする。',
+  },
+  skill_armor_hex: {
+    id: 'skill_armor_hex',
+    name: '鎧弱の呪',
+    description: '単体の物理防御を下げる。',
+  },
+  skill_call_wraith: {
+    id: 'skill_call_wraith',
+    name: '死霊召喚',
+    description: '自律して敵を貫通攻撃する死霊を最前列に呼ぶ（戦闘限り）。',
+  },
+  skill_soul_barrier: {
+    id: 'skill_soul_barrier',
+    name: '無慈悲な盾',
+    description: '味方全体に、被弾を肩代わりする障壁を張る（数ターン）。',
+  },
+  skill_call_sentinel: {
+    id: 'skill_call_sentinel',
+    name: '亡者の壁',
+    description: '敵の攻撃を引き受ける高耐久の壁を最前列に呼ぶ（戦闘限り）。',
+  },
+  skill_soul_burst: {
+    id: 'skill_soul_burst',
+    name: '死霊爆裂',
+    description: '敵全体に無属性魔法ダメージ。',
+  },
+  skill_cleanse_draft: {
+    id: 'skill_cleanse_draft',
+    name: '解毒の秘薬',
+    description: '味方1人の状態異常を治療する。',
+  },
+  skill_counter_throw: {
+    id: 'skill_counter_throw',
+    name: '当て身投げ',
+    description: '敵の攻撃を受けた時、確率で反撃する構えを取る（数ターン）。',
+  },
 };

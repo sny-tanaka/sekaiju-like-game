@@ -8,6 +8,7 @@ import type {
   Element,
   EnemyMaster,
   EquipBonuses,
+  PassiveMods,
   PhysElement,
   Rng,
   Stats,
@@ -56,26 +57,28 @@ export function buffMultiplier(buffs: ActiveBuff[], stat: BuffStatTarget): numbe
 }
 
 /**
- * 素ステータス＋装備＋バフから戦闘派生値を算出（[03 §7]）。
- * patk = str*2 + 装備atk、… にバフ倍率を乗算。命中/回避/クリ率も算出。
+ * 素ステータス＋装備＋バフ＋パッシブから戦闘派生値を算出（[03 §7]）。
+ * patk = str*2 + 装備atk、… にバフ倍率とパッシブ常時倍率（[03 §5.4]）を乗算。命中/回避/クリ率も算出。
  */
 export function deriveCombat(
   stats: Stats,
   equip: EquipBonuses,
-  buffs: ActiveBuff[]
+  buffs: ActiveBuff[],
+  passive?: PassiveMods
 ): DerivedCombat {
-  const patk = (stats.str * 2 + (equip.atk ?? 0)) * buffMultiplier(buffs, 'patk');
-  const pdef = (stats.vit * 2 + (equip.def ?? 0)) * buffMultiplier(buffs, 'pdef');
-  const matk = (stats.int * 2 + (equip.mat ?? 0)) * buffMultiplier(buffs, 'matk');
-  const mdef = (stats.mnd * 2 + (equip.mdf ?? 0)) * buffMultiplier(buffs, 'mdef');
+  const p = (k: keyof PassiveMods) => passive?.[k] ?? 1;
+  const patk = (stats.str * 2 + (equip.atk ?? 0)) * buffMultiplier(buffs, 'patk') * p('patk');
+  const pdef = (stats.vit * 2 + (equip.def ?? 0)) * buffMultiplier(buffs, 'pdef') * p('pdef');
+  const matk = (stats.int * 2 + (equip.mat ?? 0)) * buffMultiplier(buffs, 'matk') * p('matk');
+  const mdef = (stats.mnd * 2 + (equip.mdf ?? 0)) * buffMultiplier(buffs, 'mdef') * p('mdef');
   return {
     patk,
     pdef,
     matk,
     mdef,
     hit: stats.agi,
-    acc: stats.agi * buffMultiplier(buffs, 'acc'),
-    eva: stats.agi * buffMultiplier(buffs, 'eva'),
+    acc: stats.agi * buffMultiplier(buffs, 'acc') * p('acc'),
+    eva: stats.agi * buffMultiplier(buffs, 'eva') * p('eva'),
     crit: stats.luc,
   };
 }
@@ -100,8 +103,8 @@ export function computeDamage(
   rng: Rng
 ): DamageResult {
   const isPhysical = params.statBase === 'str';
-  const atkD = deriveCombat(attacker.stats, attacker.equip, attacker.buffs);
-  const defD = deriveCombat(defender.stats, defender.equip, defender.buffs);
+  const atkD = deriveCombat(attacker.stats, attacker.equip, attacker.buffs, attacker.passive);
+  const defD = deriveCombat(defender.stats, defender.equip, defender.buffs, defender.passive);
   const atk = isPhysical ? atkD.patk : atkD.matk;
   const def = isPhysical ? defD.pdef : defD.mdef;
 
@@ -136,9 +139,11 @@ export function computeDamage(
 
   let dmg = mitigated * params.elementMultiplier * rowMult * variance;
 
-  // ③ クリティカル
+  // ③ クリティカル（パッシブ crit は加算補正。[03 §5.4]）
   const critRate = clamp(
-    BALANCE.CRIT_BASE + (attacker.stats.luc - defender.stats.luc) * BALANCE.CRIT_LUC_K,
+    BALANCE.CRIT_BASE +
+      (attacker.stats.luc - defender.stats.luc) * BALANCE.CRIT_LUC_K +
+      (attacker.passive?.crit ?? 0),
     BALANCE.CRIT_MIN,
     BALANCE.CRIT_MAX
   );

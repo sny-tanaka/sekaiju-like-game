@@ -1,5 +1,6 @@
 import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { MASTERS } from '@/data/index';
+import { PASSIVE_SKILLS } from '@/data/passives';
 import { SELL_UNLOCKS } from '@/domain/shop';
 import type { SkillTreeDef } from '@/domain/types';
 
@@ -133,6 +134,20 @@ export function validateMasters(): ValidationResult {
       errors.push(
         `[unionSkills] "${def.id}" が BATTLE_SKILLS にも存在（通常スキルとして撃ててしまう）`
       );
+    }
+  }
+
+  // パッシブスキル（[03 §5.4]）: ID 規約・キー一致・skills 実在・他レジストリとの非重複
+  checkIdConvention('passiveSkills', Object.keys(PASSIVE_SKILLS), errors);
+  for (const [key, def] of Object.entries(PASSIVE_SKILLS)) {
+    if (key !== def.id) errors.push(`[passiveSkills] キー "${key}" と id "${def.id}" が不一致`);
+    if (!skillIds.has(def.id)) errors.push(`[passiveSkills] "${def.id}" が skills に未定義`);
+    // パッシブは「撃つ」スキルではないので BATTLE_SKILLS / UNION_SKILLS に混入してはならない。
+    if (def.id in BATTLE_SKILLS) {
+      errors.push(`[passiveSkills] "${def.id}" が BATTLE_SKILLS にも存在（戦闘で撃ててしまう）`);
+    }
+    if (def.id in unionSkills) {
+      errors.push(`[passiveSkills] "${def.id}" が UNION_SKILLS にも存在`);
     }
   }
 

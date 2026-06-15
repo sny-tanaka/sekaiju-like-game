@@ -42,4 +42,28 @@ export const SUMMONS: Record<SummonKind, SummonMaster> = {
     persistsAfterBattle: true,
     persistsOutOfDungeon: false,
   },
+  // 死霊（降霊術士）: 自律して敵を貫通攻撃する攻撃役。戦闘終了で消える。
+  summon_wraith: {
+    id: 'summon_wraith',
+    name: '死霊',
+    baseStats: { hp: 40, tp: 0, str: 13, vit: 5, agi: 13, int: 8, mnd: 5, luc: 6 },
+    refDepth: 1,
+    attackElement: 'pierce',
+    actsOnTurn: true,
+    buffImmune: false,
+    persistsAfterBattle: false,
+    persistsOutOfDungeon: false,
+  },
+  // 亡者の壁（降霊術士）: 攻撃せず敵の攻撃を引き受ける高耐久の壁。戦闘終了で消える。
+  summon_revenant: {
+    id: 'summon_revenant',
+    name: '亡者の壁',
+    baseStats: { hp: 120, tp: 0, str: 4, vit: 17, agi: 3, int: 2, mnd: 11, luc: 2 },
+    refDepth: 1,
+    attackElement: 'bash',
+    actsOnTurn: false,
+    buffImmune: true,
+    persistsAfterBattle: false,
+    persistsOutOfDungeon: false,
+  },
 };
