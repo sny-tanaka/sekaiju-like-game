@@ -1,11 +1,10 @@
 import type { ClassId, ClassMaster } from '@/domain/types';
 
 // ============================================================================
-// 職業マスター（[01 §4]）。
-// スキルツリーは「基本＋達人＋パッシブ」を3段の前提チェーンで構成（本家相当の厚み）。
-// T1（前提なし）→ T2（T1を Lv2〜3 で解放）→ T3（T2を Lv3〜5 で解放・奥義級）。
+// 職業マスター（[01 §4]）。本家『世界樹の迷宮V』相当の厚み（各20前後・4段）。
+// スキルツリーは T1（前提なし）→ T2（T1 を Lv2-3）→ T3（T2 を Lv3）→ T4（T3 を Lv3・奥義）。
 // 各ツリーの先頭ノードは作成/転職時に Lv1 で無料付与される起点アクティブ（charProgress）。
-// 役割の幅は本家『世界樹の迷宮V』を参考に拡充（固有名詞は本作オリジナル）。
+// 役割の幅は本家の職業類型を参考に拡充（固有名詞は本作オリジナル）。
 // ============================================================================
 
 export const CLASSES: Record<ClassId, ClassMaster> = {
@@ -15,14 +14,12 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     name: '戦士',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_power_slash', maxLevel: 5 },
         { skillId: 'passive_warrior_blade_mastery', maxLevel: 3 },
         { skillId: 'passive_warrior_axe_mastery', maxLevel: 3 },
         { skillId: 'passive_warrior_phys_boost', maxLevel: 3 },
         { skillId: 'skill_guard_stance', maxLevel: 3 },
         { skillId: 'skill_warrior_war_cry', maxLevel: 3 },
-        // T2
         {
           skillId: 'skill_cleave',
           maxLevel: 5,
@@ -53,7 +50,6 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'passive_warrior_phys_boost', level: 2 }],
         },
-        // T3
         {
           skillId: 'skill_warrior_blade_storm',
           maxLevel: 5,
@@ -69,6 +65,36 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'passive_warrior_crit_focus', level: 3 }],
         },
+        {
+          skillId: 'skill_warrior_flame_blade',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_warrior_double_slash', level: 2 }],
+        },
+        {
+          skillId: 'skill_warrior_armor_crush',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_warrior_heavy_swing', level: 3 }],
+        },
+        {
+          skillId: 'passive_warrior_dual_edge',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_warrior_crit_focus', level: 2 }],
+        },
+        {
+          skillId: 'skill_warrior_blade_dance',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_warrior_flame_blade', level: 3 }],
+        },
+        {
+          skillId: 'skill_warrior_savage_blow',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_warrior_armor_crush', level: 3 }],
+        },
+        {
+          skillId: 'skill_warrior_meteor_strike',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_warrior_blade_storm', level: 3 }],
+        },
       ],
     },
     equipableWeaponTypes: ['sword', 'axe'],
@@ -81,14 +107,12 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     name: '守護兵',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_shield_bash', maxLevel: 5 },
         { skillId: 'passive_guardian_shield_mastery', maxLevel: 3 },
         { skillId: 'passive_guardian_spear_mastery', maxLevel: 3 },
         { skillId: 'passive_guardian_hp_boost', maxLevel: 3 },
         { skillId: 'skill_provoke', maxLevel: 3 },
         { skillId: 'skill_summon_bulwark', maxLevel: 3 },
-        // T2
         {
           skillId: 'skill_line_guard',
           maxLevel: 3,
@@ -119,7 +143,11 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'skill_counter_guard', level: 2 }],
         },
-        // T3
+        {
+          skillId: 'skill_guardian_spear_thrust',
+          maxLevel: 5,
+          requires: [{ skillId: 'passive_guardian_spear_mastery', level: 2 }],
+        },
         {
           skillId: 'skill_guardian_aegis',
           maxLevel: 3,
@@ -129,6 +157,36 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           skillId: 'passive_guardian_iron_will',
           maxLevel: 3,
           requires: [{ skillId: 'passive_guardian_mdef_boost', level: 3 }],
+        },
+        {
+          skillId: 'skill_guardian_shield_throw',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_guardian_shield_press', level: 3 }],
+        },
+        {
+          skillId: 'skill_guardian_bulwark_stance',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_guardian_taunt_roar', level: 3 }],
+        },
+        {
+          skillId: 'skill_guardian_iron_counter',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_guardian_retribution', level: 3 }],
+        },
+        {
+          skillId: 'skill_guardian_phalanx',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_guardian_aegis', level: 3 }],
+        },
+        {
+          skillId: 'skill_guardian_great_wall',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_guardian_phalanx', level: 2 }],
+        },
+        {
+          skillId: 'skill_guardian_dragon_lance',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_guardian_spear_thrust', level: 3 }],
         },
       ],
     },
@@ -142,7 +200,6 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     name: '魔導士',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_fire_bolt', maxLevel: 5 },
         {
           skillId: 'skill_ice_bolt',
@@ -157,7 +214,6 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
         { skillId: 'passive_mage_staff_mastery', maxLevel: 3 },
         { skillId: 'passive_mage_tp_boost', maxLevel: 3 },
         { skillId: 'skill_mage_focus', maxLevel: 3 },
-        // T2
         {
           skillId: 'skill_fire_storm',
           maxLevel: 5,
@@ -183,7 +239,11 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 2,
           requires: [{ skillId: 'passive_mage_tp_boost', level: 2 }],
         },
-        // T3
+        {
+          skillId: 'skill_mage_mana_charge',
+          maxLevel: 5,
+          requires: [{ skillId: 'passive_mage_tp_boost', level: 2 }],
+        },
         {
           skillId: 'skill_mage_meteor',
           maxLevel: 5,
@@ -199,6 +259,36 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'passive_mage_matk_boost', level: 3 }],
         },
+        {
+          skillId: 'skill_mage_fire_lance',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_fire_storm', level: 2 }],
+        },
+        {
+          skillId: 'skill_mage_frost_lance',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_mage_ice_storm', level: 2 }],
+        },
+        {
+          skillId: 'skill_mage_volt_lance',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_mage_volt_storm', level: 2 }],
+        },
+        {
+          skillId: 'passive_mage_overload',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_mage_matk_boost', level: 2 }],
+        },
+        {
+          skillId: 'skill_mage_absolute_zero',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_mage_frost_lance', level: 3 }],
+        },
+        {
+          skillId: 'skill_mage_ragnarok',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_mage_thunderbolt', level: 3 }],
+        },
       ],
     },
     equipableWeaponTypes: ['staff'],
@@ -211,23 +301,26 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     name: '狩人',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_aimed_shot', maxLevel: 5 },
-        { skillId: 'passive_ranger_bow_mastery', maxLevel: 3 },
-        { skillId: 'passive_ranger_agi_boost', maxLevel: 3 },
         { skillId: 'skill_spread_shot', maxLevel: 5 },
         { skillId: 'skill_leg_snipe', maxLevel: 3 },
         { skillId: 'skill_arm_snipe', maxLevel: 3 },
-        // T2
+        { skillId: 'passive_ranger_bow_mastery', maxLevel: 3 },
+        { skillId: 'passive_ranger_agi_boost', maxLevel: 3 },
         {
           skillId: 'skill_head_snipe',
           maxLevel: 3,
-          requires: [{ skillId: 'skill_aimed_shot', level: 1 }],
+          requires: [{ skillId: 'skill_aimed_shot', level: 2 }],
         },
         {
           skillId: 'skill_ranger_piercing_arrow',
           maxLevel: 5,
           requires: [{ skillId: 'skill_aimed_shot', level: 3 }],
+        },
+        {
+          skillId: 'skill_ranger_double_shot',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_aimed_shot', level: 2 }],
         },
         {
           skillId: 'skill_ranger_rain_of_arrows',
@@ -244,18 +337,65 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'passive_ranger_bow_mastery', level: 2 }],
         },
-        { skillId: 'skill_first_aid', maxLevel: 3 },
-        { skillId: 'skill_summon_wolf', maxLevel: 3 },
-        // T3
+        {
+          skillId: 'passive_ranger_swift_hands',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_ranger_bow_mastery', level: 2 }],
+        },
+        {
+          skillId: 'skill_first_aid',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_ranger_agi_boost', level: 2 }],
+        },
+        {
+          skillId: 'skill_summon_wolf',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_ranger_agi_boost', level: 2 }],
+        },
         {
           skillId: 'skill_ranger_charged_shot',
           maxLevel: 5,
           requires: [{ skillId: 'skill_ranger_piercing_arrow', level: 3 }],
         },
         {
-          skillId: 'skill_ranger_summon_falcon',
+          skillId: 'skill_ranger_binding_volley',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_ranger_rain_of_arrows', level: 3 }],
+        },
+        {
+          skillId: 'skill_ranger_hunters_mark',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_ranger_eagle_eye', level: 3 }],
+        },
+        {
+          skillId: 'skill_ranger_falconry',
           maxLevel: 3,
           requires: [{ skillId: 'skill_summon_wolf', level: 3 }],
+        },
+        {
+          skillId: 'skill_ranger_field_dressing',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_first_aid', level: 3 }],
+        },
+        {
+          skillId: 'skill_ranger_volley_chase',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_ranger_double_shot', level: 3 }],
+        },
+        {
+          skillId: 'passive_ranger_predator',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_ranger_swift_hands', level: 3 }],
+        },
+        {
+          skillId: 'skill_ranger_apollo_shot',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_ranger_charged_shot', level: 3 }],
+        },
+        {
+          skillId: 'skill_ranger_sky_volley',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_ranger_binding_volley', level: 3 }],
         },
       ],
     },
@@ -269,14 +409,12 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     name: '薬師',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_heal', maxLevel: 5 },
         { skillId: 'skill_protect_hymn', maxLevel: 3 },
-        { skillId: 'passive_medic_tp_boost', maxLevel: 3 },
-        { skillId: 'passive_medic_mdef_boost', maxLevel: 3 },
         { skillId: 'skill_refresh_herb', maxLevel: 3 },
         { skillId: 'skill_poison_smoke', maxLevel: 3 },
-        // T2
+        { skillId: 'passive_medic_tp_boost', maxLevel: 3 },
+        { skillId: 'passive_medic_mdef_boost', maxLevel: 3 },
         {
           skillId: 'skill_mass_heal',
           maxLevel: 5,
@@ -288,9 +426,9 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           requires: [{ skillId: 'skill_heal', level: 3 }],
         },
         {
-          skillId: 'skill_medic_tp_tonic',
+          skillId: 'skill_medic_immune_hymn',
           maxLevel: 3,
-          requires: [{ skillId: 'passive_medic_tp_boost', level: 2 }],
+          requires: [{ skillId: 'skill_protect_hymn', level: 2 }],
         },
         {
           skillId: 'skill_medic_blind_powder',
@@ -298,15 +436,69 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           requires: [{ skillId: 'skill_poison_smoke', level: 2 }],
         },
         {
+          skillId: 'skill_medic_sleep_mist',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_poison_smoke', level: 2 }],
+        },
+        {
+          skillId: 'skill_medic_tp_tonic',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_medic_tp_boost', level: 2 }],
+        },
+        {
           skillId: 'passive_medic_mind_boost',
           maxLevel: 3,
           requires: [{ skillId: 'skill_heal', level: 2 }],
         },
-        // T3
+        {
+          skillId: 'passive_medic_healing_hands',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_medic_mdef_boost', level: 2 }],
+        },
+        {
+          skillId: 'passive_medic_staff_mastery',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_medic_mdef_boost', level: 2 }],
+        },
         {
           skillId: 'skill_medic_party_cure',
           maxLevel: 5,
           requires: [{ skillId: 'skill_mass_heal', level: 3 }],
+        },
+        {
+          skillId: 'skill_medic_regen_balm',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_medic_full_heal', level: 3 }],
+        },
+        {
+          skillId: 'skill_medic_paralysis_powder',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_medic_sleep_mist', level: 3 }],
+        },
+        {
+          skillId: 'skill_medic_weakening_smoke',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_medic_blind_powder', level: 3 }],
+        },
+        {
+          skillId: 'skill_medic_revive_draft',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_medic_tp_tonic', level: 3 }],
+        },
+        {
+          skillId: 'passive_medic_vitality',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_medic_healing_hands', level: 3 }],
+        },
+        {
+          skillId: 'skill_medic_salvation',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_medic_party_cure', level: 3 }],
+        },
+        {
+          skillId: 'skill_medic_panacea',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_medic_regen_balm', level: 3 }],
         },
       ],
     },
@@ -314,20 +506,18 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     equipableArmorTypes: ['clothes', 'light'],
     titleOptions: ['title_saint', 'title_apothecary'],
   },
-  // 剣舞士: 舞と歌でパーティを強化・回復する支援職。
+  // 剣舞士: 舞と歌でパーティを強化・回復し、剣舞で攻撃もこなす支援職。
   class_dancer: {
     id: 'class_dancer',
     name: '剣舞士',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_war_dance', maxLevel: 3 },
         { skillId: 'skill_evasion_dance', maxLevel: 3 },
+        { skillId: 'skill_guard_dance', maxLevel: 3 },
         { skillId: 'skill_weaken_song', maxLevel: 3 },
         { skillId: 'passive_dancer_agi_boost', maxLevel: 3 },
         { skillId: 'passive_dancer_tp_boost', maxLevel: 3 },
-        { skillId: 'skill_guard_dance', maxLevel: 3 },
-        // T2
         {
           skillId: 'skill_healing_song',
           maxLevel: 3,
@@ -335,6 +525,11 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
         },
         {
           skillId: 'skill_dancer_inspire_dance',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_war_dance', level: 2 }],
+        },
+        {
+          skillId: 'skill_dancer_chant_of_valor',
           maxLevel: 3,
           requires: [{ skillId: 'skill_war_dance', level: 2 }],
         },
@@ -349,15 +544,64 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           requires: [{ skillId: 'skill_evasion_dance', level: 2 }],
         },
         {
+          skillId: 'skill_dancer_dual_blade',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_evasion_dance', level: 2 }],
+        },
+        {
+          skillId: 'skill_dancer_curse_dance',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_weaken_song', level: 2 }],
+        },
+        {
           skillId: 'passive_dancer_grace',
           maxLevel: 3,
           requires: [{ skillId: 'passive_dancer_agi_boost', level: 2 }],
         },
-        // T3
+        {
+          skillId: 'passive_dancer_blade_mastery',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_dancer_agi_boost', level: 2 }],
+        },
         {
           skillId: 'skill_dancer_revival_dance',
           maxLevel: 3,
           requires: [{ skillId: 'skill_healing_song', level: 3 }],
+        },
+        {
+          skillId: 'skill_dancer_mana_song',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_dancer_inspire_dance', level: 3 }],
+        },
+        {
+          skillId: 'skill_dancer_lullaby_song',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_dancer_curse_dance', level: 3 }],
+        },
+        {
+          skillId: 'skill_dancer_blade_chase',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_dancer_dual_blade', level: 3 }],
+        },
+        {
+          skillId: 'passive_dancer_resonance',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_dancer_grace', level: 3 }],
+        },
+        {
+          skillId: 'passive_dancer_vigor',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_dancer_blade_mastery', level: 3 }],
+        },
+        {
+          skillId: 'skill_dancer_grand_finale',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_dancer_revival_dance', level: 3 }],
+        },
+        {
+          skillId: 'skill_dancer_storm_waltz',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_dancer_blade_waltz', level: 3 }],
         },
       ],
     },
@@ -371,14 +615,12 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     name: '拳聖',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_triple_strike', maxLevel: 5 },
         { skillId: 'skill_monk_palm_strike', maxLevel: 5 },
         { skillId: 'passive_monk_fist_mastery', maxLevel: 3 },
         { skillId: 'passive_monk_crit_boost', maxLevel: 3 },
         { skillId: 'passive_monk_hp_boost', maxLevel: 3 },
         { skillId: 'skill_focus_ki', maxLevel: 3 },
-        // T2
         {
           skillId: 'skill_arm_break',
           maxLevel: 5,
@@ -395,7 +637,12 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           requires: [{ skillId: 'skill_triple_strike', level: 3 }],
         },
         {
-          skillId: 'skill_iron_body',
+          skillId: 'skill_monk_double_palm',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_monk_palm_strike', level: 3 }],
+        },
+        {
+          skillId: 'skill_monk_ki_guard',
           maxLevel: 3,
           requires: [{ skillId: 'skill_focus_ki', level: 2 }],
         },
@@ -409,16 +656,50 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'passive_monk_crit_boost', level: 2 }],
         },
-        // T3
+        {
+          skillId: 'passive_monk_counter_mastery',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_monk_fist_mastery', level: 2 }],
+        },
         {
           skillId: 'skill_monk_head_smash',
           maxLevel: 3,
           requires: [{ skillId: 'skill_monk_leg_sweep', level: 3 }],
         },
         {
+          skillId: 'skill_monk_pressure_point',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_arm_break', level: 3 }],
+        },
+        {
+          skillId: 'skill_monk_whirlwind_kick',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_monk_double_palm', level: 3 }],
+        },
+        {
+          skillId: 'skill_iron_body',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_monk_ki_guard', level: 3 }],
+        },
+        {
+          skillId: 'skill_monk_breathing',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_monk_counter_mastery', level: 3 }],
+        },
+        {
           skillId: 'skill_monk_rising_dragon',
           maxLevel: 5,
           requires: [{ skillId: 'skill_monk_flurry', level: 3 }],
+        },
+        {
+          skillId: 'skill_monk_seven_star',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_monk_whirlwind_kick', level: 3 }],
+        },
+        {
+          skillId: 'skill_monk_demon_palm',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_monk_pressure_point', level: 3 }],
         },
       ],
     },
@@ -432,14 +713,12 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     name: '呪術士',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_venom_hex', maxLevel: 5 },
         { skillId: 'skill_sleep_hex', maxLevel: 3 },
         { skillId: 'skill_weaken_hex', maxLevel: 3 },
         { skillId: 'passive_hexer_matk_boost', maxLevel: 3 },
         { skillId: 'passive_hexer_mdef_boost', maxLevel: 3 },
         { skillId: 'passive_hexer_acc_boost', maxLevel: 3 },
-        // T2
         {
           skillId: 'skill_hexer_paralyze_hex',
           maxLevel: 5,
@@ -470,7 +749,16 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'skill_venom_hex', level: 3 }],
         },
-        // T3
+        {
+          skillId: 'skill_hexer_drowsy_hex',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_sleep_hex', level: 2 }],
+        },
+        {
+          skillId: 'passive_hexer_curse_lore',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_hexer_matk_boost', level: 2 }],
+        },
         {
           skillId: 'skill_hexer_doom_hex',
           maxLevel: 5,
@@ -480,6 +768,36 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           skillId: 'skill_hexer_curse_field',
           maxLevel: 3,
           requires: [{ skillId: 'skill_hexer_mass_venom', level: 3 }],
+        },
+        {
+          skillId: 'skill_hexer_mass_paralyze',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_hexer_paralyze_hex', level: 3 }],
+        },
+        {
+          skillId: 'skill_hexer_def_hex',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_armor_hex', level: 3 }],
+        },
+        {
+          skillId: 'skill_hexer_dark_bolt',
+          maxLevel: 5,
+          requires: [{ skillId: 'passive_hexer_curse_lore', level: 3 }],
+        },
+        {
+          skillId: 'skill_hexer_nightmare',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_hexer_drowsy_hex', level: 3 }],
+        },
+        {
+          skillId: 'skill_hexer_calamity',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_hexer_mass_paralyze', level: 3 }],
+        },
+        {
+          skillId: 'skill_hexer_mdef_hex',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_hexer_def_hex', level: 3 }],
         },
       ],
     },
@@ -493,14 +811,12 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     name: '降霊術士',
     skillTree: {
       skills: [
-        // T1
         { skillId: 'skill_call_wraith', maxLevel: 3 },
         { skillId: 'skill_soul_barrier', maxLevel: 3 },
         { skillId: 'skill_summoner_soul_drain', maxLevel: 5 },
         { skillId: 'passive_summoner_staff_mastery', maxLevel: 3 },
         { skillId: 'passive_summoner_tp_boost', maxLevel: 3 },
         { skillId: 'passive_summoner_mdef_boost', maxLevel: 3 },
-        // T2
         {
           skillId: 'skill_call_sentinel',
           maxLevel: 3,
@@ -526,7 +842,16 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 3,
           requires: [{ skillId: 'passive_summoner_tp_boost', level: 2 }],
         },
-        // T3
+        {
+          skillId: 'skill_summoner_necro_bolt',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_summoner_soul_drain', level: 2 }],
+        },
+        {
+          skillId: 'skill_summoner_spirit_veil',
+          maxLevel: 3,
+          requires: [{ skillId: 'passive_summoner_mdef_boost', level: 2 }],
+        },
         {
           skillId: 'skill_summoner_oblivion',
           maxLevel: 5,
@@ -536,6 +861,36 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           skillId: 'skill_summoner_spirit_chase',
           maxLevel: 3,
           requires: [{ skillId: 'skill_summoner_soul_drain', level: 3 }],
+        },
+        {
+          skillId: 'skill_summoner_grave_field',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_summoner_grave_chill', level: 3 }],
+        },
+        {
+          skillId: 'skill_summoner_soul_ward',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_summoner_spirit_veil', level: 3 }],
+        },
+        {
+          skillId: 'passive_summoner_spirit_lore',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_summoner_necro_bolt', level: 3 }],
+        },
+        {
+          skillId: 'skill_summoner_annihilation',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_summoner_oblivion', level: 3 }],
+        },
+        {
+          skillId: 'skill_summoner_soul_render',
+          maxLevel: 5,
+          requires: [{ skillId: 'passive_summoner_spirit_lore', level: 3 }],
+        },
+        {
+          skillId: 'skill_necromancer_t_call_revenant',
+          maxLevel: 3,
+          requires: [{ skillId: 'skill_summoner_soul_ward', level: 3 }],
         },
       ],
     },

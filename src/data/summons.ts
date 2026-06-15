@@ -42,6 +42,18 @@ export const SUMMONS: Record<SummonKind, SummonMaster> = {
     persistsAfterBattle: true,
     persistsOutOfDungeon: false,
   },
+  // 鷹（狩人）: 自律して敵を貫通攻撃する攻撃役。狼より素早く手数で勝る。戦闘終了で消える。
+  summon_falcon: {
+    id: 'summon_falcon',
+    name: '召喚獣・鷹',
+    baseStats: { hp: 38, tp: 0, str: 11, vit: 5, agi: 18, int: 5, mnd: 4, luc: 8 },
+    refDepth: 1,
+    attackElement: 'pierce',
+    actsOnTurn: true,
+    buffImmune: false,
+    persistsAfterBattle: false,
+    persistsOutOfDungeon: false,
+  },
   // 死霊（降霊術士）: 自律して敵を貫通攻撃する攻撃役。戦闘終了で消える。
   summon_wraith: {
     id: 'summon_wraith',

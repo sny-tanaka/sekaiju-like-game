@@ -469,6 +469,94 @@ export const PASSIVE_SKILLS: Record<SkillId, PassiveSkillDef> = {
     tree: 'title',
     mods: (lv) => ({ maxHp: 1 + 0.04 * lv, maxTp: 1 + 0.04 * lv }),
   },
+
+  // ---- Phase 6-2d: ツリー本家相当拡充の追加パッシブ ----
+  passive_warrior_dual_edge: {
+    id: 'passive_warrior_dual_edge',
+    name: '双刃の理',
+    tree: 'base',
+    mods: (lv) => ({ patk: 1 + 0.04 * lv, crit: 0.015 * lv }),
+  },
+  passive_mage_overload: {
+    id: 'passive_mage_overload',
+    name: '魔導過負荷',
+    tree: 'base',
+    mods: (lv) => ({ matk: 1 + 0.04 * lv }),
+  },
+  passive_ranger_keen_eye: {
+    id: 'passive_ranger_keen_eye',
+    name: '精密眼',
+    tree: 'base',
+    mods: (lv) => ({ acc: 1 + 0.03 * lv, crit: 0.015 * lv }),
+  },
+  passive_ranger_swift_hands: {
+    id: 'passive_ranger_swift_hands',
+    name: '速射の手',
+    tree: 'base',
+    mods: (lv) => ({ patk: 1 + 0.03 * lv }),
+  },
+  passive_ranger_predator: {
+    id: 'passive_ranger_predator',
+    name: '狩猟本能',
+    tree: 'base',
+    mods: (lv) => ({ patk: 1 + 0.04 * lv, crit: 0.015 * lv }),
+  },
+  passive_medic_healing_hands: {
+    id: 'passive_medic_healing_hands',
+    name: '癒しの手',
+    tree: 'base',
+    mods: (lv) => ({ matk: 1 + 0.03 * lv }),
+  },
+  passive_medic_staff_mastery: {
+    id: 'passive_medic_staff_mastery',
+    name: '杖の心得',
+    tree: 'base',
+    weaponType: 'staff',
+    mods: (lv) => ({ matk: 1 + 0.04 * lv }),
+  },
+  passive_medic_vitality: {
+    id: 'passive_medic_vitality',
+    name: '健勝',
+    tree: 'base',
+    mods: (lv) => ({ maxHp: 1 + 0.04 * lv }),
+  },
+  passive_dancer_blade_mastery: {
+    id: 'passive_dancer_blade_mastery',
+    name: '剣の心得',
+    tree: 'base',
+    weaponType: 'sword',
+    mods: (lv) => ({ patk: 1 + 0.04 * lv }),
+  },
+  passive_dancer_vigor: {
+    id: 'passive_dancer_vigor',
+    name: '活力',
+    tree: 'base',
+    mods: (lv) => ({ maxHp: 1 + 0.04 * lv }),
+  },
+  passive_dancer_resonance: {
+    id: 'passive_dancer_resonance',
+    name: '共鳴',
+    tree: 'base',
+    mods: (lv) => ({ matk: 1 + 0.03 * lv, maxTp: 1 + 0.03 * lv }),
+  },
+  passive_monk_counter_mastery: {
+    id: 'passive_monk_counter_mastery',
+    name: '反骨',
+    tree: 'base',
+    mods: (lv) => ({ patk: 1 + 0.03 * lv, crit: 0.015 * lv }),
+  },
+  passive_hexer_curse_lore: {
+    id: 'passive_hexer_curse_lore',
+    name: '呪術の知識',
+    tree: 'base',
+    mods: (lv) => ({ matk: 1 + 0.04 * lv }),
+  },
+  passive_summoner_spirit_lore: {
+    id: 'passive_summoner_spirit_lore',
+    name: '冥導',
+    tree: 'base',
+    mods: (lv) => ({ matk: 1 + 0.03 * lv, maxTp: 1 + 0.03 * lv }),
+  },
 };
 
 /** パッシブスキルか。 */

@@ -999,4 +999,407 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
     name: '操糸の妙',
     description: '最大HPと最大TPが上昇する（常時）。',
   },
+
+  // ============================================================================
+  // Phase 6-2d: ツリー本家相当拡充（T4 4段化）の追加スキル
+  // ============================================================================
+  // ---- 戦士 ----
+  skill_warrior_flame_blade: {
+    id: 'skill_warrior_flame_blade',
+    name: 'フレイムブレイド',
+    description: '剣に炎を纏わせ単体に火属性の斬撃を放つ。',
+  },
+  skill_warrior_whirlwind: {
+    id: 'skill_warrior_whirlwind',
+    name: 'ワールウィンド',
+    description: '斧で全方位を薙ぎ払い敵全体を強打する。',
+  },
+  skill_warrior_armor_crush: {
+    id: 'skill_warrior_armor_crush',
+    name: 'アーマークラッシュ',
+    description: '斧で単体を打ち砕き、確率で腕を封じる。',
+  },
+  skill_warrior_blade_dance: {
+    id: 'skill_warrior_blade_dance',
+    name: 'ブレイドダンス',
+    description: '単体に高速の3連斬を浴びせる。',
+  },
+  passive_warrior_dual_edge: {
+    id: 'passive_warrior_dual_edge',
+    name: '双刃の理',
+    description: '物理攻撃とクリティカル率が上昇する（常時）。',
+  },
+  skill_warrior_savage_blow: {
+    id: 'skill_warrior_savage_blow',
+    name: 'サベージブロウ',
+    description: '渾身の一撃を単体に叩き込む斧の極奥義。',
+  },
+  skill_warrior_meteor_strike: {
+    id: 'skill_warrior_meteor_strike',
+    name: 'メテオストライク',
+    description: '剣で敵全体を斬り裂く極大の全体奥義。',
+  },
+  // ---- 守護兵 ----
+  skill_guardian_shield_throw: {
+    id: 'skill_guardian_shield_throw',
+    name: 'シールドスロー',
+    description: '盾を投げ敵全体を強打し、確率で麻痺させる。',
+  },
+  skill_guardian_spear_thrust: {
+    id: 'skill_guardian_spear_thrust',
+    name: 'スピアスラスト',
+    description: '槍で単体を鋭く貫く突き技。',
+  },
+  skill_guardian_bulwark_stance: {
+    id: 'skill_guardian_bulwark_stance',
+    name: 'バルワークの構え',
+    description: '物理防御を大きく高め、敵の注意を引きつける。',
+  },
+  skill_guardian_iron_counter: {
+    id: 'skill_guardian_iron_counter',
+    name: 'アイアンカウンター',
+    description: '構えをとり、被弾時に高確率で強烈な反撃を返す。',
+  },
+  skill_guardian_phalanx: {
+    id: 'skill_guardian_phalanx',
+    name: 'ファランクス',
+    description: '味方全体に被弾を肩代わりする障壁を張る。',
+  },
+  skill_guardian_dragon_lance: {
+    id: 'skill_guardian_dragon_lance',
+    name: 'ドラゴンランス',
+    description: '槍で単体を貫く渾身の極奥義。',
+  },
+  skill_guardian_great_wall: {
+    id: 'skill_guardian_great_wall',
+    name: 'グレートウォール',
+    description: '味方全体に極大の障壁を展開する城壁の奥義。',
+  },
+  // ---- 魔導士 ----
+  skill_mage_fire_lance: {
+    id: 'skill_mage_fire_lance',
+    name: 'ファイアランス',
+    description: '単体に上位の火属性魔法ダメージ。',
+  },
+  skill_mage_frost_lance: {
+    id: 'skill_mage_frost_lance',
+    name: 'フロストランス',
+    description: '単体に上位の氷属性魔法を放ち、確率で麻痺させる。',
+  },
+  skill_mage_volt_lance: {
+    id: 'skill_mage_volt_lance',
+    name: 'ボルトランス',
+    description: '単体に上位の雷属性魔法ダメージ。',
+  },
+  skill_mage_mana_charge: {
+    id: 'skill_mage_mana_charge',
+    name: 'マナチャージ',
+    description: '自身のTPを回復する魔導士の秘術。',
+  },
+  skill_mage_absolute_zero: {
+    id: 'skill_mage_absolute_zero',
+    name: 'アブソリュートゼロ',
+    description: '敵全体を凍てつかせる極大の氷属性奥義。',
+  },
+  skill_mage_ragnarok: {
+    id: 'skill_mage_ragnarok',
+    name: 'ラグナロク',
+    description: '単体を無属性の極大魔法で滅する極奥義。',
+  },
+  passive_mage_overload: {
+    id: 'passive_mage_overload',
+    name: '魔導過負荷',
+    description: '魔法攻撃が大きく上昇する（常時）。',
+  },
+  // ---- 狩人 ----
+  skill_ranger_double_shot: {
+    id: 'skill_ranger_double_shot',
+    name: 'ダブルショット',
+    description: '単体に2連続の射撃を浴びせる。',
+  },
+  skill_ranger_sky_volley: {
+    id: 'skill_ranger_sky_volley',
+    name: '空裂の斉射',
+    description: '敵全体に降り注ぐ強力な射撃ダメージ（奥義）。',
+  },
+  skill_ranger_apollo_shot: {
+    id: 'skill_ranger_apollo_shot',
+    name: '滅びの一矢',
+    description: '単体に絶大な貫通ダメージを与える狙撃の極致（奥義）。',
+  },
+  skill_ranger_binding_volley: {
+    id: 'skill_ranger_binding_volley',
+    name: '封鎖の斉射',
+    description: '敵全体に射撃ダメージを与え、確率で腕を封じる。',
+  },
+  skill_ranger_falconry: {
+    id: 'skill_ranger_falconry',
+    name: '鷹匠の絆',
+    description: '自律して敵を攻撃する鷹を最前列に呼ぶ（戦闘限り）。',
+  },
+  skill_ranger_hunters_mark: {
+    id: 'skill_ranger_hunters_mark',
+    name: '狩人の照準',
+    description: '自身の命中を大きく高める。',
+  },
+  skill_ranger_field_dressing: {
+    id: 'skill_ranger_field_dressing',
+    name: '応急手当',
+    description: '味方全体の状態異常を治療する。',
+  },
+  skill_ranger_volley_chase: {
+    id: 'skill_ranger_volley_chase',
+    name: '追い討ちの構え',
+    description: '味方が突属性で敵を攻撃した時、追撃する構えを取る（数ターン）。',
+  },
+  passive_ranger_keen_eye: {
+    id: 'passive_ranger_keen_eye',
+    name: '精密眼',
+    description: '命中とクリティカル率が上昇する（常時）。',
+  },
+  passive_ranger_swift_hands: {
+    id: 'passive_ranger_swift_hands',
+    name: '速射の手',
+    description: '物理攻撃が上昇する（常時）。',
+  },
+  passive_ranger_predator: {
+    id: 'passive_ranger_predator',
+    name: '狩猟本能',
+    description: '物理攻撃とクリティカル率が上昇する（常時）。',
+  },
+  // ---- 薬師 ----
+  skill_medic_regen_balm: {
+    id: 'skill_medic_regen_balm',
+    name: 'リジェネバーム',
+    description: '味方1人のHPを大きく回復する。',
+  },
+  skill_medic_salvation: {
+    id: 'skill_medic_salvation',
+    name: 'サルベーション',
+    description: '味方全体のHPを絶大に回復する奥義。',
+  },
+  skill_medic_panacea: {
+    id: 'skill_medic_panacea',
+    name: 'パナケイア',
+    description: '味方全体のHPを大きく回復しつつ状態異常を治療する奥義。',
+  },
+  skill_medic_sleep_mist: {
+    id: 'skill_medic_sleep_mist',
+    name: 'スリープミスト',
+    description: '敵全体を確率で眠らせる。',
+  },
+  skill_medic_paralysis_powder: {
+    id: 'skill_medic_paralysis_powder',
+    name: '痺れ粉',
+    description: '敵全体を確率で麻痺させる。',
+  },
+  skill_medic_immune_hymn: {
+    id: 'skill_medic_immune_hymn',
+    name: '免疫の聖歌',
+    description: '味方全体の物理防御を高める。',
+  },
+  skill_medic_revive_draft: {
+    id: 'skill_medic_revive_draft',
+    name: '蘇生薬',
+    description: '味方全体のTPを回復させる。',
+  },
+  skill_medic_weakening_smoke: {
+    id: 'skill_medic_weakening_smoke',
+    name: '衰弱の煙',
+    description: '敵全体の物理攻撃力を下げる。',
+  },
+  passive_medic_healing_hands: {
+    id: 'passive_medic_healing_hands',
+    name: '癒しの手',
+    description: '魔法攻撃力が上昇する（常時）。',
+  },
+  passive_medic_staff_mastery: {
+    id: 'passive_medic_staff_mastery',
+    name: '杖の心得',
+    description: '杖を装備中、魔法攻撃力が上昇する（常時）。',
+  },
+  passive_medic_vitality: {
+    id: 'passive_medic_vitality',
+    name: '健勝',
+    description: '最大HPが上昇する（常時）。',
+  },
+  // ---- 剣舞士 ----
+  skill_dancer_chant_of_valor: {
+    id: 'skill_dancer_chant_of_valor',
+    name: '勇気の歌',
+    description: '味方全体の命中を高める。',
+  },
+  skill_dancer_curse_dance: {
+    id: 'skill_dancer_curse_dance',
+    name: '呪縛の舞',
+    description: '敵全体の回避を下げる。',
+  },
+  skill_dancer_storm_waltz: {
+    id: 'skill_dancer_storm_waltz',
+    name: '嵐の円舞',
+    description: '敵全体を斬り払う剣舞の奥義。',
+  },
+  skill_dancer_dual_blade: {
+    id: 'skill_dancer_dual_blade',
+    name: '双剣の舞',
+    description: '単体に2連続の斬撃を浴びせる。',
+  },
+  skill_dancer_grand_finale: {
+    id: 'skill_dancer_grand_finale',
+    name: '大円舞曲',
+    description: '味方全体のHPを大きく回復する癒しの奥義。',
+  },
+  skill_dancer_blade_chase: {
+    id: 'skill_dancer_blade_chase',
+    name: '連舞の構え',
+    description: '味方が斬属性で敵を攻撃した時、追撃する構えを取る（数ターン）。',
+  },
+  skill_dancer_lullaby_song: {
+    id: 'skill_dancer_lullaby_song',
+    name: '安らぎの調べ',
+    description: '敵全体を確率で眠らせる舞姫の歌。',
+  },
+  skill_dancer_mana_song: {
+    id: 'skill_dancer_mana_song',
+    name: '律動の歌',
+    description: '味方全体のTPを回復させる。',
+  },
+  passive_dancer_blade_mastery: {
+    id: 'passive_dancer_blade_mastery',
+    name: '剣の心得',
+    description: '剣を装備中、物理攻撃力が上昇する（常時）。',
+  },
+  passive_dancer_vigor: {
+    id: 'passive_dancer_vigor',
+    name: '活力',
+    description: '最大HPが上昇する（常時）。',
+  },
+  passive_dancer_resonance: {
+    id: 'passive_dancer_resonance',
+    name: '共鳴',
+    description: '魔法攻撃力と最大TPが上昇する（常時）。',
+  },
+  // ---- 拳聖 ----
+  skill_monk_double_palm: {
+    id: 'skill_monk_double_palm',
+    name: '双掌打',
+    description: '単体に壊打の2連撃を浴びせる。',
+  },
+  skill_monk_pressure_point: {
+    id: 'skill_monk_pressure_point',
+    name: '点穴突き',
+    description: '単体に壊打ダメージを与え、確率で腕を封じる。',
+  },
+  skill_monk_whirlwind_kick: {
+    id: 'skill_monk_whirlwind_kick',
+    name: '旋風脚',
+    description: '敵全体を蹴り払う壊打。',
+  },
+  skill_monk_ki_guard: {
+    id: 'skill_monk_ki_guard',
+    name: '気功護身',
+    description: '自身の物理防御を高める。',
+  },
+  skill_monk_breathing: {
+    id: 'skill_monk_breathing',
+    name: '吐納',
+    description: '自身のTPを回復する呼吸法。',
+  },
+  skill_monk_seven_star: {
+    id: 'skill_monk_seven_star',
+    name: '七星連撃',
+    description: '単体に壊打の5連撃を叩き込む奥義。',
+  },
+  skill_monk_demon_palm: {
+    id: 'skill_monk_demon_palm',
+    name: '羅刹掌',
+    description: '単体に壊打の渾身奥義を放つ。',
+  },
+  passive_monk_counter_mastery: {
+    id: 'passive_monk_counter_mastery',
+    name: '反骨',
+    description: '物理攻撃力とクリティカル率が上昇する（常時）。',
+  },
+  // ---- 呪術士 ----
+  skill_hexer_drowsy_hex: {
+    id: 'skill_hexer_drowsy_hex',
+    name: '微睡の呪',
+    description: '単体を確率で眠らせる（被ダメで解除）。',
+  },
+  skill_hexer_dark_bolt: {
+    id: 'skill_hexer_dark_bolt',
+    name: '闇の呪弾',
+    description: '単体に無属性魔法ダメージ。',
+  },
+  skill_hexer_mass_paralyze: {
+    id: 'skill_hexer_mass_paralyze',
+    name: '痺れの呪',
+    description: '敵全体を確率で麻痺させる。',
+  },
+  skill_hexer_def_hex: {
+    id: 'skill_hexer_def_hex',
+    name: '虚弱の呪',
+    description: '敵全体の物理防御を下げる。',
+  },
+  skill_hexer_mdef_hex: {
+    id: 'skill_hexer_mdef_hex',
+    name: '崩魔の呪',
+    description: '敵全体の魔法防御を下げる。',
+  },
+  skill_hexer_nightmare: {
+    id: 'skill_hexer_nightmare',
+    name: '悪夢の呪',
+    description: '単体に魔法ダメージを与え、確率で眠らせる奥義。',
+  },
+  skill_hexer_calamity: {
+    id: 'skill_hexer_calamity',
+    name: '災禍の呪',
+    description: '敵全体に強力な無属性魔法ダメージを与え、確率で毒にする奥義。',
+  },
+  passive_hexer_curse_lore: {
+    id: 'passive_hexer_curse_lore',
+    name: '呪術の知識',
+    description: '魔法攻撃力が上昇する（常時）。',
+  },
+  // ---- 降霊術士 ----
+  skill_summoner_bone_spear: {
+    id: 'skill_summoner_bone_spear',
+    name: '骨の槍',
+    description: '単体に無属性魔法ダメージを与え、確率で麻痺させる。',
+  },
+  skill_summoner_grave_field: {
+    id: 'skill_summoner_grave_field',
+    name: '墓標の凍土',
+    description: '敵全体に氷属性魔法ダメージ。',
+  },
+  skill_summoner_soul_ward: {
+    id: 'skill_summoner_soul_ward',
+    name: '霊障の壁',
+    description: '味方全体に、被弾を肩代わりする障壁を張る（数ターン）。',
+  },
+  skill_summoner_spirit_veil: {
+    id: 'skill_summoner_spirit_veil',
+    name: '霊衣',
+    description: '自身の魔法防御を高める。',
+  },
+  skill_summoner_necro_bolt: {
+    id: 'skill_summoner_necro_bolt',
+    name: '死霊弾',
+    description: '単体に無属性魔法ダメージ。',
+  },
+  skill_summoner_annihilation: {
+    id: 'skill_summoner_annihilation',
+    name: '冥滅爆裂',
+    description: '敵全体に絶大な無属性魔法ダメージを与える奥義。',
+  },
+  skill_summoner_soul_render: {
+    id: 'skill_summoner_soul_render',
+    name: '魂喰らい',
+    description: '単体に極大の無属性魔法ダメージを与える奥義。',
+  },
+  passive_summoner_spirit_lore: {
+    id: 'passive_summoner_spirit_lore',
+    name: '冥導',
+    description: '魔法攻撃力と最大TPが上昇する（常時）。',
+  },
 };
