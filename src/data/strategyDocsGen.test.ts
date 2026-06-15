@@ -11,6 +11,8 @@ import { test, expect } from 'vitest';
 
 import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { CLASSES } from '@/data/classes';
+import { ENEMIES } from '@/data/enemies';
+import { ITEMS } from '@/data/items';
 import { PASSIVE_SKILLS } from '@/data/passives';
 import { RACES } from '@/data/races';
 import { SKILLS } from '@/data/skills';
@@ -262,6 +264,49 @@ export function generateStrategyDocs(): void {
   for (const s of Object.values(SUMMONS))
     summons += `| ${s.name} | ${s.baseStats.hp} | ${s.baseStats.str} | ${s.baseStats.vit} | ${s.baseStats.agi} | ${ELEM[s.attackElement]} | ${s.actsOnTurn ? '攻撃する' : '壁のみ'} | ${s.buffImmune ? '無効' : '有効'} | ${s.persistsAfterBattle ? '戦闘またぎ' : '戦闘限り'} |\n`;
   writeFileSync(resolve(out, 'summons.md'), summons, 'utf-8');
+
+  // ---- enemies.md（帯ごとの敵・ドロップ素材） ----
+  const KIND_LABEL: Record<string, string> = { zako: '雑魚', foe: 'FOE', boss: 'ボス' };
+  const resistStr = (r?: Partial<Record<string, number>>): string => {
+    if (!r) return '―';
+    const weak: string[] = [];
+    const res: string[] = [];
+    const imm: string[] = [];
+    for (const [el, m] of Object.entries(r)) {
+      if (m === undefined) continue;
+      if (m > 1) weak.push(ELEM[el] ?? el);
+      else if (m === 0) imm.push(ELEM[el] ?? el);
+      else if (m < 1) res.push(ELEM[el] ?? el);
+    }
+    const parts: string[] = [];
+    if (weak.length) parts.push(`弱点:${weak.join('')}`);
+    if (res.length) parts.push(`耐性:${res.join('')}`);
+    if (imm.length) parts.push(`無効:${imm.join('')}`);
+    return parts.join(' / ') || '―';
+  };
+  const TIER_THEME = ['森・洞窟', '岩山・獣', '氷雪', '雷雨・嵐', '瘴気・不死・機械'];
+  const bands = [...new Set(Object.values(ENEMIES).map((e) => e.tierBand))].sort((a, b) => a - b);
+  let enemies = `# 敵・ドロップ素材一覧\n\n> 敵は「基準ステータス × 出現階係数（enemyScale）」で強くなる（基準階=表の「基準階」）。\n> 1〜50階は tier0〜4、**50階以降は全帯（tier0〜${Math.max(...bands)}）を循環**し、敵名に **LvN（周回数）** を付して再登場・強化される（例: 51〜60階=tier0の2周目=「スライム Lv2」）。\n> ドロップ素材も周回数に応じて **LvN** にグレードアップし、そこから並ぶ装備も強化される。\n\n`;
+  for (const band of bands) {
+    enemies += `## tier${band}（${band * 10 + 1}〜${band * 10 + 10}階・${TIER_THEME[band] ?? ''}）\n\n`;
+    enemies += `| 敵 | 種別 | 基準階 | HP | STR | VIT | AGI | 攻撃 | 弱点/耐性 | ドロップ(確率) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n`;
+    const inBand = Object.values(ENEMIES).filter((e) => e.tierBand === band);
+    const order = (e: (typeof inBand)[number]) =>
+      e.kind === 'boss' || e.isBoss ? 2 : e.kind === 'foe' ? 1 : 0;
+    for (const e of inBand.sort((a, b) => order(a) - order(b) || a.refDepth - b.refDepth)) {
+      const drops =
+        (e.drops ?? [])
+          .map((d) => `${ITEMS[d.itemId]?.name ?? d.itemId}(${Math.round(d.rate * 100)}%)`)
+          .join('、') || '―';
+      enemies += `| ${e.name} | ${KIND_LABEL[e.kind ?? 'zako']} | ${e.refDepth} | ${e.baseStats.hp} | ${e.baseStats.str} | ${e.baseStats.vit} | ${e.baseStats.agi} | ${ELEM[e.attackElement ?? 'bash']} | ${resistStr(e.resist)} | ${drops} |\n`;
+    }
+    enemies += '\n';
+  }
+  // ドロップ素材一覧
+  enemies += `## ドロップ素材\n\n> 素材を売ると対応する装備がショップに並ぶ（[04 §8]）。周回時は「素材名 LvN」にグレードアップ。\n\n| 素材 | 説明 |\n| --- | --- |\n`;
+  for (const it of Object.values(ITEMS).filter((i) => i.category === 'material'))
+    enemies += `| ${it.name} | ${it.description} |\n`;
+  writeFileSync(resolve(out, 'enemies.md'), enemies, 'utf-8');
 }
 
 test('strategy-docs generator', () => {
