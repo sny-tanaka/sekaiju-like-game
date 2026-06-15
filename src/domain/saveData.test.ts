@@ -1,5 +1,10 @@
 import { GUILD_MEMBER_LIMIT, STARTING_GOLD } from '@/data/balance';
-import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
+import {
+  addCharacterToGuild,
+  createCharacter,
+  createInitialSaveData,
+  removeCharacterFromGuild,
+} from '@/domain/saveData';
 
 describe('saveData', () => {
   test('createCharacter は Lv1・指定種族/職業のキャラを作る', () => {
@@ -58,5 +63,25 @@ describe('saveData', () => {
       save = addCharacterToGuild(save, c);
     }
     expect(save.guild.members).toHaveLength(GUILD_MEMBER_LIMIT);
+  });
+
+  test('removeCharacterFromGuild は団員を一覧・編成から取り除く（純粋）', () => {
+    const base = createInitialSaveData('ギルド');
+    const char = createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: 'A' });
+    const save = addCharacterToGuild(base, char);
+    expect(save.guild.party.front[0]).toBe(char.id);
+
+    const next = removeCharacterFromGuild(save, char.id);
+    // 元データは不変
+    expect(save.guild.members).toHaveLength(1);
+    // 一覧・編成の双方から除去される
+    expect(next.guild.members).toHaveLength(0);
+    expect(next.guild.party.front).not.toContain(char.id);
+    expect(next.guild.party.back).not.toContain(char.id);
+  });
+
+  test('removeCharacterFromGuild は存在しない ID では変化しない', () => {
+    const save = createInitialSaveData('ギルド');
+    expect(removeCharacterFromGuild(save, 'nope')).toBe(save);
   });
 });
