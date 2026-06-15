@@ -281,6 +281,11 @@ export interface EnemyMaster {
   drops?: { itemId: ItemId; rate: number }[];
   /** 階層ボスか（[06 §4]）。雑魚プール除外・ボス配置の判定に使う。 */
   isBoss?: boolean;
+  /**
+   * 敵の役割（[06 §3]）。'zako'=ランダムエンカウント / 'foe'=フィールド徘徊（FOE・強敵）/ 'boss'=階層ボス。
+   * 未指定は 'zako' 扱い。ボスは isBoss:true も併せて立てる。
+   */
+  kind?: 'zako' | 'foe' | 'boss';
 }
 
 /**

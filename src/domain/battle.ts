@@ -6,6 +6,7 @@ import { ITEMS } from '@/data/items';
 import { SUMMONS } from '@/data/summons';
 import { UNION_SKILLS } from '@/data/unionSkills';
 import { computeDamage, effectiveEnemyStats, scaleStats } from '@/domain/combat';
+import { enemyLapForDepth } from '@/domain/encounterTable';
 import { forgeBonusFor } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computePassiveMods } from '@/domain/passives';
@@ -108,13 +109,14 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
   };
 }
 
-/** 敵の戦闘員を組む（出現階でスケール）。 */
+/** 敵の戦闘員を組む（出現階でスケール）。2周目以降は名前に LvN（周回数）を付す（[06 §3]）。 */
 function buildEnemy(enemyId: EnemyId, index: number, depth: number): Combatant {
   const master = ENEMIES[enemyId];
   const stats = effectiveEnemyStats(master, depth);
+  const lap = enemyLapForDepth(depth);
   return {
     id: `enemy_${index}`,
-    name: master.name,
+    name: lap >= 2 ? `${master.name} Lv${lap}` : master.name,
     side: 'enemy',
     row: 'front',
     stats,

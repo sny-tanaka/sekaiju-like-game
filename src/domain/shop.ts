@@ -32,6 +32,15 @@ export const SELL_UNLOCKS: Record<ItemId, ItemId[]> = {
   item_rat_tail: ['equip_rat_dagger'],
   item_bat_wing: ['equip_bat_cloak'],
   item_golem_core: ['equip_golem_blade'],
+  // Phase 6-3: 帯素材を売ると、その帯〜次帯の装備が早期に並ぶ（ティア未到達でも購入可）。
+  item_mat_t1_coarse_hide: ['equip_t2_light'],
+  item_mat_t1_lord_pelt: ['equip_t2_sword', 'equip_t2_heavy'],
+  item_mat_t2_frost_pelt: ['equip_t3_light'],
+  item_mat_t2_monarch_diadem: ['equip_t3_staff', 'equip_t3_clothes'],
+  item_mat_t3_charged_hide: ['equip_t4_light'],
+  item_mat_t3_sovereign_horn: ['equip_t4_sword', 'equip_t4_heavy'],
+  item_mat_t4_corroded_plate: ['equip_t5_light'],
+  item_mat_t4_sovereign_crown: ['equip_t5_sword', 'equip_t5_heavy'],
 };
 
 const equipNote = (id: ItemId): string => {
