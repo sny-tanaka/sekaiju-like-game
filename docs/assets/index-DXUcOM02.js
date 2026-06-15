@@ -17355,7 +17355,6 @@ const P2 = {
     ceiling: '#3a4a2c',
     floor: '#5d6b46',
     wall: '#8b9a6b',
-    opening: '#1c241522',
     frontWall: '#7a8a5c',
     outline: '#2c3720',
   },
@@ -19594,7 +19593,7 @@ const k3 = () => {
                     ],
                   }),
         }),
-        m.jsxs('footer', { className: Ke.foot, children: ['v', '0.1.20'] }),
+        m.jsxs('footer', { className: Ke.foot, children: ['v', '0.1.21'] }),
       ],
     });
   },

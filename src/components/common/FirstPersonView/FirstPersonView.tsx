@@ -31,12 +31,12 @@ type Props = {
 
 // 単色＋遠近の台形だけで描く軽量な擬似3D一人称視界（3D/WebGL不使用）。
 // 直線上の階段・FOE 等を「正面に見える」形で提示し、マッピングの手がかりにする。
+// 開口部は sky 色を流用するため opening 定数は持たない。
 const COLORS = {
   sky: '#26301c',
   ceiling: '#3a4a2c',
   floor: '#5d6b46',
   wall: '#8b9a6b',
-  opening: '#1c241522',
   frontWall: '#7a8a5c',
   outline: '#2c3720',
 };

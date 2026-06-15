@@ -11,7 +11,7 @@ export interface BandTheme {
   wall: string;
   frontWall: string;
   outline: string;
-  /** 2D マップの床/壁の基調（任意）。 */
+  /** 2D マップの床基調（将来の2Dマップ帯連動用。現状は擬似3Dのみ帯テーマ適用）。 */
   mapFloor: string;
 }
 
