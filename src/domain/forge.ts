@@ -9,11 +9,24 @@ import type { EquipBonuses, EquipInstance, EquipSlotKey, SaveData } from '@/doma
 
 export type IngotType = 'copper' | 'silver' | 'gold';
 
+/** ティア連動の強化1段あたりの上昇量（§7.3）。round(STAT_PER_LEVEL * TIER_STEP^equipTier)。 */
+export function forgeIncPerLevel(equipTier: number): number {
+  return Math.round(FORGE.STAT_PER_LEVEL * Math.pow(FORGE.TIER_STEP, equipTier));
+}
+
+/** リサイクルで得られる断片数（§7.3）。max(2, floor(buyPrice/120))。 */
+export function recycleFragments(masterId: string): number {
+  const eq = EQUIPMENT[masterId];
+  if (!eq) return 2;
+  return Math.max(2, Math.floor(eq.buyPrice / 120));
+}
+
 /** 強化値による装備ボーナス（武器=ATK/MAT、防具=DEF/MDF、アクセ=なし）。 */
 export function forgeBonusFor(masterId: string, forgeLevel: number): EquipBonuses {
   const eq = EQUIPMENT[masterId];
   if (!eq || forgeLevel <= 0) return {};
-  const inc = forgeLevel * FORGE.STAT_PER_LEVEL;
+  const incPerLevel = forgeIncPerLevel(eq.tier ?? 0);
+  const inc = forgeLevel * incPerLevel;
   if (eq.slot === 'weapon') return { atk: inc, mat: inc };
   if (eq.slot === 'armor') return { def: inc, mdf: inc };
   return {};
@@ -109,7 +122,7 @@ export function recycle(save: SaveData, instanceId: string): ForgeResult {
   const pool = save.guild.equipment.filter((e) => e.id !== instanceId);
 
   const fragments = { ...save.forgeInventory.fragments };
-  fragments.common = (fragments.common ?? 0) + FORGE.RECYCLE_FRAGMENTS;
+  fragments.common = (fragments.common ?? 0) + recycleFragments(inst.masterId);
   let copper = save.forgeInventory.ingots.copper;
   while (fragments.common >= FORGE.FRAGMENTS_PER_INGOT) {
     fragments.common -= FORGE.FRAGMENTS_PER_INGOT;
