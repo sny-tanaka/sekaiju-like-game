@@ -79,4 +79,64 @@ export const TITLES: Record<TitleId, TitleMaster> = {
     skillTree: { skills: [] },
     growthModifier: noGrowth({ agi: 1 }),
   },
+  // 薬師
+  title_saint: {
+    id: 'title_saint',
+    name: '聖者',
+    parentClassId: 'class_medic',
+    skillTree: { skills: [] },
+    growthModifier: noGrowth({ mnd: 1, tp: 2 }),
+  },
+  title_apothecary: {
+    id: 'title_apothecary',
+    name: '調薬師',
+    parentClassId: 'class_medic',
+    skillTree: { skills: [] },
+    growthModifier: noGrowth({ luc: 1, tp: 1 }),
+  },
+  // 剣舞士
+  title_blade_dancer: {
+    id: 'title_blade_dancer',
+    name: '剣の舞手',
+    parentClassId: 'class_dancer',
+    skillTree: { skills: [] },
+    growthModifier: noGrowth({ agi: 1, str: 1 }),
+  },
+  title_muse: {
+    id: 'title_muse',
+    name: '舞姫',
+    parentClassId: 'class_dancer',
+    skillTree: { skills: [] },
+    growthModifier: noGrowth({ mnd: 1, tp: 1 }),
+  },
+  // 拳聖
+  title_grappler: {
+    id: 'title_grappler',
+    name: '組手家',
+    parentClassId: 'class_monk',
+    skillTree: { skills: [] },
+    growthModifier: noGrowth({ str: 1, agi: 1 }),
+  },
+  title_zen: {
+    id: 'title_zen',
+    name: '禅僧',
+    parentClassId: 'class_monk',
+    skillTree: { skills: [] },
+    growthModifier: noGrowth({ vit: 1, tp: 1 }),
+  },
+  // 呪術士
+  title_plague: {
+    id: 'title_plague',
+    name: '疫病使い',
+    parentClassId: 'class_hexer',
+    skillTree: { skills: [] },
+    growthModifier: noGrowth({ int: 1 }),
+  },
+  title_warlock: {
+    id: 'title_warlock',
+    name: '魔道師',
+    parentClassId: 'class_hexer',
+    skillTree: { skills: [] },
+    growthModifier: noGrowth({ int: 1, luc: 1 }),
+  },
 };

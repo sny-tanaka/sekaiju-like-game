@@ -129,4 +129,74 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
     name: '連牙',
     description: '単体に貫通3連撃を浴びせるユニオンスキル（テリアン）。',
   },
+  skill_union_moonlight: {
+    id: 'skill_union_moonlight',
+    name: '月光の癒し',
+    description: '味方全体を回復し魔法防御を高めるユニオンスキル（ルーナ）。',
+  },
+  skill_union_quake: {
+    id: 'skill_union_quake',
+    name: '大震撃',
+    description: '敵全体に大きな壊打を与えるユニオンスキル（ゴラン・2名）。',
+  },
+
+  // ---- Phase 6-2 追加スキル ----
+  skill_cleave: { id: 'skill_cleave', name: 'なぎ払い', description: '敵全体に斬撃ダメージ。' },
+  skill_volt_bolt: {
+    id: 'skill_volt_bolt',
+    name: 'ボルトショック',
+    description: '単体に雷属性魔法ダメージ。',
+  },
+  // 薬師
+  skill_heal: { id: 'skill_heal', name: 'ヒール', description: '味方1人の HP を回復する。' },
+  skill_mass_heal: {
+    id: 'skill_mass_heal',
+    name: 'マスヒール',
+    description: '味方全体の HP を回復する。',
+  },
+  skill_protect_hymn: {
+    id: 'skill_protect_hymn',
+    name: '守りの聖歌',
+    description: '味方全体の魔法防御を高める。',
+  },
+  // 剣舞士
+  skill_war_dance: {
+    id: 'skill_war_dance',
+    name: '戦いの舞',
+    description: '味方全体の物理攻撃力を高める。',
+  },
+  skill_evasion_dance: {
+    id: 'skill_evasion_dance',
+    name: '回避の舞',
+    description: '味方全体の回避を高める。',
+  },
+  skill_weaken_song: {
+    id: 'skill_weaken_song',
+    name: '弱体の歌',
+    description: '敵全体の物理攻撃力を下げる。',
+  },
+  // 拳聖
+  skill_triple_strike: {
+    id: 'skill_triple_strike',
+    name: '三段突き',
+    description: '単体に壊打の3連撃。',
+  },
+  skill_focus_ki: { id: 'skill_focus_ki', name: '練気', description: '自身の物理攻撃力を高める。' },
+  skill_iron_body: { id: 'skill_iron_body', name: '鉄身', description: '自身の物理防御を高める。' },
+  // 呪術士
+  skill_venom_hex: {
+    id: 'skill_venom_hex',
+    name: '毒の呪',
+    description: '単体に魔法ダメージを与え毒を付与する。',
+  },
+  skill_sleep_hex: {
+    id: 'skill_sleep_hex',
+    name: '眠りの呪',
+    description: '敵全体を眠らせる（被ダメで解除）。',
+  },
+  skill_weaken_hex: {
+    id: 'skill_weaken_hex',
+    name: '魔弱の呪',
+    description: '単体の魔法攻撃力を下げる。',
+  },
 };

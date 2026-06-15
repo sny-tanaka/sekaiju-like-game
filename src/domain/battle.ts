@@ -217,6 +217,11 @@ const elementMult = (target: Combatant, element: Element): number => target.resi
 
 function dealDamage(target: Combatant, dmg: number, log: BattleState['log']): void {
   target.hp = clamp(target.hp - dmg, 0, target.maxHp);
+  // 睡眠は被ダメージで解除（[03 §6]）。
+  if (dmg > 0 && target.ailments.some((a) => a.type === 'sleep')) {
+    target.ailments = target.ailments.filter((a) => a.type !== 'sleep');
+    log.push({ text: `${target.name} は目を覚ました` });
+  }
   if (target.hp === 0 && !target.isDown) {
     target.isDown = true;
     target.unionGauge = Math.floor(target.unionGauge / 2); // 戦闘不能で保有ゲージ半減
@@ -424,6 +429,7 @@ const avgAgi = (cs: Combatant[]) =>
   cs.length === 0 ? 0 : cs.reduce((s, c) => s + c.stats.agi, 0) / cs.length;
 
 const isParalyzed = (c: Combatant) => c.ailments.some((a) => a.type === 'paralysis');
+const isAsleep = (c: Combatant) => c.ailments.some((a) => a.type === 'sleep');
 
 // バインド（部位封じ・[03 §6]）。
 const hasAilment = (c: Combatant, t: AilmentType) => c.ailments.some((a) => a.type === t);
@@ -564,6 +570,11 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   for (const actor of actors) {
     if (actor.isDown) continue;
     if (next.outcome !== 'ongoing') break;
+    // 睡眠: 行動不能（被ダメで解除。[03 §6]）。
+    if (isAsleep(actor)) {
+      next.log.push({ text: `${actor.name} は眠っている` });
+      continue;
+    }
     // 麻痺: 30% で行動不能
     if (isParalyzed(actor) && rng.next() < BALANCE.PARALYSIS_SKIP) {
       next.log.push({ text: `${actor.name} は麻痺で動けない` });

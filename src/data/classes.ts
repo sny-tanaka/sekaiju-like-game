@@ -14,6 +14,11 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
       skills: [
         { skillId: 'skill_power_slash', maxLevel: 5 },
         { skillId: 'skill_guard_stance', maxLevel: 3 },
+        {
+          skillId: 'skill_cleave',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_power_slash', level: 2 }],
+        },
       ],
     },
     equipableWeaponTypes: ['sword', 'axe'],
@@ -45,6 +50,11 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           maxLevel: 5,
           requires: [{ skillId: 'skill_fire_bolt', level: 1 }],
         },
+        {
+          skillId: 'skill_volt_bolt',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_ice_bolt', level: 1 }],
+        },
         { skillId: 'skill_summon_familiar', maxLevel: 2 },
       ],
     },
@@ -72,5 +82,71 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
     equipableWeaponTypes: ['bow', 'fist'],
     equipableArmorTypes: ['light', 'clothes'],
     titleOptions: ['title_sniper', 'title_tracker'],
+  },
+
+  // ---- Phase 6-2 追加職業 ----
+  // 薬師: 回復・防御支援の要。
+  class_medic: {
+    id: 'class_medic',
+    name: '薬師',
+    skillTree: {
+      skills: [
+        { skillId: 'skill_heal', maxLevel: 5 },
+        {
+          skillId: 'skill_mass_heal',
+          maxLevel: 5,
+          requires: [{ skillId: 'skill_heal', level: 2 }],
+        },
+        { skillId: 'skill_protect_hymn', maxLevel: 3 },
+      ],
+    },
+    equipableWeaponTypes: ['staff', 'fist'],
+    equipableArmorTypes: ['clothes', 'light'],
+    titleOptions: ['title_saint', 'title_apothecary'],
+  },
+  // 剣舞士: 舞でパーティを強化しつつ斬る支援アタッカー。
+  class_dancer: {
+    id: 'class_dancer',
+    name: '剣舞士',
+    skillTree: {
+      skills: [
+        { skillId: 'skill_war_dance', maxLevel: 3 },
+        { skillId: 'skill_evasion_dance', maxLevel: 3 },
+        { skillId: 'skill_weaken_song', maxLevel: 3 },
+      ],
+    },
+    equipableWeaponTypes: ['sword', 'fist'],
+    equipableArmorTypes: ['light', 'clothes'],
+    titleOptions: ['title_blade_dancer', 'title_muse'],
+  },
+  // 拳聖: 素手で多段攻撃する近接アタッカー。自己強化が得意。
+  class_monk: {
+    id: 'class_monk',
+    name: '拳聖',
+    skillTree: {
+      skills: [
+        { skillId: 'skill_triple_strike', maxLevel: 5 },
+        { skillId: 'skill_focus_ki', maxLevel: 3 },
+        { skillId: 'skill_iron_body', maxLevel: 3 },
+      ],
+    },
+    equipableWeaponTypes: ['fist'],
+    equipableArmorTypes: ['light', 'heavy'],
+    titleOptions: ['title_grappler', 'title_zen'],
+  },
+  // 呪術士: 状態異常と弱体で敵を崩すデバッファー。
+  class_hexer: {
+    id: 'class_hexer',
+    name: '呪術士',
+    skillTree: {
+      skills: [
+        { skillId: 'skill_venom_hex', maxLevel: 5 },
+        { skillId: 'skill_sleep_hex', maxLevel: 3 },
+        { skillId: 'skill_weaken_hex', maxLevel: 3 },
+      ],
+    },
+    equipableWeaponTypes: ['staff'],
+    equipableArmorTypes: ['clothes'],
+    titleOptions: ['title_plague', 'title_warlock'],
   },
 };

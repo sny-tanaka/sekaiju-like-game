@@ -158,6 +158,201 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     target: 'self',
     effects: [{ kind: 'summon', summonKind: 'summon_familiar' }],
   },
+
+  // ---- 既存職業の追加スキル（Phase 6-2） ----
+  skill_cleave: {
+    id: 'skill_cleave',
+    name: 'なぎ払い',
+    tree: 'master',
+    tpCost: (lv) => 5 + lv,
+    element: 'slash',
+    target: 'enemyAll',
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 0.7 + 0.12 * lv }],
+  },
+  skill_volt_bolt: {
+    id: 'skill_volt_bolt',
+    name: 'ボルトショック',
+    tree: 'master',
+    tpCost: (lv) => 4 + lv,
+    element: 'volt',
+    target: 'enemyOne',
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.5 + 0.25 * lv }],
+  },
+
+  // ---- 薬師（class_medic） ----
+  skill_heal: {
+    id: 'skill_heal',
+    name: 'ヒール',
+    tree: 'base',
+    tpCost: (lv) => 4 + lv,
+    element: 'almighty',
+    target: 'allyOne',
+    effects: [{ kind: 'heal', amount: (lv) => 40 + 20 * lv }],
+  },
+  skill_mass_heal: {
+    id: 'skill_mass_heal',
+    name: 'マスヒール',
+    tree: 'base',
+    tpCost: (lv) => 8 + lv,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [{ kind: 'heal', amount: (lv) => 25 + 15 * lv }],
+  },
+  skill_protect_hymn: {
+    id: 'skill_protect_hymn',
+    name: '守りの聖歌',
+    tree: 'base',
+    tpCost: () => 6,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'mdef',
+        modifier: (lv) => 1.2 + 0.05 * lv,
+        turns: 3,
+        stackGroup: 'defBuff',
+      },
+    ],
+  },
+
+  // ---- 剣舞士（class_dancer） ----
+  skill_war_dance: {
+    id: 'skill_war_dance',
+    name: '戦いの舞',
+    tree: 'base',
+    tpCost: () => 6,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'patk',
+        modifier: (lv) => 1.2 + 0.05 * lv,
+        turns: 3,
+        stackGroup: 'atkBuff',
+      },
+    ],
+  },
+  skill_evasion_dance: {
+    id: 'skill_evasion_dance',
+    name: '回避の舞',
+    tree: 'base',
+    tpCost: () => 6,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'eva',
+        modifier: (lv) => 1.2 + 0.05 * lv,
+        turns: 3,
+        stackGroup: 'evaBuff',
+      },
+    ],
+  },
+  skill_weaken_song: {
+    id: 'skill_weaken_song',
+    name: '弱体の歌',
+    tree: 'base',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'enemyAll',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'patk',
+        modifier: (lv) => 0.85 - 0.03 * lv,
+        turns: 3,
+        stackGroup: 'atkDebuff',
+      },
+    ],
+  },
+
+  // ---- 拳聖（class_monk） ----
+  skill_triple_strike: {
+    id: 'skill_triple_strike',
+    name: '三段突き',
+    tree: 'base',
+    tpCost: (lv) => 4 + lv,
+    element: 'bash',
+    target: 'enemyOne',
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 0.7 + 0.1 * lv, hits: 3 }],
+  },
+  skill_focus_ki: {
+    id: 'skill_focus_ki',
+    name: '練気',
+    tree: 'base',
+    tpCost: () => 4,
+    element: 'almighty',
+    target: 'self',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'patk',
+        modifier: (lv) => 1.3 + 0.05 * lv,
+        turns: 3,
+        stackGroup: 'atkBuff',
+      },
+    ],
+  },
+  skill_iron_body: {
+    id: 'skill_iron_body',
+    name: '鉄身',
+    tree: 'base',
+    tpCost: () => 4,
+    element: 'almighty',
+    target: 'self',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'pdef',
+        modifier: (lv) => 1.4 + 0.05 * lv,
+        turns: 3,
+        stackGroup: 'defBuff',
+      },
+    ],
+  },
+
+  // ---- 呪術士（class_hexer） ----
+  skill_venom_hex: {
+    id: 'skill_venom_hex',
+    name: '毒の呪',
+    tree: 'base',
+    tpCost: (lv) => 5 + lv,
+    element: 'almighty',
+    target: 'enemyOne',
+    effects: [
+      { kind: 'damage', statBase: 'int', power: (lv) => 0.8 + 0.1 * lv },
+      { kind: 'ailment', ailment: 'poison', chance: (lv) => 0.5 + 0.05 * lv, turns: 3 },
+    ],
+  },
+  skill_sleep_hex: {
+    id: 'skill_sleep_hex',
+    name: '眠りの呪',
+    tree: 'base',
+    tpCost: (lv) => 7 + lv,
+    element: 'almighty',
+    target: 'enemyAll',
+    effects: [{ kind: 'ailment', ailment: 'sleep', chance: (lv) => 0.35 + 0.03 * lv, turns: 2 }],
+  },
+  skill_weaken_hex: {
+    id: 'skill_weaken_hex',
+    name: '魔弱の呪',
+    tree: 'base',
+    tpCost: (lv) => 5 + lv,
+    element: 'almighty',
+    target: 'enemyOne',
+    effects: [
+      {
+        kind: 'buff',
+        stat: 'matk',
+        modifier: (lv) => 0.8 - 0.03 * lv,
+        turns: 3,
+        stackGroup: 'matkDebuff',
+      },
+    ],
+  },
 };
 
 /** 戦闘効果を持つスキルか。 */

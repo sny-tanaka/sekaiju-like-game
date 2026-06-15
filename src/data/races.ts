@@ -72,4 +72,36 @@ export const RACES: Record<RaceId, RaceMaster> = {
     },
     defaultClassId: 'class_ranger',
   },
+  // 月の民（魔法・幸運寄りの癒し手）
+  race_lunar: {
+    id: 'race_lunar',
+    name: 'ルーナ',
+    baseStatsAtLv1: { hp: 30, tp: 28, str: 5, vit: 6, agi: 8, int: 10, mnd: 12, luc: 10 },
+    statGrowth: { hp: 5, tp: 6, str: 1, vit: 1, agi: 2, int: 3, mnd: 3, luc: 3 },
+    // 種族スキル: ユニオン＋採集（採取・収穫に長ける）
+    raceSkillTree: {
+      skills: [
+        { skillId: 'skill_union_moonlight', maxLevel: 3 },
+        { skillId: 'skill_gathering', maxLevel: 1 },
+        { skillId: 'skill_harvest', maxLevel: 1 },
+      ],
+    },
+    defaultClassId: 'class_medic',
+  },
+  // 岩の民（高耐久・剛力）
+  race_golan: {
+    id: 'race_golan',
+    name: 'ゴラン',
+    baseStatsAtLv1: { hp: 60, tp: 10, str: 12, vit: 13, agi: 4, int: 3, mnd: 6, luc: 5 },
+    statGrowth: { hp: 13, tp: 2, str: 3, vit: 3, agi: 1, int: 1, mnd: 1, luc: 2 },
+    // 種族スキル: ユニオン＋採集（採掘・伐採に長ける）
+    raceSkillTree: {
+      skills: [
+        { skillId: 'skill_union_quake', maxLevel: 3 },
+        { skillId: 'skill_mining', maxLevel: 1 },
+        { skillId: 'skill_logging', maxLevel: 1 },
+      ],
+    },
+    defaultClassId: 'class_monk',
+  },
 };

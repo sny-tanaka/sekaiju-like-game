@@ -150,6 +150,37 @@ function withGauge(state: BattleState, idx: number, gauge: number): BattleState 
   };
 }
 
+describe('battle: 睡眠（[03 §6]）', () => {
+  test('眠っている敵は行動しない（味方は無傷）', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const allyHp = base.allies[0].hp;
+    const state = withAilment(base, 'enemies', 0, 'sleep');
+    const after = resolveTurn(
+      state,
+      [{ kind: 'guard', actorId: state.allies[0].id }],
+      createRng(1)
+    );
+    expect(after.allies[0].hp).toBe(allyHp);
+    expect(after.log.some((l) => l.text.includes('眠っている'))).toBe(true);
+  });
+
+  test('睡眠は被ダメージで解除される', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const state = withAilment(base, 'enemies', 0, 'sleep');
+    // 味方が攻撃 → 敵が起きる
+    const after = resolveTurn(
+      state,
+      [{ kind: 'attack', actorId: state.allies[0].id, targetId: state.enemies[0].id }],
+      createRng(7)
+    );
+    const enemy = after.enemies[0];
+    // 倒していなければ睡眠は解除されている
+    if (!enemy.isDown) {
+      expect(enemy.ailments.some((a) => a.type === 'sleep')).toBe(false);
+    }
+  });
+});
+
 describe('battle: バインド（部位封じ・[03 §6]）', () => {
   test('腕封じの敵は通常攻撃できない（味方は無傷）', () => {
     const base = startBattle(diveSave(), ['enemy_slime']);
