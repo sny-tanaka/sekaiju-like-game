@@ -288,3 +288,29 @@
   font-size: 14px;
   cursor: pointer;
 }
+
+.skillTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.skillTab {
+  flex: 1;
+  min-width: 90px;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 1px solid var.$gray;
+  border-radius: 8px;
+  background-color: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skillTabOn {
+  background-color: #6fae46;
+  border-color: #6fae46;
+  color: var.$white;
+}

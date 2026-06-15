@@ -1,5 +1,11 @@
 import { createCharacter } from '@/domain/saveData';
-import { availableSP, canLearnSkill, learnSkill, skillLevel } from '@/domain/skillTree';
+import {
+  availableSP,
+  canLearnSkill,
+  learnSkill,
+  skillLevel,
+  skillSpCost,
+} from '@/domain/skillTree';
 import type { Character } from '@/domain/types';
 
 function mage(sp: number): Character {
@@ -13,17 +19,24 @@ describe('skillTree', () => {
     expect(canLearnSkill(c, 'skill_fire_bolt')).toBe(false);
   });
 
-  test('SP を消費して新スキルを習得できる（魔導士は開始時 fire Lv1 で ice 解放）', () => {
-    let c = mage(3);
-    // 開始スキルで fire_bolt Lv1 → さらに強化
+  test('SP を消費して新スキルを習得できる（深さ別コスト。魔導士は開始時 fire Lv1 で ice 解放）', () => {
+    // fire_bolt は T1（深さ0=1SP）、ice_bolt は深さ1=2SP。
+    let c = mage(10);
     expect(skillLevel(c, 'skill_fire_bolt')).toBe(1);
-    c = learnSkill(c, 'skill_fire_bolt');
+    c = learnSkill(c, 'skill_fire_bolt'); // +1SP
     expect(skillLevel(c, 'skill_fire_bolt')).toBe(2);
-    expect(availableSP(c)).toBe(2);
-    // ice_bolt（前提 fire Lv1）を新規習得
+    expect(availableSP(c)).toBe(9);
+    // ice_bolt（前提 fire Lv1）を新規習得 +2SP
     c = learnSkill(c, 'skill_ice_bolt');
     expect(skillLevel(c, 'skill_ice_bolt')).toBe(1);
-    expect(availableSP(c)).toBe(1);
+    expect(availableSP(c)).toBe(7);
+  });
+
+  test('前提のあるスキルは基本(T1)より消費 SP が高い（基本1・以降2）', () => {
+    const c = mage(99);
+    expect(skillSpCost(c, 'skill_fire_bolt')).toBe(1); // 深さ0（基本）
+    expect(skillSpCost(c, 'skill_fire_storm')).toBe(2); // 深さ1（fire Lv3 前提）
+    expect(skillSpCost(c, 'skill_mage_meteor')).toBe(2); // 深さ2（fire_storm 前提）
   });
 
   test('前提スキル未習得だと習得できない（ice は fire Lv1 が前提）', () => {

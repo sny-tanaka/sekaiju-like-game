@@ -102,6 +102,28 @@ export interface ActiveBuff {
   stackGroup: string; // 'atkBuff' / 'defDebuff' 等
 }
 
+/**
+ * 反応系の戦闘状態（[03 §6.5]）。反撃／連携追撃／挑発／障壁。残りターン制。
+ * バフ/状態異常とは別管理（属性条件・残量を持つため）。保存しない（戦闘内のみ）。
+ */
+export type CombatState =
+  | {
+      kind: 'counter';
+      chance: number;
+      power: number;
+      statBase: 'str' | 'int';
+      remainingTurns: number;
+    }
+  | {
+      kind: 'chase';
+      element: Element;
+      power: number;
+      statBase: 'str' | 'int';
+      remainingTurns: number;
+    }
+  | { kind: 'decoy'; weight: number; remainingTurns: number }
+  | { kind: 'barrier'; absorb: number; remainingTurns: number };
+
 // ----------------------------------------------------------------------------
 // 戦闘の実行時モデル（[03]）。保存しない（戦闘開始時に生成・終了時に結果を反映）。
 // ----------------------------------------------------------------------------
@@ -122,6 +144,10 @@ export interface Combatant {
   maxTp: number;
   buffs: ActiveBuff[];
   ailments: ActiveAilment[];
+  /** 反応系の戦闘状態（反撃/連携/挑発/障壁。[03 §6.5]）。 */
+  states?: CombatState[];
+  /** パッシブスキル由来の常時倍率（[01 §5]・[03 §5.4]）。戦闘員生成時に確定。 */
+  passive?: PassiveMods;
   unionGauge: number; // 0..100
   isDown: boolean;
   enemyId?: EnemyId; // 敵のみ
@@ -177,6 +203,35 @@ export interface SkillTreeNode {
 }
 export interface SkillTreeDef {
   skills: SkillTreeNode[];
+}
+
+/**
+ * パッシブスキルの常時倍率（[03 §5.4]）。戦闘員生成時に学習Lvから合算する。
+ * combat 系（patk/matk/pdef/mdef/acc/eva）と最大HP/TP・クリ率に作用する。
+ * 値は「倍率」（1.0=無効果）。複数パッシブは乗算合成。
+ */
+export interface PassiveMods {
+  patk?: number;
+  matk?: number;
+  pdef?: number;
+  mdef?: number;
+  acc?: number;
+  eva?: number;
+  maxHp?: number;
+  maxTp?: number;
+  crit?: number; // クリ率への加算（割合）。例 0.05 = +5%
+}
+
+/**
+ * パッシブスキル定義（[03 §5.4]）。BATTLE_SKILLS とは別レジストリ（戦闘中に「撃つ」ものではない）。
+ * mods は学習Lvに応じた常時倍率を返す。weaponType 指定時は対応武器の装備中のみ有効（武器マスタリー）。
+ */
+export interface PassiveSkillDef {
+  id: SkillId;
+  name: string;
+  tree: 'base' | 'master' | 'race' | 'title';
+  weaponType?: WeaponType; // 指定時はこの武器を装備中のみ有効
+  mods: (lv: number) => PassiveMods;
 }
 
 export interface RaceMaster {
@@ -266,7 +321,28 @@ export type SkillEffectDef =
       turns: number;
       stackGroup: string;
     }
-  | { kind: 'summon'; summonKind: SummonKind };
+  | { kind: 'summon'; summonKind: SummonKind }
+  // 反撃（[03 §6.5]）。付与中、対象が敵から被弾し生存している時に確率で反撃する。
+  | {
+      kind: 'counter';
+      chance: (lv: number) => number;
+      power: (lv: number) => number;
+      statBase: 'str' | 'int';
+      turns: number;
+    }
+  // 連携追撃（[03 §6.5]）。付与中、味方が同属性ダメージを敵に与えると追撃する。
+  | {
+      kind: 'chase';
+      power: (lv: number) => number;
+      statBase: 'str' | 'int';
+      turns: number;
+    }
+  // 挑発（[03 §6.5]）。付与中、敵に狙われやすくなる（ターゲット重み増加）。
+  | { kind: 'decoy'; weight: (lv: number) => number; turns: number }
+  // 障壁（[03 §6.5]）。付与中、被弾ダメージを総量 absorb まで肩代わりする。
+  | { kind: 'barrier'; absorb: (lv: number) => number; turns: number }
+  // 状態異常治療（[03 §6.6]）。対象の状態異常（封じ含む）を解除する。
+  | { kind: 'cleanse' };
 
 export interface BattleSkillDef {
   id: SkillId;

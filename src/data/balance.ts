@@ -13,7 +13,9 @@ export const BALANCE = {
   // 経験値（[01 §5]）: expToNext(Lv) = round(EXP_CURVE_BASE * Lv^EXP_CURVE_POW)
   EXP_CURVE_BASE: 20,
   EXP_CURVE_POW: 1.6,
-  SP_PER_LEVEL: 3, // レベルアップ時の獲得 SP（暫定）
+  // レベルアップ時の獲得 SP（平均）。Lv100 で総 SP ≈ 160 になるよう調整（端数は累計を四捨五入し、
+  // 各レベルアップで +1 か +2 を配分する。spTotalForLevel / spGainOnLevelUp 参照）。
+  SP_PER_LEVEL: 1.62,
   // ダメージ（[03 §7]）: 除算型
   DAMAGE_DEF_K: 100, // dmg = base * K/(K+def)
   CRIT_MULT: 1.5,
@@ -109,6 +111,17 @@ export const encounterTier = (depth: number): number => Math.floor((depth - 1) /
 /** 次のレベルに必要な経験値（[01 §5]）。 */
 export const expToNext = (level: number): number =>
   Math.round(BALANCE.EXP_CURVE_BASE * Math.pow(level, BALANCE.EXP_CURVE_POW));
+
+/**
+ * その Lv 到達時点で得ている総 SP（[01 §5]）。平均 SP_PER_LEVEL を線形に累計し四捨五入。
+ * Lv1=0、Lv100≈160。SP 総量の正準はこの関数（per-level の加算ではなく累計で持つ）。
+ */
+export const spTotalForLevel = (level: number): number =>
+  Math.round(BALANCE.SP_PER_LEVEL * Math.max(0, level - 1));
+
+/** Lv (level-1)→level に上がった時に得る SP（累計の差分。+1 か +2）。 */
+export const spGainOnLevelUp = (newLevel: number): number =>
+  spTotalForLevel(newLevel) - spTotalForLevel(newLevel - 1);
 
 /** レベル上限（100）に達したキャラは経験値を獲得しない（確定。[01 §5]）。 */
 export const canGainExp = (level: number): boolean => level < BALANCE.LEVEL_CAP;

@@ -3,11 +3,11 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { SkillTree } from '@/components/common/SkillTree/SkillTree';
 import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
 import { RACES } from '@/data/races';
-import { SKILLS } from '@/data/skills';
 import { TITLES } from '@/data/titles';
 import {
   acquireTitle,
@@ -18,13 +18,7 @@ import {
 } from '@/domain/charProgress';
 import { equipDisplayName } from '@/domain/forge';
 import { canEquip, equipItem, unequipItem } from '@/domain/inventory';
-import {
-  availableSP,
-  canLearnSkill,
-  learnSkill,
-  skillLevel,
-  skillNodesFor,
-} from '@/domain/skillTree';
+import { availableSP, learnSkill } from '@/domain/skillTree';
 import { computeBaseStats } from '@/domain/stats';
 import type { Character, ClassId, EquipSlotKey, RaceId, SaveData, StatKey } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
@@ -54,6 +48,7 @@ export const Page = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { save, applyAndPersist } = useGameState();
+  const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
   const [transferTo, setTransferTo] = useState<ClassId>(CLASS_IDS[0]);
   const [rbName, setRbName] = useState('');
   const [rbRace, setRbRace] = useState<RaceId>(RACE_IDS[0]);
@@ -158,42 +153,49 @@ export const Page = () => {
         })}
       </section>
 
-      {/* スキル */}
+      {/* スキル（本家風ツリー表示。職業/種族/称号で切替） */}
       <section className={styles.card}>
         <h2 className={styles.h2}>
           スキル <span className={styles.sp}>SP {sp}</span>
         </h2>
-        <ul className={styles.skills}>
-          {skillNodesFor(char).map((node) => {
-            const lv = skillLevel(char, node.skillId);
-            const can = canLearnSkill(char, node.skillId);
-            const def = SKILLS[node.skillId];
-            return (
-              <li
-                key={node.skillId}
-                className={styles.skill}
-              >
-                <div className={styles.skillInfo}>
-                  <span className={styles.skillName}>
-                    {def?.name ?? node.skillId}
-                    <span className={styles.skillLv}>
-                      Lv {lv}/{node.maxLevel}
-                    </span>
-                  </span>
-                  <span className={styles.skillDesc}>{def?.description ?? ''}</span>
-                </div>
-                <button
-                  type="button"
-                  className={styles.learnBtn}
-                  disabled={!can}
-                  onClick={() => void updateChar((c) => learnSkill(c, node.skillId))}
-                >
-                  ＋
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <div className={styles.skillTabs}>
+          <button
+            type="button"
+            className={`${styles.skillTab} ${skillTab === 'class' ? styles.skillTabOn : ''}`}
+            onClick={() => setSkillTab('class')}
+          >
+            職業（{CLASSES[char.classId]?.name ?? ''}）
+          </button>
+          <button
+            type="button"
+            className={`${styles.skillTab} ${skillTab === 'race' ? styles.skillTabOn : ''}`}
+            onClick={() => setSkillTab('race')}
+          >
+            種族（{RACES[char.raceId]?.name ?? ''}）
+          </button>
+          {char.titleId ? (
+            <button
+              type="button"
+              className={`${styles.skillTab} ${skillTab === 'title' ? styles.skillTabOn : ''}`}
+              onClick={() => setSkillTab('title')}
+            >
+              称号（{TITLES[char.titleId]?.name ?? ''}）
+            </button>
+          ) : null}
+        </div>
+        <SkillTree
+          nodes={
+            skillTab === 'class'
+              ? (CLASSES[char.classId]?.skillTree.skills ?? [])
+              : skillTab === 'race'
+                ? (RACES[char.raceId]?.raceSkillTree.skills ?? [])
+                : char.titleId
+                  ? (TITLES[char.titleId]?.skillTree.skills ?? [])
+                  : []
+          }
+          char={char}
+          onLearn={(skillId) => void updateChar((c) => learnSkill(c, skillId))}
+        />
       </section>
 
       {/* 育成: 転職・称号・転生 */}

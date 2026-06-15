@@ -65,6 +65,39 @@ export const UNION_SKILLS: Record<SkillId, UnionSkillDef> = {
     target: 'enemyOne',
     effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.4 + 0.3 * lv, hits: 3 }],
   },
+  // ルーナ（月・癒し）: 全体回復＋魔法防御上昇。単独発動できる支援の要。
+  skill_union_moonlight: {
+    id: 'skill_union_moonlight',
+    name: '月光の癒し',
+    description: '味方全体を大回復し、魔法防御を高める。単独で発動できる。',
+    raceId: 'race_lunar',
+    requiredParticipants: 1,
+    gaugeCostPerParticipant: 100,
+    element: 'almighty',
+    target: 'allyAll',
+    effects: [
+      { kind: 'heal', amount: (lv) => 55 + 22 * lv },
+      {
+        kind: 'buff',
+        stat: 'mdef',
+        modifier: (lv) => 1.2 + 0.05 * lv,
+        turns: 3,
+        stackGroup: 'union',
+      },
+    ],
+  },
+  // ゴラン（岩・力）: 敵全体に大震撃。協力者1名が必要。
+  skill_union_quake: {
+    id: 'skill_union_quake',
+    name: '大震撃',
+    description: '2名のユニオンで敵全体に大きな壊打ダメージを与える。',
+    raceId: 'race_golan',
+    requiredParticipants: 2,
+    gaugeCostPerParticipant: 50,
+    element: 'bash',
+    target: 'enemyAll',
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.3 + 0.4 * lv }],
+  },
 };
 
 /** ユニオンスキルか。 */

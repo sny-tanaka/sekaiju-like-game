@@ -1,0 +1,179 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scroll {
+  overflow: auto;
+  max-height: 440px;
+  padding: 8px;
+  border: 1px solid #cfd8c5;
+  border-radius: 8px;
+  background: #f3f7ee;
+  -webkit-overflow-scrolling: touch;
+}
+
+.canvas {
+  position: relative;
+}
+
+.edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.edge {
+  stroke: #9caa86;
+  stroke-width: 2;
+}
+
+.edgeLabel {
+  fill: #5f7a3a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border: 1px solid #b9c4ab;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #33402a;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+// 習得済み（緑）
+.learned {
+  background: #d8ecc6;
+  border-color: #8db86a;
+}
+
+// 最大Lv（金枠）
+.maxed {
+  border-color: #d4a637;
+  background: #e7efbf;
+}
+
+// 習得可能（強調枠＋発光）
+.available {
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.35);
+}
+
+// 前提未達（暗く）
+.locked {
+  opacity: 0.45;
+}
+
+// 選択中
+.selected {
+  outline: 2px solid #ef8a3a;
+  outline-offset: 1px;
+}
+
+.nodeName {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-right: 22px; // SPコストバッジ分の余白
+}
+
+.nodeCost {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #5f7a3a;
+  background: #eef3e4;
+  border-radius: 4px;
+  padding: 0 3px;
+}
+
+.nodeLv {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  color: #5b6b4a;
+}
+
+.lvNum {
+  min-width: 8px;
+  text-align: right;
+  font-weight: 700;
+}
+
+.lvBar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #d4dcc8;
+  overflow: hidden;
+}
+
+.lvFill {
+  display: block;
+  height: 100%;
+  background: #6fae46;
+}
+
+.lvMax {
+  color: #97a585;
+}
+
+.detail {
+  padding: 8px 10px;
+  border: 1px solid #cfd8c5;
+  border-radius: 8px;
+  background: #fbfdf7;
+}
+
+.detailName {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 700;
+  color: #33402a;
+}
+
+.detailLv {
+  font-size: 11px;
+  color: #6b7a58;
+  font-weight: 600;
+}
+
+.detailDesc {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #4c5a3c;
+  line-height: 1.4;
+}
+
+.detailReq {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8a6a3a;
+}
+
+.hint {
+  font-size: 11px;
+  color: #8a9678;
+  line-height: 1.4;
+}

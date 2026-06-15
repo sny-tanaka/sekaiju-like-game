@@ -1,8 +1,14 @@
-import { BALANCE, CLASS_CHANGE_LEVEL_PENALTY, TITLE_BONUS_SP, UNLOCK } from '@/data/balance';
+import {
+  CLASS_CHANGE_LEVEL_PENALTY,
+  spTotalForLevel,
+  TITLE_BONUS_SP,
+  UNLOCK,
+} from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { RACES } from '@/data/races';
 import { canEquip, unequipItem } from '@/domain/inventory';
 import { createCharacter } from '@/domain/saveData';
+import { skillSpCost } from '@/domain/skillTree';
 import type {
   Character,
   ClassId,
@@ -36,8 +42,13 @@ function raceSkillIds(raceId: RaceId): Set<string> {
   return new Set((RACES[raceId]?.raceSkillTree.skills ?? []).map((n) => n.skillId));
 }
 
-const sumLevels = (learned: Record<string, number>) =>
-  Object.values(learned).reduce((s, v) => s + v, 0);
+/** 学習済みスキルの消費SP合計（深さ別コスト加重）。char は SP コスト算出のための文脈。 */
+const spentForLearned = (char: Character, learned: Record<string, number>): number => {
+  const ctx: Character = { ...char, learnedSkills: learned };
+  let sp = 0;
+  for (const [sid, lv] of Object.entries(learned)) sp += skillSpCost(ctx, sid) * lv;
+  return sp;
+};
 
 /**
  * 転職（[01 §6]）。職業を変更し、レベルを一定値下げ、職業/称号スキルを振り直す。
@@ -57,9 +68,11 @@ export function transferClass(char: Character, newClassId: ClassId): Character {
 
   const level = Math.max(1, char.level - CLASS_CHANGE_LEVEL_PENALTY);
   // SP 総量は新レベル基準に再計算（転職コスト=レベル低下を SP にも反映。増殖を防ぐ）。
-  const total = BALANCE.SP_PER_LEVEL * Math.max(0, level - 1);
-  // 開始スキルの無料 Lv1 は spent に含めない
-  let spent = sumLevels(learned) - (starter && learned[starter] ? 1 : 0);
+  const total = spTotalForLevel(level);
+  // 深さ別コストで消費SPを再計算。開始スキルの無料 Lv1 は spent に含めない。
+  const ctx: Character = { ...char, classId: newClassId, titleId: null, learnedSkills: learned };
+  let spent =
+    spentForLearned(ctx, learned) - (starter && learned[starter] ? skillSpCost(ctx, starter) : 0);
   // 低レベル化で種族スキル投資を払い切れない場合は剥奪（負の SP を作らない）
   if (spent > total) {
     learned = starter ? { [starter]: 1 } : {};
@@ -141,7 +154,7 @@ export function reincarnate(
   const startLv = Math.min(30, Math.floor(char.level / 2));
   const base = createCharacter({ ...next, id: char.id });
   // startLv 分の通常 SP ＋ ボーナス SP
-  const total = BALANCE.SP_PER_LEVEL * Math.max(0, startLv - 1) + bonus.bonusSp;
+  const total = spTotalForLevel(startLv) + bonus.bonusSp;
   return {
     ...base,
     level: Math.max(1, startLv),
