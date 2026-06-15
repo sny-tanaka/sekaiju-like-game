@@ -16,6 +16,7 @@ import type {
   ActiveBuff,
   AilmentType,
   BattleCommand,
+  BattleLogEntry,
   BattleSkillDef,
   BattleState,
   Character,
@@ -28,6 +29,8 @@ import type {
   Rng,
   SaveData,
   SkillEffectDef,
+  StatKey,
+  Stats,
   SummonKind,
   TargetType,
 } from '@/domain/types';
@@ -691,6 +694,18 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   if (state.outcome !== 'ongoing') return state;
   // ディープコピー（純粋性のため）
   const next: BattleState = structuredClone({ ...state, log: [] });
+  // ログ行ごとに「その時点の全戦闘員 HP」を記録する（issue #18 の逐次再生用）。
+  // すべての効果ヘルパは next.log.push でログを積むため、push をラップして自動採取する。
+  const origPush = next.log.push.bind(next.log);
+  next.log.push = (...entries: BattleLogEntry[]): number => {
+    const r = origPush(...entries);
+    const snap: Record<string, { hp: number; isDown: boolean }> = {};
+    for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
+      snap[c.id] = { hp: c.hp, isDown: c.isDown };
+    }
+    for (const e of entries) e.snapshot = snap;
+    return r;
+  };
   // 通常行動のコマンド表（ユニオンは別枠なので除外する）。
   const cmdByActor = new Map(commands.filter((c) => c.kind !== 'union').map((c) => [c.actorId, c]));
 
@@ -914,6 +929,57 @@ export function battleRewards(state: BattleState): { exp: number; gold: number }
     gold += Math.round(master.gold * scale);
   }
   return { exp, gold };
+}
+
+/**
+ * リザルト表示用の経験値・レベルアップ結果（issue #18）。
+ * 戦闘勝利時、出撃メンバーごとに「獲得経験値・次レベルまでのバー・レベルアップ時のステ増分」を返す。
+ * applyBattleResult と同じ grantExpToChar を使うため、表示と実適用は一致する。
+ */
+export interface LevelUpResult {
+  charId: string;
+  name: string;
+  gainedExp: number;
+  fromLevel: number;
+  toLevel: number;
+  /** 適用後の現在経験値と次レベルに必要な経験値（バー表示用。Lv上限なら expToNext=0）。 */
+  exp: number;
+  expToNext: number;
+  /** レベルアップした場合の素ステータス増分（しなければ空）。 */
+  statGains: Partial<Stats>;
+}
+
+/** 戦闘勝利時の各メンバーの経験値獲得・レベルアップ結果（リザルト画面用。純粋・副作用なし）。 */
+export function partyExpResults(save: SaveData, state: BattleState): LevelUpResult[] {
+  if (state.outcome !== 'win' || !save.diveState) return [];
+  const { exp } = battleRewards(state);
+  const partyIds = new Set(save.diveState.party.map((p) => p.charId));
+  const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
+  const results: LevelUpResult[] = [];
+  for (const m of save.guild.members) {
+    if (!partyIds.has(m.id)) continue;
+    const after = grantExpToChar(m, share);
+    const statGains: Partial<Stats> = {};
+    if (after.level > m.level) {
+      const before = computeBaseStats(m);
+      const aft = computeBaseStats(after);
+      for (const k of Object.keys(before) as StatKey[]) {
+        const d = Math.round(aft[k] - before[k]);
+        if (d !== 0) statGains[k] = d;
+      }
+    }
+    results.push({
+      charId: m.id,
+      name: m.name,
+      gainedExp: canGainExp(m.level) ? share : 0,
+      fromLevel: m.level,
+      toLevel: after.level,
+      exp: after.exp,
+      expToNext: canGainExp(after.level) ? expToNext(after.level) : 0,
+      statGains,
+    });
+  }
+  return results;
 }
 
 /** キャラに経験値を与え、必要ならレベルアップ（Lv上限で経験値は無効）。 */
