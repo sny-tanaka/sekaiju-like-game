@@ -3,12 +3,20 @@ import { useMemo, useState } from 'react';
 import styles from './style.module.scss';
 
 import { SKILLS } from '@/data/skills';
-import { canLearnSkill, skillLevel, spCostForDepth } from '@/domain/skillTree';
+import {
+  availableSP,
+  canLearnSkill,
+  prereqsMet,
+  skillLevel,
+  skillSpCost,
+  spCostForDepth,
+} from '@/domain/skillTree';
 import type { Character, SkillTreeNode } from '@/domain/types';
 
 // ============================================================================
 // スキルツリー表示（本家風）。前提スキルから「Lv N」ラベル付きの線で次の列へつなぐ
-// 左→右の段（列）レイアウト。列 = 前提チェーンの深さ。タップで習得（SP 1 消費）。
+// 左→右の段（列）レイアウト。列 = 前提チェーンの深さ。
+// ノードはタップで「選択」するのみ。実際の習得/強化は下部の習得ボタンで行う（誤タップ防止）。
 // ============================================================================
 
 type Props = {
@@ -166,10 +174,7 @@ export const SkillTree = ({ nodes, char, onLearn }: Props) => {
                 key={node.skillId}
                 className={cls}
                 style={{ left: col * COL_W, top: row * ROW_H, width: NODE_W, height: NODE_H }}
-                onClick={() => {
-                  setSelected(node.skillId);
-                  if (can) onLearn(node.skillId);
-                }}
+                onClick={() => setSelected(node.skillId)}
               >
                 <span className={styles.nodeName}>
                   {SKILLS[node.skillId]?.name ?? node.skillId}
@@ -190,27 +195,55 @@ export const SkillTree = ({ nodes, char, onLearn }: Props) => {
           })}
         </div>
       </div>
-      {detail ? (
-        <div className={styles.detail}>
-          <div className={styles.detailName}>
-            {detail.name}
-            <span className={styles.detailLv}>
-              Lv {skillLevel(char, detail.id)}/{detailNode?.maxLevel ?? 0}
-            </span>
-          </div>
-          <div className={styles.detailDesc}>{detail.description}</div>
-          {detailNode?.requires?.length ? (
-            <div className={styles.detailReq}>
-              前提:{' '}
-              {detailNode.requires
-                .map((r) => `${SKILLS[r.skillId]?.name ?? r.skillId} Lv${r.level}`)
-                .join('・')}
+      {detail && detailNode ? (
+        (() => {
+          const lv = skillLevel(char, detail.id);
+          const maxed = lv >= detailNode.maxLevel;
+          const met = prereqsMet(char, detailNode);
+          const cost = skillSpCost(char, detail.id);
+          const enoughSp = availableSP(char) >= cost;
+          const canDo = !maxed && met && enoughSp;
+          // 状況に応じたボタン文言（誤タップ防止のため、選択中スキルのみここから消費する）。
+          const label = maxed
+            ? '習得済み（最大Lv）'
+            : !met
+              ? '前提スキル未達'
+              : !enoughSp
+                ? `SP不足（必要 SP${cost}）`
+                : lv === 0
+                  ? `習得する（SP${cost} 消費）`
+                  : `Lv${lv}→${lv + 1} に強化（SP${cost} 消費）`;
+          return (
+            <div className={styles.detail}>
+              <div className={styles.detailName}>
+                {detail.name}
+                <span className={styles.detailLv}>
+                  Lv {lv}/{detailNode.maxLevel}
+                </span>
+              </div>
+              <div className={styles.detailDesc}>{detail.description}</div>
+              {detailNode.requires?.length ? (
+                <div className={styles.detailReq}>
+                  前提:{' '}
+                  {detailNode.requires
+                    .map((r) => `${SKILLS[r.skillId]?.name ?? r.skillId} Lv${r.level}`)
+                    .join('・')}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                className={styles.learnBtn}
+                disabled={!canDo}
+                onClick={() => onLearn(detail.id)}
+              >
+                {label}
+              </button>
             </div>
-          ) : null}
-        </div>
+          );
+        })()
       ) : (
         <div className={styles.hint}>
-          ノードをタップで習得（1Lvあたりの消費SPは各ノードの「SP◯」。深いスキルほど高コスト）。緑=習得済
+          ノードをタップで選択し、下の「習得する」ボタンで習得/強化（1Lvあたりの消費SPは各ノードの「SP◯」。深いスキルほど高コスト）。緑=習得済
           / 枠強調=習得可 / 暗=前提未達。
         </div>
       )}

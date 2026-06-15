@@ -8,11 +8,17 @@ import { EQUIPMENT } from '@/data/equipment';
 import { equipDisplayName, forgeWithIngot, recycle, type IngotType } from '@/domain/forge';
 import { useGameState } from '@/store/gameState';
 
+// 確認待ちの操作（タップ1回での誤強化/誤分解を防ぐ。確認ダイアログ経由でのみ実行）。
+type Pending =
+  | { kind: 'forge'; instanceId: string; ingot: IngotType; name: string; ingotLabel: string }
+  | { kind: 'recycle'; id: string; name: string };
+
 // 鍛冶屋（[04 §4]）。所有装備（個体）の強化（インゴット消費）とリサイクル。
 export const Page = () => {
   const navigate = useNavigate();
   const { save, applyAndPersist } = useGameState();
   const [tab, setTab] = useState<'forge' | 'recycle'>('forge');
+  const [pending, setPending] = useState<Pending | null>(null);
 
   if (!save) {
     return (
@@ -27,12 +33,31 @@ export const Page = () => {
   const fragments = save.forgeInventory.fragments.common ?? 0;
   const pool = save.guild.equipment;
 
-  const ingotBtn = (instanceId: string, kind: IngotType, label: string, count: number) => (
+  // 確認ダイアログで「はい」を押したときだけ実際に強化/分解を確定する。
+  const confirmPending = () => {
+    if (!pending) return;
+    if (pending.kind === 'forge') {
+      void applyAndPersist((s) => forgeWithIngot(s, pending.instanceId, pending.ingot).save);
+    } else {
+      void applyAndPersist((s) => recycle(s, pending.id).save);
+    }
+    setPending(null);
+  };
+
+  const ingotBtn = (
+    instanceId: string,
+    name: string,
+    kind: IngotType,
+    label: string,
+    count: number
+  ) => (
     <button
       type="button"
       className={styles.ingot}
       disabled={count <= 0}
-      onClick={() => void applyAndPersist((s) => forgeWithIngot(s, instanceId, kind).save)}
+      onClick={() =>
+        setPending({ kind: 'forge', instanceId, ingot: kind, name, ingotLabel: label })
+      }
     >
       {label}+{FORGE.INGOT_INC[kind]}（{count}）
     </button>
@@ -92,9 +117,9 @@ export const Page = () => {
                       <span className={styles.maxed}>最大強化</span>
                     ) : (
                       <>
-                        {ingotBtn(e.id, 'copper', '銅', copper)}
-                        {ingotBtn(e.id, 'silver', '銀', silver)}
-                        {ingotBtn(e.id, 'gold', '金', gold)}
+                        {ingotBtn(e.id, equipDisplayName(e), 'copper', '銅', copper)}
+                        {ingotBtn(e.id, equipDisplayName(e), 'silver', '銀', silver)}
+                        {ingotBtn(e.id, equipDisplayName(e), 'gold', '金', gold)}
                       </>
                     )}
                   </div>
@@ -102,7 +127,9 @@ export const Page = () => {
                   <button
                     type="button"
                     className={styles.recycle}
-                    onClick={() => void applyAndPersist((s) => recycle(s, e.id).save)}
+                    onClick={() =>
+                      setPending({ kind: 'recycle', id: e.id, name: equipDisplayName(e) })
+                    }
                   >
                     分解（断片+{FORGE.RECYCLE_FRAGMENTS}）
                   </button>
@@ -122,6 +149,47 @@ export const Page = () => {
           拠点へ戻る
         </button>
       </footer>
+
+      {/* 強化/分解の確認ダイアログ（誤タップ防止）。 */}
+      {pending ? (
+        <div
+          className={styles.confirmOverlay}
+          onClick={() => setPending(null)}
+        >
+          <div
+            className={styles.confirmBox}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.confirmText}>
+              {pending.kind === 'forge' ? (
+                <>
+                  <strong>{pending.name}</strong> を{pending.ingotLabel}インゴットで強化しますか？
+                </>
+              ) : (
+                <>
+                  <strong>{pending.name}</strong> を分解しますか？（装備は失われます）
+                </>
+              )}
+            </div>
+            <div className={styles.confirmActions}>
+              <button
+                type="button"
+                className={styles.confirmCancel}
+                onClick={() => setPending(null)}
+              >
+                やめる
+              </button>
+              <button
+                type="button"
+                className={styles.confirmOk}
+                onClick={confirmPending}
+              >
+                {pending.kind === 'forge' ? '強化する' : '分解する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

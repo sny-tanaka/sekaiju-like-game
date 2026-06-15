@@ -177,3 +177,22 @@
   color: #8a9678;
   line-height: 1.4;
 }
+
+.learnBtn {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 10px;
+  background-color: #6fae46;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    background-color: #cfd8c5;
+    color: #7a8568;
+    cursor: default;
+  }
+}
