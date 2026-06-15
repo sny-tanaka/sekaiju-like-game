@@ -154,12 +154,22 @@ export function validateMasters(): ValidationResult {
     for (const d of g.drops) {
       if (!(d.itemId in items)) {
         errors.push(`[gatherTypes] "${g.type}" のドロップ "${d.itemId}" が未定義アイテム`);
+      } else {
+        // food 系統のドロップは food カテゴリ、素材系統は food 以外であること（振り分け先の整合）。
+        const isFoodItem = items[d.itemId].category === 'food';
+        if (g.food && !isFoodItem) {
+          errors.push(`[gatherTypes] 食材系統 "${g.type}" のドロップ "${d.itemId}" が food でない`);
+        }
+        if (!g.food && isFoodItem) {
+          errors.push(`[gatherTypes] 素材系統 "${g.type}" のドロップ "${d.itemId}" が food`);
+        }
       }
       if (d.weight <= 0) errors.push(`[gatherTypes] "${g.type}" のドロップ重みが正でない`);
     }
   }
 
-  // 料理レシピ（[04 §6]）: 食材・結果の実在と food カテゴリ整合
+  // 料理レシピ（[04 §6]）: ID 規約・食材・結果の実在と food カテゴリ整合
+  checkIdConvention('recipes', Object.keys(recipes), errors);
   for (const [key, r] of Object.entries(recipes)) {
     if (key !== r.id) errors.push(`[recipes] キー "${key}" と id "${r.id}" が不一致`);
     for (const ing of r.ingredients) {

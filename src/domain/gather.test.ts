@@ -99,6 +99,20 @@ describe('gather', () => {
     expect(foodCount(res.save, 'item_food_fish')).toBe(1);
   });
 
+  test('食材枠が満杯だと採集を拒否し、枯渇登録もしない（取りこぼし防止）', () => {
+    let save = diveWithGather('fishing', 'skill_fishing');
+    // 食材を60個まで満たす
+    save = {
+      ...save,
+      guild: { ...save.guild, foodStorage: [{ itemId: 'item_food_fish', qty: 60 }] },
+    };
+    const res = gatherHere(save, createRng(1));
+    expect(res.ok).toBe(false);
+    expect(res.reason).toBe('foodFull');
+    const p = gatheringPointHere(res.save)!;
+    expect(isGatherDepleted(res.save, p)).toBe(false); // 枯渇していない
+  });
+
   test('採集後はそのポイントが枯渇し、再採集できない', () => {
     const save = diveWithGather('mining', 'skill_mining');
     const res = gatherHere(save, createRng(1));

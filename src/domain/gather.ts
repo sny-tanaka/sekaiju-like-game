@@ -1,6 +1,6 @@
 import { GATHER_TYPES } from '@/data/gather';
 import { ITEMS } from '@/data/items';
-import { addFood, addItem } from '@/domain/inventory';
+import { FOOD_STORAGE_LIMIT, addFood, addItem, foodTotal } from '@/domain/inventory';
 import { cellKey } from '@/domain/types';
 import type { GatheringPoint, Rng, SaveData } from '@/domain/types';
 
@@ -13,7 +13,7 @@ export interface GatherResult {
   ok: boolean;
   save: SaveData;
   itemId?: string;
-  reason?: 'noDive' | 'noPoint' | 'depleted' | 'noSkill';
+  reason?: 'noDive' | 'noPoint' | 'depleted' | 'noSkill' | 'foodFull';
 }
 
 /** 出撃中パーティが指定スキルを習得しているか。 */
@@ -71,6 +71,10 @@ export function gatherHere(save: SaveData, rng: Rng): GatherResult {
   if (isGatherDepleted(save, point)) return { ok: false, save, reason: 'depleted' };
   const def = GATHER_TYPES[point.type];
   if (!partyHasSkill(save, def.requiredSkillId)) return { ok: false, save, reason: 'noSkill' };
+  // 食材枠が満杯なら採集しない（枯渇登録もしない＝採集機会を失わせない）。
+  if (def.food && foodTotal(save) >= FOOD_STORAGE_LIMIT) {
+    return { ok: false, save, reason: 'foodFull' };
+  }
 
   const itemId = pickWeighted(def.drops, rng);
   let next = def.food ? addFood(save, itemId, 1) : addItem(save, itemId, 1);

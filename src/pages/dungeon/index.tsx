@@ -71,7 +71,13 @@ export const Page = () => {
     if (!rngRef.current) rngRef.current = createRng((save.masterSeed ^ 0x9e3779b9) >>> 0);
     const res = gatherHere(save, rngRef.current);
     if (!res.ok) {
-      setNotice(res.reason === 'noSkill' ? '対応する採集スキルを持つ仲間がいない' : '採集できない');
+      setNotice(
+        res.reason === 'noSkill'
+          ? '対応する採集スキルを持つ仲間がいない'
+          : res.reason === 'foodFull'
+            ? '食料がいっぱいで採れない'
+            : '採集できない'
+      );
       return;
     }
     void applyAndPersist(() => res.save);
