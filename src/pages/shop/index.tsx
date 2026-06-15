@@ -27,11 +27,14 @@ export const Page = () => {
   const gold = save.guild.gold;
   const catalog = shopCatalog(save);
   // 売却可能な所持品（売値 > 0）と所有装備（個体）
-  const sellable = save.guild.storage.filter((s) => sellPriceOf(s.itemId) > 0);
+  const sellable = save.guild.storage.filter((s) => sellPriceOf(s.itemId, s.grade ?? 1) > 0);
   const sellableEquip = save.guild.equipment;
   const nothingToSell = sellable.length === 0 && sellableEquip.length === 0;
 
-  const nameOf = (id: string) => ITEMS[id]?.name ?? EQUIPMENT[id]?.name ?? id;
+  const nameOf = (id: string, grade = 1) => {
+    const base = ITEMS[id]?.name ?? EQUIPMENT[id]?.name ?? id;
+    return grade > 1 ? `${base} Lv${grade}` : base;
+  };
 
   return (
     <div className={styles.layout}>
@@ -102,19 +105,19 @@ export const Page = () => {
             ))}
             {sellable.map((s) => (
               <div
-                key={s.itemId}
+                key={`${s.itemId}_${s.grade ?? 1}`}
                 className={styles.row}
               >
                 <div className={styles.info}>
-                  <span className={styles.name}>{nameOf(s.itemId)}</span>
+                  <span className={styles.name}>{nameOf(s.itemId, s.grade ?? 1)}</span>
                   <span className={styles.note}>所持 {s.qty}</span>
                 </div>
                 <button
                   type="button"
                   className={styles.action}
-                  onClick={() => void applyAndPersist((sv) => sell(sv, s.itemId, 1))}
+                  onClick={() => void applyAndPersist((sv) => sell(sv, s.itemId, 1, s.grade ?? 1))}
                 >
-                  売却 {sellPriceOf(s.itemId)} G
+                  売却 {sellPriceOf(s.itemId, s.grade ?? 1)} G
                 </button>
               </div>
             ))}

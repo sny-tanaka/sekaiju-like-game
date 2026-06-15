@@ -1,6 +1,7 @@
 import { isBossFloor } from '@/data/balance';
 import { ENEMIES } from '@/data/enemies';
 import { GATHER_TYPE_LIST } from '@/data/gather';
+import { poolBandForDepth } from '@/domain/encounterTable';
 import type {
   Cell,
   Dir,
@@ -11,10 +12,18 @@ import type {
   Rng,
 } from '@/domain/types';
 
-/** その帯の FOE プール（雑魚と同プール。ボスは除外）。 */
+/**
+ * その帯の FOE プール（kind='foe' の徘徊強敵）。帯に FOE が無ければ雑魚で代替する。
+ * band は呼び出し側で poolBandForDepth により最深帯クランプ済み。
+ */
 function FOE_POOL_BY_BAND(band: number): EnemyId[] {
+  const foes = Object.values(ENEMIES)
+    .filter((e) => e.tierBand === band && e.kind === 'foe')
+    .map((e) => e.id);
+  if (foes.length > 0) return foes;
+  // フォールバック: FOE 未定義の帯は雑魚で代替（空配置を避ける）。
   return Object.values(ENEMIES)
-    .filter((e) => e.tierBand === band && !e.isBoss)
+    .filter((e) => e.tierBand === band && !e.isBoss && e.kind !== 'foe')
     .map((e) => e.id);
 }
 
@@ -176,7 +185,7 @@ export function generateFloor(depth: number, rng: Rng): FloorMaster {
   cells[entranceY][entranceX].event = { kind: 'stairsDown' }; // 拠点/前階へ戻る入口
   cells[exitY][exitX].event = { kind: 'stairsUp' }; // 次の階へ進む出口
 
-  const band = Math.floor((depth - 1) / 10);
+  const band = poolBandForDepth(depth); // 最深帯クランプ（深部は最深帯プール＋係数スケール）
 
   // ⑤ FOE（徘徊敵）配置（[02 §6]）。ボス階には雑魚FOEを置かず、代わりに固定ボスを置く（[06 §4]）。
   const foeSpawns: FoeSpawn[] = [];

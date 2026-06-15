@@ -281,6 +281,11 @@ export interface EnemyMaster {
   drops?: { itemId: ItemId; rate: number }[];
   /** 階層ボスか（[06 §4]）。雑魚プール除外・ボス配置の判定に使う。 */
   isBoss?: boolean;
+  /**
+   * 敵の役割（[06 §3]）。'zako'=ランダムエンカウント / 'foe'=フィールド徘徊（FOE・強敵）/ 'boss'=階層ボス。
+   * 未指定は 'zako' 扱い。ボスは isBoss:true も併せて立てる。
+   */
+  kind?: 'zako' | 'foe' | 'boss';
 }
 
 /**
@@ -477,6 +482,8 @@ export interface EquipInstance {
   id: string; // 個体一意 ID
   masterId: ItemId; // EQUIPMENT のマスター ID
   forgeLevel: number; // 強化値 0..5（[04 §4.1]）
+  /** 周回グレード（[06 §3]）。未指定=1。ボーナスは ×(1+0.5*(grade-1))。名前に LvN を付す。 */
+  grade?: number;
 }
 
 /** 装備中スロット。各スロットに装備個体（未装備は null）。 */
@@ -510,6 +517,8 @@ export interface PartyFormation {
 export interface ItemStack {
   itemId: ItemId;
   qty: number;
+  /** 周回グレード（[06 §3]）。素材のみ使用。未指定=1。grade 違いは別スタック・名前に LvN。 */
+  grade?: number;
 }
 
 export interface Guild {
@@ -748,6 +757,11 @@ export interface ShopStock {
   unlockedTier: number;
   /** 売却で恒久解放された商品 ID（素材を売ると並ぶ。Phase 4 で実装）。 */
   unlockedItemIds: string[];
+  /**
+   * 売却で解放された装備の最大グレード（[06 §3]）。未指定/未登録=1。
+   * 高グレード素材（周回ドロップ）を売ると、その装備が LvN として並ぶ。
+   */
+  unlockedGrades?: Record<string, number>;
 }
 
 // ============================================================================

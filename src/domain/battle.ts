@@ -6,7 +6,8 @@ import { ITEMS } from '@/data/items';
 import { SUMMONS } from '@/data/summons';
 import { UNION_SKILLS } from '@/data/unionSkills';
 import { computeDamage, effectiveEnemyStats, scaleStats } from '@/domain/combat';
-import { forgeBonusFor } from '@/domain/forge';
+import { enemyLapForDepth } from '@/domain/encounterTable';
+import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computePassiveMods } from '@/domain/passives';
 import { computeBaseStats } from '@/domain/stats';
@@ -68,11 +69,12 @@ function aggregateEquip(char: Character): EquipBonuses {
     if (!inst) continue;
     const eq = EQUIPMENT[inst.masterId];
     if (!eq) continue;
+    const base = gradedBaseBonuses(inst.masterId, inst.grade); // 周回グレードで基礎を倍化（[06 §3]）
     const forge = forgeBonusFor(inst.masterId, inst.forgeLevel); // 鍛冶 +N 反映（[04 §4]）
-    acc.atk += (eq.bonuses.atk ?? 0) + (forge.atk ?? 0);
-    acc.mat += (eq.bonuses.mat ?? 0) + (forge.mat ?? 0);
-    acc.def += (eq.bonuses.def ?? 0) + (forge.def ?? 0);
-    acc.mdf += (eq.bonuses.mdf ?? 0) + (forge.mdf ?? 0);
+    acc.atk += (base.atk ?? 0) + (forge.atk ?? 0);
+    acc.mat += (base.mat ?? 0) + (forge.mat ?? 0);
+    acc.def += (base.def ?? 0) + (forge.def ?? 0);
+    acc.mdf += (base.mdf ?? 0) + (forge.mdf ?? 0);
   }
   return acc;
 }
@@ -108,13 +110,14 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
   };
 }
 
-/** 敵の戦闘員を組む（出現階でスケール）。 */
+/** 敵の戦闘員を組む（出現階でスケール）。2周目以降は名前に LvN（周回数）を付す（[06 §3]）。 */
 function buildEnemy(enemyId: EnemyId, index: number, depth: number): Combatant {
   const master = ENEMIES[enemyId];
   const stats = effectiveEnemyStats(master, depth);
+  const lap = enemyLapForDepth(depth);
   return {
     id: `enemy_${index}`,
-    name: master.name,
+    name: lap >= 2 ? `${master.name} Lv${lap}` : master.name,
     side: 'enemy',
     row: 'front',
     stats,
@@ -997,7 +1000,8 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
 
   // 倉庫: 戦闘で使ったアイテムを減算（勝敗問わず）
   for (const id of state.consumedItems) next = removeItem(next, id, 1);
-  // 倉庫: 勝利時のみドロップを加算
-  if (win) for (const d of state.drops) next = addItem(next, d.itemId, 1);
+  // 倉庫: 勝利時のみドロップを加算（周回数=グレード。2周目以降は素材が LvN 化。[06 §3]）
+  const dropGrade = enemyLapForDepth(state.depth);
+  if (win) for (const d of state.drops) next = addItem(next, d.itemId, 1, dropGrade);
   return next;
 }
