@@ -11,7 +11,8 @@ describe('rollEncounter', () => {
     expect(a.every((id) => id.startsWith('enemy_') && !id.startsWith('enemy_boss'))).toBe(true);
   });
 
-  test('ボス階はボス単体', () => {
-    expect(rollEncounter(10, createRng(5))).toEqual(['enemy_boss_gatekeeper']);
+  test('ボス階でもランダムは雑魚のみ（ボスは固定遭遇でランダムに出さない）', () => {
+    const enc = rollEncounter(10, createRng(5));
+    expect(enc.every((id) => !id.startsWith('enemy_boss'))).toBe(true);
   });
 });
