@@ -224,6 +224,8 @@ export interface EnemyMaster {
   resist?: Partial<Record<Element, number>>; // 属性倍率（弱点1.5/耐性0.5/無効0）
   /** 通常ドロップ（[04 §7]）。rate=0..1。撃破時に rng で抽選。 */
   drops?: { itemId: ItemId; rate: number }[];
+  /** 階層ボスか（[06 §4]）。雑魚プール除外・ボス配置の判定に使う。 */
+  isBoss?: boolean;
 }
 
 /**
@@ -496,6 +498,8 @@ export interface FoeSpawn {
   moveSpeed: number;
   sightRange: number;
   respawn: boolean;
+  /** 階層ボスか（[06 §4]）。撃破でゲート解放・ワープ解放・記録更新の対象。 */
+  isBoss?: boolean;
 }
 
 export interface FoeRuntimeState {
@@ -635,6 +639,8 @@ export interface PendingFoeBattle {
   enemyId: EnemyId;
   /** 接触方向で決まる先手（[03 §10]）。 */
   firstStrike: FirstStrike;
+  /** 階層ボス戦か（[06 §4]）。勝利でゲート解放・ワープ解放・記録更新を行う。 */
+  isBoss?: boolean;
 }
 
 export interface DiveState {

@@ -12,7 +12,15 @@ import { ITEMS } from '@/data/items';
 import { MAP_ICONS } from '@/data/mapIcons';
 import { RECIPES } from '@/data/recipes';
 import { canCook, cook, isAtCookingSpot, unlockedRecipes } from '@/domain/cooking';
-import { goDeeper, goShallower, moveStep, returnToTown, stairsAt, turnTo } from '@/domain/dive';
+import {
+  canAscend,
+  goDeeper,
+  goShallower,
+  moveStep,
+  returnToTown,
+  stairsAt,
+  turnTo,
+} from '@/domain/dive';
 import { gaugeLevel } from '@/domain/encounter';
 import { canGather, gatherHere, gatheringPointHere, isGatherDepleted } from '@/domain/gather';
 import { foodCount } from '@/domain/inventory';
@@ -124,6 +132,11 @@ export const Page = () => {
     if (!save) return;
     const kind = stairsAt(save);
     if (kind === 'stairsUp') {
+      // ボス階はボス撃破まで封鎖（[06 §4]）
+      if (!canAscend(save, save.diveState!.depth)) {
+        setNotice('強大な力に阻まれている。階層ボスを倒さねば先へ進めない。');
+        return;
+      }
       await applyAndPersist((s) => goDeeper(s));
     } else if (kind === 'stairsDown') {
       if (save.diveState!.depth <= 1) {

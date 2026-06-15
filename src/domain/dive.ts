@@ -195,7 +195,13 @@ export function moveStep(
   if (hitFoe) {
     const spawn = floor.foeSpawns.find((s) => s.id === hitFoe.spawnId);
     const pending: PendingFoeBattle | null = spawn
-      ? { spawnId: hitFoe.spawnId, enemyId: spawn.enemyId, firstStrike: 'preemptive' }
+      ? {
+          spawnId: hitFoe.spawnId,
+          enemyId: spawn.enemyId,
+          // ボスには先制を許さない（正面突破の歯ごたえ。[06 §4]）。
+          firstStrike: spawn.isBoss ? 'none' : 'preemptive',
+          isBoss: spawn.isBoss,
+        }
       : null;
     let next: SaveData = {
       ...save,
@@ -257,8 +263,42 @@ export function resolveFoeBattle(save: SaveData, win: boolean): SaveData {
       f.spawnId === pending.spawnId ? { ...f, defeated: true } : f
     );
     next = setFoeRuntime(next, dive.depth, foeRuntime);
+    // 階層ボス撃破（[06 §4-5・§7]）: ゲート解放・ワープ解放・記録更新。
+    if (pending.isBoss) next = defeatBoss(next, dive.depth);
   }
   return next;
+}
+
+/**
+ * 階層ボスの撃破を反映する（[06 §4-5・§7]）。
+ * - BossGateState.defeated=true（出口階段の封鎖解除）
+ * - WarpState にチェックポイント追加
+ * - TowerRecord（最高撃破ボス階・撃破履歴）更新
+ */
+export function defeatBoss(save: SaveData, depth: number, at: number = Date.now()): SaveData {
+  const ts = save.towerState;
+  const bossGates = { ...ts.bossGates, [depth]: { depth, defeated: true } };
+  const unlockedCheckpoints = ts.warp.unlockedCheckpoints.includes(depth)
+    ? ts.warp.unlockedCheckpoints
+    : [...ts.warp.unlockedCheckpoints, depth].sort((a, b) => a - b);
+  const alreadyLogged = ts.record.bossDefeatLog.some((b) => b.depth === depth);
+  const record = {
+    ...ts.record,
+    highestBossDefeated: Math.max(ts.record.highestBossDefeated, depth),
+    bossDefeatLog: alreadyLogged
+      ? ts.record.bossDefeatLog
+      : [...ts.record.bossDefeatLog, { depth, at }],
+  };
+  return {
+    ...save,
+    towerState: { ...ts, bossGates, warp: { ...ts.warp, unlockedCheckpoints }, record },
+  };
+}
+
+/** その階の出口（上り階段）を通れるか（[06 §4]）。ボス階は撃破済みのみ通行可。 */
+export function canAscend(save: SaveData, depth: number): boolean {
+  if (!isBossFloor(depth)) return true;
+  return save.towerState.bossGates[depth]?.defeated === true;
 }
 
 /** 現在セルの階段種別（上り/下り/なし）。 */
@@ -272,11 +312,11 @@ export function stairsAt(save: SaveData): 'stairsUp' | 'stairsDown' | null {
 
 /**
  * 出口（stairsUp）から1つ深い階へ。次階の入口に立つ。
- * TODO(Phase 3): ボス階（isBossFloor）は BossGateState.defeated まで出口を封鎖する
- *   ゲート判定をここに挟む（[06 §4] canAscend）。現状は常に通行可。
+ * ボス階はボス撃破（canAscend）まで封鎖（[06 §4]）。封鎖中は変更せず返す。
  */
 export function goDeeper(save: SaveData): SaveData {
   if (!save.diveState) return save;
+  if (!canAscend(save, save.diveState.depth)) return save; // ゲート封鎖中
   const nextDepth = save.diveState.depth + 1;
   const rng = createRng(save.masterSeed).fork(
     `enc:${nextDepth}:${save.towerState.record.totalDives}`

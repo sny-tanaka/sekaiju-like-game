@@ -14,8 +14,37 @@ import type {
 /** その帯の FOE プール（雑魚と同プール。ボスは除外）。 */
 function FOE_POOL_BY_BAND(band: number): EnemyId[] {
   return Object.values(ENEMIES)
-    .filter((e) => e.tierBand === band && !e.id.startsWith('enemy_boss'))
+    .filter((e) => e.tierBand === band && !e.isBoss)
     .map((e) => e.id);
+}
+
+/**
+ * その帯の階層ボス（[06 §4]）。帯にボスが無ければ、定義済みボスのうち tierBand 最大のものに
+ * フォールバック（出現階で enemyScale により難度はスケールする）。Phase 6-3 で帯ごとに増やす。
+ */
+function BOSS_FOR_BAND(band: number): EnemyId | null {
+  const bosses = Object.values(ENEMIES).filter((e) => e.isBoss);
+  if (bosses.length === 0) return null;
+  const inBand = bosses.filter((e) => e.tierBand === band);
+  if (inBand.length > 0) return inBand[0].id;
+  return bosses.sort((a, b) => b.tierBand - a.tierBand)[0].id;
+}
+
+/** (x,y) に隣接する、イベントの無い通行可能セルを返す（壁開口を優先）。無ければ null。 */
+function adjacentFreeCell(
+  cells: Cell[][],
+  x: number,
+  y: number,
+  w: number,
+  h: number
+): { x: number; y: number } | null {
+  for (const dir of ['N', 'E', 'S', 'W'] as Dir[]) {
+    if (cells[y][x].walls[dir]) continue; // 開口している方向を優先
+    const nx = x + DELTA[dir].dx;
+    const ny = y + DELTA[dir].dy;
+    if (inBounds(nx, ny, w, h) && !cells[ny][nx].event) return { x: nx, y: ny };
+  }
+  return null;
 }
 
 // ============================================================================
@@ -149,7 +178,7 @@ export function generateFloor(depth: number, rng: Rng): FloorMaster {
 
   const band = Math.floor((depth - 1) / 10);
 
-  // ⑤ FOE（徘徊敵）配置（[02 §6]）。ボス階には置かない。入口/出口と入口隣接は避ける。
+  // ⑤ FOE（徘徊敵）配置（[02 §6]）。ボス階には雑魚FOEを置かず、代わりに固定ボスを置く（[06 §4]）。
   const foeSpawns: FoeSpawn[] = [];
   if (!isBossFloor(depth)) {
     const pool = FOE_POOL_BY_BAND(band);
@@ -173,6 +202,22 @@ export function generateFloor(depth: number, rng: Rng): FloorMaster {
         moveSpeed: 1,
         sightRange: 3,
         respawn: false,
+      });
+    }
+  } else {
+    // 階層ボス（[06 §4]）: 出口階段の手前（隣接床）に固定遭遇として置く。撃破でゲート解放。
+    const bossId = BOSS_FOR_BAND(band);
+    if (bossId) {
+      const adj = adjacentFreeCell(cells, exitX, exitY, width, height) ?? { x: exitX, y: exitY };
+      foeSpawns.push({
+        id: 'boss',
+        enemyId: bossId,
+        startCell: adj,
+        patrol: { kind: 'static' },
+        moveSpeed: 0,
+        sightRange: 0,
+        respawn: false,
+        isBoss: true,
       });
     }
   }
