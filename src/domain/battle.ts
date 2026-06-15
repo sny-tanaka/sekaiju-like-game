@@ -1,4 +1,4 @@
-import { BALANCE, canGainExp, enemyScale, expToNext } from '@/data/balance';
+import { BALANCE, canGainExp, enemyScale, expToNext, spGainOnLevelUp } from '@/data/balance';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { ENEMIES } from '@/data/enemies';
 import { EQUIPMENT } from '@/data/equipment';
@@ -921,7 +921,7 @@ function grantExpToChar(char: Character, exp: number): Character {
   while (canGainExp(level) && curExp >= expToNext(level)) {
     curExp -= expToNext(level);
     level += 1;
-    sp += BALANCE.SP_PER_LEVEL;
+    sp += spGainOnLevelUp(level); // 累計が spTotalForLevel に一致するよう +1/+2 を配分
   }
   return {
     ...char,

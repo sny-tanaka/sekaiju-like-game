@@ -1,4 +1,9 @@
-import { BALANCE, CLASS_CHANGE_LEVEL_PENALTY, TITLE_BONUS_SP, UNLOCK } from '@/data/balance';
+import {
+  CLASS_CHANGE_LEVEL_PENALTY,
+  spTotalForLevel,
+  TITLE_BONUS_SP,
+  UNLOCK,
+} from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { RACES } from '@/data/races';
 import { canEquip, unequipItem } from '@/domain/inventory';
@@ -63,7 +68,7 @@ export function transferClass(char: Character, newClassId: ClassId): Character {
 
   const level = Math.max(1, char.level - CLASS_CHANGE_LEVEL_PENALTY);
   // SP 総量は新レベル基準に再計算（転職コスト=レベル低下を SP にも反映。増殖を防ぐ）。
-  const total = BALANCE.SP_PER_LEVEL * Math.max(0, level - 1);
+  const total = spTotalForLevel(level);
   // 深さ別コストで消費SPを再計算。開始スキルの無料 Lv1 は spent に含めない。
   const ctx: Character = { ...char, classId: newClassId, titleId: null, learnedSkills: learned };
   let spent =
@@ -149,7 +154,7 @@ export function reincarnate(
   const startLv = Math.min(30, Math.floor(char.level / 2));
   const base = createCharacter({ ...next, id: char.id });
   // startLv 分の通常 SP ＋ ボーナス SP
-  const total = BALANCE.SP_PER_LEVEL * Math.max(0, startLv - 1) + bonus.bonusSp;
+  const total = spTotalForLevel(startLv) + bonus.bonusSp;
   return {
     ...base,
     level: Math.max(1, startLv),

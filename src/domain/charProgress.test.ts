@@ -1,4 +1,4 @@
-import { BALANCE } from '@/data/balance';
+import { spTotalForLevel } from '@/data/balance';
 import {
   acquireTitle,
   canAcquireTitle,
@@ -49,11 +49,11 @@ describe('transferClass', () => {
   });
 
   test('SP 総量は新レベル基準に再計算され、増殖しない（回帰）', () => {
-    // Lv20（total=57相当）→ 転職で Lv15。total は 3*(15-1)=42 に再計算される
+    // Lv20 → 転職で Lv15。total は spTotalForLevel(15) に再計算される
     const c = warrior({ level: 20, skillPoints: { total: 57, spent: 0 } });
     const after = transferClass(c, 'class_mage');
-    expect(after.skillPoints.total).toBe(BALANCE.SP_PER_LEVEL * 14);
-    expect(availableSP(after)).toBeLessThanOrEqual(BALANCE.SP_PER_LEVEL * 14);
+    expect(after.skillPoints.total).toBe(spTotalForLevel(15));
+    expect(availableSP(after)).toBeLessThanOrEqual(spTotalForLevel(15));
     expect(availableSP(after)).toBeGreaterThanOrEqual(0);
   });
 });
@@ -112,7 +112,7 @@ describe('reincarnate', () => {
     expect(r.level).toBe(25); // floor(50/2)
     expect(r.rebirthBonus).toEqual({ allStats: 6, bonusSp: 6 });
     // 開始Lv分の通常SP + ボーナスSP
-    expect(r.skillPoints.total).toBe(3 * 24 + 6);
+    expect(r.skillPoints.total).toBe(spTotalForLevel(25) + 6);
   });
 
   test('開始レベルは上限30', () => {
