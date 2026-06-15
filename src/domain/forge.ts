@@ -34,6 +34,7 @@ export function gradedBaseBonuses(masterId: string, grade?: number): EquipBonuse
   if (eq.bonuses.mat) out.mat = Math.round(eq.bonuses.mat * m);
   if (eq.bonuses.def) out.def = Math.round(eq.bonuses.def * m);
   if (eq.bonuses.mdf) out.mdf = Math.round(eq.bonuses.mdf * m);
+  // statMods（「STR+N」等）は周回グレード倍化しない（現データは未使用。付与時はここで要対応）。
   if (eq.bonuses.statMods) out.statMods = eq.bonuses.statMods;
   return out;
 }

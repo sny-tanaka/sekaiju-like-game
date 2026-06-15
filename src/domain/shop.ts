@@ -96,9 +96,9 @@ export function buyPriceOf(id: ItemId, grade = 1): number | null {
   return null;
 }
 
-/** 売却価格。装備は買値の半額、アイテムは items.sellPrice（素材は周回グレードで上昇）。 */
+/** 売却価格。装備は買値の半額、アイテムは items.sellPrice（いずれも周回グレードで gradeMult 上昇）。 */
 export function sellPriceOf(id: ItemId, grade = 1): number {
-  if (ITEMS[id]) return itemSellPrice(ITEMS[id]) * Math.max(1, grade);
+  if (ITEMS[id]) return Math.round(itemSellPrice(ITEMS[id]) * gradeMult(grade));
   if (EQUIPMENT[id]) return Math.floor((EQUIPMENT[id].buyPrice * gradeMult(grade)) / 2);
   return 0;
 }
@@ -113,10 +113,10 @@ export function buy(save: SaveData, id: ItemId): SaveData {
   return { ...next, guild: { ...next.guild, gold: next.guild.gold - price } };
 }
 
-/** 装備個体の売却額（[04 §8]）。買値の半額＋強化値ぶんの上乗せ。 */
+/** 装備個体の売却額（[04 §8]）。買値（周回グレード込み）の半額＋強化値ぶんの上乗せ。 */
 export function equipSellValue(inst: EquipInstance): number {
-  const base = Math.floor((EQUIPMENT[inst.masterId]?.buyPrice ?? 0) / 2);
-  return base + inst.forgeLevel * 10;
+  const buyPrice = (EQUIPMENT[inst.masterId]?.buyPrice ?? 0) * gradeMult(inst.grade);
+  return Math.floor(buyPrice / 2) + inst.forgeLevel * 10;
 }
 
 /** 装備個体を売却する（[04 §8]）。 */
