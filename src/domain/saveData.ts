@@ -128,6 +128,29 @@ export function addCharacterToGuild(save: SaveData, char: Character): SaveData {
 }
 
 /**
+ * ギルドから団員を追放する（[01 §9]・issue #26）。純粋。
+ * members から除外し、編成（party）と潜行中パーティ（diveState）からも取り除く。
+ * 該当 ID が居なければそのまま返す。
+ */
+export function removeCharacterFromGuild(save: SaveData, charId: string): SaveData {
+  if (!save.guild.members.some((m) => m.id === charId)) return save;
+  const front = save.guild.party.front.map((id) => (id === charId ? null : id));
+  const back = save.guild.party.back.map((id) => (id === charId ? null : id));
+  const diveState = save.diveState
+    ? { ...save.diveState, party: save.diveState.party.filter((p) => p.charId !== charId) }
+    : save.diveState;
+  return {
+    ...save,
+    guild: {
+      ...save.guild,
+      members: save.guild.members.filter((m) => m.id !== charId),
+      party: { front, back },
+    },
+    diveState,
+  };
+}
+
+/**
  * 新規セーブの初期状態を作る（[05 §4.1]）。
  * 団員 0 人・拠点（diveState=null）で開始する。
  * savedAt は永続化層でスタンプするため 0 で初期化する。
