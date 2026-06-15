@@ -56,6 +56,12 @@ export const Page = () => {
   const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
   // 採集/調理の一時メッセージ
   const [notice, setNotice] = useState<string | null>(null);
+  // 消費系操作の確認ダイアログ（タップ1回での誤消費を防ぐ）。
+  const [confirm, setConfirm] = useState<{
+    message: string;
+    okLabel: string;
+    onYes: () => void;
+  } | null>(null);
 
   const dive = save?.diveState ?? null;
   const floor = useMemo(
@@ -387,7 +393,13 @@ export const Page = () => {
                       <button
                         type="button"
                         className={styles.itemUse}
-                        onClick={() => handleUseItem(s.itemId)}
+                        onClick={() =>
+                          setConfirm({
+                            message: `${item.name} を使いますか？`,
+                            okLabel: '使う',
+                            onYes: () => handleUseItem(s.itemId),
+                          })
+                        }
                       >
                         使う
                       </button>
@@ -402,7 +414,13 @@ export const Page = () => {
                               type="button"
                               key={p.charId}
                               className={styles.itemTarget}
-                              onClick={() => handleUseItem(s.itemId, p.charId)}
+                              onClick={() =>
+                                setConfirm({
+                                  message: `${c.name} に ${item.name} を使いますか？`,
+                                  okLabel: '使う',
+                                  onYes: () => handleUseItem(s.itemId, p.charId),
+                                })
+                              }
                             >
                               {c.name}
                               <span className={styles.itemHp}>
@@ -467,7 +485,13 @@ export const Page = () => {
                       type="button"
                       className={styles.itemUse}
                       disabled={!ok}
-                      onClick={() => handleCook(r.id)}
+                      onClick={() =>
+                        setConfirm({
+                          message: `${r.name} を作りますか？`,
+                          okLabel: '作る',
+                          onYes: () => handleCook(r.id),
+                        })
+                      }
                     >
                       作る
                     </button>
@@ -638,6 +662,40 @@ export const Page = () => {
                 </>
               );
             })()}
+          </div>
+        </div>
+      ) : null}
+
+      {/* 消費系操作の確認ダイアログ（誤タップ防止）。 */}
+      {confirm ? (
+        <div
+          className={styles.confirmOverlay}
+          onClick={() => setConfirm(null)}
+        >
+          <div
+            className={styles.confirmBox}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.confirmText}>{confirm.message}</div>
+            <div className={styles.confirmActions}>
+              <button
+                type="button"
+                className={styles.confirmCancel}
+                onClick={() => setConfirm(null)}
+              >
+                やめる
+              </button>
+              <button
+                type="button"
+                className={styles.confirmOk}
+                onClick={() => {
+                  confirm.onYes();
+                  setConfirm(null);
+                }}
+              >
+                {confirm.okLabel}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

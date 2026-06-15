@@ -150,3 +150,61 @@
   font-size: 14px;
   cursor: pointer;
 }
+
+// 強化/分解の確認ダイアログ（誤タップ防止）
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.confirmBox {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 20px 18px;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+}
+
+.confirmText {
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+  color: #33402a;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirmCancel,
+.confirmOk {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirmCancel {
+  border: 1px solid #cfd8c5;
+  background-color: #fff;
+  color: #4c5a3c;
+}
+
+.confirmOk {
+  background-color: #6fae46;
+  color: #fff;
+}

@@ -9,11 +9,18 @@ import { equipDisplayName } from '@/domain/forge';
 import { buy, equipSellValue, sell, sellEquipment, sellPriceOf, shopCatalog } from '@/domain/shop';
 import { useGameState } from '@/store/gameState';
 
+// 確認待ちの売買操作（タップ1回での誤購入/誤売却を防ぐ。確認ダイアログ経由でのみ実行）。
+type Pending =
+  | { kind: 'buy'; id: string; name: string; price: number }
+  | { kind: 'sellItem'; itemId: string; grade: number; name: string; price: number }
+  | { kind: 'sellEquip'; id: string; name: string; price: number };
+
 // ショップ（[04 §8]）。装備・消費アイテムの売買。
 export const Page = () => {
   const navigate = useNavigate();
   const { save, applyAndPersist } = useGameState();
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
+  const [pending, setPending] = useState<Pending | null>(null);
 
   if (!save) {
     return (
@@ -34,6 +41,19 @@ export const Page = () => {
   const nameOf = (id: string, grade = 1) => {
     const base = ITEMS[id]?.name ?? EQUIPMENT[id]?.name ?? id;
     return grade > 1 ? `${base} Lv${grade}` : base;
+  };
+
+  // 確認ダイアログで「はい」を押したときだけ実際に売買を確定する。
+  const confirmPending = () => {
+    if (!pending) return;
+    if (pending.kind === 'buy') {
+      void applyAndPersist((s) => buy(s, pending.id));
+    } else if (pending.kind === 'sellItem') {
+      void applyAndPersist((s) => sell(s, pending.itemId, 1, pending.grade));
+    } else {
+      void applyAndPersist((s) => sellEquipment(s, pending.id));
+    }
+    setPending(null);
   };
 
   return (
@@ -75,7 +95,7 @@ export const Page = () => {
                 type="button"
                 className={styles.action}
                 disabled={gold < e.price}
-                onClick={() => void applyAndPersist((s) => buy(s, e.id))}
+                onClick={() => setPending({ kind: 'buy', id: e.id, name: e.name, price: e.price })}
               >
                 {e.price} G
               </button>
@@ -97,7 +117,14 @@ export const Page = () => {
                 <button
                   type="button"
                   className={styles.action}
-                  onClick={() => void applyAndPersist((sv) => sellEquipment(sv, e.id))}
+                  onClick={() =>
+                    setPending({
+                      kind: 'sellEquip',
+                      id: e.id,
+                      name: equipDisplayName(e),
+                      price: equipSellValue(e),
+                    })
+                  }
                 >
                   売却 {equipSellValue(e)} G
                 </button>
@@ -115,7 +142,15 @@ export const Page = () => {
                 <button
                   type="button"
                   className={styles.action}
-                  onClick={() => void applyAndPersist((sv) => sell(sv, s.itemId, 1, s.grade ?? 1))}
+                  onClick={() =>
+                    setPending({
+                      kind: 'sellItem',
+                      itemId: s.itemId,
+                      grade: s.grade ?? 1,
+                      name: nameOf(s.itemId, s.grade ?? 1),
+                      price: sellPriceOf(s.itemId, s.grade ?? 1),
+                    })
+                  }
                 >
                   売却 {sellPriceOf(s.itemId, s.grade ?? 1)} G
                 </button>
@@ -134,6 +169,47 @@ export const Page = () => {
           拠点へ戻る
         </button>
       </footer>
+
+      {/* 売買の確認ダイアログ（誤タップ防止）。 */}
+      {pending ? (
+        <div
+          className={styles.confirmOverlay}
+          onClick={() => setPending(null)}
+        >
+          <div
+            className={styles.confirmBox}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.confirmText}>
+              {pending.kind === 'buy' ? (
+                <>
+                  <strong>{pending.name}</strong> を {pending.price} G で購入しますか？
+                </>
+              ) : (
+                <>
+                  <strong>{pending.name}</strong> を {pending.price} G で売却しますか？
+                </>
+              )}
+            </div>
+            <div className={styles.confirmActions}>
+              <button
+                type="button"
+                className={styles.confirmCancel}
+                onClick={() => setPending(null)}
+              >
+                やめる
+              </button>
+              <button
+                type="button"
+                className={styles.confirmOk}
+                onClick={confirmPending}
+              >
+                {pending.kind === 'buy' ? '購入する' : '売却する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
