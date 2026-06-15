@@ -17,6 +17,7 @@ import { SKILLS } from '@/data/skills';
 import { SUMMONS } from '@/data/summons';
 import { TITLES } from '@/data/titles';
 import { UNION_SKILLS } from '@/data/unionSkills';
+import { skillDepth, spCostForDepth } from '@/domain/skillTree';
 import type { BattleSkillDef, SkillEffectDef, SkillTreeNode, StatKey } from '@/domain/types';
 
 const TREE = { base: '基本', master: '達人', title: '称号', race: '種族' } as const;
@@ -143,7 +144,7 @@ function passiveStr(skillId: string, max: number): string {
   const cond = def.weaponType ? `（${def.weaponType} 装備時のみ）` : '';
   return `常時: ${parts.join('・')}${cond}`;
 }
-function nodeRow(node: SkillTreeNode): string {
+function nodeRow(node: SkillTreeNode, sp: number): string {
   const id = node.skillId;
   const max = node.maxLevel;
   const name = SKILLS[id]?.name ?? id;
@@ -152,20 +153,28 @@ function nodeRow(node: SkillTreeNode): string {
       ? node.requires.map((r) => `${SKILLS[r.skillId]?.name ?? r.skillId} Lv${r.level}`).join('・')
       : '―';
   if (id in PASSIVE_SKILLS)
-    return `| ${name} | パッシブ | ${max} | ― | ― | ― | ${passiveStr(id, max)} | ${req} |`;
+    return `| ${name} | パッシブ | ${max} | ${sp} | ― | ― | ― | ${passiveStr(id, max)} | ${req} |`;
   if (id in BATTLE_SKILLS) {
     const def = BATTLE_SKILLS[id];
-    return `| ${name} | アクティブ(${TREE[def.tree]}) | ${max} | ${tpStr(def, max)} | ${TARGET[def.target]} | ${ELEM[def.element]} | ${def.effects.map((e) => effectStr(e, max)).join('／')} | ${req} |`;
+    return `| ${name} | アクティブ(${TREE[def.tree]}) | ${max} | ${sp} | ${tpStr(def, max)} | ${TARGET[def.target]} | ${ELEM[def.element]} | ${def.effects.map((e) => effectStr(e, max)).join('／')} | ${req} |`;
   }
   if (id in UNION_SKILLS) {
     const u = UNION_SKILLS[id];
-    return `| ${name} | ユニオン | ${max} | ゲージ${u.gaugeCostPerParticipant}×${u.requiredParticipants}人 | ${TARGET[u.target]} | ${ELEM[u.element]} | ${u.effects.map((e) => effectStr(e, max)).join('／')} | ${req} |`;
+    return `| ${name} | ユニオン | ${max} | ${sp} | ゲージ${u.gaugeCostPerParticipant}×${u.requiredParticipants}人 | ${TARGET[u.target]} | ${ELEM[u.element]} | ${u.effects.map((e) => effectStr(e, max)).join('／')} | ${req} |`;
   }
-  return `| ${name} | 探索 | ${max} | ― | ― | ― | ${SKILLS[id]?.description ?? ''} | ${req} |`;
+  return `| ${name} | 探索 | ${max} | ${sp} | ― | ― | ― | ${SKILLS[id]?.description ?? ''} | ${req} |`;
+}
+
+/** 1ツリーを表に。SP/Lv は前提チェーンの深さ別コスト。 */
+function treeTable(nodes: SkillTreeNode[]): string {
+  let s = `${TABLE_HEAD}\n`;
+  for (const node of nodes)
+    s += nodeRow(node, spCostForDepth(skillDepth(nodes, node.skillId))) + '\n';
+  return s;
 }
 
 const TABLE_HEAD =
-  '| スキル | 種別 | 最大Lv | TP | 対象 | 属性 | 効果（Lv1→最大Lv） | 前提 |\n| --- | --- | --- | --- | --- | --- | --- | --- |';
+  '| スキル | 種別 | 最大Lv | 習得SP/Lv | TP | 対象 | 属性 | 効果（Lv1→最大Lv） | 前提 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |';
 const classOrder = [
   'class_warrior',
   'class_guardian',
@@ -216,8 +225,7 @@ export function generateStrategyDocs(): void {
     const c = CLASSES[cid];
     classes += `## ${c.name}（全${c.skillTree.skills.length}スキル）\n\n${classRole[cid] ?? ''}\n\n`;
     classes += `- **装備可能武器**: ${c.equipableWeaponTypes.join(' / ')}\n- **装備可能防具**: ${c.equipableArmorTypes.join(' / ')}\n- **称号（第2スキルツリー）**: ${c.titleOptions.map((t) => TITLES[t]?.name ?? t).join(' / ')}\n- **起点スキル（作成/転職時に Lv1 で無料習得）**: ${SKILLS[c.skillTree.skills[0].skillId]?.name}\n\n`;
-    classes += `### スキルツリー\n\n${TABLE_HEAD}\n`;
-    for (const node of c.skillTree.skills) classes += nodeRow(node) + '\n';
+    classes += `### スキルツリー\n\n${treeTable(c.skillTree.skills)}`;
     classes += '\n';
   }
   writeFileSync(resolve(out, 'classes.md'), classes, 'utf-8');
@@ -230,8 +238,7 @@ export function generateStrategyDocs(): void {
     races += `| 初期値(Lv1) | ${statKeys.map((k) => r.baseStatsAtLv1[k]).join(' | ')} |\n`;
     races += `| 成長/Lv | ${statKeys.map((k) => r.statGrowth[k]).join(' | ')} |\n`;
     races += `| Lv100時 | ${statKeys.map((k) => r.baseStatsAtLv1[k] + r.statGrowth[k] * 99).join(' | ')} |\n\n`;
-    races += `### 種族スキルツリー\n\n${TABLE_HEAD}\n`;
-    for (const node of r.raceSkillTree.skills) races += nodeRow(node) + '\n';
+    races += `### 種族スキルツリー\n\n${treeTable(r.raceSkillTree.skills)}`;
     races += '\n';
   }
   writeFileSync(resolve(out, 'races.md'), races, 'utf-8');
@@ -245,8 +252,7 @@ export function generateStrategyDocs(): void {
         .filter((k) => t.growthModifier[k] !== 0)
         .map((k) => `${STAT_LABEL[k]}+${t.growthModifier[k]}`)
         .join('・');
-      titles += `## ${t.name}（${CLASSES[cid].name}）\n\n- **成長補正**: ${growth || '―'}\n\n${TABLE_HEAD}\n`;
-      for (const node of t.skillTree.skills) titles += nodeRow(node) + '\n';
+      titles += `## ${t.name}（${CLASSES[cid].name}）\n\n- **成長補正**: ${growth || '―'}\n\n${treeTable(t.skillTree.skills)}`;
       titles += '\n';
     }
   }

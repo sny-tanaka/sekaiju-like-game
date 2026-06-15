@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import styles from './style.module.scss';
 
 import { SKILLS } from '@/data/skills';
-import { canLearnSkill, skillLevel } from '@/domain/skillTree';
+import { canLearnSkill, skillLevel, spCostForDepth } from '@/domain/skillTree';
 import type { Character, SkillTreeNode } from '@/domain/types';
 
 // ============================================================================
@@ -174,6 +174,7 @@ export const SkillTree = ({ nodes, char, onLearn }: Props) => {
                 <span className={styles.nodeName}>
                   {SKILLS[node.skillId]?.name ?? node.skillId}
                 </span>
+                <span className={styles.nodeCost}>SP{spCostForDepth(col)}</span>
                 <span className={styles.nodeLv}>
                   <span className={styles.lvNum}>{lv}</span>
                   <span className={styles.lvBar}>
@@ -209,7 +210,8 @@ export const SkillTree = ({ nodes, char, onLearn }: Props) => {
         </div>
       ) : (
         <div className={styles.hint}>
-          ノードをタップで習得（SP 1 消費）。緑=習得済 / 枠強調=習得可 / 暗=前提未達。
+          ノードをタップで習得（1Lvあたりの消費SPは各ノードの「SP◯」。深いスキルほど高コスト）。緑=習得済
+          / 枠強調=習得可 / 暗=前提未達。
         </div>
       )}
     </div>

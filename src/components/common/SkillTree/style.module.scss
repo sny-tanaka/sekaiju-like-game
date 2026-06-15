@@ -91,6 +91,19 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  padding-right: 22px; // SPコストバッジ分の余白
+}
+
+.nodeCost {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #5f7a3a;
+  background: #eef3e4;
+  border-radius: 4px;
+  padding: 0 3px;
 }
 
 .nodeLv {

@@ -2045,6 +2045,15 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     target: 'enemyOne',
     effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.4 + 0.35 * lv }],
   },
+  skill_summoner_call_revenant: {
+    id: 'skill_summoner_call_revenant',
+    name: '亡者召喚',
+    tree: 'master',
+    tpCost: (lv) => 6 + lv,
+    element: 'almighty',
+    target: 'self',
+    effects: [{ kind: 'summon', summonKind: 'summon_revenant' }],
+  },
 };
 
 /** 戦闘効果を持つスキルか。 */

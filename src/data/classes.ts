@@ -888,7 +888,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
           requires: [{ skillId: 'passive_summoner_spirit_lore', level: 3 }],
         },
         {
-          skillId: 'skill_necromancer_t_call_revenant',
+          skillId: 'skill_summoner_call_revenant',
           maxLevel: 3,
           requires: [{ skillId: 'skill_summoner_soul_ward', level: 3 }],
         },

@@ -1402,4 +1402,9 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
     name: '冥導',
     description: '魔法攻撃力と最大TPが上昇する（常時）。',
   },
+  skill_summoner_call_revenant: {
+    id: 'skill_summoner_call_revenant',
+    name: '亡者召喚',
+    description: '敵の攻撃を引き受ける高耐久の亡者の壁を最前列に呼ぶ（戦闘限り）。',
+  },
 };
