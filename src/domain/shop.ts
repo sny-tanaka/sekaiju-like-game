@@ -1,5 +1,6 @@
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS, sellPrice as itemSellPrice } from '@/data/items';
+import { gradeMult, gradedBaseBonuses } from '@/domain/forge';
 import { addEquipment, addItem, removeItem } from '@/domain/inventory';
 import type { EquipInstance, ItemId, SaveData } from '@/domain/types';
 
@@ -43,8 +44,8 @@ export const SELL_UNLOCKS: Record<ItemId, ItemId[]> = {
   item_mat_t4_sovereign_crown: ['equip_t5_sword', 'equip_t5_heavy'],
 };
 
-const equipNote = (id: ItemId): string => {
-  const b = EQUIPMENT[id].bonuses;
+const equipNote = (id: ItemId, grade = 1): string => {
+  const b = gradedBaseBonuses(id, grade);
   const parts: string[] = [];
   if (b.atk) parts.push(`ATK+${b.atk}`);
   if (b.mat) parts.push(`MAT+${b.mat}`);
@@ -53,8 +54,14 @@ const equipNote = (id: ItemId): string => {
   return parts.join(' ');
 };
 
+/** その装備のショップ表示グレード（素材売却で解放した最大グレード。既定1）。 */
+export function shopEquipGrade(save: SaveData, equipId: ItemId): number {
+  return save.shopStock.unlockedGrades?.[equipId] ?? 1;
+}
+
 /**
  * 購入できる商品一覧（消費アイテム＋解放ティア以下の装備＋素材売却で解放済みの装備）。
+ * 売却で解放した装備は、その素材の周回グレードに応じて LvN として並ぶ（[06 §3]）。
  */
 export function shopCatalog(save: SaveData): ShopEntry[] {
   const tier = unlockedTier(save);
@@ -64,13 +71,16 @@ export function shopCatalog(save: SaveData): ShopEntry[] {
     .map((it) => ({ id: it.id, name: it.name, price: it.buyPrice, kind: 'item' }));
   const equips: ShopEntry[] = Object.values(EQUIPMENT)
     .filter((eq) => eq.tier <= tier || unlockedIds.has(eq.id))
-    .map((eq) => ({
-      id: eq.id,
-      name: eq.name,
-      price: eq.buyPrice,
-      kind: 'equip',
-      note: equipNote(eq.id),
-    }));
+    .map((eq) => {
+      const grade = shopEquipGrade(save, eq.id);
+      return {
+        id: eq.id,
+        name: grade > 1 ? `${eq.name} Lv${grade}` : eq.name,
+        price: Math.round(eq.buyPrice * gradeMult(grade)),
+        kind: 'equip' as const,
+        note: equipNote(eq.id, grade),
+      };
+    });
   return [...equips, ...items];
 }
 
@@ -79,24 +89,27 @@ export function unlocksFromSelling(itemId: ItemId): ItemId[] {
   return SELL_UNLOCKS[itemId] ?? [];
 }
 
-/** 購入価格（ITEMS / EQUIPMENT 共通）。存在しなければ null。 */
-export function buyPriceOf(id: ItemId): number | null {
-  return ITEMS[id]?.buyPrice ?? EQUIPMENT[id]?.buyPrice ?? null;
+/** 購入価格（ITEMS / EQUIPMENT 共通）。装備は周回グレードで上昇。存在しなければ null。 */
+export function buyPriceOf(id: ItemId, grade = 1): number | null {
+  if (ITEMS[id]) return ITEMS[id].buyPrice;
+  if (EQUIPMENT[id]) return Math.round(EQUIPMENT[id].buyPrice * gradeMult(grade));
+  return null;
 }
 
-/** 売却価格。装備は買値の半額、アイテムは items.sellPrice。 */
-export function sellPriceOf(id: ItemId): number {
-  if (ITEMS[id]) return itemSellPrice(ITEMS[id]);
-  if (EQUIPMENT[id]) return Math.floor(EQUIPMENT[id].buyPrice / 2);
+/** 売却価格。装備は買値の半額、アイテムは items.sellPrice（素材は周回グレードで上昇）。 */
+export function sellPriceOf(id: ItemId, grade = 1): number {
+  if (ITEMS[id]) return itemSellPrice(ITEMS[id]) * Math.max(1, grade);
+  if (EQUIPMENT[id]) return Math.floor((EQUIPMENT[id].buyPrice * gradeMult(grade)) / 2);
   return 0;
 }
 
-/** 購入: 所持金が足りれば 1 個購入。装備は個体としてプールへ、消費品は倉庫へ。 */
+/** 購入: 所持金が足りれば 1 個購入。装備は解放グレードの個体としてプールへ、消費品は倉庫へ。 */
 export function buy(save: SaveData, id: ItemId): SaveData {
-  const price = buyPriceOf(id);
+  const grade = EQUIPMENT[id] ? shopEquipGrade(save, id) : 1;
+  const price = buyPriceOf(id, grade);
   if (price === null || price <= 0) return save;
   if (save.guild.gold < price) return save;
-  const next = EQUIPMENT[id] ? addEquipment(save, id) : addItem(save, id, 1);
+  const next = EQUIPMENT[id] ? addEquipment(save, id, 0, grade) : addItem(save, id, 1);
   return { ...next, guild: { ...next.guild, gold: next.guild.gold - price } };
 }
 
@@ -115,20 +128,30 @@ export function sellEquipment(save: SaveData, instanceId: string): SaveData {
   return { ...save, guild: { ...save.guild, equipment, gold: save.guild.gold + gain } };
 }
 
-/** 売却: 倉庫から qty 個売って所持金を得る。素材なら関連装備を恒久解放する。 */
-export function sell(save: SaveData, id: ItemId, qty = 1): SaveData {
-  const have = save.guild.storage.find((s) => s.itemId === id)?.qty ?? 0;
+/**
+ * 売却: 倉庫から指定グレードの素材/アイテムを qty 個売って所持金を得る。
+ * 素材なら関連装備を恒久解放し、その装備のショップ表示グレードを「売った素材の周回グレード」に引き上げる（[06 §3]）。
+ */
+export function sell(save: SaveData, id: ItemId, qty = 1, grade = 1): SaveData {
+  const have = save.guild.storage
+    .filter((s) => s.itemId === id && (s.grade ?? 1) === grade)
+    .reduce((a, s) => a + s.qty, 0);
   if (have < qty) return save;
-  const gain = sellPriceOf(id) * qty;
-  const next = removeItem(save, id, qty);
-  // 素材売却での品揃え解放（[04 §8]）
-  const newlyUnlocked = unlocksFromSelling(id).filter(
-    (eid) => !next.shopStock.unlockedItemIds.includes(eid)
-  );
-  const unlockedItemIds = [...next.shopStock.unlockedItemIds, ...newlyUnlocked];
+  const gain = sellPriceOf(id, grade) * qty;
+  const next = removeItem(save, id, qty, grade);
+  // 素材売却での品揃え解放（[04 §8]）。解放装備のグレードを素材グレードまで引き上げる。
+  const unlocks = unlocksFromSelling(id);
+  const unlockedItemIds = [
+    ...next.shopStock.unlockedItemIds,
+    ...unlocks.filter((eid) => !next.shopStock.unlockedItemIds.includes(eid)),
+  ];
+  const unlockedGrades = { ...(next.shopStock.unlockedGrades ?? {}) };
+  for (const eid of unlocks) {
+    unlockedGrades[eid] = Math.max(unlockedGrades[eid] ?? 1, grade);
+  }
   return {
     ...next,
     guild: { ...next.guild, gold: next.guild.gold + gain },
-    shopStock: { ...next.shopStock, unlockedItemIds },
+    shopStock: { ...next.shopStock, unlockedItemIds, unlockedGrades },
   };
 }

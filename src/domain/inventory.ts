@@ -8,24 +8,30 @@ import type { Character, EquipInstance, EquipSlotKey, ItemId, SaveData } from '@
 // 鍛冶(+N)は Phase 4 のため、ここでは masterId のみを扱う簡易モデル。
 // ============================================================================
 
-export function itemCount(save: SaveData, itemId: ItemId): number {
-  return save.guild.storage.find((s) => s.itemId === itemId)?.qty ?? 0;
+/** スタックの周回グレード（未指定=1）。grade 違いは別スタック（[06 §3]）。 */
+const stackGrade = (s: { grade?: number }): number => s.grade ?? 1;
+
+/** 所持数。grade 指定時はそのグレードのみ、未指定は全グレード合計。 */
+export function itemCount(save: SaveData, itemId: ItemId, grade?: number): number {
+  return save.guild.storage
+    .filter((s) => s.itemId === itemId && (grade === undefined || stackGrade(s) === grade))
+    .reduce((a, s) => a + s.qty, 0);
 }
 
-/** 倉庫にアイテムを加える。 */
-export function addItem(save: SaveData, itemId: ItemId, qty = 1): SaveData {
+/** 倉庫にアイテムを加える（grade 既定=1。grade>1 は周回グレード素材）。 */
+export function addItem(save: SaveData, itemId: ItemId, qty = 1, grade = 1): SaveData {
   if (qty <= 0) return save;
   const storage = [...save.guild.storage];
-  const idx = storage.findIndex((s) => s.itemId === itemId);
+  const idx = storage.findIndex((s) => s.itemId === itemId && stackGrade(s) === grade);
   if (idx >= 0) storage[idx] = { ...storage[idx], qty: storage[idx].qty + qty };
-  else storage.push({ itemId, qty });
+  else storage.push(grade > 1 ? { itemId, qty, grade } : { itemId, qty });
   return { ...save, guild: { ...save.guild, storage } };
 }
 
-/** 倉庫からアイテムを減らす。足りなければ変更しない。 */
-export function removeItem(save: SaveData, itemId: ItemId, qty = 1): SaveData {
+/** 倉庫からアイテムを減らす（grade 既定=1）。足りなければ変更しない。 */
+export function removeItem(save: SaveData, itemId: ItemId, qty = 1, grade = 1): SaveData {
   if (qty <= 0) return save;
-  const idx = save.guild.storage.findIndex((s) => s.itemId === itemId);
+  const idx = save.guild.storage.findIndex((s) => s.itemId === itemId && stackGrade(s) === grade);
   if (idx < 0 || save.guild.storage[idx].qty < qty) return save;
   const storage = [...save.guild.storage];
   const left = storage[idx].qty - qty;
@@ -94,9 +100,15 @@ function generateEquipId(): string {
 }
 
 /** 新しい装備個体を所有プール（guild.equipment）に加える。 */
-export function addEquipment(save: SaveData, masterId: ItemId, forgeLevel = 0): SaveData {
+export function addEquipment(
+  save: SaveData,
+  masterId: ItemId,
+  forgeLevel = 0,
+  grade = 1
+): SaveData {
   if (!EQUIPMENT[masterId]) return save;
   const inst: EquipInstance = { id: generateEquipId(), masterId, forgeLevel };
+  if (grade > 1) inst.grade = grade;
   return { ...save, guild: { ...save.guild, equipment: [...save.guild.equipment, inst] } };
 }
 

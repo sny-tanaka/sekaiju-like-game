@@ -286,7 +286,7 @@ export function generateStrategyDocs(): void {
   };
   const TIER_THEME = ['森・洞窟', '岩山・獣', '氷雪', '雷雨・嵐', '瘴気・不死・機械'];
   const bands = [...new Set(Object.values(ENEMIES).map((e) => e.tierBand))].sort((a, b) => a - b);
-  let enemies = `# 敵・ドロップ素材一覧\n\n> 敵は「基準ステータス × 出現階係数（enemyScale）」で強くなる（基準階=表の「基準階」）。\n> 1〜50階は tier0〜4、**50階以降は全帯（tier0〜${Math.max(...bands)}）を循環**し、敵名に **LvN（周回数）** を付して再登場・強化される（例: 51〜60階=tier0の2周目=「スライム Lv2」）。\n> ドロップ素材も周回数に応じて **LvN** にグレードアップし、そこから並ぶ装備も強化される。\n\n`;
+  let enemies = `# 敵・ドロップ素材一覧\n\n> 敵は「基準ステータス × 出現階係数（enemyScale）」で強くなる（基準階=表の「基準階」）。\n> 1〜50階は tier0〜4、**50階以降は全帯（tier0〜${Math.max(...bands)}）を循環**し、敵名に **LvN（周回数）** を付して再登場・強化される（例: 51〜60階=tier0の2周目=「スライム Lv2」）。\n> ドロップ素材も周回数に応じて **LvN** にグレードアップ（別スタック・売却額上昇）。LvN 素材を売ると、その装備が **LvN** でショップに並び、性能は **Lvごとに +50%**（基礎×(1+0.5×(Lv−1))）。\n\n`;
   for (const band of bands) {
     enemies += `## tier${band}（${band * 10 + 1}〜${band * 10 + 10}階・${TIER_THEME[band] ?? ''}）\n\n`;
     enemies += `| 敵 | 種別 | 基準階 | HP | STR | VIT | AGI | 攻撃 | 弱点/耐性 | ドロップ(確率) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n`;

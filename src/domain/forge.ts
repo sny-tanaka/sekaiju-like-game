@@ -19,6 +19,25 @@ export function forgeBonusFor(masterId: string, forgeLevel: number): EquipBonuse
   return {};
 }
 
+/** 周回グレードによる装備ボーナス倍率（[06 §3]）。Lv ごとに +50%。未指定=1.0。 */
+export function gradeMult(grade?: number): number {
+  return 1 + 0.5 * (Math.max(1, grade ?? 1) - 1);
+}
+
+/** 装備マスターの基礎ボーナスを周回グレードで倍化した値（[06 §3]）。 */
+export function gradedBaseBonuses(masterId: string, grade?: number): EquipBonuses {
+  const eq = EQUIPMENT[masterId];
+  if (!eq) return {};
+  const m = gradeMult(grade);
+  const out: EquipBonuses = {};
+  if (eq.bonuses.atk) out.atk = Math.round(eq.bonuses.atk * m);
+  if (eq.bonuses.mat) out.mat = Math.round(eq.bonuses.mat * m);
+  if (eq.bonuses.def) out.def = Math.round(eq.bonuses.def * m);
+  if (eq.bonuses.mdf) out.mdf = Math.round(eq.bonuses.mdf * m);
+  if (eq.bonuses.statMods) out.statMods = eq.bonuses.statMods;
+  return out;
+}
+
 const SLOTS: EquipSlotKey[] = ['weapon', 'armor', 'accessory'];
 
 /** プール・全メンバーの装備スロットを通じて、指定個体を fn で書き換えた save を返す。 */
@@ -111,6 +130,7 @@ export function recycle(save: SaveData, instanceId: string): ForgeResult {
 
 /** 表示用: 装備名（+N 付き）。 */
 export function equipDisplayName(inst: EquipInstance): string {
-  const name = EQUIPMENT[inst.masterId]?.name ?? inst.masterId;
+  const base = EQUIPMENT[inst.masterId]?.name ?? inst.masterId;
+  const name = inst.grade && inst.grade > 1 ? `${base} Lv${inst.grade}` : base;
   return inst.forgeLevel > 0 ? `${name} +${inst.forgeLevel}` : name;
 }
