@@ -50,6 +50,61 @@
   background-color: #e3f2fd;
 }
 
+// カテゴリ絞り込み＋並び替え
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var.$gray;
+  border-radius: 999px;
+  background-color: var.$white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chipActive {
+  border-color: var.$primary;
+  background-color: #e3f2fd;
+  color: var.$primary;
+}
+
+.sortRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sortLabel {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.sort {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: var.$white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .list {
   flex: 1;
   overflow-y: auto;
