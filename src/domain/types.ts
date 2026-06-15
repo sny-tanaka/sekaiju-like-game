@@ -444,7 +444,11 @@ export interface Guild {
   equipment: EquipInstance[];
   /** 食材・料理の保管（[04 §6]）。アイテムと別枠・最大60個・売却不可。 */
   foodStorage: ItemStack[];
-  bestiary: BestiaryState; // 図鑑
+  /**
+   * 図鑑。※正典は SaveData.bestiary（トップレベル）。こちらは後方互換のミラーで、
+   * 読み取りは SaveData.bestiary を使う。新規の更新経路を guild 側に作らないこと。
+   */
+  bestiary: BestiaryState;
 }
 
 // ============================================================================
