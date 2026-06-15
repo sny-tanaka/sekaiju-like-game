@@ -1,6 +1,6 @@
 import { itemCount } from '@/domain/inventory';
 import { createInitialSaveData } from '@/domain/saveData';
-import { buy, sell, sellEquipment, shopCatalog, unlockedTier } from '@/domain/shop';
+import { buy, sell, sellEquipment, sellPriceOf, shopCatalog, unlockedTier } from '@/domain/shop';
 import type { SaveData } from '@/domain/types';
 
 function richSave(gold: number): SaveData {
@@ -62,5 +62,26 @@ describe('shop', () => {
     save = sell(save, 'item_slime_jelly', 1);
     expect(save.shopStock.unlockedItemIds).toContain('equip_slime_shield');
     expect(shopCatalog(save).some((e) => e.id === 'equip_slime_shield')).toBe(true);
+  });
+
+  test('消費アイテム・素材を売ると所持金が増え倉庫から減る（#16 回帰）', () => {
+    let save = richSave(0);
+    save = {
+      ...save,
+      guild: {
+        ...save.guild,
+        storage: [
+          { itemId: 'item_potion', qty: 2 },
+          { itemId: 'item_slime_jelly', qty: 1 },
+        ],
+      },
+    };
+    const afterPotion = sell(save, 'item_potion', 1);
+    expect(afterPotion.guild.gold).toBe(sellPriceOf('item_potion'));
+    expect(itemCount(afterPotion, 'item_potion')).toBe(1);
+    expect(afterPotion).not.toBe(save);
+    const afterMat = sell(afterPotion, 'item_slime_jelly', 1);
+    expect(afterMat.guild.gold).toBeGreaterThan(afterPotion.guild.gold);
+    expect(itemCount(afterMat, 'item_slime_jelly')).toBe(0);
   });
 });
