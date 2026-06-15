@@ -164,6 +164,19 @@ describe('battle: 睡眠（[03 §6]）', () => {
     expect(after.log.some((l) => l.text.includes('眠っている'))).toBe(true);
   });
 
+  test('眠っている味方は行動できない（敵は無傷）', () => {
+    const base = startBattle(diveSave(), ['enemy_slime']);
+    const enemyHp = base.enemies[0].hp;
+    const state = withAilment(base, 'allies', 0, 'sleep');
+    const after = resolveTurn(
+      state,
+      [{ kind: 'attack', actorId: state.allies[0].id, targetId: state.enemies[0].id }],
+      createRng(1)
+    );
+    expect(after.enemies[0].hp).toBe(enemyHp);
+    expect(after.log.some((l) => l.text.includes('眠っている'))).toBe(true);
+  });
+
   test('睡眠は被ダメージで解除される', () => {
     const base = startBattle(diveSave(), ['enemy_slime']);
     const state = withAilment(base, 'enemies', 0, 'sleep');

@@ -43,6 +43,26 @@ export const EQUIPMENT: Record<ItemId, EquipmentMaster> = {
     weaponType: 'bow',
     bonuses: { atk: 5 },
   },
+  // 拳（拳聖・剣舞士・薬師・狩人向け）
+  equip_iron_knuckle: {
+    id: 'equip_iron_knuckle',
+    name: '鉄甲',
+    slot: 'weapon',
+    tier: 0,
+    buyPrice: 100,
+    weaponType: 'fist',
+    bonuses: { atk: 5 },
+  },
+  // 斧（戦士向け・重い一撃）
+  equip_battle_axe: {
+    id: 'equip_battle_axe',
+    name: 'バトルアックス',
+    slot: 'weapon',
+    tier: 0,
+    buyPrice: 160,
+    weaponType: 'axe',
+    bonuses: { atk: 8 },
+  },
   equip_leather_armor: {
     id: 'equip_leather_armor',
     name: 'レザーアーマー',
