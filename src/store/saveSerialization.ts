@@ -18,8 +18,49 @@ export type LoadResult = { ok: true; data: SaveData } | { ok: false; reason: str
  * 新フィールド追加など構造変更時にここへ追記する（現状は v1 が初版なので空）。
  */
 const MIGRATIONS: Record<number, (old: Record<string, unknown>) => Record<string, unknown>> = {
-  // 例: 1: (old) => ({ ...old, schemaVersion: 2, newField: defaultValue }),
+  // v1 → v2: 装備のインスタンス化（Phase 4-5b）＋採集/食材枠（4-5a）の正規化。
+  1: (old) => migrateV1toV2(old),
 };
+
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** v1（装備=itemId 文字列）から v2（装備=EquipInstance 個体）へ変換する。 */
+function migrateV1toV2(old: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...old, schemaVersion: 2 };
+  let counter = 0;
+  const mkInstance = (masterId: string) => ({
+    id: `eq_mig_${Date.now().toString(36)}_${counter++}`,
+    masterId,
+    forgeLevel: 0,
+  });
+
+  const guild = isObj(next.guild) ? { ...next.guild } : {};
+  // 旧 storage に紛れていた装備個体は無く、装備は各メンバーのスロット文字列のみ。
+  // 新フィールド（所有装備プール・食材枠）を用意。
+  if (!Array.isArray(guild.equipment)) guild.equipment = [];
+  if (!Array.isArray((guild as Record<string, unknown>).foodStorage)) {
+    (guild as Record<string, unknown>).foodStorage = [];
+  }
+
+  // 各メンバーの equipment スロットを文字列 itemId → EquipInstance|null に変換。
+  if (Array.isArray(guild.members)) {
+    guild.members = guild.members.map((m) => {
+      if (!isObj(m)) return m;
+      const eq = isObj(m.equipment) ? { ...m.equipment } : {};
+      for (const slot of ['weapon', 'armor', 'accessory']) {
+        const cur = eq[slot];
+        eq[slot] = typeof cur === 'string' ? mkInstance(cur) : (cur ?? null);
+      }
+      return { ...m, equipment: eq };
+    });
+  }
+  next.guild = guild;
+
+  // 料理レシピ解放リスト（4-5a で追加）。欠落していれば空で補完（既定解放は新規開始時のみ）。
+  if (!Array.isArray(next.unlockedRecipeIds)) next.unlockedRecipeIds = [];
+  return next;
+}
 
 /** 保存用にプレーンな構造へ変換する。現状の SaveData は構造化複製可能なのでディープコピーのみ。 */
 export function serializeSave(data: SaveData): SaveData {
@@ -39,6 +80,8 @@ function looksLikeSaveData(v: unknown): v is SaveData {
   const guild = v.guild;
   if (typeof guild.name !== 'string') return false;
   if (!Array.isArray(guild.members)) return false;
+  if (!Array.isArray(guild.equipment)) return false; // 装備個体プール（v2 以降は必須）
+  if (!isPlainObject(v.forgeInventory)) return false;
   if (!isPlainObject(v.towerState)) return false;
   if (!isPlainObject(v.towerState.record)) return false;
   if (typeof v.towerState.record.deepestReached !== 'number') return false;

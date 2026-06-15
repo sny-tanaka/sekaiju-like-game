@@ -1,0 +1,152 @@
+@use 'variables' as var;
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  color: var.$text-dark;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.stock {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tab {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: var.$white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tabActive {
+  border-color: var.$primary;
+  background-color: #e3f2fd;
+}
+
+.hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: var.$white;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.note {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.ingot {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #b08d57;
+  border-radius: 8px;
+  background-color: #f6efe4;
+  color: #7a5b2c;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.recycle {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var.$gray;
+  border-radius: 8px;
+  background-color: var.$white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.maxed {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c0392b;
+}
+
+.empty {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.foot {
+  margin-top: 16px;
+}
+
+.back {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: transparent;
+  font-size: 14px;
+  cursor: pointer;
+}

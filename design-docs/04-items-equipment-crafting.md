@@ -129,6 +129,12 @@ interface ForgeInventory {
 
 > **設計意図**: 「次々に新装備を買う」より「1本を育てて使い続ける」方が経済的、という選択肢を作りプレイの方向性に幅を持たせる。
 
+> **MVP 実装メモ（Phase 4-5b・実装済み）**:
+> - **装備をインスタンス化**: 装備は `EquipInstance {id, masterId, forgeLevel}` として個体所有する。未装備は `guild.equipment[]`、装備中は `Character.equipment[slot]`（個体オブジェクト）。これにより +N が外しても残り、個体ごとに育つ。ショップ購入＝個体生成、売却＝個体破棄（買値半額＋強化分）。
+> - **強化**: `forge.forgeWithIngot(save, instanceId, ingot)` がインゴット（銅+1/銀+3/金+5・`BALANCE.FORGE`）を1消費して `forgeLevel` を最大5まで上げる。武器は ATK/MAT、防具は DEF/MDF が `forgeLevel × STAT_PER_LEVEL` 上昇（`forgeBonusFor` を `aggregateEquip` が加算）。
+> - **リサイクル**: `forge.recycle(save, instanceId)` が所有個体を断片（`fragments.common`）に変換。`FRAGMENTS_PER_INGOT`(10) たまるごとに銅インゴットへ自動変換。装備中は対象外。
+> - **UI**: 拠点「鍛冶屋」(`/forge`)＝強化/リサイクルのタブ。隠し能力・専用素材・唯一品の鍛冶不可は MVP 未実装（Phase 6 で拡充余地）。
+
 ---
 
 ## 5. 採集（素材獲得）

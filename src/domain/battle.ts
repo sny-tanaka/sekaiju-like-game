@@ -6,6 +6,7 @@ import { ITEMS } from '@/data/items';
 import { SUMMONS } from '@/data/summons';
 import { UNION_SKILLS } from '@/data/unionSkills';
 import { computeDamage, effectiveEnemyStats, scaleStats } from '@/domain/combat';
+import { forgeBonusFor } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computeBaseStats } from '@/domain/stats';
 import type {
@@ -61,14 +62,15 @@ function aggregateEquip(char: Character): EquipBonuses {
     def: 0,
     mdf: 0,
   };
-  for (const id of Object.values(char.equipment)) {
-    if (!id) continue;
-    const eq = EQUIPMENT[id];
+  for (const inst of Object.values(char.equipment)) {
+    if (!inst) continue;
+    const eq = EQUIPMENT[inst.masterId];
     if (!eq) continue;
-    acc.atk += eq.bonuses.atk ?? 0;
-    acc.mat += eq.bonuses.mat ?? 0;
-    acc.def += eq.bonuses.def ?? 0;
-    acc.mdf += eq.bonuses.mdf ?? 0;
+    const forge = forgeBonusFor(inst.masterId, inst.forgeLevel); // 鍛冶 +N 反映（[04 §4]）
+    acc.atk += (eq.bonuses.atk ?? 0) + (forge.atk ?? 0);
+    acc.mat += (eq.bonuses.mat ?? 0) + (forge.mat ?? 0);
+    acc.def += (eq.bonuses.def ?? 0) + (forge.def ?? 0);
+    acc.mdf += (eq.bonuses.mdf ?? 0) + (forge.mdf ?? 0);
   }
   return acc;
 }

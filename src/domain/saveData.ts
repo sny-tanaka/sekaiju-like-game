@@ -26,7 +26,8 @@ import type {
 // ============================================================================
 
 /** SaveData の論理バージョン（migration 用。IndexedDB の DB バージョンとは別物）。 */
-export const CURRENT_SCHEMA_VERSION = 1;
+// v2: 装備のインスタンス化（Phase 4-5b）。採集/食材枠（4-5a）も v2 で正規化する。
+export const CURRENT_SCHEMA_VERSION = 2;
 
 export const DEFAULT_SETTINGS: GameSettings = {
   autoMap: 'on',
@@ -143,6 +144,7 @@ export function createInitialSaveData(guildName: string): SaveData {
       members: [], // 初期 0 人。プレイヤーが作成する
       party: emptyFormation(),
       storage: [],
+      equipment: [],
       foodStorage: [],
       bestiary: emptyBestiary(),
     },

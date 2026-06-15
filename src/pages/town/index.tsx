@@ -92,8 +92,8 @@ export const Page = () => {
         />
         <MenuButton
           label="鍛冶屋"
-          description="武器強化（Phase 4）"
-          disabled
+          description="装備の強化・リサイクル"
+          onClick={() => navigate('/forge')}
         />
         <MenuButton
           label="図鑑 / 記録"

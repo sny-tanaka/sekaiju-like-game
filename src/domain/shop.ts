@@ -1,7 +1,7 @@
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS, sellPrice as itemSellPrice } from '@/data/items';
-import { addItem, removeItem } from '@/domain/inventory';
-import type { ItemId, SaveData } from '@/domain/types';
+import { addEquipment, addItem, removeItem } from '@/domain/inventory';
+import type { EquipInstance, ItemId, SaveData } from '@/domain/types';
 
 // ============================================================================
 // ショップ（[04 §8]）。装備・消費アイテムの売買。
@@ -82,13 +82,28 @@ export function sellPriceOf(id: ItemId): number {
   return 0;
 }
 
-/** 購入: 所持金が足りれば 1 個購入して倉庫へ。 */
+/** 購入: 所持金が足りれば 1 個購入。装備は個体としてプールへ、消費品は倉庫へ。 */
 export function buy(save: SaveData, id: ItemId): SaveData {
   const price = buyPriceOf(id);
   if (price === null || price <= 0) return save;
   if (save.guild.gold < price) return save;
-  const next = addItem(save, id, 1);
+  const next = EQUIPMENT[id] ? addEquipment(save, id) : addItem(save, id, 1);
   return { ...next, guild: { ...next.guild, gold: next.guild.gold - price } };
+}
+
+/** 装備個体の売却額（[04 §8]）。買値の半額＋強化値ぶんの上乗せ。 */
+export function equipSellValue(inst: EquipInstance): number {
+  const base = Math.floor((EQUIPMENT[inst.masterId]?.buyPrice ?? 0) / 2);
+  return base + inst.forgeLevel * 10;
+}
+
+/** 装備個体を売却する（[04 §8]）。 */
+export function sellEquipment(save: SaveData, instanceId: string): SaveData {
+  const inst = save.guild.equipment.find((e) => e.id === instanceId);
+  if (!inst) return save;
+  const gain = equipSellValue(inst);
+  const equipment = save.guild.equipment.filter((e) => e.id !== instanceId);
+  return { ...save, guild: { ...save.guild, equipment, gold: save.guild.gold + gain } };
 }
 
 /** 売却: 倉庫から qty 個売って所持金を得る。素材なら関連装備を恒久解放する。 */
