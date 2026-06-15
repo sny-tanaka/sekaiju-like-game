@@ -1,6 +1,7 @@
 import { BALANCE } from '@/data/balance';
 import { RACES } from '@/data/races';
 import { TITLES } from '@/data/titles';
+import { surplusSp } from '@/domain/skillTree';
 import type { Character, StatKey, Stats } from '@/domain/types';
 
 // ============================================================================
@@ -24,10 +25,12 @@ export function computeBaseStats(char: Character): Stats {
   const titleGrowth = char.titleId ? TITLES[char.titleId]?.growthModifier : undefined;
   const rebirthAll = char.rebirthBonus?.allStats ?? 0;
 
+  const surplusBonus = Math.floor(surplusSp(char) / BALANCE.SURPLUS_SP_PER_STAT);
+
   const result = {} as Stats;
   for (const key of STAT_KEYS) {
     const growth = race.statGrowth[key] + (titleGrowth?.[key] ?? 0);
-    result[key] = race.baseStatsAtLv1[key] + growth * levelSteps + rebirthAll;
+    result[key] = race.baseStatsAtLv1[key] + growth * levelSteps + rebirthAll + surplusBonus;
   }
   return result;
 }

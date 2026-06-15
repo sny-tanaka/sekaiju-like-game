@@ -191,7 +191,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 4 + lv,
     element: 'almighty',
     target: 'allyOne',
-    effects: [{ kind: 'heal', amount: (lv) => 40 + 20 * lv }],
+    // §7.4 回復魔力連動 (one): flat + casterMatk * 0.70
+    effects: [{ kind: 'heal', amount: (lv) => 20 + 5 * lv, matkCoef: 'one' as const }],
   },
   skill_mass_heal: {
     id: 'skill_mass_heal',
@@ -200,7 +201,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'heal', amount: (lv) => 25 + 15 * lv }],
+    // §7.4 回復魔力連動 (all): flat + casterMatk * 0.45
+    effects: [{ kind: 'heal', amount: (lv) => 10 + 3 * lv, matkCoef: 'all' as const }],
   },
   skill_protect_hymn: {
     id: 'skill_protect_hymn',
@@ -437,7 +439,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 4 + lv,
     element: 'almighty',
     target: 'allyOne',
-    effects: [{ kind: 'heal', amount: (lv) => 30 + 15 * lv }],
+    // §7.4 回復魔力連動 (minor): flat + casterMatk * 0.30
+    effects: [{ kind: 'heal', amount: (lv) => 8 + 2 * lv, matkCoef: 'minor' as const }],
   },
 
   // ---- 薬師（治療・スモーク） ----
@@ -485,7 +488,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 6 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'heal', amount: (lv) => 18 + 10 * lv }],
+    // §7.4 回復魔力連動 (minor): flat + casterMatk * 0.30
+    effects: [{ kind: 'heal', amount: (lv) => 8 + 2 * lv, matkCoef: 'minor' as const }],
   },
 
   // ---- 拳聖（封じ拳・反撃） ----
@@ -929,7 +933,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'almighty',
     target: 'allyOne',
-    effects: [{ kind: 'heal', amount: (lv) => 40 + 20 * lv }],
+    // §7.4 回復魔力連動 (one): flat + casterMatk * 0.70
+    effects: [{ kind: 'heal', amount: (lv) => 20 + 5 * lv, matkCoef: 'one' as const }],
   },
   skill_medic_party_cure: {
     id: 'skill_medic_party_cure',
@@ -938,7 +943,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'heal', amount: (lv) => 25 + 15 * lv }],
+    // §7.4 回復魔力連動 (all): flat + casterMatk * 0.45
+    effects: [{ kind: 'heal', amount: (lv) => 10 + 3 * lv, matkCoef: 'all' as const }],
   },
   skill_medic_tp_tonic: {
     id: 'skill_medic_tp_tonic',
@@ -965,7 +971,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'heal', amount: (lv) => 30 + 18 * lv }],
+    // §7.4 回復魔力連動 (minor): flat + casterMatk * 0.30 (蘇生の光)
+    effects: [{ kind: 'heal', amount: (lv) => 8 + 2 * lv, matkCoef: 'minor' as const }],
   },
   skill_medic_t_stimulant: {
     id: 'skill_medic_t_stimulant',
@@ -1027,7 +1034,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'heal', amount: (lv) => 25 + 15 * lv }],
+    effects: [{ kind: 'heal', amount: (lv) => 10 + 3 * lv, matkCoef: 'all' as const }],
   },
   skill_dancer_t_finale: {
     id: 'skill_dancer_t_finale',
