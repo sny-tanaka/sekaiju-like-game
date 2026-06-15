@@ -20,23 +20,23 @@ describe('skillTree', () => {
   });
 
   test('SP を消費して新スキルを習得できる（深さ別コスト。魔導士は開始時 fire Lv1 で ice 解放）', () => {
-    // fire_bolt は T1（深さ0=2SP）、ice_bolt は深さ1=2SP。
+    // fire_bolt は T1（深さ0=1SP）、ice_bolt は深さ1=2SP。
     let c = mage(10);
     expect(skillLevel(c, 'skill_fire_bolt')).toBe(1);
-    c = learnSkill(c, 'skill_fire_bolt'); // +2SP
+    c = learnSkill(c, 'skill_fire_bolt'); // +1SP
     expect(skillLevel(c, 'skill_fire_bolt')).toBe(2);
-    expect(availableSP(c)).toBe(8);
+    expect(availableSP(c)).toBe(9);
     // ice_bolt（前提 fire Lv1）を新規習得 +2SP
     c = learnSkill(c, 'skill_ice_bolt');
     expect(skillLevel(c, 'skill_ice_bolt')).toBe(1);
-    expect(availableSP(c)).toBe(6);
+    expect(availableSP(c)).toBe(7);
   });
 
-  test('深いスキルほど消費 SP が高い（前提チェーンの段数でコスト逓増）', () => {
+  test('前提のあるスキルは基本(T1)より消費 SP が高い（基本1・以降2）', () => {
     const c = mage(99);
-    expect(skillSpCost(c, 'skill_fire_bolt')).toBe(2); // 深さ0
+    expect(skillSpCost(c, 'skill_fire_bolt')).toBe(1); // 深さ0（基本）
     expect(skillSpCost(c, 'skill_fire_storm')).toBe(2); // 深さ1（fire Lv3 前提）
-    expect(skillSpCost(c, 'skill_mage_meteor')).toBe(4); // 深さ2（fire_storm 前提）
+    expect(skillSpCost(c, 'skill_mage_meteor')).toBe(2); // 深さ2（fire_storm 前提）
   });
 
   test('前提スキル未習得だと習得できない（ice は fire Lv1 が前提）', () => {

@@ -11,8 +11,11 @@ import type { Character, SkillId, SkillTreeNode } from '@/domain/types';
 // 習得可能なノードは 職業ツリー＋種族(ユニオン)ツリー＋称号ツリー。
 // ============================================================================
 
-/** スキル1Lvあたりの消費SP（前提チェーンの深さ別）。深いほど高い（[01 §5]）。 */
-const SP_COST_BY_DEPTH = [2, 2, 4, 5, 6] as const;
+/**
+ * スキル1Lvあたりの消費SP（前提チェーンの深さ別）。基本(T1)=1 で、前提のある段は一律 2。
+ * 緩やかな逓増にとどめ、職業間の必要SP差を小さく保つ（[01 §5]）。
+ */
+const SP_COST_BY_DEPTH = [1, 2, 2, 2, 2] as const;
 
 /** 深さ（前提チェーン段数）→ 1Lvあたりの消費SP。 */
 export function spCostForDepth(depth: number): number {
