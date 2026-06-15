@@ -1211,3 +1211,29 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
   if (win) for (const d of state.drops) next = addItem(next, d.itemId, 1, dropGrade);
   return next;
 }
+
+// ---- シミュレーション用ヘルパ（§17 忠実シミュ用。既存挙動は変えない純粋な追加）---
+
+/**
+ * シミュレーション専用: Combatant 配列から BattleState を直接構築する。
+ * SaveData を必要とせず、balanceSim.test.ts / balanceSim.mjs から呼ぶ。
+ * 既存の startBattle / resolveTurn は変更しない。
+ */
+export function buildSimBattleState(
+  allies: Combatant[],
+  enemies: Combatant[],
+  depth: number
+): BattleState {
+  return {
+    turn: 1,
+    depth,
+    allies,
+    enemies,
+    summons: [],
+    log: [],
+    outcome: 'ongoing',
+    firstStrike: 'none',
+    drops: [],
+    consumedItems: [],
+  };
+}
