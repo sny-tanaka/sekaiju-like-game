@@ -1,4 +1,10 @@
-import { applyBattleResult, battleRewards, resolveTurn, startBattle } from '@/domain/battle';
+import {
+  applyBattleResult,
+  battleRewards,
+  partyExpResults,
+  resolveTurn,
+  startBattle,
+} from '@/domain/battle';
 import { startDive } from '@/domain/dive';
 import { addItem, itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
@@ -692,5 +698,55 @@ describe('battle: rewards', () => {
     const ally = state.allies[0];
     const member = after.diveState!.party.find((p) => p.charId === ally.id);
     expect(member?.hp).toBe(ally.hp);
+  });
+});
+
+describe('battle: ログのHPスナップショット（issue #18 逐次再生）', () => {
+  test('各ログ行に全戦闘員のHPスナップショットが付く', () => {
+    const state = startBattle(diveSave(), ['enemy_slime']);
+    const after = resolveTurn(state, attackAll(state), createRng(7));
+    expect(after.log.length).toBeGreaterThan(0);
+    for (const l of after.log) {
+      expect(l.snapshot).toBeDefined();
+      // 味方・敵の双方の id がスナップショットに含まれる
+      expect(l.snapshot![state.allies[0].id]).toBeDefined();
+      expect(l.snapshot![state.enemies[0].id]).toBeDefined();
+    }
+  });
+
+  test('ダメージを与えたログ行のスナップショットでは敵HPが減っている', () => {
+    const state = startBattle(diveSave(), ['enemy_slime']);
+    const after = resolveTurn(state, attackAll(state), createRng(7));
+    const eid = state.enemies[0].id;
+    const last = after.log[after.log.length - 1];
+    expect(last.snapshot![eid].hp).toBeLessThanOrEqual(state.enemies[0].hp);
+  });
+});
+
+describe('battle: partyExpResults（issue #18 リザルト）', () => {
+  test('勝利時に出撃メンバーの獲得経験値と次レベルバー情報を返す', () => {
+    const save = diveSave();
+    let state = startBattle(save, ['enemy_slime']);
+    const rng = createRng(7);
+    for (let i = 0; i < 30 && state.outcome === 'ongoing'; i++) {
+      state = resolveTurn(state, attackAll(state), rng);
+    }
+    expect(state.outcome).toBe('win');
+    const results = partyExpResults(save, state);
+    expect(results.length).toBeGreaterThan(0);
+    const r = results[0];
+    expect(r.gainedExp).toBeGreaterThan(0);
+    expect(r.toLevel).toBeGreaterThanOrEqual(r.fromLevel);
+    expect(r.expToNext).toBeGreaterThan(0);
+    // 実適用（applyBattleResult）後のレベルと一致する
+    const after = applyBattleResult(save, state);
+    const member = after.guild.members.find((m) => m.id === r.charId);
+    expect(member?.level).toBe(r.toLevel);
+  });
+
+  test('勝利以外では空配列', () => {
+    const save = diveSave();
+    const state = startBattle(save, ['enemy_slime']);
+    expect(partyExpResults(save, state)).toEqual([]);
   });
 });

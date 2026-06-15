@@ -82,6 +82,7 @@
 .cardRow {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center; // 2体しかいない列でも中央寄せ（issue #18）
   gap: 6px;
   margin-bottom: 4px;
 }
@@ -121,6 +122,52 @@
 
 .uni {
   color: #ff9800;
+}
+
+// 味方の職業名（常時表示。issue #18）
+.cardJob {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7a58;
+}
+
+// ユニオンゲージ（issue #18）
+.gaugeRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gaugeLabel {
+  font-size: 9px;
+  font-weight: 700;
+  color: #ef6c00;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// 被弾カードの点滅（issue #18）
+.flash {
+  animation: cardFlash 0.42s ease-out;
+}
+
+@keyframes cardFlash {
+  0% {
+    background-color: #ffcdd2;
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 // ---- 召喚体（最前列） ----
@@ -218,6 +265,14 @@
   line-height: 1.4;
 }
 
+// スキルの威力・属性・対象サマリ（issue #18）
+.skillSummary {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2f6d36;
+  line-height: 1.35;
+}
+
 .target {
   font-size: 12px;
   opacity: 0.75;
@@ -226,15 +281,39 @@
 // ---- ユニオン ----
 .unionBanner {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
   padding: 6px 10px;
   border-radius: 10px;
   background-color: #fff3e0;
   border: 1px solid #ffb74d;
   font-size: 13px;
   font-weight: 700;
+  color: #e65100;
+}
+
+.unionBannerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.unionBannerDesc {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #bf5a00;
+}
+
+// 発動可能なユニオンの効果説明（コマンドメニュー上部。issue #18）
+.unionInfo {
+  padding: 6px 10px;
+  border-radius: 10px;
+  background-color: #fff3e0;
+  border: 1px dashed #ffb74d;
+  font-size: 12px;
+  line-height: 1.45;
   color: #e65100;
 }
 
@@ -354,4 +433,196 @@
 
 .resultBody {
   font-size: 14px;
+}
+
+// ---- リザルトの経験値バー（issue #18） ----
+.expList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin: 6px 0 2px;
+}
+
+.expRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expName {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.expLv {
+  font-size: 12px;
+  color: #6b7a58;
+}
+
+.expUp {
+  color: #e65100;
+  font-weight: 800;
+}
+
+.expNum {
+  font-size: 10px;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+// ---- 行動の逐次再生（issue #18） ----
+.playback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.playbackHint {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.skip {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: var.$white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+// 直近に開いたログ行をフェードインで強調
+.logLineNew {
+  animation: logFadeIn 0.32s ease-out;
+  font-weight: 700;
+}
+
+@keyframes logFadeIn {
+  from {
+    opacity: 0.2;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ---- レベルアップダイアログ（issue #18） ----
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  padding: 22px 18px;
+  border-radius: 16px;
+  background-color: var.$white;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  animation: dialogPop 0.28s ease-out;
+}
+
+@keyframes dialogPop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dialogTitle {
+  font-size: 20px;
+  font-weight: 900;
+  color: #e65100;
+}
+
+.dialogName {
+  font-size: 15px;
+  text-align: center;
+}
+
+.dialogStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  justify-content: center;
+}
+
+.dialogStat {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f6d36;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background-color: #eaf5ea;
+}
+
+// ---- エンカウント/戦闘終了の暗転エフェクト（issue #18） ----
+.fxIntro {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background-color: #b71c1c;
+  animation: encounterFlash 0.7s ease-out forwards;
+}
+
+@keyframes encounterFlash {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.fxOutro {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background-color: #000;
+  animation: fadeToBlack 0.46s ease-in forwards;
+}
+
+.fxLose {
+  background-color: #6a0000;
+}
+
+@keyframes fadeToBlack {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

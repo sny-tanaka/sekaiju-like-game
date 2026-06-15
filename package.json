@@ -1,6 +1,6 @@
 {
   "name": "sekaiju-like-game",
-  "version": "0.1.30",
+  "version": "0.1.32",
   "private": true,
   "type": "module",
   "scripts": {
@@ -52,7 +52,6 @@
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "lint-staged": "^15.3.0",
-    "playwright-core": "^1.60.0",
     "plop": "^4.0.1",
     "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "^4.1.0",

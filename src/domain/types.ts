@@ -408,6 +408,12 @@ export type FirstStrike = 'none' | 'preemptive' | 'ambush';
 
 export interface BattleLogEntry {
   text: string;
+  /**
+   * このログ行が表示された時点の全戦闘員の HP/戦闘不能状態のスナップショット（issue #18）。
+   * UI が行動を1行ずつ再生し、カードの HP バーを段階的に減らす/点滅させるために使う。
+   * 戦闘エンジンが resolveTurn 内で各 push 時に記録する（保存しない）。
+   */
+  snapshot?: Record<string, { hp: number; isDown: boolean }>;
 }
 
 export interface BattleState {
