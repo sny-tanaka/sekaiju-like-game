@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "gen:docs": "GEN_DOCS=1 vitest run src/data/strategyDocsGen.test.ts",
     "lint": "eslint .",
     "fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",

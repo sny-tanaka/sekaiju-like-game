@@ -274,6 +274,201 @@ export const PASSIVE_SKILLS: Record<SkillId, PassiveSkillDef> = {
     tree: 'title',
     mods: (lv) => ({ maxHp: 1 + 0.03 * lv, maxTp: 1 + 0.02 * lv }),
   },
+
+  // ============================================================================
+  // Phase 6-2c: ツリー拡充で追加したパッシブ
+  // ============================================================================
+  // 戦士
+  passive_warrior_axe_mastery: {
+    id: 'passive_warrior_axe_mastery',
+    name: '斧の心得',
+    tree: 'base',
+    weaponType: 'axe',
+    mods: (lv) => ({ patk: 1 + 0.04 * lv }),
+  },
+  passive_warrior_crit_focus: {
+    id: 'passive_warrior_crit_focus',
+    name: '会心',
+    tree: 'base',
+    mods: (lv) => ({ crit: 0.015 * lv }),
+  },
+  passive_warrior_vitality: {
+    id: 'passive_warrior_vitality',
+    name: '頑健な肉体',
+    tree: 'base',
+    mods: (lv) => ({ maxHp: 1 + 0.04 * lv }),
+  },
+  passive_warrior_t_bloodlust: {
+    id: 'passive_warrior_t_bloodlust',
+    name: '血の渇き',
+    tree: 'title',
+    mods: (lv) => ({ patk: 1 + 0.03 * lv, crit: 0.015 * lv }),
+  },
+  passive_warrior_t_guardian_eye: {
+    id: 'passive_warrior_t_guardian_eye',
+    name: '監視眼',
+    tree: 'title',
+    mods: (lv) => ({ pdef: 1 + 0.03 * lv, acc: 1 + 0.03 * lv }),
+  },
+  // 守護兵
+  passive_guardian_spear_mastery: {
+    id: 'passive_guardian_spear_mastery',
+    name: '槍の心得',
+    tree: 'base',
+    weaponType: 'spear',
+    mods: (lv) => ({ patk: 1 + 0.04 * lv }),
+  },
+  passive_guardian_mdef_boost: {
+    id: 'passive_guardian_mdef_boost',
+    name: '魔法耐性',
+    tree: 'base',
+    mods: (lv) => ({ mdef: 1 + 0.03 * lv }),
+  },
+  passive_guardian_iron_will: {
+    id: 'passive_guardian_iron_will',
+    name: '鋼の意志',
+    tree: 'base',
+    mods: (lv) => ({ pdef: 1 + 0.03 * lv, maxHp: 1 + 0.04 * lv }),
+  },
+  passive_guardian_t_fortress: {
+    id: 'passive_guardian_t_fortress',
+    name: '要塞',
+    tree: 'title',
+    mods: (lv) => ({ pdef: 1 + 0.04 * lv, maxHp: 1 + 0.04 * lv }),
+  },
+  passive_guardian_t_spearhead: {
+    id: 'passive_guardian_t_spearhead',
+    name: '尖兵',
+    tree: 'title',
+    mods: (lv) => ({ patk: 1 + 0.04 * lv }),
+  },
+  // 魔導士
+  passive_mage_matk_boost: {
+    id: 'passive_mage_matk_boost',
+    name: '魔力増幅',
+    tree: 'base',
+    mods: (lv) => ({ matk: 1 + 0.03 * lv }),
+  },
+  passive_mage_spell_focus: {
+    id: 'passive_mage_spell_focus',
+    name: '魔法熟練',
+    tree: 'base',
+    mods: (lv) => ({ matk: 1 + 0.03 * lv, crit: 0.015 * lv }),
+  },
+  passive_mage_t_inferno: {
+    id: 'passive_mage_t_inferno',
+    name: '業炎',
+    tree: 'title',
+    mods: (lv) => ({ matk: 1 + 0.04 * lv }),
+  },
+  passive_mage_t_arcane_lore: {
+    id: 'passive_mage_t_arcane_lore',
+    name: '深淵の知識',
+    tree: 'title',
+    mods: (lv) => ({ maxTp: 1 + 0.04 * lv, mdef: 1 + 0.03 * lv }),
+  },
+  // 狩人
+  passive_ranger_eagle_eye: {
+    id: 'passive_ranger_eagle_eye',
+    name: '鷹の目',
+    tree: 'base',
+    mods: (lv) => ({ acc: 1 + 0.03 * lv, crit: 0.015 * lv }),
+  },
+  passive_ranger_t_keen_sight: {
+    id: 'passive_ranger_t_keen_sight',
+    name: '眼力',
+    tree: 'title',
+    mods: (lv) => ({ acc: 1 + 0.03 * lv }),
+  },
+  passive_ranger_t_shadowstep: {
+    id: 'passive_ranger_t_shadowstep',
+    name: '影縫い',
+    tree: 'title',
+    mods: (lv) => ({ eva: 1 + 0.03 * lv }),
+  },
+  // 薬師
+  passive_medic_mind_boost: {
+    id: 'passive_medic_mind_boost',
+    name: '治療の心得',
+    tree: 'base',
+    mods: (lv) => ({ matk: 1 + 0.03 * lv }),
+  },
+  passive_medic_t_blessing: {
+    id: 'passive_medic_t_blessing',
+    name: '祝福',
+    tree: 'title',
+    mods: (lv) => ({ maxTp: 1 + 0.04 * lv, mdef: 1 + 0.02 * lv }),
+  },
+  passive_medic_t_alchemy: {
+    id: 'passive_medic_t_alchemy',
+    name: '錬薬',
+    tree: 'title',
+    mods: (lv) => ({ maxTp: 1 + 0.04 * lv }),
+  },
+  // 剣舞士
+  passive_dancer_grace: {
+    id: 'passive_dancer_grace',
+    name: '優美',
+    tree: 'base',
+    mods: (lv) => ({ eva: 1 + 0.03 * lv, acc: 1 + 0.02 * lv }),
+  },
+  passive_dancer_t_grace: {
+    id: 'passive_dancer_t_grace',
+    name: '舞の極み',
+    tree: 'title',
+    mods: (lv) => ({ patk: 1 + 0.03 * lv, eva: 1 + 0.02 * lv }),
+  },
+  passive_dancer_t_melody: {
+    id: 'passive_dancer_t_melody',
+    name: '調べ',
+    tree: 'title',
+    mods: (lv) => ({ maxTp: 1 + 0.04 * lv, mdef: 1 + 0.02 * lv }),
+  },
+  // 拳聖
+  passive_monk_hp_boost: {
+    id: 'passive_monk_hp_boost',
+    name: '鍛錬',
+    tree: 'base',
+    mods: (lv) => ({ maxHp: 1 + 0.04 * lv }),
+  },
+  passive_monk_eva_boost: {
+    id: 'passive_monk_eva_boost',
+    name: '見切り',
+    tree: 'base',
+    mods: (lv) => ({ eva: 1 + 0.03 * lv }),
+  },
+  passive_grappler_t_counter_mastery: {
+    id: 'passive_grappler_t_counter_mastery',
+    name: '体捌き',
+    tree: 'title',
+    mods: (lv) => ({ eva: 1 + 0.03 * lv, crit: 0.015 * lv }),
+  },
+  // 呪術士
+  passive_hexer_acc_boost: {
+    id: 'passive_hexer_acc_boost',
+    name: '呪言',
+    tree: 'base',
+    mods: (lv) => ({ acc: 1 + 0.03 * lv }),
+  },
+  passive_warlock_t_matk_mastery: {
+    id: 'passive_warlock_t_matk_mastery',
+    name: '禁術の知識',
+    tree: 'title',
+    mods: (lv) => ({ matk: 1 + 0.04 * lv }),
+  },
+  // 降霊術士
+  passive_summoner_mdef_boost: {
+    id: 'passive_summoner_mdef_boost',
+    name: '霊体防護',
+    tree: 'base',
+    mods: (lv) => ({ mdef: 1 + 0.03 * lv }),
+  },
+  passive_puppeteer_t_vitality: {
+    id: 'passive_puppeteer_t_vitality',
+    name: '操糸の妙',
+    tree: 'title',
+    mods: (lv) => ({ maxHp: 1 + 0.04 * lv, maxTp: 1 + 0.04 * lv }),
+  },
 };
 
 /** パッシブスキルか。 */
