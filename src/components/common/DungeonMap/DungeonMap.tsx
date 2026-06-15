@@ -39,6 +39,17 @@ const COLORS = {
   cooking: '#e8923a', // 調理地点
 };
 
+// 採集種類ごとの絵文字アイコン（issue #20。地図上で種類を見分けやすく）。
+const GATHER_GLYPH: Record<string, string> = {
+  mining: '⛏️', // 採掘=ツルハシ
+  gathering: '🌿', // 採取=草
+  logging: '🪓', // 伐採=斧
+  fishing: '🎣', // 釣り
+  harvest: '🌰', // 収穫=木の実
+  hunting: '🍖', // 狩猟=肉
+};
+const COOKING_GLYPH = '🍳'; // 調理=フライパン
+
 // 2D 俯瞰のプレイヤーマップ（02 §4 / MVP の主役ビュー）。
 // 探索済みセルのみ床・壁を描画し、未踏は霧として残す。自動マップ相当。
 export const DungeonMap = ({
@@ -62,6 +73,9 @@ export const DungeonMap = ({
     if (!canvas) return;
     const exploredSet = new Set(explored);
     const depletedSet = new Set(depletedGathers);
+    const gatherTypeByCell = new Map(
+      floor.gatheringPoints.map((g) => [`${g.cell.x},${g.cell.y}`, g.type])
+    );
     const dpr = window.devicePixelRatio || 1;
     canvas.width = w * dpr;
     canvas.height = h * dpr;
@@ -105,29 +119,36 @@ export const DungeonMap = ({
         if (c.walls.W) line(px, py, px, py + cell);
         if (c.walls.E) line(px + cell, py, px + cell, py + cell);
 
-        // 階段マーク
+        // 階段マーク: 階段状のアイコンで描く（issue #20）。上り=橙・下り=青。
         const ev = c.event;
         if (ev?.kind === 'stairsUp' || ev?.kind === 'stairsDown') {
-          ctx.fillStyle = ev.kind === 'stairsUp' ? COLORS.stairsUp : COLORS.stairsDown;
-          ctx.beginPath();
-          ctx.arc(px + cell / 2, py + cell / 2, cell * 0.28, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#ffffff';
-          ctx.font = `bold ${Math.floor(cell * 0.5)}px sans-serif`;
+          const up = ev.kind === 'stairsUp';
+          const n = 3;
+          const s = cell * 0.62;
+          const ox = px + (cell - s) / 2;
+          const oy = py + (cell - s) / 2;
+          const sw = s / n;
+          ctx.fillStyle = up ? COLORS.stairsUp : COLORS.stairsDown;
+          for (let i = 0; i < n; i++) {
+            const stepH = (s / n) * (up ? i + 1 : n - i);
+            ctx.fillRect(ox + i * sw, oy + s - stepH, sw - 1, stepH);
+          }
+        } else if (ev?.kind === 'gather') {
+          // 採集ポイント: 種類別の絵文字アイコン（issue #20）。枯渇済みは薄く表示。
+          const depleted = depletedSet.has(`${x},${y}`);
+          const t = gatherTypeByCell.get(`${x},${y}`);
+          ctx.globalAlpha = depleted ? 0.35 : 1;
+          ctx.font = `${Math.floor(cell * 0.7)}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(ev.kind === 'stairsUp' ? '▲' : '▼', px + cell / 2, py + cell / 2 + 1);
-        } else if (ev?.kind === 'gather') {
-          // 採集ポイント（緑の菱形）。枯渇済みは薄く表示。
-          const depleted = depletedSet.has(`${x},${y}`);
-          ctx.fillStyle = depleted ? COLORS.gatherDone : COLORS.gather;
-          ctx.beginPath();
-          ctx.arc(px + cell / 2, py + cell / 2, cell * 0.24, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.fillText((t && GATHER_GLYPH[t]) || '🌿', px + cell / 2, py + cell / 2 + 1);
+          ctx.globalAlpha = 1;
         } else if (ev?.kind === 'cookingSpot') {
-          // 調理地点（オレンジの四角）。
-          ctx.fillStyle = COLORS.cooking;
-          ctx.fillRect(px + cell * 0.28, py + cell * 0.28, cell * 0.44, cell * 0.44);
+          // 調理地点（フライパン）。
+          ctx.font = `${Math.floor(cell * 0.7)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(COOKING_GLYPH, px + cell / 2, py + cell / 2 + 1);
         }
       }
     }
