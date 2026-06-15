@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { SkillTree } from '@/components/common/SkillTree/SkillTree';
 import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
@@ -104,6 +105,34 @@ export const Page = () => {
           ))}
         </dl>
       </section>
+
+      {/* §16: 種族耐性（属性・状態異常） */}
+      {RACES[char.raceId]?.elementResist || RACES[char.raceId]?.ailmentResist ? (
+        <section className={styles.card}>
+          <h2 className={styles.h2}>種族耐性</h2>
+          <div className={styles.resistBlock}>
+            <div className={styles.resistRow}>
+              <span className={styles.resistLabel}>属性</span>
+              <ResistBadges
+                elementResist={RACES[char.raceId]?.elementResist}
+                ailmentResist={undefined}
+              />
+            </div>
+            <div className={styles.resistRow}>
+              <span className={styles.resistLabel}>状態異常</span>
+              <ResistBadges
+                elementResist={undefined}
+                ailmentResist={RACES[char.raceId]?.ailmentResist}
+              />
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className={styles.card}>
+          <h2 className={styles.h2}>種族耐性</h2>
+          <p className={styles.warn}>この種族は特別な耐性を持ちません。</p>
+        </section>
+      )}
 
       {/* 装備 */}
       <section className={styles.card}>

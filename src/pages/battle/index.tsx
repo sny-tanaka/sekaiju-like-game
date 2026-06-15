@@ -3,13 +3,16 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { CLASSES } from '@/data/classes';
+import { ENEMIES } from '@/data/enemies';
 import { ITEMS } from '@/data/items';
 import { RACES } from '@/data/races';
 import { SKILLS } from '@/data/skills';
 import { UNION_SKILLS } from '@/data/unionSkills';
+import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import {
   applyBattleResult,
   battleRewards,
@@ -26,6 +29,7 @@ import type {
   BattleCommand,
   BattleState,
   Combatant,
+  EnemyId,
   ItemId,
   Rng,
   SkillEffectDef,
@@ -522,11 +526,14 @@ export const Page = () => {
       <div className={styles.enemies}>
         {state.enemies.map((e) => {
           const d = dispOf(e);
+          const isTargeted = targetId === e.id;
+          const masterEnemyId = e.enemyId as EnemyId | undefined;
+          const master = masterEnemyId ? ENEMIES[masterEnemyId] : undefined;
           return (
             <button
               type="button"
               key={e.id}
-              className={`${styles.enemy} ${d.isDown ? styles.down : ''} ${targetId === e.id ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
+              className={`${styles.enemy} ${d.isDown ? styles.down : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
               disabled={e.isDown || !!anim}
               onClick={() => setTargetId(e.id)}
             >
@@ -540,6 +547,18 @@ export const Page = () => {
                 color="#e57373"
                 showValue={false}
               />
+              {/* §16: 選択中の敵の耐性コンパクト表示 */}
+              {isTargeted && master ? (
+                <div className={styles.enemyResist}>
+                  <ResistBadges
+                    elementResist={master.resist}
+                    ailmentResist={
+                      masterEnemyId ? resolveEnemyAilmentResist(masterEnemyId) : undefined
+                    }
+                    compact
+                  />
+                </div>
+              ) : null}
             </button>
           );
         })}
