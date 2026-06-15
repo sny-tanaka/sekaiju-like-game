@@ -159,6 +159,8 @@ export interface Combatant {
   ownerId?: string; // 召喚主の charId
   /** 敵スキルAI のアクション状態（§3）。戦闘中のみ。SaveData には出さない。 */
   actionState?: Record<string, { lastUsedTurn: number; uses: number }>;
+  /** 状態異常付与率倍率（[06 §15]）。敵=系統+種別デフォルト/味方=種族。0=完全無効。戦闘中のみ。 */
+  ailmentResist?: Partial<Record<AilmentType, number>>;
 }
 
 export interface DamageResult {

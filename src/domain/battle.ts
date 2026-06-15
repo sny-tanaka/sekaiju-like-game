@@ -11,8 +11,10 @@ import { ENEMIES } from '@/data/enemies';
 import { BASIC_WEIGHT, ENEMY_KITS } from '@/data/enemySkills';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
+import { RACES } from '@/data/races';
 import { SUMMONS } from '@/data/summons';
 import { UNION_SKILLS } from '@/data/unionSkills';
+import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { enemyLapForDepth } from '@/domain/encounterTable';
 import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
@@ -102,6 +104,8 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
   const maxHp = Math.round(stats.hp * (passive.maxHp ?? 1));
   const maxTp = Math.round(stats.tp * (passive.maxTp ?? 1));
   const front = save.guild.party.front.includes(charId);
+  // §15: 種族の属性耐性・状態異常耐性を Combatant に載せる（敵の resist と同形で elementMult が効くようにする）
+  const race = RACES[char.raceId];
   return {
     id: charId,
     name: char.name,
@@ -119,6 +123,10 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
     passive,
     unionGauge: member?.unionGauge ?? 0,
     isDown: member ? member.hp <= 0 : false,
+    // 属性耐性（§15.2: 味方 Combatant.resist に race.elementResist を載せる）
+    resist: race?.elementResist,
+    // 状態異常耐性（§15.2: 味方 Combatant.ailmentResist に race.ailmentResist を載せる）
+    ailmentResist: race?.ailmentResist,
   };
 }
 
@@ -144,6 +152,8 @@ function buildEnemy(enemyId: EnemyId, index: number, depth: number): Combatant {
     isDown: false,
     enemyId,
     resist: master.resist,
+    // §15: 種別デフォルト＋系統プロファイル＋個別指定でマージした状態異常耐性
+    ailmentResist: resolveEnemyAilmentResist(enemyId),
   };
 }
 
@@ -397,13 +407,24 @@ function triggerReactions(
   }
 }
 
-/** 状態異常の付与確率（[03 §6.2]）。 */
-function ailmentChance(base: number, attacker: Combatant, defender: Combatant): number {
-  return clamp(
-    base * (1 + (attacker.stats.luc - defender.stats.luc) * BALANCE.AILMENT_LUC_K),
-    0,
-    BALANCE.AILMENT_MAX
-  );
+/**
+ * 状態異常の付与確率（[03 §6.2]）。
+ * §15: type を渡すと defender.ailmentResist?.[type] を乗算する。
+ * 0（完全無効）なら即 0 を返す（0.95 キャップより優先）。
+ */
+function ailmentChance(
+  base: number,
+  attacker: Combatant,
+  defender: Combatant,
+  type?: AilmentType
+): number {
+  // §15: 耐性倍率を取得（未指定は 1.0）
+  const resistMult = type !== undefined ? (defender.ailmentResist?.[type] ?? 1) : 1;
+  // 完全無効（0）は即時 0（LUC 補正や上限キャップより優先）
+  if (resistMult === 0) return 0;
+  const lucAdjusted =
+    base * (1 + (attacker.stats.luc - defender.stats.luc) * BALANCE.AILMENT_LUC_K);
+  return clamp(lucAdjusted * resistMult, 0, BALANCE.AILMENT_MAX);
 }
 
 /**
@@ -519,7 +540,8 @@ function applySkillEffect(
     case 'ailment': {
       for (const target of targets) {
         if (target.isDown) continue;
-        const chance = ailmentChance(effect.chance(level), actor, target);
+        // §15: effect.ailment を type として渡し、defender.ailmentResist を反映する
+        const chance = ailmentChance(effect.chance(level), actor, target, effect.ailment);
         if (rng.next() < chance) {
           applyAilment(target, {
             type: effect.ailment,
@@ -783,6 +805,8 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   // 召喚体は最前列の壁として攻撃対象に含める（[03 §8]）。
   const enemyDecoyTargets = new Map<string, string>(); // enemyId -> picked targetId（decoy込み）
   const enemySelectedAction = new Map<string, EnemyActionDef | null>(); // null = basic
+  // §15.6: bound で完全に封じられた敵の ID（行動ログ用）
+  const enemyBoundCannotAct = new Set<string>();
   if (!skipEnemies) {
     for (const e of aliveSide(next, 'enemy')) {
       // ①対象抽選（decoyTargetId）
@@ -796,9 +820,16 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         master?.actions ?? (master?.kit ? (ENEMY_KITS[master.kit] ?? []) : []);
       const turn = next.turn;
       const state_ = e;
+      // §15.6: 部位封じの判定（effect に str ダメージを含むか）
+      const isPhysicalAction = (a: EnemyActionDef): boolean =>
+        a.effects.some((ef) => ef.kind === 'damage' && ef.statBase === 'str');
+      const armBound = isArmBound(e);
+      const headBound = isHeadBound(e);
       const candidates: { action: EnemyActionDef | null; weight: number }[] = [];
-      // 通常攻撃（basic）は常に候補
-      candidates.push({ action: null, weight: BASIC_WEIGHT });
+      // 通常攻撃（basic）: armBound なら候補に入れない（物理行動）
+      if (!armBound) {
+        candidates.push({ action: null, weight: BASIC_WEIGHT });
+      }
       for (const a of actions) {
         const c = a.cond;
         if (c) {
@@ -814,7 +845,16 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
             if (turn - lastUsed < c.cooldown) continue;
           }
         }
+        // §15.6: 腕封じ = 物理アクション除外、頭封じ = 頭系（非物理）アクション除外
+        if (armBound && isPhysicalAction(a)) continue;
+        if (headBound && !isPhysicalAction(a)) continue;
         candidates.push({ action: a, weight: a.weight });
+      }
+      // §15.6: 候補が空なら「封じられて動けない」
+      if (candidates.length === 0) {
+        enemyBoundCannotAct.add(e.id);
+        enemySelectedAction.set(e.id, null);
+        continue;
       }
       // weight 抽選
       const totalWeight = candidates.reduce((s, c) => s + c.weight, 0);
@@ -866,10 +906,10 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       continue;
     }
 
-    // 腕封じ（armBind）: 通常攻撃が不可（味方・敵共通。[03 §6]）
     if (actor.side === 'enemy') {
-      if (isArmBound(actor)) {
-        next.log.push({ text: `${actor.name} は腕を封じられて攻撃できない` });
+      // §15.6: 候補が空で動けない場合（部位封じで全行動ブロック）
+      if (enemyBoundCannotAct.has(actor.id)) {
+        next.log.push({ text: `${actor.name} は封じられて動けない` });
         continue;
       }
       // §3.2 ③効果適用

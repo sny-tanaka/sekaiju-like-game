@@ -427,6 +427,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     kind: 'boss',
     isBoss: true,
     actions: mountainLordActions,
+    // §15.4 山嶺の大猿王: sleep 無効
+    ailmentResist: { sleep: 0 },
   },
 
   // ---- tier2（21〜30階・氷雪） ----
@@ -620,6 +622,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     kind: 'boss',
     isBoss: true,
     actions: frostMonarchActions,
+    // §15.4 氷晶の女王: poison・sleep 無効、paralysis 耐性
+    ailmentResist: { poison: 0, sleep: 0, paralysis: 0.5 },
   },
 
   // ---- tier3（31〜40階・雷雨/嵐） ----
@@ -813,6 +817,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     kind: 'boss',
     isBoss: true,
     actions: tempestSovereignActions,
+    // §15.4 雷霆の覇王: paralysis・sleep 無効
+    ailmentResist: { paralysis: 0, sleep: 0 },
   },
 
   // ---- tier4（41〜50階・瘴気/不死/機械） ----
@@ -1034,5 +1040,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     kind: 'boss',
     isBoss: true,
     actions: blightSovereignActions,
+    // §15.4 瘴気を統べる腐王: poison・sleep 無効（undead 系統で既にアーキタイプが適用されるが、個別も明示）
+    ailmentResist: { poison: 0, sleep: 0 },
   },
 };

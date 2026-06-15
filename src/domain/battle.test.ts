@@ -202,17 +202,26 @@ describe('battle: 睡眠（[03 §6]）', () => {
 
 describe('battle: バインド（部位封じ・[03 §6]）', () => {
   test('腕封じの敵は通常攻撃できない（味方は無傷）', () => {
+    // §15.6: 腕封じ敵は物理アクション（basicを含む）を候補から除外し、非物理なら使用可。
+    // enemy_slime は zako_bruiser（ea_double_strike[物理]+ea_guard_up[バフ]）。
+    // 腕封じ時: 物理除外 → ea_guard_up のみ候補 → 敵は自己バフ使用 → 味方は無傷。
     const base = startBattle(diveSave(), ['enemy_slime']);
     const allyHp = base.allies[0].hp;
     const state = withAilment(base, 'enemies', 0, 'armBind');
-    // 味方は防御（敵の行動のみ観測）
-    const after = resolveTurn(
-      state,
-      [{ kind: 'guard', actorId: state.allies[0].id }],
-      createRng(1)
-    );
-    expect(after.allies[0].hp).toBe(allyHp);
-    expect(after.log.some((l) => l.text.includes('腕を封じ'))).toBe(true);
+    // 味方は防御（敵の行動のみ観測）。全100seedで一度も味方が攻撃されないことを確認。
+    let allyDamaged = false;
+    for (let seed = 0; seed < 100; seed++) {
+      const after = resolveTurn(
+        state,
+        [{ kind: 'guard', actorId: state.allies[0].id }],
+        createRng(seed)
+      );
+      if (after.allies[0].hp < allyHp) {
+        allyDamaged = true;
+        break;
+      }
+    }
+    expect(allyDamaged).toBe(false);
   });
 
   test('腕封じの味方は通常攻撃できない（敵は無傷）', () => {

@@ -37,7 +37,7 @@ export const BALANCE = {
   AILMENT_LUC_K: 0.01,
   AILMENT_MAX: 0.95,
   PARALYSIS_SKIP: 0.3, // 麻痺で行動不能になる確率
-  POISON_HP_RATIO: 0.05, // 毒の毎ターン割合ダメージ（magnitude 未指定時）
+  POISON_HP_RATIO: 0.03, // 毒の毎ターン割合ダメージ（magnitude 未指定時）（§15: 0.05→0.03）
   // TP 自然回復（[03 §2] ターン終了処理）: 毎ターン maxTp の割合だけ回復
   TP_REGEN_RATIO: 0.04, // 0.05 → 0.04（長期戦の消耗を効かせる）
   // ユニオン（[03 §9]）
