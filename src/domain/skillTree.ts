@@ -13,7 +13,7 @@ import type { Character, SkillId, SkillTreeNode } from '@/domain/types';
 export function skillNodesFor(char: Character): SkillTreeNode[] {
   const nodes: SkillTreeNode[] = [
     ...(CLASSES[char.classId]?.skillTree.skills ?? []),
-    ...(RACES[char.raceId]?.unionSkillTree.skills ?? []),
+    ...(RACES[char.raceId]?.raceSkillTree.skills ?? []),
   ];
   if (char.titleId && TITLES[char.titleId]) {
     nodes.push(...TITLES[char.titleId].skillTree.skills);

@@ -91,24 +91,29 @@ export function validateMasters(): ValidationResult {
   const classIds = new Set(Object.keys(classes));
   const titleIds = new Set(Object.keys(titles));
 
-  // 種族: 既定職業が存在するか / ユニオンツリーの参照整合
+  // 種族: 既定職業が存在するか / 種族スキルツリーの参照整合
   for (const race of Object.values(races)) {
     if (!classIds.has(race.defaultClassId)) {
       errors.push(`[races] "${race.id}" の defaultClassId "${race.defaultClassId}" が未定義`);
     }
-    checkSkillTree(`races/${race.id}`, race.unionSkillTree, skillIds, errors);
-    // ユニオンツリーのスキルは UNION_SKILLS に効果定義があり、raceId が一致すること（[03 §9]）
-    for (const node of race.unionSkillTree.skills) {
+    checkSkillTree(`races/${race.id}`, race.raceSkillTree, skillIds, errors);
+    // 種族ツリー内のユニオンスキルは raceId が一致すること。
+    // （ユニオン以外＝採集スキル等は混在してよいので def 無しはエラーにしない。）
+    for (const node of race.raceSkillTree.skills) {
       const def = unionSkills[node.skillId];
-      if (!def) {
-        errors.push(
-          `[races/${race.id}] ユニオンスキル "${node.skillId}" の効果定義が UNION_SKILLS に無い`
-        );
-      } else if (def.raceId !== race.id) {
+      if (def && def.raceId !== race.id) {
         errors.push(
           `[races/${race.id}] ユニオンスキル "${node.skillId}" の raceId "${def.raceId}" が不一致`
         );
       }
+    }
+  }
+
+  // ユニオンスキルは必ず該当種族の種族スキルツリーに含まれること（[03 §9]）。
+  for (const def of Object.values(unionSkills)) {
+    const tree = races[def.raceId]?.raceSkillTree;
+    if (!tree || !tree.skills.some((n) => n.skillId === def.id)) {
+      errors.push(`[unionSkills] "${def.id}" が種族 "${def.raceId}" のスキルツリーに無い`);
     }
   }
 

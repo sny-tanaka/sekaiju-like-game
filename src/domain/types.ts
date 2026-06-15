@@ -184,7 +184,7 @@ export interface RaceMaster {
   name: string;
   statGrowth: StatGrowth; // Lv ごとの各能力上昇量
   baseStatsAtLv1: Stats;
-  unionSkillTree: SkillTreeDef; // 種族固有（ユニオンスキル含む）
+  raceSkillTree: SkillTreeDef; // 種族固有スキルツリー（ユニオンスキル・採集スキル等を含む）
   /** 作成時に割り当てられる既定職業（[01 §4]）。Phase 0 の初期パーティ生成に使う。 */
   defaultClassId: ClassId;
 }

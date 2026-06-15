@@ -234,11 +234,11 @@ export const Page = () => {
     return s;
   };
 
-  // そのキャラが発動できるユニオンスキル（種族固有・習得済み・ゲージ100%）。
+  // そのキャラが発動できるユニオンスキル（種族スキルツリーのうち UNION_SKILLS に該当・習得済み）。
   const unionSkillOf = (ally: Combatant): UnionSkillDef | null => {
     const char = save.guild.members.find((m) => m.id === ally.id);
     if (!char) return null;
-    const node = RACES[char.raceId]?.unionSkillTree.skills[0];
+    const node = RACES[char.raceId]?.raceSkillTree.skills.find((n) => n.skillId in UNION_SKILLS);
     if (!node || !(node.skillId in char.learnedSkills)) return null;
     return UNION_SKILLS[node.skillId] ?? null;
   };
