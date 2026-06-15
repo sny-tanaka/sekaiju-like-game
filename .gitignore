@@ -16,6 +16,9 @@
 # 注意: docs/ は GitHub Pages の公開先なので gitignore しない
 # (commit して push することで公開される)
 
+# Claude Code のローカル作業領域（エージェント worktree 等）
+/.claude/
+
 # misc
 .DS_Store
 .env.local
