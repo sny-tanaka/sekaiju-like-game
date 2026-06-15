@@ -242,6 +242,10 @@ export interface RaceMaster {
   statGrowth: StatGrowth; // Lv ごとの各能力上昇量
   baseStatsAtLv1: Stats;
   raceSkillTree: SkillTreeDef; // 種族固有スキルツリー（ユニオンスキル・採集スキル等を含む）
+  /** 種族の属性被ダメ倍率（[06 §15]。敵 resist と同形。未指定=1.0）。 */
+  elementResist?: Partial<Record<Element, number>>;
+  /** 種族の状態異常付与率倍率（[06 §15]。0=完全無効。未指定=1.0）。 */
+  ailmentResist?: Partial<Record<AilmentType, number>>;
   /** 作成時に割り当てられる既定職業（[01 §4]）。Phase 0 の初期パーティ生成に使う。 */
   defaultClassId: ClassId;
 }
@@ -279,6 +283,8 @@ export interface EnemyMaster {
   gold: number; // 撃破時の所持金
   attackElement?: PhysElement; // 通常攻撃の物理属性（既定 bash）
   resist?: Partial<Record<Element, number>>; // 属性倍率（弱点1.5/耐性0.5/無効0）
+  /** 状態異常の付与率倍率（[06 §15]）。0=完全無効。未指定は kind 別デフォルト＋系統プロファイルで解決。 */
+  ailmentResist?: Partial<Record<AilmentType, number>>;
   /** 通常ドロップ（[04 §7]）。rate=0..1。撃破時に rng で抽選。 */
   drops?: { itemId: ItemId; rate: number }[];
   /** 階層ボスか（[06 §4]）。雑魚プール除外・ボス配置の判定に使う。 */

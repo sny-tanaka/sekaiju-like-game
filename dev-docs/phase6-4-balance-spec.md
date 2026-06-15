@@ -534,3 +534,94 @@ AI 方針: 薬は瀕死(<35%)に単体回復・2人以上が<70%で全体回復�
 2. **第2段（数値収束＋経済＋ドキュメント）**: §13 受け入れシミュ実装→§5/§6/§7.2/§7.3/§8 の数値を手順で収束→確定値を書き戻し→§11 既存テスト更新→§12 ドキュメント同期。`yarn test`/`lint` 緑。
 
 各段の完了後にディレクター（オーケストレータ）がレビューする。
+
+---
+
+## 15. 耐性システム（状態異常＋属性。敵・味方とも）
+
+状態異常が「全部入る／全部効く」ハメゲーにならないよう、**全敵に状態異常耐性**を、**味方種族に状態異常・属性耐性**を持たせる。元素 `resist`（既存）と同形で per-type。`0 = 完全無効`。
+
+### 15.1 型（`types.ts`）
+
+```ts
+// EnemyMaster に追加
+ailmentResist?: Partial<Record<AilmentType, number>>; // 種類別の付与率倍率。0=無効。未指定は種別デフォルト
+// RaceMaster に追加
+elementResist?: Partial<Record<Element, number>>;     // 属性被ダメ倍率（敵 resist と同形）。未指定=1.0
+ailmentResist?: Partial<Record<AilmentType, number>>; // 状態異常付与率倍率。未指定=1.0
+// Combatant に追加（戦闘時に解決して載せる。永続化しない）
+ailmentResist?: Partial<Record<AilmentType, number>>; // 解決済み（敵=系統+種別デフォルト / 味方=種族）
+// ※ 属性は既存 Combatant.resist を流用。味方 Combatant にも race.elementResist を載せる。
+```
+
+### 15.2 エンジン
+
+- **状態異常**: `ailmentChance(base, attacker, defender, type)` に `type` を渡し、`× (defender.ailmentResist?.[type] ?? 1)` を乗算（既存の LUC 補正・上限0.95はそのまま、ただし `0` なら 0 を返す＝無効）。`applySkillEffect` の ailment 分岐で type を渡す。
+- **属性（味方の被弾）**: 既存 `elementMult(target, element) = target.resist?.[element] ?? 1` がそのまま効くよう、**味方 Combatant 構築時に `resist = RACES[raceId].elementResist` を載せる**（現状は敵のみ）。
+- **Combatant.ailmentResist 解決**: 敵 Combatant 構築時 = `{...KIND_DEFAULT[kind], ...ENEMY_ARCHETYPE[archetype], ...master.ailmentResist}`（後優先）。味方 Combatant 構築時 = `RACES[raceId].ailmentResist`。
+- **毒**: `POISON_HP_RATIO` を `0.05 → 0.03` に（割合処刑の防止。`balance.ts`）。
+
+### 15.3 種別デフォルト（敵・明示が無い状態異常に適用）
+
+```ts
+const AILMENT_KIND_DEFAULT = { zako: 0.7, foe: 0.5, boss: 0.35 };
+```
+
+### 15.4 敵の系統別プロファイル（名前/ID キーワードで機械分類。優先順: 機械>霊体>不死>植物>スライム>蟲>鳥>獣）
+
+`ENEMY_ARCHETYPE_RESIST: Record<string, Partial<Record<AilmentType, number>>>` を定義し、各敵を1系統に分類して付与（kind デフォルトに上書き合成）。
+
+| 系統 | キーワード | 無効(0) | 耐性(0.5) | 弱点(1.3) |
+| --- | --- | --- | --- | --- |
+| construct(機械/構造) | ゴーレム,哨戒機,自動兵器,番犬,歯車,装甲,結晶,クリスタル,タイデン,ホウデン | poison, sleep | paralysis | — |
+| spirit(霊体) | 鬼火,亡霊,残り火,コオリビ,イカズチビ | armBind, headBind, legBind, poison | — | sleep |
+| undead(不死/瘴気) | 骸骨,怨霊,呪詛,墓守,腐肉,疫病,這い虫,亡者 | poison, sleep | — | — |
+| plant(植物/菌) | タケ,樹人 | poison, blind | — | — |
+| slime | スライム | armBind, legBind | — | paralysis |
+| insect(蟲) | ムシ,ヤスデ,ガニ,ガマ,毒蛾 | — | poison | paralysis |
+| bird(鳥/飛行) | タカ,チョウ,ワシ,フクロウ | legBind | — | — |
+| beast(獣/人型/その他) | 上記以外 | — | — | （種別デフォルトのみ） |
+
+ボス個別（系統＋）: 門番ゴーレム=construct / 氷晶の女王=poison・sleep無効,paralysis耐性 / 雷霆の覇王=paralysis・sleep無効 / 瘴気を統べる腐王=poison・sleep無効 / 山嶺の大猿王=sleep無効。
+
+### 15.5 味方 種族別プロファイル（`races.ts`）
+
+| 種族 | elementResist | ailmentResist |
+| --- | --- | --- |
+| ヒト | （なし） | （なし） |
+| ガロン | bash 0.8 / fire 1.2 | poison 0.4, legBind 0.7 / paralysis 1.2 |
+| ピクス | fire/ice/volt 0.85 / slash/pierce/bash 1.2 | blind 0.5, headBind 0.6 / armBind 1.3, sleep 1.2 |
+| テリアン | ice 1.2 | legBind 0.4, blind 0.5 / sleep 1.2 |
+| ルーナ | ice 0.8 / fire 1.2 | sleep 0.4, headBind 0.5 / poison 1.2 |
+| ゴラン | slash/pierce/bash 0.8 / ice 1.2 | poison 0.3, paralysis 0.5 / blind 1.2 |
+
+> 値は ±20% 以内中心。追加後に §13/§17 の sim を再実行し AC がずれたら機械調整。
+
+### 15.6 敵側の部位封じ制約（味方と対称化・`battle.ts`）
+
+敵スキルAIの**候補抽出段で部位封じを反映**（現状は armBind で全行動スキップ＝過剰、headBind 未チェック＝抜け）:
+- `armBound`: 通常攻撃＋**物理(str ダメージ effect を含む)**アクションを候補から除外（バフ/魔法/状態異常=頭系は使用可）。
+- `headBound`: **頭系（str ダメージを含まない: 魔法/バフ/状態異常/回復）**アクションを候補から除外（物理攻撃は使用可）。
+- 候補が空なら「封じられて動けない」。判定は味方の `skillUsesArm` 相当（effect に str ダメージを含むか）で行う。
+
+---
+
+## 16. 耐性の可視化（UI。隠しパラメータにしない）
+
+プレイヤーが耐性を理解できるよう**ゲーム内に表示**する。
+
+- **敵の耐性** → **図鑑（codex/Bestiary）の敵詳細**に「属性（弱点/耐性/無効）」「状態異常（効きやすい/耐性/無効）」を表示。図鑑は遭遇/撃破で情報が解放される既存挙動に乗せる（`src/domain/codex.ts` の seen/defeated を解放条件に流用）。加えて**戦闘中の敵情報パネル**（敵を選択/タップ時）に同要約をコンパクト表示。
+  - 表記: 弱点=「弱」/耐性(0.5)=「半」/無効(0)=「無」/通常=表示省略。状態異常は per-type に「効きやすい(>1)/効きにくい(<1)/無効(0)」をアイコン or ラベルで。
+- **味方の種族耐性** → **キャラのステータス詳細画面**に「属性耐性」「状態異常耐性」セクションを追加（種族由来。弱点/耐性/無効を同記法で）。
+- 既存のステータス/図鑑コンポーネントに節を追加する形で実装（新規ページは作らない）。Storybook 確認を推奨（CLAUDE.md）。
+
+---
+
+## 17. ボスHP最終調整（AC1 達成）と忠実シミュレーション
+
+§13 の簡易 sim はパーティの **TP 枯渇による火力減衰・全体AoEによる強制回復・状態異常での行動ロス**を再現せず、DPS を過大評価して「ボス6〜9ターン」と出た（実際は上記要因で延びる）。AC1（18〜22ターン）達成のため:
+
+1. **忠実シミュへ改修**: `scripts/balanceSim.mjs` / `balanceSim.test.ts` を、可能な限り**実 `resolveTurn` を駆動**する方式に作り替える（BattleState を構築し、毎ターン味方コマンドをスクリプトAIで生成＝薬師は HP 閾値で回復・DPS は TP≥コストでスキル/不足で通常・盾は挑発、を実コマンドで投入し、決着までループ）。TP・回復・状態異常・敵 kit が実挙動で効く。
+2. **ボスHPを再収束**: 忠実 sim で各ボスを **18〜22ターン・必勝・最低パーティHP≤15%** に。ディレクター事前推定（TP/回復考慮）では現値の約 **×1.6〜1.9**（目安: F10≈8500 / F20≈12000 / F30≈14000 / F40≈15000 / F50≈17000）。最終値は忠実 sim で確定し `enemies.ts` と本書 §5.1 に書き戻す。**スキル威力の引き下げはしない**（ボスHPで吸収）。
+3. **AC5 微調整**: 残りグラインドが 2Lv（目標3〜5）なので、対象帯の敵 exp を約 1〜2割下げて残り 3〜5Lv に。
+4. §15 の耐性追加後に sim を再実行し、全 AC を満たすことを確認。`balanceSim.test.ts` を**実目標レンジ（18〜22t 等）で恒久化**（Wave2 が緩めた基準を本来値へ）。
