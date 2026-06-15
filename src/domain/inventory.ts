@@ -34,6 +34,49 @@ export function removeItem(save: SaveData, itemId: ItemId, qty = 1): SaveData {
   return { ...save, guild: { ...save.guild, storage } };
 }
 
+// ---- 食材・料理（[04 §6]・別枠 foodStorage・最大60個） --------------------
+
+/** 食材の保管上限（合計個数）。 */
+export const FOOD_STORAGE_LIMIT = 60;
+
+const foodStorageOf = (save: SaveData) => save.guild.foodStorage ?? [];
+
+/** 食材の合計個数。 */
+export function foodTotal(save: SaveData): number {
+  return foodStorageOf(save).reduce((s, x) => s + x.qty, 0);
+}
+
+export function foodCount(save: SaveData, itemId: ItemId): number {
+  return foodStorageOf(save).find((s) => s.itemId === itemId)?.qty ?? 0;
+}
+
+/**
+ * 食材を加える。上限(60)を超える分は切り捨てる。実際に追加できた個数を反映した save を返す。
+ */
+export function addFood(save: SaveData, itemId: ItemId, qty = 1): SaveData {
+  if (qty <= 0) return save;
+  const room = FOOD_STORAGE_LIMIT - foodTotal(save);
+  const add = Math.min(qty, Math.max(0, room));
+  if (add <= 0) return save;
+  const foodStorage = [...foodStorageOf(save)];
+  const idx = foodStorage.findIndex((s) => s.itemId === itemId);
+  if (idx >= 0) foodStorage[idx] = { ...foodStorage[idx], qty: foodStorage[idx].qty + add };
+  else foodStorage.push({ itemId, qty: add });
+  return { ...save, guild: { ...save.guild, foodStorage } };
+}
+
+/** 食材を減らす。足りなければ変更しない。 */
+export function removeFood(save: SaveData, itemId: ItemId, qty = 1): SaveData {
+  if (qty <= 0) return save;
+  const foodStorage = [...foodStorageOf(save)];
+  const idx = foodStorage.findIndex((s) => s.itemId === itemId);
+  if (idx < 0 || foodStorage[idx].qty < qty) return save;
+  const left = foodStorage[idx].qty - qty;
+  if (left <= 0) foodStorage.splice(idx, 1);
+  else foodStorage[idx] = { ...foodStorage[idx], qty: left };
+  return { ...save, guild: { ...save.guild, foodStorage } };
+}
+
 function updateMember(save: SaveData, charId: string, fn: (c: Character) => Character): SaveData {
   return {
     ...save,

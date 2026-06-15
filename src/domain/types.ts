@@ -184,7 +184,7 @@ export interface RaceMaster {
   name: string;
   statGrowth: StatGrowth; // Lv ごとの各能力上昇量
   baseStatsAtLv1: Stats;
-  unionSkillTree: SkillTreeDef; // 種族固有（ユニオンスキル含む）
+  raceSkillTree: SkillTreeDef; // 種族固有スキルツリー（ユニオンスキル・採集スキル等を含む）
   /** 作成時に割り当てられる既定職業（[01 §4]）。Phase 0 の初期パーティ生成に使う。 */
   defaultClassId: ClassId;
 }
@@ -344,7 +344,19 @@ export interface BattleState {
   consumedItems: ItemId[];
 }
 
-export type ItemCategory = 'consumable' | 'material' | 'drop' | 'valuable';
+export type ItemCategory = 'consumable' | 'material' | 'drop' | 'valuable' | 'food';
+
+/**
+ * 料理レシピ（[04 §6]）。食材を消費して上位の食材（料理）を作る。
+ * 解放トリガーは到達階・ドロップ・購入等の非ストーリー手段（[06 §8]）。
+ */
+export interface RecipeMaster {
+  id: string;
+  name: string;
+  ingredients: ItemStack[]; // 必要食材（foodStorage から消費）
+  result: { itemId: ItemId; count: number };
+  unlockedByDefault: boolean; // 初期から作れるか
+}
 
 export interface ItemMaster {
   id: ItemId;
@@ -417,6 +429,8 @@ export interface Guild {
   members: Character[]; // 上限あり（例: 30）
   party: PartyFormation; // 出撃中の編成
   storage: ItemStack[]; // 預かり所
+  /** 食材・料理の保管（[04 §6]）。アイテムと別枠・最大60個・売却不可。 */
+  foodStorage: ItemStack[];
   bestiary: BestiaryState; // 図鑑
 }
 
@@ -475,6 +489,16 @@ export interface FoeRuntimeState {
 }
 
 /** generateFloor(depth, rng) の生成物（[02 §2]・[06 §2]）。 */
+/** 採集の系統（[04 §5]）。鉱石/採取/伐採＋食材系（釣り/収穫/狩猟）。 */
+export type GatherType = 'mining' | 'gathering' | 'logging' | 'fishing' | 'harvest' | 'hunting';
+
+/** 階に配置された採集ポイント（[04 §5]）。ドロップ表・必要スキルは GATHER_TYPES から引く。 */
+export interface GatheringPoint {
+  id: string;
+  cell: { x: number; y: number };
+  type: GatherType;
+}
+
 export interface FloorMaster {
   depth: number;
   width: number;
@@ -482,6 +506,8 @@ export interface FloorMaster {
   cells: Cell[][]; // [y][x]
   encounterTable: string;
   foeSpawns: FoeSpawn[];
+  /** 採集ポイント（[04 §5]）。cell には event {kind:'gather'} も併置される。 */
+  gatheringPoints: GatheringPoint[];
   bgmId: string;
 }
 
@@ -669,6 +695,8 @@ export interface SaveData {
   exploredCells: Record<number, CellKey[]>; // depth -> 視認済み cellKey[]
   forgeInventory: ForgeInventory;
   shopStock: ShopStock;
+  /** 解放済みの料理レシピ ID（[04 §6]）。 */
+  unlockedRecipeIds: string[];
   flags: Record<string, boolean>; // 到達階トリガーの解放フラグ
 }
 

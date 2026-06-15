@@ -19,6 +19,7 @@ function corridor(): FloorMaster {
     ],
     encounterTable: 't',
     foeSpawns: [],
+    gatheringPoints: [],
     bgmId: 'b',
   };
 }

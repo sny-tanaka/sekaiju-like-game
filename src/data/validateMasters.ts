@@ -48,8 +48,19 @@ function checkSkillTree(
 
 export function validateMasters(): ValidationResult {
   const errors: string[] = [];
-  const { races, classes, titles, skills, unionSkills, summons, enemies, items, equipment } =
-    MASTERS;
+  const {
+    races,
+    classes,
+    titles,
+    skills,
+    unionSkills,
+    summons,
+    gatherTypes,
+    recipes,
+    enemies,
+    items,
+    equipment,
+  } = MASTERS;
 
   // ID 命名規約
   checkIdConvention('races', Object.keys(races), errors);
@@ -80,24 +91,29 @@ export function validateMasters(): ValidationResult {
   const classIds = new Set(Object.keys(classes));
   const titleIds = new Set(Object.keys(titles));
 
-  // 種族: 既定職業が存在するか / ユニオンツリーの参照整合
+  // 種族: 既定職業が存在するか / 種族スキルツリーの参照整合
   for (const race of Object.values(races)) {
     if (!classIds.has(race.defaultClassId)) {
       errors.push(`[races] "${race.id}" の defaultClassId "${race.defaultClassId}" が未定義`);
     }
-    checkSkillTree(`races/${race.id}`, race.unionSkillTree, skillIds, errors);
-    // ユニオンツリーのスキルは UNION_SKILLS に効果定義があり、raceId が一致すること（[03 §9]）
-    for (const node of race.unionSkillTree.skills) {
+    checkSkillTree(`races/${race.id}`, race.raceSkillTree, skillIds, errors);
+    // 種族ツリー内のユニオンスキルは raceId が一致すること。
+    // （ユニオン以外＝採集スキル等は混在してよいので def 無しはエラーにしない。）
+    for (const node of race.raceSkillTree.skills) {
       const def = unionSkills[node.skillId];
-      if (!def) {
-        errors.push(
-          `[races/${race.id}] ユニオンスキル "${node.skillId}" の効果定義が UNION_SKILLS に無い`
-        );
-      } else if (def.raceId !== race.id) {
+      if (def && def.raceId !== race.id) {
         errors.push(
           `[races/${race.id}] ユニオンスキル "${node.skillId}" の raceId "${def.raceId}" が不一致`
         );
       }
+    }
+  }
+
+  // ユニオンスキルは必ず該当種族の種族スキルツリーに含まれること（[03 §9]）。
+  for (const def of Object.values(unionSkills)) {
+    const tree = races[def.raceId]?.raceSkillTree;
+    if (!tree || !tree.skills.some((n) => n.skillId === def.id)) {
+      errors.push(`[unionSkills] "${def.id}" が種族 "${def.raceId}" のスキルツリーに無い`);
     }
   }
 
@@ -131,6 +147,47 @@ export function validateMasters(): ValidationResult {
       if (eff.kind === 'summon' && !(eff.summonKind in summons)) {
         errors.push(`[battleSkills] "${def.id}" の召喚 "${eff.summonKind}" が未定義`);
       }
+    }
+  }
+
+  // 採集系統（[04 §5]）: 必要スキル・ドロップ素材の実在
+  for (const [key, g] of Object.entries(gatherTypes)) {
+    if (key !== g.type) errors.push(`[gatherTypes] キー "${key}" と type "${g.type}" が不一致`);
+    if (!skillIds.has(g.requiredSkillId)) {
+      errors.push(`[gatherTypes] "${g.type}" の requiredSkillId "${g.requiredSkillId}" が未定義`);
+    }
+    for (const d of g.drops) {
+      if (!(d.itemId in items)) {
+        errors.push(`[gatherTypes] "${g.type}" のドロップ "${d.itemId}" が未定義アイテム`);
+      } else {
+        // food 系統のドロップは food カテゴリ、素材系統は food 以外であること（振り分け先の整合）。
+        const isFoodItem = items[d.itemId].category === 'food';
+        if (g.food && !isFoodItem) {
+          errors.push(`[gatherTypes] 食材系統 "${g.type}" のドロップ "${d.itemId}" が food でない`);
+        }
+        if (!g.food && isFoodItem) {
+          errors.push(`[gatherTypes] 素材系統 "${g.type}" のドロップ "${d.itemId}" が food`);
+        }
+      }
+      if (d.weight <= 0) errors.push(`[gatherTypes] "${g.type}" のドロップ重みが正でない`);
+    }
+  }
+
+  // 料理レシピ（[04 §6]）: ID 規約・食材・結果の実在と food カテゴリ整合
+  checkIdConvention('recipes', Object.keys(recipes), errors);
+  for (const [key, r] of Object.entries(recipes)) {
+    if (key !== r.id) errors.push(`[recipes] キー "${key}" と id "${r.id}" が不一致`);
+    for (const ing of r.ingredients) {
+      if (!(ing.itemId in items)) {
+        errors.push(`[recipes] "${r.id}" の材料 "${ing.itemId}" が未定義`);
+      } else if (items[ing.itemId].category !== 'food') {
+        errors.push(`[recipes] "${r.id}" の材料 "${ing.itemId}" が food カテゴリでない`);
+      }
+    }
+    if (!(r.result.itemId in items)) {
+      errors.push(`[recipes] "${r.id}" の結果 "${r.result.itemId}" が未定義`);
+    } else if (items[r.result.itemId].category !== 'food') {
+      errors.push(`[recipes] "${r.id}" の結果 "${r.result.itemId}" が food カテゴリでない`);
     }
   }
 

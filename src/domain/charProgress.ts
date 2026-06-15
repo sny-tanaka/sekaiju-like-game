@@ -31,9 +31,9 @@ function starterSkillId(classId: ClassId): string | undefined {
   return CLASSES[classId]?.skillTree.skills[0]?.skillId;
 }
 
-/** 種族（ユニオン）ツリーのスキル ID 集合。転職で保持する。 */
+/** 種族スキルツリー（ユニオン・採集等）のスキル ID 集合。転職で保持する。 */
 function raceSkillIds(raceId: RaceId): Set<string> {
-  return new Set((RACES[raceId]?.unionSkillTree.skills ?? []).map((n) => n.skillId));
+  return new Set((RACES[raceId]?.raceSkillTree.skills ?? []).map((n) => n.skillId));
 }
 
 const sumLevels = (learned: Record<string, number>) =>

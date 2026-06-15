@@ -71,10 +71,94 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
     category: 'material',
     buyPrice: 0,
   },
+  // 採集素材（[04 §5]・鉱石/採取/伐採）。売却可・鍛冶（4-5b）でも使う。
+  item_ore: {
+    id: 'item_ore',
+    name: '鉄鉱石',
+    description: '採掘で得られる鉱石。',
+    category: 'material',
+    buyPrice: 0,
+  },
+  item_medic_herb: {
+    id: 'item_medic_herb',
+    name: '薬の葉',
+    description: '採取で得られる薬草。',
+    category: 'material',
+    buyPrice: 0,
+  },
+  item_lumber: {
+    id: 'item_lumber',
+    name: '良質な木材',
+    description: '伐採で得られる木材。',
+    category: 'material',
+    buyPrice: 0,
+  },
+  // 食材（[04 §6]・探索専用・別枠保管60個・売却不可）。生の食材。
+  item_food_fish: {
+    id: 'item_food_fish',
+    name: '川魚',
+    description: '釣りで得た食材。探索中に食べて HP を 25 回復。',
+    category: 'food',
+    buyPrice: 0,
+    useContext: ['field'],
+    effects: [{ kind: 'heal', amount: () => 25 }],
+  },
+  item_food_nuts: {
+    id: 'item_food_nuts',
+    name: '木の実',
+    description: '収穫で得た食材。探索中に食べて TP を 12 回復。',
+    category: 'food',
+    buyPrice: 0,
+    useContext: ['field'],
+    effects: [{ kind: 'restoreTp', amount: () => 12 }],
+  },
+  item_food_meat: {
+    id: 'item_food_meat',
+    name: '生肉',
+    description: '狩猟で得た食材。探索中に食べて HP を 30 回復。',
+    category: 'food',
+    buyPrice: 0,
+    useContext: ['field'],
+    effects: [{ kind: 'heal', amount: () => 30 }],
+  },
+  // 料理（[04 §6]・調理で作る上位食材）。
+  item_dish_grilled_fish: {
+    id: 'item_dish_grilled_fish',
+    name: '焼き魚',
+    description: '川魚を焼いた料理。探索中に食べて HP を 70 回復。',
+    category: 'food',
+    buyPrice: 0,
+    useContext: ['field'],
+    effects: [{ kind: 'heal', amount: () => 70 }],
+  },
+  item_dish_nut_platter: {
+    id: 'item_dish_nut_platter',
+    name: '木の実の盛り合わせ',
+    description: '木の実を調理した一品。探索中に食べて TP を 35 回復。',
+    category: 'food',
+    buyPrice: 0,
+    useContext: ['field'],
+    effects: [{ kind: 'restoreTp', amount: () => 35 }],
+  },
+  item_dish_grilled_meat: {
+    id: 'item_dish_grilled_meat',
+    name: '焼き肉',
+    description: '生肉を焼いた料理。探索中に食べて HP を 90 回復。',
+    category: 'food',
+    buyPrice: 0,
+    useContext: ['field'],
+    effects: [{ kind: 'heal', amount: () => 90 }],
+  },
 };
 
-/** 売却価格（買値の半額・切り捨て。0=売却不可だが素材は別途最低額）。 */
+/** 売却価格（買値の半額・切り捨て）。食材は売却不可（0）、素材は一律最低額。 */
 export function sellPrice(item: ItemMaster): number {
+  if (item.category === 'food') return 0; // 食材・料理は売却不可（[04 §6]）
   if (item.category === 'material') return 8; // 素材の一律売却額（暫定）
   return Math.floor(item.buyPrice / 2);
+}
+
+/** 食材・料理か（foodStorage 管理対象）。 */
+export function isFood(itemId: ItemId): boolean {
+  return ITEMS[itemId]?.category === 'food';
 }

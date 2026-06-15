@@ -148,6 +148,13 @@ interface GatheringPoint {
 }
 ```
 
+> **MVP 実装メモ（Phase 4-5a・実装済み）**:
+> - **採集スキルは「種族スキル」として提供**（設計どおり）。種族スキルツリー `RaceMaster.raceSkillTree`（旧 `unionSkillTree` を改名。ユニオン＋採集＋将来の種族スキルを保持）に配置: ヒト=採掘・採取／ガロン=伐採・狩猟／ピクス=採取・収穫／テリアン=釣り・狩猟・収穫。種族で採集適性が分かれ、編成段階の戦略要素になる。
+> - ドロップ表は `data/gather.ts` `GATHER_TYPES`（系統→必要スキル・food フラグ・重み付きドロップ）。**素材系は倉庫、食材系は foodStorage** に入る。1回1点抽選。
+> - 配置は `generateFloor` で `2 + floor(depth/10)` 点（乱数末尾追加で既存階の再現を保つ）。`exhaustible` は MVP では常に true（その探索中は枯渇＝`towerState.floors[d].depletedGathers`）。
+> - **食材枠が満杯（60）のときは採集を拒否**し枯渇登録もしない（採集機会を失わせない）。
+> - マップに採集（緑）・調理（橙）・枯渇（淡色）を自動表示（[02 §4.2]）。
+
 ---
 
 ## 6. 食材・料理

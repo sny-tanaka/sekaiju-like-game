@@ -1,8 +1,13 @@
 import {
+  FOOD_STORAGE_LIMIT,
+  addFood,
   addItem,
   canEquip,
   equipItem,
+  foodCount,
+  foodTotal,
   itemCount,
+  removeFood,
   removeItem,
   unequipItem,
 } from '@/domain/inventory';
@@ -32,6 +37,24 @@ describe('inventory: storage', () => {
     // 0 で stack 消滅
     save = removeItem(before, 'item_potion', 1);
     expect(itemCount(save, 'item_potion')).toBe(0);
+  });
+});
+
+describe('inventory: food (foodStorage)', () => {
+  test('addFood / removeFood / foodCount', () => {
+    let save = createInitialSaveData('g');
+    save = addFood(save, 'item_food_fish', 3);
+    expect(foodCount(save, 'item_food_fish')).toBe(3);
+    save = removeFood(save, 'item_food_fish', 1);
+    expect(foodCount(save, 'item_food_fish')).toBe(2);
+  });
+
+  test('合計60個を超える分は切り捨てられる', () => {
+    let save = createInitialSaveData('g');
+    save = addFood(save, 'item_food_fish', 50);
+    save = addFood(save, 'item_food_meat', 20); // 50+20=70 → 60 まで
+    expect(foodTotal(save)).toBe(FOOD_STORAGE_LIMIT);
+    expect(foodCount(save, 'item_food_meat')).toBe(10);
   });
 });
 

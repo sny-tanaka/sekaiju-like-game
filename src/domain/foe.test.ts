@@ -18,6 +18,7 @@ function openFloor(size: number, foeSpawns: FoeSpawn[]): FloorMaster {
     cells,
     encounterTable: 'band_0',
     foeSpawns,
+    gatheringPoints: [],
     bgmId: 'bgm_dungeon',
   };
 }
