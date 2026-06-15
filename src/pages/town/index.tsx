@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router';
 
 import styles from './style.module.scss';
@@ -10,6 +11,7 @@ import { useGameState } from '@/store/gameState';
 export const Page = () => {
   const navigate = useNavigate();
   const { save, exitToTitle, applyAndPersist } = useGameState();
+  const [warpOpen, setWarpOpen] = useState(false);
 
   // セーブが無い状態で直接来たらタイトルへ
   if (!save) {
@@ -35,6 +37,14 @@ export const Page = () => {
     if (!diveState) {
       await applyAndPersist((s) => startDive(s, 1));
     }
+    navigate('/dungeon');
+  };
+
+  // 10層ワープ（[06 §5]）: 解放済みチェックポイントへ新規ダイブ開始。
+  const checkpoints = towerState.warp.unlockedCheckpoints;
+  const handleWarp = async (depth: number) => {
+    setWarpOpen(false);
+    await applyAndPersist((s) => startDive(s, depth));
     navigate('/dungeon');
   };
 
@@ -81,6 +91,18 @@ export const Page = () => {
           onClick={() => void handleDive()}
         />
         <MenuButton
+          label="ワープ"
+          description={
+            checkpoints.length === 0
+              ? 'ボス撃破で解放'
+              : diveState
+                ? '潜行中は使えません'
+                : `解放済み: ${checkpoints.map((d) => `${d}F`).join('・')}`
+          }
+          disabled={!hasMembers || checkpoints.length === 0 || !!diveState}
+          onClick={() => setWarpOpen(true)}
+        />
+        <MenuButton
           label="ギルド管理"
           description="編成・キャラ作成"
           onClick={() => navigate('/guild')}
@@ -111,6 +133,37 @@ export const Page = () => {
           タイトルへ戻る
         </button>
       </footer>
+
+      {warpOpen ? (
+        <div
+          className={styles.warpOverlay}
+          onClick={() => setWarpOpen(false)}
+        >
+          <div
+            className={styles.warpPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.warpTitle}>ワープ先を選択</div>
+            {checkpoints.map((d) => (
+              <button
+                type="button"
+                key={d}
+                className={styles.warpBtn}
+                onClick={() => void handleWarp(d)}
+              >
+                第 {d} 階へ
+              </button>
+            ))}
+            <button
+              type="button"
+              className={styles.warpClose}
+              onClick={() => setWarpOpen(false)}
+            >
+              とじる
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

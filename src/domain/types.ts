@@ -496,6 +496,8 @@ export interface FoeSpawn {
   moveSpeed: number;
   sightRange: number;
   respawn: boolean;
+  /** 階層ボスか（[06 §4]）。撃破でゲート解放・ワープ解放・記録更新の対象。 */
+  isBoss?: boolean;
 }
 
 export interface FoeRuntimeState {
@@ -635,6 +637,8 @@ export interface PendingFoeBattle {
   enemyId: EnemyId;
   /** 接触方向で決まる先手（[03 §10]）。 */
   firstStrike: FirstStrike;
+  /** 階層ボス戦か（[06 §4]）。勝利でゲート解放・ワープ解放・記録更新を行う。 */
+  isBoss?: boolean;
 }
 
 export interface DiveState {

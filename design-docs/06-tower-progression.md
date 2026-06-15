@@ -164,6 +164,12 @@ interface BossGateState {
 
 > **設計判断**: ボス階を「ワープ解放」「進行解放」「報酬」の3つの節目に一致させることで、プレイヤーの目標（次のボスを倒す）と区切り（ワープ・補給）が自然に揃う。封鎖を地形でなく状態で持つことで、生成済み地形を一切書き換えずにゲートを表現できる。
 
+> **MVP 実装メモ（Phase 6-1・実装済み）**:
+> - **ボス配置**: `generateFloor` がボス階（`isBossFloor`）で雑魚FOEを置かず、出口階段の隣接床に固定ボスを `FoeSpawn{ isBoss:true, patrol:'static', sightRange:0 }` として1体置く（`BOSS_FOR_BAND`。帯にボスが無ければ最大帯ボスへフォールバック＝`enemyScale` で難度はスケール。帯ごとのボスは Phase 6-3 で拡充）。ボスには先制を許さない（`firstStrike:'none'`）。
+> - **ゲート**: `dive.canAscend(save, depth) = !isBossFloor(depth) || bossGates[depth]?.defeated`。`goDeeper` は封鎖中なら変更せず返し、UI は「強大な力に阻まれている」と表示。地形は書き換えない（状態で封鎖）。
+> - **撃破処理**: `dive.defeatBoss(save, depth)` が `bossGates[depth].defeated=true`・`warp.unlockedCheckpoints` 追加・`TowerRecord`（`highestBossDefeated`・`bossDefeatLog`）更新。`resolveFoeBattle` がボス FOE 勝利時に呼ぶ。
+> - **ワープ**: 拠点の「ワープ」から解放済みチェックポイントへ `startDive(save, depth)`（潜行中は不可）。フロアジャンプは本仕様に一本化済み。
+
 ---
 
 ## 5. ワープチェックポイント（10層ごと）

@@ -73,3 +73,51 @@
   font-size: 14px;
   cursor: pointer;
 }
+
+// ---- ワープ（10層チェックポイント） ----
+.warpOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 20;
+}
+
+.warpPanel {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 14px;
+  background-color: var.$white;
+}
+
+.warpTitle {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.warpBtn {
+  min-height: 48px;
+  border: 1px solid var.$primary;
+  border-radius: 10px;
+  background-color: #e3f2fd;
+  color: var.$text-dark;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.warpClose {
+  min-height: 40px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: transparent;
+  font-size: 14px;
+  cursor: pointer;
+}
