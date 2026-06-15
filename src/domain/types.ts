@@ -391,7 +391,18 @@ export interface RebirthBonus {
   bonusSp: number; // 追加 SP
 }
 
-export type EquipmentSlots = Record<EquipSlotKey, ItemId | null>;
+/**
+ * 装備個体（[04 §4]）。鍛冶の強化値を個体ごとに持つため、装備は masterId 参照ではなく
+ * インスタンスとして所有する（同じ装備でも +N が異なりうる）。
+ */
+export interface EquipInstance {
+  id: string; // 個体一意 ID
+  masterId: ItemId; // EQUIPMENT のマスター ID
+  forgeLevel: number; // 強化値 0..5（[04 §4.1]）
+}
+
+/** 装備中スロット。各スロットに装備個体（未装備は null）。 */
+export type EquipmentSlots = Record<EquipSlotKey, EquipInstance | null>;
 
 /**
  * キャラクターの永続データ。
@@ -428,7 +439,9 @@ export interface Guild {
   gold: number;
   members: Character[]; // 上限あり（例: 30）
   party: PartyFormation; // 出撃中の編成
-  storage: ItemStack[]; // 預かり所
+  storage: ItemStack[]; // 預かり所（消費アイテム・素材。装備は equipment 個体で管理）
+  /** 所有する未装備の装備個体（[04 §4]）。鍛冶・リサイクルの対象。 */
+  equipment: EquipInstance[];
   /** 食材・料理の保管（[04 §6]）。アイテムと別枠・最大60個・売却不可。 */
   foodStorage: ItemStack[];
   bestiary: BestiaryState; // 図鑑

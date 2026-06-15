@@ -1,6 +1,6 @@
 import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
-import type { Character, EquipSlotKey, ItemId, SaveData } from '@/domain/types';
+import type { Character, EquipInstance, EquipSlotKey, ItemId, SaveData } from '@/domain/types';
 
 // ============================================================================
 // 所持品（倉庫）と装備の純関数（[04 §2-3]）。
@@ -87,9 +87,35 @@ function updateMember(save: SaveData, charId: string, fn: (c: Character) => Char
   };
 }
 
+// ---- 装備個体（[04 §4]・鍛冶のため装備はインスタンスで所有） -----------------
+
+function generateEquipId(): string {
+  return `eq_${Date.now().toString(36)}_${Math.floor(Math.random() * 0xffffff).toString(36)}`;
+}
+
+/** 新しい装備個体を所有プール（guild.equipment）に加える。 */
+export function addEquipment(save: SaveData, masterId: ItemId, forgeLevel = 0): SaveData {
+  if (!EQUIPMENT[masterId]) return save;
+  const inst: EquipInstance = { id: generateEquipId(), masterId, forgeLevel };
+  return { ...save, guild: { ...save.guild, equipment: [...save.guild.equipment, inst] } };
+}
+
+/** 所有プール・全メンバーの装備中スロットから個体を探す。 */
+export function findEquipInstance(save: SaveData, instanceId: string): EquipInstance | undefined {
+  const pooled = save.guild.equipment.find((e) => e.id === instanceId);
+  if (pooled) return pooled;
+  for (const m of save.guild.members) {
+    for (const slot of ['weapon', 'armor', 'accessory'] as EquipSlotKey[]) {
+      const e = m.equipment[slot];
+      if (e?.id === instanceId) return e;
+    }
+  }
+  return undefined;
+}
+
 /** その装備をこの職業が装備できるか（[04 §3]・[01 §4]）。 */
-export function canEquip(char: Character, itemId: ItemId): boolean {
-  const eq = EQUIPMENT[itemId];
+export function canEquip(char: Character, masterId: ItemId): boolean {
+  const eq = EQUIPMENT[masterId];
   if (!eq) return false;
   const cls = CLASSES[char.classId];
   if (!cls) return false;
@@ -100,31 +126,34 @@ export function canEquip(char: Character, itemId: ItemId): boolean {
 }
 
 /**
- * 倉庫の装備をキャラに装備する。元の装備品は倉庫へ戻す。
- * 倉庫に無い／装備不可なら変更しない。
+ * 所有プールの装備個体をキャラに装備する。元の装備個体はプールへ戻す。
+ * プールに無い／装備不可なら変更しない。
  */
-export function equipItem(save: SaveData, charId: string, itemId: ItemId): SaveData {
-  const eq = EQUIPMENT[itemId];
+export function equipItem(save: SaveData, charId: string, instanceId: string): SaveData {
+  const inst = save.guild.equipment.find((e) => e.id === instanceId);
   const char = save.guild.members.find((m) => m.id === charId);
-  if (!eq || !char || !canEquip(char, itemId)) return save;
-  if (itemCount(save, itemId) <= 0) return save;
-
-  let next = removeItem(save, itemId, 1);
+  if (!inst || !char || !canEquip(char, inst.masterId)) return save;
+  const eq = EQUIPMENT[inst.masterId];
+  let pool = save.guild.equipment.filter((e) => e.id !== instanceId);
   const prev = char.equipment[eq.slot];
-  if (prev) next = addItem(next, prev, 1);
+  if (prev) pool = [...pool, prev];
+  const next: SaveData = { ...save, guild: { ...save.guild, equipment: pool } };
   return updateMember(next, charId, (c) => ({
     ...c,
-    equipment: { ...c.equipment, [eq.slot]: itemId },
+    equipment: { ...c.equipment, [eq.slot]: inst },
   }));
 }
 
-/** キャラの指定スロットの装備を外して倉庫へ戻す。 */
+/** キャラの指定スロットの装備を外して所有プールへ戻す。 */
 export function unequipItem(save: SaveData, charId: string, slot: EquipSlotKey): SaveData {
   const char = save.guild.members.find((m) => m.id === charId);
   if (!char) return save;
   const cur = char.equipment[slot];
   if (!cur) return save;
-  const next = addItem(save, cur, 1);
+  const next: SaveData = {
+    ...save,
+    guild: { ...save.guild, equipment: [...save.guild.equipment, cur] },
+  };
   return updateMember(next, charId, (c) => ({
     ...c,
     equipment: { ...c.equipment, [slot]: null },

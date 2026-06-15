@@ -9,7 +9,7 @@ import {
   transferClass,
   transferClassInSave,
 } from '@/domain/charProgress';
-import { addItem, equipItem, itemCount } from '@/domain/inventory';
+import { addEquipment, equipItem } from '@/domain/inventory';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
 import { availableSP, skillLevel } from '@/domain/skillTree';
 import type { Character, SaveData } from '@/domain/types';
@@ -63,15 +63,16 @@ describe('transferClassInSave', () => {
     let save: SaveData = createInitialSaveData('g');
     const c = createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: 'A' });
     save = addCharacterToGuild(save, c);
-    save = addItem(save, 'equip_short_sword', 1);
-    save = equipItem(save, c.id, 'equip_short_sword');
-    expect(save.guild.members[0].equipment.weapon).toBe('equip_short_sword');
+    save = addEquipment(save, 'equip_short_sword');
+    save = equipItem(save, c.id, save.guild.equipment[0].id);
+    expect(save.guild.members[0].equipment.weapon?.masterId).toBe('equip_short_sword');
 
     save = transferClassInSave(save, c.id, 'class_mage'); // 魔導士は剣不可
     const m = save.guild.members[0];
     expect(m.classId).toBe('class_mage');
     expect(m.equipment.weapon).toBeNull();
-    expect(itemCount(save, 'equip_short_sword')).toBe(1); // 倉庫へ返却
+    // プールへ返却
+    expect(save.guild.equipment.some((e) => e.masterId === 'equip_short_sword')).toBe(true);
   });
 });
 
@@ -80,15 +81,16 @@ describe('reincarnateInSave', () => {
     let save: SaveData = createInitialSaveData('g');
     const c = createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: 'A' });
     save = addCharacterToGuild(save, { ...c, level: 50 });
-    save = addItem(save, 'equip_iron_armor', 1);
-    save = equipItem(save, c.id, 'equip_iron_armor');
+    save = addEquipment(save, 'equip_iron_armor');
+    save = equipItem(save, c.id, save.guild.equipment[0].id);
 
     save = reincarnateInSave(save, c.id, { raceId: 'race_pix', classId: 'class_mage', name: 'B' });
     const m = save.guild.members[0];
     expect(m.id).toBe(c.id);
     expect(m.classId).toBe('class_mage');
     expect(m.equipment.armor).toBeNull();
-    expect(itemCount(save, 'equip_iron_armor')).toBe(1); // 倉庫へ返却
+    // プールへ返却
+    expect(save.guild.equipment.some((e) => e.masterId === 'equip_iron_armor')).toBe(true);
     expect(m.rebirthBonus).toEqual({ allStats: 6, bonusSp: 6 });
   });
 });

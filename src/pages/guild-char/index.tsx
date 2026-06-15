@@ -16,6 +16,7 @@ import {
   reincarnateInSave,
   transferClassInSave,
 } from '@/domain/charProgress';
+import { equipDisplayName } from '@/domain/forge';
 import { canEquip, equipItem, unequipItem } from '@/domain/inventory';
 import {
   availableSP,
@@ -113,10 +114,10 @@ export const Page = () => {
       <section className={styles.card}>
         <h2 className={styles.h2}>装備</h2>
         {SLOTS.map((slot) => {
-          const equippedId = char.equipment[slot];
-          const equipped = equippedId ? EQUIPMENT[equippedId] : null;
-          const candidates = save.guild.storage.filter(
-            (s) => EQUIPMENT[s.itemId]?.slot === slot && canEquip(char, s.itemId)
+          const equipped = char.equipment[slot];
+          // 所有プールから、このスロットに装備可能な個体を候補に
+          const candidates = save.guild.equipment.filter(
+            (e) => EQUIPMENT[e.masterId]?.slot === slot && canEquip(char, e.masterId)
           );
           return (
             <div
@@ -125,7 +126,9 @@ export const Page = () => {
             >
               <div className={styles.equipHead}>
                 <span className={styles.slotLabel}>{SLOT_LABEL[slot]}</span>
-                <span className={styles.equipName}>{equipped ? equipped.name : '（なし）'}</span>
+                <span className={styles.equipName}>
+                  {equipped ? equipDisplayName(equipped) : '（なし）'}
+                </span>
                 {equipped ? (
                   <button
                     type="button"
@@ -138,14 +141,14 @@ export const Page = () => {
               </div>
               {candidates.length > 0 ? (
                 <div className={styles.equipPick}>
-                  {candidates.map((c) => (
+                  {candidates.map((e) => (
                     <button
                       type="button"
-                      key={c.itemId}
+                      key={e.id}
                       className={styles.pickBtn}
-                      onClick={() => void applyAndPersist((s) => equipItem(s, id, c.itemId))}
+                      onClick={() => void applyAndPersist((s) => equipItem(s, id, e.id))}
                     >
-                      {EQUIPMENT[c.itemId].name} 装備{c.qty > 1 ? `(${c.qty})` : ''}
+                      {equipDisplayName(e)} 装備
                     </button>
                   ))}
                 </div>

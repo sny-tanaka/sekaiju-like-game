@@ -1,6 +1,6 @@
 import { itemCount } from '@/domain/inventory';
 import { createInitialSaveData } from '@/domain/saveData';
-import { buy, sell, sellPriceOf, shopCatalog, unlockedTier } from '@/domain/shop';
+import { buy, sell, sellEquipment, shopCatalog, unlockedTier } from '@/domain/shop';
 import type { SaveData } from '@/domain/types';
 
 function richSave(gold: number): SaveData {
@@ -37,14 +37,15 @@ describe('shop', () => {
     expect(save).toBe(before);
   });
 
-  test('売却で所持金が増え倉庫から減る', () => {
-    let save = richSave(0);
-    save = buy(richSave(200), 'equip_short_sword'); // 120 → gold 80, 在庫1
+  test('装備の購入は個体としてプールに入り、売却で所持金が増えプールから減る', () => {
+    let save = buy(richSave(200), 'equip_short_sword'); // 120 → gold 80, 個体1
     expect(save.guild.gold).toBe(80);
+    expect(save.guild.equipment).toHaveLength(1);
+    const inst = save.guild.equipment[0];
     const gold0 = save.guild.gold;
-    save = sell(save, 'equip_short_sword', 1); // 売却 60
-    expect(save.guild.gold).toBe(gold0 + sellPriceOf('equip_short_sword'));
-    expect(itemCount(save, 'equip_short_sword')).toBe(0);
+    save = sellEquipment(save, inst.id); // 売却（買値の半額 = 60）
+    expect(save.guild.gold).toBe(gold0 + Math.floor(120 / 2));
+    expect(save.guild.equipment).toHaveLength(0);
   });
 
   test('持っていない物は売れない', () => {

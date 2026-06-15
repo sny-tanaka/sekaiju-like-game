@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router';
 
 import { Page as BattlePage } from '@/pages/battle';
 import { Page as DungeonPage } from '@/pages/dungeon';
+import { Page as ForgePage } from '@/pages/forge';
 import { Page as GuildPage } from '@/pages/guild';
 import { Page as GuildCharPage } from '@/pages/guild-char';
 import { Page as NotFoundPage } from '@/pages/not-found';
@@ -41,6 +42,10 @@ function App() {
       <Route
         path="/shop"
         element={<ShopPage />}
+      />
+      <Route
+        path="/forge"
+        element={<ForgePage />}
       />
       <Route
         path="/dungeon"

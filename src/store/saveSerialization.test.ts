@@ -40,6 +40,44 @@ describe('saveSerialization', () => {
     expect(deserializeSave(future).ok).toBe(false);
   });
 
+  test('v1→v2 migration: 装備の itemId 文字列が EquipInstance 個体へ変換される', () => {
+    // 旧 v1 形式（装備=itemId 文字列・guild.equipment / foodStorage 無し）を手作り
+    const v1 = {
+      ...serializeSave(makeSave()),
+      schemaVersion: 1,
+    } as Record<string, unknown>;
+    const guild = v1.guild as Record<string, unknown>;
+    delete guild.equipment;
+    delete guild.foodStorage;
+    guild.members = [
+      {
+        id: 'c1',
+        name: 'A',
+        raceId: 'race_human',
+        classId: 'class_warrior',
+        titleId: null,
+        level: 1,
+        exp: 0,
+        skillPoints: { total: 0, spent: 0 },
+        learnedSkills: {},
+        equipment: { weapon: 'equip_short_sword', armor: null, accessory: null },
+      },
+    ];
+    delete (v1 as Record<string, unknown>).unlockedRecipeIds;
+
+    const result = deserializeSave(v1);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+      expect(Array.isArray(result.data.guild.equipment)).toBe(true);
+      const w = result.data.guild.members[0].equipment.weapon;
+      expect(w).not.toBeNull();
+      expect(w?.masterId).toBe('equip_short_sword');
+      expect(w?.forgeLevel).toBe(0);
+      expect(result.data.guild.members[0].equipment.armor).toBeNull();
+    }
+  });
+
   test('deriveSaveMeta はギルド名・到達階・団員数・セーブ時刻を抽出する', () => {
     const save = makeSave('わがギルド');
     const meta = deriveSaveMeta(save);

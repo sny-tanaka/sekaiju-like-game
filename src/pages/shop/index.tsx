@@ -5,7 +5,8 @@ import styles from './style.module.scss';
 
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
-import { buy, sell, sellPriceOf, shopCatalog } from '@/domain/shop';
+import { equipDisplayName } from '@/domain/forge';
+import { buy, equipSellValue, sell, sellEquipment, sellPriceOf, shopCatalog } from '@/domain/shop';
 import { useGameState } from '@/store/gameState';
 
 // ショップ（[04 §8]）。装備・消費アイテムの売買。
@@ -25,8 +26,10 @@ export const Page = () => {
 
   const gold = save.guild.gold;
   const catalog = shopCatalog(save);
-  // 売却可能な所持品（売値 > 0）
+  // 売却可能な所持品（売値 > 0）と所有装備（個体）
   const sellable = save.guild.storage.filter((s) => sellPriceOf(s.itemId) > 0);
+  const sellableEquip = save.guild.equipment;
+  const nothingToSell = sellable.length === 0 && sellableEquip.length === 0;
 
   const nameOf = (id: string) => ITEMS[id]?.name ?? EQUIPMENT[id]?.name ?? id;
 
@@ -75,27 +78,47 @@ export const Page = () => {
               </button>
             </div>
           ))
-        ) : sellable.length === 0 ? (
+        ) : nothingToSell ? (
           <p className={styles.empty}>売れる物がありません。</p>
         ) : (
-          sellable.map((s) => (
-            <div
-              key={s.itemId}
-              className={styles.row}
-            >
-              <div className={styles.info}>
-                <span className={styles.name}>{nameOf(s.itemId)}</span>
-                <span className={styles.note}>所持 {s.qty}</span>
-              </div>
-              <button
-                type="button"
-                className={styles.action}
-                onClick={() => void applyAndPersist((sv) => sell(sv, s.itemId, 1))}
+          <>
+            {sellableEquip.map((e) => (
+              <div
+                key={e.id}
+                className={styles.row}
               >
-                売却 {sellPriceOf(s.itemId)} G
-              </button>
-            </div>
-          ))
+                <div className={styles.info}>
+                  <span className={styles.name}>{equipDisplayName(e)}</span>
+                  <span className={styles.note}>装備</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.action}
+                  onClick={() => void applyAndPersist((sv) => sellEquipment(sv, e.id))}
+                >
+                  売却 {equipSellValue(e)} G
+                </button>
+              </div>
+            ))}
+            {sellable.map((s) => (
+              <div
+                key={s.itemId}
+                className={styles.row}
+              >
+                <div className={styles.info}>
+                  <span className={styles.name}>{nameOf(s.itemId)}</span>
+                  <span className={styles.note}>所持 {s.qty}</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.action}
+                  onClick={() => void applyAndPersist((sv) => sell(sv, s.itemId, 1))}
+                >
+                  売却 {sellPriceOf(s.itemId)} G
+                </button>
+              </div>
+            ))}
+          </>
         )}
       </div>
 

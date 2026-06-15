@@ -1,5 +1,6 @@
 import {
   FOOD_STORAGE_LIMIT,
+  addEquipment,
   addFood,
   addItem,
   canEquip,
@@ -67,34 +68,35 @@ describe('inventory: equip', () => {
     expect(canEquip(warrior, 'equip_amulet')).toBe(true); // アクセは職業不問
   });
 
-  test('equipItem は倉庫から装備し、元の装備は倉庫へ戻る', () => {
+  test('equipItem は所有プールから装備し、元の装備はプールへ戻る', () => {
     const init = saveWith('race_human', 'class_warrior');
     const charId = init.charId;
     let save = init.save;
-    save = addItem(save, 'equip_short_sword', 1);
-    save = addItem(save, 'equip_iron_spear', 1); // 戦士は槍不可
-    save = equipItem(save, charId, 'equip_short_sword');
+    save = addEquipment(save, 'equip_short_sword');
+    save = addEquipment(save, 'equip_iron_spear'); // 戦士は槍不可
+    const sword = save.guild.equipment.find((e) => e.masterId === 'equip_short_sword')!;
+    const spear = save.guild.equipment.find((e) => e.masterId === 'equip_iron_spear')!;
+    save = equipItem(save, charId, sword.id);
     let char = save.guild.members.find((m) => m.id === charId)!;
-    expect(char.equipment.weapon).toBe('equip_short_sword');
-    expect(itemCount(save, 'equip_short_sword')).toBe(0);
+    expect(char.equipment.weapon?.masterId).toBe('equip_short_sword');
+    // 装備した個体はプールから消える
+    expect(save.guild.equipment.some((e) => e.id === sword.id)).toBe(false);
 
     // 槍は装備不可 → 変更されない
     const before = save;
-    save = equipItem(save, charId, 'equip_iron_spear');
+    save = equipItem(save, charId, spear.id);
     expect(save).toBe(before);
 
-    // 別の剣に持ち替えると前の剣が倉庫へ戻る
-    save = addItem(save, 'equip_short_sword', 1); // もう1本
-    // 倉庫の在庫が無い装備は付け替え不可なので、別武器を用意できない（剣は1種）→ unequip を検証
+    // 外すと元の個体がプールへ戻る
     save = unequipItem(save, charId, 'weapon');
     char = save.guild.members.find((m) => m.id === charId)!;
     expect(char.equipment.weapon).toBeNull();
-    expect(itemCount(save, 'equip_short_sword')).toBe(2);
+    expect(save.guild.equipment.some((e) => e.id === sword.id)).toBe(true);
   });
 
-  test('倉庫に無い装備は装備できない', () => {
+  test('プールに無い装備個体は装備できない', () => {
     const { save, charId } = saveWith('race_human', 'class_warrior');
-    const after = equipItem(save, charId, 'equip_short_sword');
+    const after = equipItem(save, charId, 'eq_nonexistent');
     expect(after).toBe(save);
   });
 });

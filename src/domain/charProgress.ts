@@ -86,9 +86,9 @@ export function transferClassInSave(save: SaveData, charId: string, newClassId: 
   let next = replaceMember(save, charId, transferClass(char, newClassId));
   const changed = next.guild.members.find((m) => m.id === charId)!;
   for (const slot of EQUIP_SLOTS) {
-    const itemId = changed.equipment[slot];
-    if (itemId && !canEquip(changed, itemId)) {
-      next = unequipItem(next, charId, slot); // 倉庫へ返却
+    const inst = changed.equipment[slot];
+    if (inst && !canEquip(changed, inst.masterId)) {
+      next = unequipItem(next, charId, slot); // 所有プールへ返却
     }
   }
   return next;
