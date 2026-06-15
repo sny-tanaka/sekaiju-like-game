@@ -14,16 +14,16 @@ import type {
 /** その帯の FOE プール（雑魚と同プール。ボスは除外）。 */
 function FOE_POOL_BY_BAND(band: number): EnemyId[] {
   return Object.values(ENEMIES)
-    .filter((e) => e.tierBand === band && !e.id.startsWith('enemy_boss'))
+    .filter((e) => e.tierBand === band && !e.isBoss)
     .map((e) => e.id);
 }
 
 /**
  * その帯の階層ボス（[06 §4]）。帯にボスが無ければ、定義済みボスのうち tierBand 最大のものに
- * フォールバック（出現階で enemyScale により難度はスケールする）。Phase 6-2 で帯ごとに増やす。
+ * フォールバック（出現階で enemyScale により難度はスケールする）。Phase 6-3 で帯ごとに増やす。
  */
 function BOSS_FOR_BAND(band: number): EnemyId | null {
-  const bosses = Object.values(ENEMIES).filter((e) => e.id.startsWith('enemy_boss'));
+  const bosses = Object.values(ENEMIES).filter((e) => e.isBoss);
   if (bosses.length === 0) return null;
   const inBand = bosses.filter((e) => e.tierBand === band);
   if (inBand.length > 0) return inBand[0].id;

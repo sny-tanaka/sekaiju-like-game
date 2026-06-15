@@ -55,5 +55,6 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     attackElement: 'bash',
     resist: { slash: 0.5, pierce: 0.5, ice: 1.5 }, // 物理に硬く氷に弱い
     drops: [{ itemId: 'item_golem_core', rate: 1 }],
+    isBoss: true,
   },
 };

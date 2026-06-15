@@ -224,6 +224,8 @@ export interface EnemyMaster {
   resist?: Partial<Record<Element, number>>; // 属性倍率（弱点1.5/耐性0.5/無効0）
   /** 通常ドロップ（[04 §7]）。rate=0..1。撃破時に rng で抽選。 */
   drops?: { itemId: ItemId; rate: number }[];
+  /** 階層ボスか（[06 §4]）。雑魚プール除外・ボス配置の判定に使う。 */
+  isBoss?: boolean;
 }
 
 /**

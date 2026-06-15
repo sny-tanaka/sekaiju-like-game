@@ -275,7 +275,7 @@ export function resolveFoeBattle(save: SaveData, win: boolean): SaveData {
  * - WarpState にチェックポイント追加
  * - TowerRecord（最高撃破ボス階・撃破履歴）更新
  */
-export function defeatBoss(save: SaveData, depth: number): SaveData {
+export function defeatBoss(save: SaveData, depth: number, at: number = Date.now()): SaveData {
   const ts = save.towerState;
   const bossGates = { ...ts.bossGates, [depth]: { depth, defeated: true } };
   const unlockedCheckpoints = ts.warp.unlockedCheckpoints.includes(depth)
@@ -287,7 +287,7 @@ export function defeatBoss(save: SaveData, depth: number): SaveData {
     highestBossDefeated: Math.max(ts.record.highestBossDefeated, depth),
     bossDefeatLog: alreadyLogged
       ? ts.record.bossDefeatLog
-      : [...ts.record.bossDefeatLog, { depth, at: Date.now() }],
+      : [...ts.record.bossDefeatLog, { depth, at }],
   };
   return {
     ...save,

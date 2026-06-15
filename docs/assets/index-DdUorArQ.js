@@ -14147,6 +14147,7 @@ const Ft = {
       attackElement: 'bash',
       resist: { slash: 0.5, pierce: 0.5, ice: 1.5 },
       drops: [{ itemId: 'item_golem_core', rate: 1 }],
+      isBoss: !0,
     },
   },
   ht = {
@@ -15371,11 +15372,11 @@ const Rn = {
   z1 = Object.keys(Rn);
 function B1(a) {
   return Object.values(Bl)
-    .filter((i) => i.tierBand === a && !i.id.startsWith('enemy_boss'))
+    .filter((i) => i.tierBand === a && !i.isBoss)
     .map((i) => i.id);
 }
 function L1(a) {
-  const i = Object.values(Bl).filter((s) => s.id.startsWith('enemy_boss'));
+  const i = Object.values(Bl).filter((s) => s.isBoss);
   if (i.length === 0) return null;
   const o = i.filter((s) => s.tierBand === a);
   return o.length > 0 ? o[0].id : i.sort((s, r) => r.tierBand - s.tierBand)[0].id;
@@ -15769,23 +15770,21 @@ function J1(a, i) {
   }
   return r;
 }
-function W1(a, i) {
-  const o = a.towerState,
-    s = { ...o.bossGates, [i]: { depth: i, defeated: !0 } },
-    r = o.warp.unlockedCheckpoints.includes(i)
-      ? o.warp.unlockedCheckpoints
-      : [...o.warp.unlockedCheckpoints, i].sort((v, g) => v - g),
-    d = o.record.bossDefeatLog.some((v) => v.depth === i),
-    h = {
-      ...o.record,
-      highestBossDefeated: Math.max(o.record.highestBossDefeated, i),
-      bossDefeatLog: d
-        ? o.record.bossDefeatLog
-        : [...o.record.bossDefeatLog, { depth: i, at: Date.now() }],
+function W1(a, i, o = Date.now()) {
+  const s = a.towerState,
+    r = { ...s.bossGates, [i]: { depth: i, defeated: !0 } },
+    d = s.warp.unlockedCheckpoints.includes(i)
+      ? s.warp.unlockedCheckpoints
+      : [...s.warp.unlockedCheckpoints, i].sort((g, y) => g - y),
+    h = s.record.bossDefeatLog.some((g) => g.depth === i),
+    v = {
+      ...s.record,
+      highestBossDefeated: Math.max(s.record.highestBossDefeated, i),
+      bossDefeatLog: h ? s.record.bossDefeatLog : [...s.record.bossDefeatLog, { depth: i, at: o }],
     };
   return {
     ...a,
-    towerState: { ...o, bossGates: s, warp: { ...o.warp, unlockedCheckpoints: r }, record: h },
+    towerState: { ...s, bossGates: r, warp: { ...s.warp, unlockedCheckpoints: d }, record: v },
   };
 }
 function _y(a, i) {
@@ -19658,7 +19657,7 @@ const M3 = () => {
                     ],
                   }),
         }),
-        m.jsxs('footer', { className: Ke.foot, children: ['v', '0.1.22'] }),
+        m.jsxs('footer', { className: Ke.foot, children: ['v', '0.1.23'] }),
       ],
     });
   },
