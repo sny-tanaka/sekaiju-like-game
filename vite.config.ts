@@ -95,5 +95,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
     css: true,
+    // .claude/ 配下（Claude Code のエージェント worktree 作業領域）は走査しない
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'],
   },
 });
