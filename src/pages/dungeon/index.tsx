@@ -245,27 +245,13 @@ export const Page = () => {
         <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
         <button
           type="button"
-          className={styles.return}
+          className={styles.menuBtn}
           onClick={() => {
             setMenuCharId(null);
             setMenuOpen(true);
           }}
         >
-          メニュー
-        </button>
-        <button
-          type="button"
-          className={styles.return}
-          onClick={() => setItemOpen(true)}
-        >
-          道具
-        </button>
-        <button
-          type="button"
-          className={styles.return}
-          onClick={() => void handleReturn()}
-        >
-          帰還
+          ☰ メニュー
         </button>
       </header>
 
@@ -519,6 +505,26 @@ export const Page = () => {
                   <>
                     <div className={styles.itemTitle}>メニュー</div>
                     <p className={styles.menuGold}>所持金 {save.guild.gold} G</p>
+                    <div className={styles.menuActions}>
+                      <button
+                        type="button"
+                        className={styles.menuAction}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setItemOpen(true);
+                        }}
+                      >
+                        🎒 どうぐ・食料
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.menuAction}
+                        onClick={() => void handleReturn()}
+                      >
+                        🏠 拠点へ帰還
+                      </button>
+                    </div>
+                    <p className={styles.menuSectionLabel}>パーティ（タップで詳細・スキル振り）</p>
                     {dive.party.map((p) => {
                       const c = save.guild.members.find((m) => m.id === p.charId);
                       if (!c) return null;

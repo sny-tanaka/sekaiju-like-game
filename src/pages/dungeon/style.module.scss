@@ -99,11 +99,48 @@
   cursor: pointer;
 }
 
+// ヘッダーのメニューボタン（道具・帰還はメニュー内に集約）
+.menuBtn {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: var.$white;
+  color: var.$text-dark;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
 // メニュー（所持金・パーティ・ステータス・スキル）
 .menuGold {
   margin: 0 0 10px;
   font-weight: 700;
   color: #5f7a3a;
+}
+
+.menuActions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.menuAction {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: #f3f7ee;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.menuSectionLabel {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #6b7a58;
 }
 
 .menuMember {
