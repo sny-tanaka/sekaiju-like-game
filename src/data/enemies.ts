@@ -109,8 +109,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_boss_gatekeeper: {
     id: 'enemy_boss_gatekeeper',
     name: '門番のゴーレム',
-    // HP 固定 5200（§5.1）
-    baseStats: { hp: 5200, tp: 0, str: 18, vit: 16, agi: 6, int: 4, mnd: 10, luc: 6 },
+    // HP 固定 9000（§17 忠実シミュ確定値: seed=93 で turns=21, minHp=0.12）
+    baseStats: { hp: 9000, tp: 0, str: 18, vit: 16, agi: 6, int: 4, mnd: 10, luc: 6 },
     refDepth: 10,
     tierBand: 0,
     // exp ×6
@@ -256,7 +256,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     baseStats: { hp: 440, tp: 0, str: 14, vit: 11, agi: 9, int: 3, mnd: 4, luc: 5 },
     refDepth: 13,
     tierBand: 1,
-    exp: 128,
+    // §13.3 手順5: exp 128→100（約22%減）でAC5残り3-5Lv（残り4Lv）を達成
+    exp: 100,
     gold: 42,
     attackElement: 'bash',
     drops: [{ itemId: 'item_mat_t1_coarse_hide', rate: 0.45 }],
@@ -369,8 +370,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t1_boulder_ogre: {
     id: 'enemy_t1_boulder_ogre',
     name: 'おおいわのオーガ',
-    // FOE: HP ×3.0, str ×1.2 (floor(28*1.2)=33)
-    baseStats: { hp: 450, tp: 0, str: 33, vit: 22, agi: 7, int: 3, mnd: 8, luc: 5 },
+    // FOE: HP §17 忠実シミュ確定値 4200（6-10t目標）, str ×1.2 (floor(28*1.2)=33)
+    baseStats: { hp: 4200, tp: 0, str: 33, vit: 22, agi: 7, int: 3, mnd: 8, luc: 5 },
     refDepth: 16,
     tierBand: 1,
     exp: 800,
@@ -414,7 +415,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t1_boss_mountain_lord: {
     id: 'enemy_t1_boss_mountain_lord',
     name: '山嶺の大猿王',
-    // HP 固定 7000（§5.1）
+    // HP 固定 7000（§17 忠実シミュ確定値: seed=93 で turns=18, minHp=0.065）
     baseStats: { hp: 7000, tp: 0, str: 40, vit: 34, agi: 12, int: 8, mnd: 18, luc: 8 },
     refDepth: 20,
     tierBand: 1,
@@ -609,8 +610,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t2_boss_frost_monarch: {
     id: 'enemy_t2_boss_frost_monarch',
     name: '氷晶の女王',
-    // HP 固定 8400（§5.1）
-    baseStats: { hp: 8400, tp: 0, str: 64, vit: 54, agi: 18, int: 16, mnd: 22, luc: 12 },
+    // HP 固定 18000（§17 忠実シミュ確定値: seed=93 で turns=20, minHp=0.096）
+    baseStats: { hp: 18000, tp: 0, str: 64, vit: 54, agi: 18, int: 16, mnd: 22, luc: 12 },
     refDepth: 30,
     tierBand: 2,
     // exp ×6
@@ -804,8 +805,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t3_boss_tempest_sovereign: {
     id: 'enemy_t3_boss_tempest_sovereign',
     name: '雷霆の覇王',
-    // HP 固定 8700（§5.1）
-    baseStats: { hp: 8700, tp: 0, str: 102, vit: 86, agi: 34, int: 22, mnd: 26, luc: 14 },
+    // HP 固定 13000（§17 忠実シミュ確定値: seed=93 で turns=21, minHp=0.035）
+    baseStats: { hp: 13000, tp: 0, str: 102, vit: 86, agi: 34, int: 22, mnd: 26, luc: 14 },
     refDepth: 40,
     tierBand: 3,
     // exp ×6
@@ -1023,8 +1024,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t4_boss_blight_sovereign: {
     id: 'enemy_t4_boss_blight_sovereign',
     name: '瘴気を統べる腐王',
-    // HP 固定 8800（§5.1）
-    baseStats: { hp: 8800, tp: 0, str: 142, vit: 122, agi: 16, int: 30, mnd: 64, luc: 26 },
+    // HP 固定 13500（§17 忠実シミュ確定値: seed=93 で turns=21, minHp=0.068）
+    baseStats: { hp: 13500, tp: 0, str: 142, vit: 122, agi: 16, int: 30, mnd: 64, luc: 26 },
     refDepth: 50,
     tierBand: 4,
     // exp ×6
