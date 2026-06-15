@@ -3,6 +3,12 @@ import type { MouseEvent } from 'react';
 
 import styles from './style.module.scss';
 
+import {
+  stairsDownImg,
+  stairsIconDrawable,
+  stairsUpImg,
+  useStairsIconsReady,
+} from '@/components/common/stairsIcons';
 import { mapIconSymbol } from '@/data/mapIcons';
 import type { Dir, FloorMaster, PlacedIcon } from '@/domain/types';
 
@@ -30,8 +36,6 @@ const COLORS = {
   wall: '#4a5a3a', // 壁線
   grid: '#e3ebd6', // 床のうっすらした境界
   player: '#2196f3',
-  stairsUp: '#e8923a', // 次階へ（上り）
-  stairsDown: '#7aa2d6', // 前階/拠点へ（下り）
   foe: '#b0533a', // 徘徊敵（未感知）
   foeAlert: '#d32f2f', // 徘徊敵（追跡中）
   gather: '#4a9d52', // 採集ポイント
@@ -64,6 +68,7 @@ export const DungeonMap = ({
   onCellClick,
 }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const iconsReady = useStairsIconsReady(); // 階段アイコンのロード完了で再描画する
   const cell = Math.max(10, Math.min(maxCell, Math.floor(360 / floor.width)));
   const w = floor.width * cell;
   const h = floor.height * cell;
@@ -119,19 +124,16 @@ export const DungeonMap = ({
         if (c.walls.W) line(px, py, px, py + cell);
         if (c.walls.E) line(px + cell, py, px + cell, py + cell);
 
-        // 階段マーク: 階段状のアイコンで描く（issue #20）。上り=橙・下り=青。
+        // 階段マーク: 専用アイコン画像で描く（上り/下り）。
         const ev = c.event;
         if (ev?.kind === 'stairsUp' || ev?.kind === 'stairsDown') {
-          const up = ev.kind === 'stairsUp';
-          const n = 3;
-          const s = cell * 0.62;
-          const ox = px + (cell - s) / 2;
-          const oy = py + (cell - s) / 2;
-          const sw = s / n;
-          ctx.fillStyle = up ? COLORS.stairsUp : COLORS.stairsDown;
-          for (let i = 0; i < n; i++) {
-            const stepH = (s / n) * (up ? i + 1 : n - i);
-            ctx.fillRect(ox + i * sw, oy + s - stepH, sw - 1, stepH);
+          const img = ev.kind === 'stairsUp' ? stairsUpImg : stairsDownImg;
+          if (stairsIconDrawable(img)) {
+            const s = cell * 0.9;
+            const ox = px + (cell - s) / 2;
+            const oy = py + (cell - s) / 2;
+            ctx.imageSmoothingEnabled = false; // ピクセルアートをくっきり描く
+            ctx.drawImage(img, ox, oy, s, s);
           }
         } else if (ev?.kind === 'gather') {
           // 採集ポイント: 種類別の絵文字アイコン（issue #20）。枯渇済みは薄く表示。
@@ -191,7 +193,7 @@ export const DungeonMap = ({
     ctx.lineTo(cx + Math.cos(a - 2.5) * r, cy + Math.sin(a - 2.5) * r);
     ctx.closePath();
     ctx.fill();
-  }, [floor, explored, pos, dir, icons, foes, depletedGathers, cell, w, h]);
+  }, [floor, explored, pos, dir, icons, foes, depletedGathers, cell, w, h, iconsReady]);
 
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
     if (!onCellClick) return;

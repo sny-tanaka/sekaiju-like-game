@@ -2,6 +2,12 @@ import { useEffect, useRef } from 'react';
 
 import styles from './style.module.scss';
 
+import {
+  stairsDownImg,
+  stairsIconDrawable,
+  stairsUpImg,
+  useStairsIconsReady,
+} from '@/components/common/stairsIcons';
 import { castView } from '@/domain/firstPersonView';
 import type { Dir, FloorMaster } from '@/domain/types';
 
@@ -55,6 +61,7 @@ export const FirstPersonView = ({
   height = 200,
 }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const iconsReady = useStairsIconsReady(); // 階段アイコンのロード完了で再描画する
 
   useEffect(() => {
     // テーマ未指定なら既定色（樹海）。
@@ -163,20 +170,17 @@ export const FirstPersonView = ({
       ctx.fillStyle = darken(k);
       ctx.fillRect(far.l, far.t, far.r - far.l, far.b - far.t);
 
-      // セル上のオブジェクト（階段）を正面に表示
+      // セル上のオブジェクト（階段）を正面に表示。専用アイコン画像（上り/下り）。
       const ev = slice.event;
       if (ev?.kind === 'stairsUp' || ev?.kind === 'stairsDown') {
-        // 階段状アイコン（issue #20）。上り=橙・下り=青。
-        const up = ev.kind === 'stairsUp';
-        const size = Math.max(18, (near.b - near.t) * 0.4);
-        const n = 4;
-        const sw = size / n;
-        const ox = cx - size / 2;
-        const oy = (near.b + far.b) / 2 + size / 2;
-        ctx.fillStyle = up ? '#e8923a' : '#7aa2d6';
-        for (let i = 0; i < n; i++) {
-          const stepH = sw * (up ? i + 1 : n - i);
-          ctx.fillRect(ox + i * sw, oy - stepH, sw - 1, stepH);
+        const img = ev.kind === 'stairsUp' ? stairsUpImg : stairsDownImg;
+        if (stairsIconDrawable(img)) {
+          // この奥行きの床帯（far.b〜near.b）の高さに合わせ、床の上に収まるよう中央へ置く。
+          const size = Math.max(20, (near.b - far.b) * 0.95);
+          const ox = cx - size / 2;
+          const oy = (near.b + far.b) / 2 - size / 2;
+          ctx.imageSmoothingEnabled = false; // ピクセルアートをくっきり描く
+          ctx.drawImage(img, ox, oy, size, size);
         }
       }
 
@@ -197,7 +201,7 @@ export const FirstPersonView = ({
         ctx.fillText('!', mx, my + 1);
       }
     }
-  }, [floor, pos, dir, foes, theme, maxDepth, width, height]);
+  }, [floor, pos, dir, foes, theme, maxDepth, width, height, iconsReady]);
 
   return (
     <canvas
