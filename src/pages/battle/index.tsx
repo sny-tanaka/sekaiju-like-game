@@ -80,7 +80,7 @@ const AILMENT_LABEL: Record<string, string> = {
 function effectLabel(e: SkillEffectDef, lv: number): string {
   switch (e.kind) {
     case 'damage':
-      return `${e.statBase === 'str' ? '物理' : '魔法'}威力${Math.round(e.power(lv) * 100) / 100}${e.hits && e.hits > 1 ? `×${e.hits}` : ''}`;
+      return `${e.statBase === 'str' ? '物理' : '魔法'}威力${Math.round(e.power(lv) * 100)}%${e.hits && e.hits > 1 ? `×${e.hits}` : ''}`;
     case 'heal':
       return `HP回復${e.amount(lv)}`;
     case 'restoreTp':

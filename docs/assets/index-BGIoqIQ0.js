@@ -22788,7 +22788,7 @@ const Hx = {
 function Yx(l, i) {
   switch (l.kind) {
     case 'damage':
-      return `${l.statBase === 'str' ? '物理' : '魔法'}威力${Math.round(l.power(i) * 100) / 100}${l.hits && l.hits > 1 ? `×${l.hits}` : ''}`;
+      return `${l.statBase === 'str' ? '物理' : '魔法'}威力${Math.round(l.power(i) * 100)}%${l.hits && l.hits > 1 ? `×${l.hits}` : ''}`;
     case 'heal':
       return `HP回復${l.amount(i)}`;
     case 'restoreTp':
@@ -26897,7 +26897,7 @@ const vw = () => {
                     ],
                   }),
         }),
-        _.jsxs('footer', { className: Ze.foot, children: ['v', '0.1.31'] }),
+        _.jsxs('footer', { className: Ze.foot, children: ['v', '0.1.32'] }),
       ],
     });
   },
