@@ -1,4 +1,4 @@
-import { canMove, step, turnBack, turnLeft, turnRight } from '@/domain/movement';
+import { canMove, pathTo, step, turnBack, turnLeft, turnRight } from '@/domain/movement';
 import type { Cell, FloorMaster } from '@/domain/types';
 
 // 2x1 の小さな床。左(0,0)と右(1,0)が東西で繋がっている。
@@ -45,5 +45,37 @@ describe('movement', () => {
     const f = tinyFloor();
     f.cells[0][1].passable = false;
     expect(canMove(f, 0, 0, 'E')).toBe(false);
+  });
+
+  // 3x1 の廊下（(0,0)-(1,0)-(2,0) が東西で連結）でタップ自動移動の経路を検証。
+  function corridor(): FloorMaster {
+    const cell = (over: Partial<Cell['walls']>): Cell => ({
+      walls: { N: true, E: true, S: true, W: true, ...over },
+      floorType: 'normal',
+      passable: true,
+    });
+    return {
+      depth: 1,
+      width: 3,
+      height: 1,
+      cells: [[cell({ E: false }), cell({ W: false, E: false }), cell({ W: false })]],
+      encounterTable: 't',
+      foeSpawns: [],
+      gatheringPoints: [],
+      bgmId: 'b',
+    };
+  }
+
+  test('pathTo は壁を考慮した最短の向き列を返す', () => {
+    const f = corridor();
+    expect(pathTo(f, { x: 0, y: 0 }, { x: 0, y: 0 })).toEqual([]); // 同一セル
+    expect(pathTo(f, { x: 0, y: 0 }, { x: 2, y: 0 })).toEqual(['E', 'E']);
+    expect(pathTo(f, { x: 2, y: 0 }, { x: 0, y: 0 })).toEqual(['W', 'W']);
+  });
+
+  test('pathTo は到達不能なら null', () => {
+    const f = corridor();
+    f.cells[0][1].passable = false; // 中央を塞ぐと右端へ行けない
+    expect(pathTo(f, { x: 0, y: 0 }, { x: 2, y: 0 })).toBeNull();
   });
 });

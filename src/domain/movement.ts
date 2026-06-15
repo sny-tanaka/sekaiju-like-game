@@ -49,3 +49,44 @@ export function step(
 export function openDirs(floor: FloorMaster, x: number, y: number): Dir[] {
   return (['N', 'E', 'S', 'W'] as Dir[]).filter((d) => !floor.cells[y][x].walls[d]);
 }
+
+/**
+ * from から to への最短経路を「向きの並び」で返す（壁を考慮した BFS。[02 §3]・issue #20）。
+ * 同一セルなら空配列、到達不能なら null。タップ移動の自動歩行に使う。
+ */
+export function pathTo(
+  floor: FloorMaster,
+  from: { x: number; y: number },
+  to: { x: number; y: number }
+): Dir[] | null {
+  if (from.x === to.x && from.y === to.y) return [];
+  if (!inBounds(to.x, to.y, floor) || !floor.cells[to.y][to.x].passable) return null;
+  const key = (x: number, y: number) => `${x},${y}`;
+  const prev = new Map<string, { x: number; y: number; dir: Dir } | null>();
+  prev.set(key(from.x, from.y), null);
+  const queue: { x: number; y: number }[] = [{ ...from }];
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    for (const d of ['N', 'E', 'S', 'W'] as Dir[]) {
+      if (!canMove(floor, cur.x, cur.y, d)) continue;
+      const nx = cur.x + DELTA[d].dx;
+      const ny = cur.y + DELTA[d].dy;
+      const k = key(nx, ny);
+      if (prev.has(k)) continue;
+      prev.set(k, { x: cur.x, y: cur.y, dir: d });
+      if (nx === to.x && ny === to.y) {
+        const dirs: Dir[] = [];
+        let ck = k;
+        for (;;) {
+          const p = prev.get(ck);
+          if (!p) break;
+          dirs.unshift(p.dir);
+          ck = key(p.x, p.y);
+        }
+        return dirs;
+      }
+      queue.push({ x: nx, y: ny });
+    }
+  }
+  return null;
+}

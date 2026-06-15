@@ -166,18 +166,18 @@ export const FirstPersonView = ({
       // セル上のオブジェクト（階段）を正面に表示
       const ev = slice.event;
       if (ev?.kind === 'stairsUp' || ev?.kind === 'stairsDown') {
-        const mx = cx;
-        const my = (near.b + far.b) / 2 - (near.b - far.b) * 0.15;
-        const size = Math.max(12, (near.b - near.t) * 0.18);
-        ctx.fillStyle = ev.kind === 'stairsUp' ? '#e8923a' : '#7aa2d6';
-        ctx.beginPath();
-        ctx.arc(mx, my, size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.floor(size * 1.2)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(ev.kind === 'stairsUp' ? '▲' : '▼', mx, my + 1);
+        // 階段状アイコン（issue #20）。上り=橙・下り=青。
+        const up = ev.kind === 'stairsUp';
+        const size = Math.max(18, (near.b - near.t) * 0.4);
+        const n = 4;
+        const sw = size / n;
+        const ox = cx - size / 2;
+        const oy = (near.b + far.b) / 2 + size / 2;
+        ctx.fillStyle = up ? '#e8923a' : '#7aa2d6';
+        for (let i = 0; i < n; i++) {
+          const stepH = sw * (up ? i + 1 : n - i);
+          ctx.fillRect(ox + i * sw, oy - stepH, sw - 1, stepH);
+        }
       }
 
       // 正面の直線上にいる FOE を重ねて表示（現在地マス k=0 は除く）。

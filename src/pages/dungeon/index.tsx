@@ -6,11 +6,14 @@ import styles from './style.module.scss';
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
+import { SkillTree } from '@/components/common/SkillTree/SkillTree';
 import { bandThemeFor } from '@/data/bandTheme';
+import { CLASSES } from '@/data/classes';
 import { GATHER_TYPES } from '@/data/gather';
 import { ITEMS } from '@/data/items';
-import { MAP_ICONS } from '@/data/mapIcons';
+import { RACES } from '@/data/races';
 import { RECIPES } from '@/data/recipes';
+import { TITLES } from '@/data/titles';
 import { canCook, cook, isAtCookingSpot, unlockedRecipes } from '@/domain/cooking';
 import {
   canAscend,
@@ -25,15 +28,14 @@ import { gaugeLevel } from '@/domain/encounter';
 import { canGather, gatherHere, gatheringPointHere, isGatherDepleted } from '@/domain/gather';
 import { foodCount } from '@/domain/inventory';
 import { applyFieldItem } from '@/domain/itemUse';
-import { DELTA, turnBack, turnLeft, turnRight } from '@/domain/movement';
-import { eraseIcon, placeIcon } from '@/domain/playerMap';
+import { pathTo, turnBack, turnLeft, turnRight } from '@/domain/movement';
 import { createRng } from '@/domain/rng';
+import { availableSP, learnSkill } from '@/domain/skillTree';
 import { computeBaseStats } from '@/domain/stats';
 import type { Dir, Rng } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 
-// マップ編集の選択ツール: null=移動モード / 'erase'=消しゴム / それ以外=アイコンID
-type Tool = string | null;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // 探索（ダンジョン）。自動生成1階のグリッド移動＋自動マップ＋エンカウントゲージ。
 // 階段で上下移動、帰還で拠点へ。オートセーブは階移動・帰還時（[05 §4]）。
@@ -42,12 +44,16 @@ export const Page = () => {
   const { save, applySave, applyAndPersist } = useGameState();
   // 移動中エンカウント抽選用の ephemeral 乱数（ダイブ内で1本。再開時は作り直し）
   const rngRef = useRef<Rng | null>(null);
-  // マップ編集ツール（null=移動）。アイコン配置/消去はオートセーブ。
-  const [tool, setTool] = useState<Tool>(null);
+  // タップ自動移動中フラグ（多重起動防止）
+  const walkingRef = useRef(false);
   // 道具メニューの開閉
   const [itemOpen, setItemOpen] = useState(false);
   // 調理メニューの開閉
   const [cookOpen, setCookOpen] = useState(false);
+  // メニュー（ステータス/スキル/所持金）の開閉と選択中キャラ
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuCharId, setMenuCharId] = useState<string | null>(null);
+  const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
   // 採集/調理の一時メッセージ
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -168,30 +174,47 @@ export const Page = () => {
     [save, applyAndPersist, navigate]
   );
 
+  // タップしたマスまで自動で歩く（[02 §3]・issue #20）。1歩ずつ解決し、エンカウント時は中断して戦闘へ。
+  const autoWalk = useCallback(
+    async (path: Dir[]) => {
+      if (walkingRef.current || path.length === 0) return;
+      walkingRef.current = true;
+      setNotice(null);
+      try {
+        for (const dir of path) {
+          if (!rngRef.current) continue;
+          let triggered = false;
+          let moved = false;
+          await applyAndPersist((prev) => {
+            if (!prev.diveState) return prev;
+            const r = moveStep(prev, dir, rngRef.current!);
+            triggered = r.triggered;
+            moved = r.moved;
+            return r.save;
+          });
+          if (triggered) {
+            navigate('/battle');
+            return;
+          }
+          if (!moved) return; // 進めなくなったら中断（経路上に想定外の障害）
+          await sleep(110); // 1歩ずつ見えるように
+        }
+      } finally {
+        walkingRef.current = false;
+      }
+    },
+    [applyAndPersist, navigate]
+  );
+
   const handleCellClick = useCallback(
     (x: number, y: number) => {
-      if (!dive) return;
-      const depth = dive.depth;
-      // マップ編集モード: 探索済みセルにアイコンを配置/消去（オートセーブ）
-      if (tool !== null) {
-        const explored = (save?.exploredCells[depth] ?? []).includes(`${x},${y}`);
-        if (!explored) return; // 未踏破セルには配置・消去しない（描画もされないため）
-        if (tool === 'erase') {
-          void applyAndPersist((s) => eraseIcon(s, depth, x, y));
-        } else {
-          void applyAndPersist((s) => placeIcon(s, depth, x, y, tool));
-        }
-        return;
-      }
-      // 移動モード: 隣接1マスのみ移動
-      const dx = x - dive.pos.x;
-      const dy = y - dive.pos.y;
-      const dir = (['N', 'E', 'S', 'W'] as Dir[]).find(
-        (d) => DELTA[d].dx === dx && DELTA[d].dy === dy
-      );
-      if (dir) doMove(dir);
+      if (!dive || !floor || walkingRef.current) return;
+      if (!rngRef.current) rngRef.current = createRng((save!.masterSeed ^ 0x9e3779b9) >>> 0);
+      // タップ先までの最短経路を求めて自動移動（隣接1マスも経路長1として扱う）。
+      const path = pathTo(floor, dive.pos, { x, y });
+      if (path && path.length > 0) void autoWalk(path);
     },
-    [dive, doMove, tool, save, applyAndPersist]
+    [dive, floor, save, autoWalk]
   );
 
   if (!save) {
@@ -222,17 +245,13 @@ export const Page = () => {
         <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
         <button
           type="button"
-          className={styles.return}
-          onClick={() => setItemOpen(true)}
+          className={styles.menuBtn}
+          onClick={() => {
+            setMenuCharId(null);
+            setMenuOpen(true);
+          }}
         >
-          道具
-        </button>
-        <button
-          type="button"
-          className={styles.return}
-          onClick={() => void handleReturn()}
-        >
-          帰還
+          ☰ メニュー
         </button>
       </header>
 
@@ -244,6 +263,40 @@ export const Page = () => {
           foes={foes}
           theme={bandThemeFor(dive.depth)}
         />
+        {/* 操作ボタンを一人称視点に重ねる（issue #20）。 */}
+        <div className={styles.fpvControls}>
+          <button
+            type="button"
+            className={styles.fpvTurn}
+            onClick={() => doTurn(turnLeft(dive.dir))}
+            aria-label="左を向く"
+          >
+            ↰
+          </button>
+          <button
+            type="button"
+            className={styles.fpvForward}
+            onClick={() => doMove(dive.dir)}
+          >
+            ▲ 前進
+          </button>
+          <button
+            type="button"
+            className={styles.fpvTurn}
+            onClick={() => doTurn(turnRight(dive.dir))}
+            aria-label="右を向く"
+          >
+            ↱
+          </button>
+        </div>
+        <button
+          type="button"
+          className={styles.fpvBack}
+          onClick={() => doTurn(turnBack(dive.dir))}
+          aria-label="振り向く"
+        >
+          ↻
+        </button>
       </div>
 
       <div className={styles.mapWrap}>
@@ -252,49 +305,12 @@ export const Page = () => {
           explored={save.exploredCells[dive.depth] ?? []}
           pos={dive.pos}
           dir={dive.dir}
-          icons={save.playerMaps[dive.depth]?.icons ?? []}
           foes={foes}
           depletedGathers={depletedGathers}
           onCellClick={handleCellClick}
         />
       </div>
-
-      <div className={styles.palette}>
-        <button
-          type="button"
-          className={`${styles.tool} ${tool === null ? styles.toolActive : ''}`}
-          onClick={() => setTool(null)}
-          aria-label="移動モード"
-        >
-          🚶
-        </button>
-        {MAP_ICONS.map((ic) => (
-          <button
-            key={ic.id}
-            type="button"
-            className={`${styles.tool} ${tool === ic.id ? styles.toolActive : ''}`}
-            onClick={() => setTool(ic.id)}
-            aria-label={ic.label}
-          >
-            {ic.symbol}
-          </button>
-        ))}
-        <button
-          type="button"
-          className={`${styles.tool} ${tool === 'erase' ? styles.toolActive : ''}`}
-          onClick={() => setTool('erase')}
-          aria-label="消しゴム"
-        >
-          🧽
-        </button>
-      </div>
-      <p className={styles.paletteHint}>
-        {tool === null
-          ? '隣接マスをタップで移動。アイコンを選ぶとマップに書き込めます。'
-          : tool === 'erase'
-            ? 'マップ上のマスをタップでアイコンを消去。'
-            : 'マップ上の探索済みマスをタップでアイコンを配置（再タップで消去）。'}
-      </p>
+      <p className={styles.paletteHint}>マップのマスをタップすると、そこまで自動で移動します。</p>
 
       {stairKind && (
         <button
@@ -336,42 +352,6 @@ export const Page = () => {
       )}
 
       {notice && <p className={styles.notice}>{notice}</p>}
-
-      <div className={styles.controls}>
-        <div className={styles.row}>
-          <button
-            type="button"
-            className={styles.turn}
-            onClick={() => doTurn(turnLeft(dive.dir))}
-            aria-label="左を向く"
-          >
-            ↰
-          </button>
-          <button
-            type="button"
-            className={styles.forward}
-            onClick={() => doMove(dive.dir)}
-          >
-            前進
-          </button>
-          <button
-            type="button"
-            className={styles.turn}
-            onClick={() => doTurn(turnRight(dive.dir))}
-            aria-label="右を向く"
-          >
-            ↱
-          </button>
-        </div>
-        <button
-          type="button"
-          className={styles.back}
-          onClick={() => doTurn(turnBack(dive.dir))}
-          aria-label="振り向く"
-        >
-          ↻ 振り向く
-        </button>
-      </div>
 
       {itemOpen ? (
         <div
@@ -502,6 +482,162 @@ export const Page = () => {
             >
               とじる
             </button>
+          </div>
+        </div>
+      ) : null}
+
+      {menuOpen ? (
+        <div
+          className={styles.itemOverlay}
+          onClick={() => setMenuOpen(false)}
+        >
+          <div
+            className={styles.itemPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const selected = menuCharId
+                ? save.guild.members.find((m) => m.id === menuCharId)
+                : null;
+              if (!selected) {
+                // メニュー: 所持金＋パーティ一覧
+                return (
+                  <>
+                    <div className={styles.itemTitle}>メニュー</div>
+                    <p className={styles.menuGold}>所持金 {save.guild.gold} G</p>
+                    <div className={styles.menuActions}>
+                      <button
+                        type="button"
+                        className={styles.menuAction}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setItemOpen(true);
+                        }}
+                      >
+                        🎒 どうぐ・食料
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.menuAction}
+                        onClick={() => void handleReturn()}
+                      >
+                        🏠 拠点へ帰還
+                      </button>
+                    </div>
+                    <p className={styles.menuSectionLabel}>パーティ（タップで詳細・スキル振り）</p>
+                    {dive.party.map((p) => {
+                      const c = save.guild.members.find((m) => m.id === p.charId);
+                      if (!c) return null;
+                      const st = computeBaseStats(c);
+                      const sp = availableSP(c);
+                      return (
+                        <button
+                          type="button"
+                          key={p.charId}
+                          className={styles.menuMember}
+                          onClick={() => {
+                            setMenuCharId(p.charId);
+                            setSkillTab('class');
+                          }}
+                        >
+                          <span className={styles.menuMemberName}>
+                            {c.name}
+                            <span className={styles.menuMemberJob}>
+                              {CLASSES[c.classId]?.name} Lv{c.level}
+                            </span>
+                          </span>
+                          <span className={styles.menuMemberStat}>
+                            HP {p.hp}/{st.hp}・TP {p.tp}/{st.tp}
+                            {sp > 0 ? <span className={styles.menuSp}>SP {sp}</span> : null}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      className={styles.itemClose}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      とじる
+                    </button>
+                  </>
+                );
+              }
+              // キャラ詳細: ステータス＋スキル振り
+              const st = computeBaseStats(selected);
+              const nodes =
+                skillTab === 'class'
+                  ? (CLASSES[selected.classId]?.skillTree.skills ?? [])
+                  : skillTab === 'race'
+                    ? (RACES[selected.raceId]?.raceSkillTree.skills ?? [])
+                    : selected.titleId
+                      ? (TITLES[selected.titleId]?.skillTree.skills ?? [])
+                      : [];
+              return (
+                <>
+                  <div className={styles.itemTitle}>
+                    {selected.name}（{CLASSES[selected.classId]?.name} Lv{selected.level}）
+                    <span className={styles.menuSp}>SP {availableSP(selected)}</span>
+                  </div>
+                  <div className={styles.menuStats}>
+                    {(
+                      [
+                        ['HP', st.hp],
+                        ['TP', st.tp],
+                        ['STR', st.str],
+                        ['VIT', st.vit],
+                        ['AGI', st.agi],
+                        ['INT', st.int],
+                        ['MND', st.mnd],
+                        ['LUC', st.luc],
+                      ] as const
+                    ).map(([k, v]) => (
+                      <span
+                        key={k}
+                        className={styles.menuStat}
+                      >
+                        {k} {v}
+                      </span>
+                    ))}
+                  </div>
+                  <div className={styles.skillTabs}>
+                    {(['class', 'race', 'title'] as const).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`${styles.skillTab} ${skillTab === t ? styles.skillTabOn : ''}`}
+                        onClick={() => setSkillTab(t)}
+                        disabled={t === 'title' && !selected.titleId}
+                      >
+                        {t === 'class' ? '職業' : t === 'race' ? '種族' : '称号'}
+                      </button>
+                    ))}
+                  </div>
+                  <SkillTree
+                    nodes={nodes}
+                    char={selected}
+                    onLearn={(skillId) =>
+                      void applyAndPersist((s) => ({
+                        ...s,
+                        guild: {
+                          ...s.guild,
+                          members: s.guild.members.map((m) =>
+                            m.id === selected.id ? learnSkill(m, skillId) : m
+                          ),
+                        },
+                      }))
+                    }
+                  />
+                  <button
+                    type="button"
+                    className={styles.itemClose}
+                    onClick={() => setMenuCharId(null)}
+                  >
+                    ← もどる
+                  </button>
+                </>
+              );
+            })()}
           </div>
         </div>
       ) : null}

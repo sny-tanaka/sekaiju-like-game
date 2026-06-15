@@ -45,9 +45,174 @@
 }
 
 .fpvWrap {
+  position: relative;
   width: 100%;
   max-width: 360px;
   margin-bottom: 12px;
+}
+
+// 一人称視点に重ねる操作ボタン（issue #20）
+.fpvControls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 8px;
+}
+
+.fpvTurn,
+.fpvForward,
+.fpvBack {
+  min-height: 48px;
+  border: none;
+  border-radius: 10px;
+  background-color: rgba(20, 28, 14, 0.62);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fpvTurn {
+  width: 56px;
+}
+
+.fpvForward {
+  flex: 1;
+  max-width: 160px;
+}
+
+.fpvBack {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 44px;
+  min-height: 40px;
+  border: none;
+  border-radius: 10px;
+  background-color: rgba(20, 28, 14, 0.62);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+// ヘッダーのメニューボタン（道具・帰還はメニュー内に集約）
+.menuBtn {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: var.$white;
+  color: var.$text-dark;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+// メニュー（所持金・パーティ・ステータス・スキル）
+.menuGold {
+  margin: 0 0 10px;
+  font-weight: 700;
+  color: #5f7a3a;
+}
+
+.menuActions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.menuAction {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: #f3f7ee;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.menuSectionLabel {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #6b7a58;
+}
+
+.menuMember {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border: 1px solid var.$gray;
+  border-radius: 10px;
+  background-color: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menuMemberName {
+  font-weight: 700;
+}
+
+.menuMemberJob {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #6b7a58;
+  font-weight: 600;
+}
+
+.menuMemberStat {
+  font-size: 12px;
+  color: #4c5a3c;
+}
+
+.menuSp {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a90d9;
+}
+
+.menuStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 10px;
+}
+
+.menuStat {
+  font-size: 13px;
+  color: #33402a;
+}
+
+.skillTabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.skillTab {
+  flex: 1;
+  min-height: 36px;
+  border: 1px solid var.$gray;
+  border-radius: 8px;
+  background-color: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skillTabOn {
+  background-color: #6fae46;
+  border-color: #6fae46;
+  color: #fff;
 }
 
 .mapWrap {
