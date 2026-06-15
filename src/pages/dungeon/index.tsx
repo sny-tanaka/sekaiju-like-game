@@ -6,10 +6,15 @@ import styles from './style.module.scss';
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
+import { GATHER_TYPES } from '@/data/gather';
 import { ITEMS } from '@/data/items';
 import { MAP_ICONS } from '@/data/mapIcons';
+import { RECIPES } from '@/data/recipes';
+import { canCook, cook, isAtCookingSpot, unlockedRecipes } from '@/domain/cooking';
 import { goDeeper, goShallower, moveStep, returnToTown, stairsAt, turnTo } from '@/domain/dive';
 import { gaugeLevel } from '@/domain/encounter';
+import { canGather, gatherHere, gatheringPointHere, isGatherDepleted } from '@/domain/gather';
+import { foodCount } from '@/domain/inventory';
 import { applyFieldItem } from '@/domain/itemUse';
 import { DELTA, turnBack, turnLeft, turnRight } from '@/domain/movement';
 import { eraseIcon, placeIcon } from '@/domain/playerMap';
@@ -32,6 +37,10 @@ export const Page = () => {
   const [tool, setTool] = useState<Tool>(null);
   // 道具メニューの開閉
   const [itemOpen, setItemOpen] = useState(false);
+  // 調理メニューの開閉
+  const [cookOpen, setCookOpen] = useState(false);
+  // 採集/調理の一時メッセージ
+  const [notice, setNotice] = useState<string | null>(null);
 
   const dive = save?.diveState ?? null;
   const floor = useMemo(
@@ -49,9 +58,41 @@ export const Page = () => {
     [save, dive]
   );
 
+  // 現在地の採集ポイント / 調理地点（[04 §5-6]）
+  const gatherPoint = useMemo(() => (save ? gatheringPointHere(save) : null), [save]);
+  const atCookingSpot = useMemo(() => (save ? isAtCookingSpot(save) : false), [save]);
+  const depletedGathers = useMemo(
+    () => (save && dive ? (save.towerState.floors[dive.depth]?.depletedGathers ?? []) : []),
+    [save, dive]
+  );
+
+  const handleGather = useCallback(() => {
+    if (!save) return;
+    if (!rngRef.current) rngRef.current = createRng((save.masterSeed ^ 0x9e3779b9) >>> 0);
+    const res = gatherHere(save, rngRef.current);
+    if (!res.ok) {
+      setNotice(res.reason === 'noSkill' ? '対応する採集スキルを持つ仲間がいない' : '採集できない');
+      return;
+    }
+    void applyAndPersist(() => res.save);
+    setNotice(`${res.itemId ? (ITEMS[res.itemId]?.name ?? '素材') : '素材'} を手に入れた`);
+  }, [save, applyAndPersist]);
+
+  const handleCook = useCallback(
+    (recipeId: string) => {
+      if (!save) return;
+      const res = cook(save, recipeId);
+      if (!res.ok) return;
+      void applyAndPersist(() => res.save);
+      setNotice(`${RECIPES[recipeId]?.name ?? '料理'} を作った`);
+    },
+    [save, applyAndPersist]
+  );
+
   const doMove = useCallback(
     (dir: Dir) => {
       if (!save) return;
+      setNotice(null);
       if (!rngRef.current) rngRef.current = createRng((save.masterSeed ^ 0x9e3779b9) >>> 0);
       const result = moveStep(save, dir, rngRef.current);
       // 1歩ごとに永続化する（位置・踏破セル＝オートマップ・エンカウント残歩数を失わない）。
@@ -190,6 +231,7 @@ export const Page = () => {
           dir={dive.dir}
           icons={save.playerMaps[dive.depth]?.icons ?? []}
           foes={foes}
+          depletedGathers={depletedGathers}
           onCellClick={handleCellClick}
         />
       </div>
@@ -245,6 +287,33 @@ export const Page = () => {
         </button>
       )}
 
+      {gatherPoint && (
+        <button
+          type="button"
+          className={styles.action}
+          disabled={isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint)}
+          onClick={handleGather}
+        >
+          {isGatherDepleted(save, gatherPoint)
+            ? `🌿 ${GATHER_TYPES[gatherPoint.type].name}（採集済み）`
+            : !canGather(save, gatherPoint)
+              ? `🌿 ${GATHER_TYPES[gatherPoint.type].name}（スキル要）`
+              : `🌿 ${GATHER_TYPES[gatherPoint.type].name}する`}
+        </button>
+      )}
+
+      {atCookingSpot && (
+        <button
+          type="button"
+          className={styles.action}
+          onClick={() => setCookOpen(true)}
+        >
+          🍳 調理する
+        </button>
+      )}
+
+      {notice && <p className={styles.notice}>{notice}</p>}
+
       <div className={styles.controls}>
         <div className={styles.row}>
           <button
@@ -290,9 +359,10 @@ export const Page = () => {
             className={styles.itemPanel}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={styles.itemTitle}>どうぐ</div>
+            <div className={styles.itemTitle}>どうぐ・食料</div>
             {(() => {
-              const usable = save.guild.storage.filter(
+              // 倉庫アイテム＋食材（foodStorage）を合わせてフィールド使用可能なものを表示。
+              const usable = [...save.guild.storage, ...(save.guild.foodStorage ?? [])].filter(
                 (s) => ITEMS[s.itemId]?.useContext?.includes('field') && s.qty > 0
               );
               if (usable.length === 0) {
@@ -348,6 +418,64 @@ export const Page = () => {
               type="button"
               className={styles.itemClose}
               onClick={() => setItemOpen(false)}
+            >
+              とじる
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {cookOpen ? (
+        <div
+          className={styles.itemOverlay}
+          onClick={() => setCookOpen(false)}
+        >
+          <div
+            className={styles.itemPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.itemTitle}>調理</div>
+            {(() => {
+              const recipes = unlockedRecipes(save);
+              if (recipes.length === 0) {
+                return <p className={styles.itemEmpty}>作れるレシピがありません。</p>;
+              }
+              return recipes.map((r) => {
+                const ok = canCook(save, r.id);
+                const ing = r.ingredients
+                  .map((i) => `${ITEMS[i.itemId]?.name ?? i.itemId}×${i.qty}`)
+                  .join(' ＋ ');
+                return (
+                  <div
+                    key={r.id}
+                    className={styles.itemRow}
+                  >
+                    <div className={styles.itemName}>
+                      {r.name}
+                      <span className={styles.itemDesc}>
+                        {ing} → {ITEMS[r.result.itemId]?.name ?? r.result.itemId}（所持
+                        {r.ingredients
+                          .map((i) => `${ITEMS[i.itemId]?.name ?? ''}${foodCount(save, i.itemId)}`)
+                          .join('・')}
+                        ）
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.itemUse}
+                      disabled={!ok}
+                      onClick={() => handleCook(r.id)}
+                    >
+                      作る
+                    </button>
+                  </div>
+                );
+              });
+            })()}
+            <button
+              type="button"
+              className={styles.itemClose}
+              onClick={() => setCookOpen(false)}
             >
               とじる
             </button>

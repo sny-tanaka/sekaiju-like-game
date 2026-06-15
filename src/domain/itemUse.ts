@@ -1,6 +1,6 @@
-import { ITEMS } from '@/data/items';
+import { ITEMS, isFood } from '@/data/items';
 import { returnToTown } from '@/domain/dive';
-import { removeItem } from '@/domain/inventory';
+import { foodCount, itemCount, removeFood, removeItem } from '@/domain/inventory';
 import { computeBaseStats } from '@/domain/stats';
 import type { SaveData } from '@/domain/types';
 
@@ -25,14 +25,16 @@ export function applyFieldItem(save: SaveData, itemId: string, charId?: string):
   if (!item.useContext?.includes('field')) {
     return { save, ok: false, message: 'ここでは使えない' };
   }
-  if ((save.guild.storage.find((s) => s.itemId === itemId)?.qty ?? 0) <= 0) {
-    return { save, ok: false, message: '所持していない' };
-  }
+  // 食材・料理は foodStorage、それ以外は倉庫から消費する（[04 §6]）。
+  const food = isFood(itemId);
+  const have = food ? foodCount(save, itemId) : itemCount(save, itemId);
+  if (have <= 0) return { save, ok: false, message: '所持していない' };
+  const consume = (s: SaveData) => (food ? removeFood(s, itemId, 1) : removeItem(s, itemId, 1));
 
   // 帰還の糸: 拠点へ戻る
   if (itemId === 'item_return_thread') {
     if (!save.diveState) return { save, ok: false, message: '探索中のみ使える' };
-    const next = returnToTown(removeItem(save, itemId, 1));
+    const next = returnToTown(consume(save));
     return { save: next, ok: true, message: '拠点へ帰還した' };
   }
 
@@ -57,6 +59,6 @@ export function applyFieldItem(save: SaveData, itemId: string, charId?: string):
   if (!applied) return { save, ok: false, message: 'いま使う効果がない' };
 
   const party = save.diveState.party.map((p) => (p.charId === charId ? { ...p, hp, tp } : p));
-  const consumed = removeItem({ ...save, diveState: { ...save.diveState, party } }, itemId, 1);
+  const consumed = consume({ ...save, diveState: { ...save.diveState, party } });
   return { save: consumed, ok: true, message: `${char.name} に ${item.name} を使った` };
 }

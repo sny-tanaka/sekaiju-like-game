@@ -6,6 +6,7 @@ import {
 } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { RACES } from '@/data/races';
+import { defaultUnlockedRecipeIds } from '@/data/recipes';
 import { randomSeed } from '@/domain/rng';
 import type {
   BestiaryState,
@@ -142,6 +143,7 @@ export function createInitialSaveData(guildName: string): SaveData {
       members: [], // 初期 0 人。プレイヤーが作成する
       party: emptyFormation(),
       storage: [],
+      foodStorage: [],
       bestiary: emptyBestiary(),
     },
     towerState: {
@@ -156,6 +158,7 @@ export function createInitialSaveData(guildName: string): SaveData {
     exploredCells: {},
     forgeInventory: { fragments: {}, ingots: { copper: 0, silver: 0, gold: 0 } },
     shopStock: { unlockedTier: 0, unlockedItemIds: [] },
+    unlockedRecipeIds: defaultUnlockedRecipeIds(),
     flags: {},
   };
 }

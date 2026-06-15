@@ -16,6 +16,8 @@ type Props = {
   icons?: PlacedIcon[];
   /** 生存中の FOE（徘徊敵）の現在位置。探索済みセルのみ自動表示する（[02 §6]）。 */
   foes?: { x: number; y: number; alerted: boolean }[];
+  /** 枯渇した採集ポイントの cellKey（"x,y"）。薄く表示する（[04 §5]）。 */
+  depletedGathers?: string[];
   /** 1セルの最大ピクセル（画面幅に合わせて縮む）。 */
   maxCell?: number;
   /** セルタップで隣接1歩移動などに使う。 */
@@ -32,6 +34,9 @@ const COLORS = {
   stairsDown: '#7aa2d6', // 前階/拠点へ（下り）
   foe: '#b0533a', // 徘徊敵（未感知）
   foeAlert: '#d32f2f', // 徘徊敵（追跡中）
+  gather: '#4a9d52', // 採集ポイント
+  gatherDone: '#a9c6ab', // 採集済み（枯渇）
+  cooking: '#e8923a', // 調理地点
 };
 
 // 2D 俯瞰のプレイヤーマップ（02 §4 / MVP の主役ビュー）。
@@ -43,6 +48,7 @@ export const DungeonMap = ({
   dir,
   icons = [],
   foes = [],
+  depletedGathers = [],
   maxCell = 26,
   onCellClick,
 }: Props) => {
@@ -55,6 +61,7 @@ export const DungeonMap = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const exploredSet = new Set(explored);
+    const depletedSet = new Set(depletedGathers);
     const dpr = window.devicePixelRatio || 1;
     canvas.width = w * dpr;
     canvas.height = h * dpr;
@@ -110,6 +117,17 @@ export const DungeonMap = ({
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(ev.kind === 'stairsUp' ? '▲' : '▼', px + cell / 2, py + cell / 2 + 1);
+        } else if (ev?.kind === 'gather') {
+          // 採集ポイント（緑の菱形）。枯渇済みは薄く表示。
+          const depleted = depletedSet.has(`${x},${y}`);
+          ctx.fillStyle = depleted ? COLORS.gatherDone : COLORS.gather;
+          ctx.beginPath();
+          ctx.arc(px + cell / 2, py + cell / 2, cell * 0.24, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (ev?.kind === 'cookingSpot') {
+          // 調理地点（オレンジの四角）。
+          ctx.fillStyle = COLORS.cooking;
+          ctx.fillRect(px + cell * 0.28, py + cell * 0.28, cell * 0.44, cell * 0.44);
         }
       }
     }
@@ -152,7 +170,7 @@ export const DungeonMap = ({
     ctx.lineTo(cx + Math.cos(a - 2.5) * r, cy + Math.sin(a - 2.5) * r);
     ctx.closePath();
     ctx.fill();
-  }, [floor, explored, pos, dir, icons, foes, cell, w, h]);
+  }, [floor, explored, pos, dir, icons, foes, depletedGathers, cell, w, h]);
 
   const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
     if (!onCellClick) return;

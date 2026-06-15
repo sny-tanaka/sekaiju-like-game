@@ -15,6 +15,7 @@ function tinyFloor(): FloorMaster {
     cells: [[cell({ E: false }), cell({ W: false })]],
     encounterTable: 't',
     foeSpawns: [],
+    gatheringPoints: [],
     bgmId: 'b',
   };
 }

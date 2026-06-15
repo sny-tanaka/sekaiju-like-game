@@ -1,6 +1,15 @@
 import { isBossFloor } from '@/data/balance';
 import { ENEMIES } from '@/data/enemies';
-import type { Cell, Dir, EnemyId, FloorMaster, FoeSpawn, Rng } from '@/domain/types';
+import { GATHER_TYPE_LIST } from '@/data/gather';
+import type {
+  Cell,
+  Dir,
+  EnemyId,
+  FloorMaster,
+  FoeSpawn,
+  GatheringPoint,
+  Rng,
+} from '@/domain/types';
 
 /** その帯の FOE プール（雑魚と同プール。ボスは除外）。 */
 function FOE_POOL_BY_BAND(band: number): EnemyId[] {
@@ -168,6 +177,33 @@ export function generateFloor(depth: number, rng: Rng): FloorMaster {
     }
   }
 
+  // ⑥ 採集ポイント＋調理地点（[04 §5-6]）。乱数消費順は FOE の後（末尾追加で既存階の再現を壊さない）。
+  // ※ 設計の論理順（採集→FOE）とは異なるが、既存生成の決定論を保つため末尾に置く（06 §2.1 実装メモ）。
+  const gatheringPoints: GatheringPoint[] = [];
+  const placeOnFreeCell = (): { x: number; y: number } | null => {
+    for (let tries = 0; tries < 25; tries++) {
+      const gx = rng.int(width);
+      const gy = rng.int(height);
+      const farFromEntrance = Math.abs(gx - entranceX) + Math.abs(gy - entranceY) >= 2;
+      if (!cells[gy][gx].event && farFromEntrance) return { x: gx, y: gy };
+    }
+    return null;
+  };
+  const gatherCount = 2 + Math.floor(depth / 10);
+  for (let i = 0; i < gatherCount; i++) {
+    const pos = placeOnFreeCell();
+    if (!pos) break;
+    const type = rng.pick(GATHER_TYPE_LIST);
+    const id = `gather_${i}`;
+    cells[pos.y][pos.x].event = { kind: 'gather', gatherId: id };
+    gatheringPoints.push({ id, cell: pos, type });
+  }
+  // 調理地点を1つ（ボス階以外）。
+  if (!isBossFloor(depth)) {
+    const pos = placeOnFreeCell();
+    if (pos) cells[pos.y][pos.x].event = { kind: 'cookingSpot', spotId: 'cook_0' };
+  }
+
   return {
     depth,
     width,
@@ -175,6 +211,7 @@ export function generateFloor(depth: number, rng: Rng): FloorMaster {
     cells,
     encounterTable: `band_${band}`,
     foeSpawns,
+    gatheringPoints,
     bgmId: isBossFloor(depth) ? 'bgm_boss' : 'bgm_dungeon',
   };
 }

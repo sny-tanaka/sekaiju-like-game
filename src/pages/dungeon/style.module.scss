@@ -101,6 +101,32 @@
   cursor: pointer;
 }
 
+.action {
+  width: 100%;
+  max-width: 360px;
+  min-height: 44px;
+  margin-bottom: 8px;
+  border: 1px solid #4a9d52;
+  border-radius: 10px;
+  background-color: #eaf5ea;
+  color: #2f6d36;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.45;
+  }
+}
+
+.notice {
+  max-width: 360px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f6d36;
+}
+
 .controls {
   display: flex;
   flex-direction: column;
@@ -253,6 +279,11 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
 }
 
 .itemClose {

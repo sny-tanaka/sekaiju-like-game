@@ -48,8 +48,19 @@ function checkSkillTree(
 
 export function validateMasters(): ValidationResult {
   const errors: string[] = [];
-  const { races, classes, titles, skills, unionSkills, summons, enemies, items, equipment } =
-    MASTERS;
+  const {
+    races,
+    classes,
+    titles,
+    skills,
+    unionSkills,
+    summons,
+    gatherTypes,
+    recipes,
+    enemies,
+    items,
+    equipment,
+  } = MASTERS;
 
   // ID 命名規約
   checkIdConvention('races', Object.keys(races), errors);
@@ -131,6 +142,37 @@ export function validateMasters(): ValidationResult {
       if (eff.kind === 'summon' && !(eff.summonKind in summons)) {
         errors.push(`[battleSkills] "${def.id}" の召喚 "${eff.summonKind}" が未定義`);
       }
+    }
+  }
+
+  // 採集系統（[04 §5]）: 必要スキル・ドロップ素材の実在
+  for (const [key, g] of Object.entries(gatherTypes)) {
+    if (key !== g.type) errors.push(`[gatherTypes] キー "${key}" と type "${g.type}" が不一致`);
+    if (!skillIds.has(g.requiredSkillId)) {
+      errors.push(`[gatherTypes] "${g.type}" の requiredSkillId "${g.requiredSkillId}" が未定義`);
+    }
+    for (const d of g.drops) {
+      if (!(d.itemId in items)) {
+        errors.push(`[gatherTypes] "${g.type}" のドロップ "${d.itemId}" が未定義アイテム`);
+      }
+      if (d.weight <= 0) errors.push(`[gatherTypes] "${g.type}" のドロップ重みが正でない`);
+    }
+  }
+
+  // 料理レシピ（[04 §6]）: 食材・結果の実在と food カテゴリ整合
+  for (const [key, r] of Object.entries(recipes)) {
+    if (key !== r.id) errors.push(`[recipes] キー "${key}" と id "${r.id}" が不一致`);
+    for (const ing of r.ingredients) {
+      if (!(ing.itemId in items)) {
+        errors.push(`[recipes] "${r.id}" の材料 "${ing.itemId}" が未定義`);
+      } else if (items[ing.itemId].category !== 'food') {
+        errors.push(`[recipes] "${r.id}" の材料 "${ing.itemId}" が food カテゴリでない`);
+      }
+    }
+    if (!(r.result.itemId in items)) {
+      errors.push(`[recipes] "${r.id}" の結果 "${r.result.itemId}" が未定義`);
+    } else if (items[r.result.itemId].category !== 'food') {
+      errors.push(`[recipes] "${r.id}" の結果 "${r.result.itemId}" が food カテゴリでない`);
     }
   }
 

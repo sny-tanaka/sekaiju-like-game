@@ -77,6 +77,37 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
     name: '使い魔を召喚',
     description: '自律攻撃する使い魔を呼ぶ。戦闘をまたいで残る（拠点帰還で消える）。',
   },
+  // 採集スキル（[04 §5]・探索用パッシブ。戦闘では使わない）
+  skill_mining: {
+    id: 'skill_mining',
+    name: '採掘',
+    description: '採掘ポイントから鉱石を採取できる。',
+  },
+  skill_gathering: {
+    id: 'skill_gathering',
+    name: '採取',
+    description: '採取ポイントから薬草などを集められる。',
+  },
+  skill_logging: {
+    id: 'skill_logging',
+    name: '伐採',
+    description: '伐採ポイントから木材を得られる。',
+  },
+  skill_fishing: {
+    id: 'skill_fishing',
+    name: '釣り',
+    description: '釣りポイントから食材（魚）を得られる。',
+  },
+  skill_harvest: {
+    id: 'skill_harvest',
+    name: '収穫',
+    description: '収穫ポイントから食材（木の実）を得られる。',
+  },
+  skill_hunting: {
+    id: 'skill_hunting',
+    name: '狩猟',
+    description: '狩猟ポイントから食材（肉）を得られる。',
+  },
   // 種族ユニオンスキル（効果は data/unionSkills.ts）
   skill_union_rally: {
     id: 'skill_union_rally',
