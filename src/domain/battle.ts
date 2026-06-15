@@ -1,11 +1,19 @@
-import { BALANCE, canGainExp, enemyScale, expToNext, spGainOnLevelUp } from '@/data/balance';
+import {
+  BALANCE,
+  canGainExp,
+  encounterTier,
+  enemyScale,
+  expToNext,
+  spGainOnLevelUp,
+} from '@/data/balance';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { ENEMIES } from '@/data/enemies';
+import { BASIC_WEIGHT, ENEMY_KITS } from '@/data/enemySkills';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
 import { SUMMONS } from '@/data/summons';
 import { UNION_SKILLS } from '@/data/unionSkills';
-import { computeDamage, effectiveEnemyStats, scaleStats } from '@/domain/combat';
+import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { enemyLapForDepth } from '@/domain/encounterTable';
 import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
@@ -23,6 +31,7 @@ import type {
   Combatant,
   CombatState,
   Element,
+  EnemyActionDef,
   EnemyId,
   EquipBonuses,
   FirstStrike,
@@ -479,7 +488,15 @@ function applySkillEffect(
       break;
     }
     case 'heal': {
-      const amount = effect.amount(level);
+      const flat = effect.amount(level);
+      const coef =
+        effect.matkCoef === 'one'
+          ? BALANCE.HEAL_MATK_COEF_ONE
+          : effect.matkCoef === 'minor'
+            ? BALANCE.HEAL_MATK_COEF_MINOR
+            : BALANCE.HEAL_MATK_COEF_ALL;
+      const casterMatk = deriveCombat(actor.stats, actor.equip, actor.buffs, actor.passive).matk;
+      const amount = Math.round(flat + casterMatk * coef);
       for (const target of targets) {
         if (target.isDown) continue;
         target.hp = clamp(target.hp + amount, 0, target.maxHp);
@@ -730,12 +747,18 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (fleer && isLegBound(fleer)) {
       next.log.push({ text: `${fleer.name} は脚を封じられて逃げられない` });
     } else {
-      const rate = clamp(
-        0.5 + (avgAgi(aliveSide(next, 'ally')) - avgAgi(aliveSide(next, 'enemy'))) * 0.02,
-        0.1,
-        0.95
+      // §8.1 逃走率: base 0.4、ボス逃走不可、FOE は 0.5倍
+      let rate = clamp(
+        0.4 + (avgAgi(aliveSide(next, 'ally')) - avgAgi(aliveSide(next, 'enemy'))) * 0.02,
+        0.05,
+        0.9
       );
-      if (rng.next() < rate) {
+      if (next.enemies.some((e) => e.enemyId && ENEMIES[e.enemyId]?.kind === 'boss')) {
+        rate = 0;
+      } else if (next.enemies.some((e) => e.enemyId && ENEMIES[e.enemyId]?.kind === 'foe')) {
+        rate *= 0.5;
+      }
+      if (rate > 0 && rng.next() < rate) {
         next.log.push({ text: 'うまく逃げ切れた！' });
         next.outcome = 'fled';
         return next;
@@ -755,13 +778,57 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     }
   }
 
-  // 敵AI: 生存敵は生存味方/召喚体の誰かを通常攻撃（先制ターンは敵が動けない）。
+  // 敵AI: §3.2 アクション選択アルゴリズム
+  // 乱数消費順: 各敵ごとに「①対象抽選 → ②アクション抽選 → ③効果適用」の順で固定。
   // 召喚体は最前列の壁として攻撃対象に含める（[03 §8]）。
-  const enemyCommands = new Map<string, string>(); // enemyId -> targetId
+  const enemyDecoyTargets = new Map<string, string>(); // enemyId -> picked targetId（decoy込み）
+  const enemySelectedAction = new Map<string, EnemyActionDef | null>(); // null = basic
   if (!skipEnemies) {
     for (const e of aliveSide(next, 'enemy')) {
-      const targets = [...aliveSummons(next), ...aliveSide(next, 'ally')];
-      if (targets.length > 0) enemyCommands.set(e.id, pickByDecoy(targets, rng).id);
+      // ①対象抽選（decoyTargetId）
+      const potentialTargets = [...aliveSummons(next), ...aliveSide(next, 'ally')];
+      if (potentialTargets.length > 0) {
+        enemyDecoyTargets.set(e.id, pickByDecoy(potentialTargets, rng).id);
+      }
+      // ②アクション抽選（候補収集 + weight 抽選）
+      const master = e.enemyId ? ENEMIES[e.enemyId] : undefined;
+      const actions: EnemyActionDef[] =
+        master?.actions ?? (master?.kit ? (ENEMY_KITS[master.kit] ?? []) : []);
+      const turn = next.turn;
+      const state_ = e;
+      const candidates: { action: EnemyActionDef | null; weight: number }[] = [];
+      // 通常攻撃（basic）は常に候補
+      candidates.push({ action: null, weight: BASIC_WEIGHT });
+      for (const a of actions) {
+        const c = a.cond;
+        if (c) {
+          if (c.hpBelow !== undefined && state_.hp / state_.maxHp > c.hpBelow) continue;
+          if (c.hpAbove !== undefined && state_.hp / state_.maxHp < c.hpAbove) continue;
+          if (c.minTurn !== undefined && turn < c.minTurn) continue;
+          if (c.maxUses !== undefined) {
+            const uses = state_.actionState?.[a.id]?.uses ?? 0;
+            if (uses >= c.maxUses) continue;
+          }
+          if (c.cooldown !== undefined) {
+            const lastUsed = state_.actionState?.[a.id]?.lastUsedTurn ?? -Infinity;
+            if (turn - lastUsed < c.cooldown) continue;
+          }
+        }
+        candidates.push({ action: a, weight: a.weight });
+      }
+      // weight 抽選
+      const totalWeight = candidates.reduce((s, c) => s + c.weight, 0);
+      let r = rng.next() * totalWeight;
+      let selected: EnemyActionDef | null = null;
+      for (const c of candidates) {
+        r -= c.weight;
+        if (r < 0) {
+          selected = c.action;
+          break;
+        }
+      }
+      if (selected === undefined) selected = null; // フォールバック
+      enemySelectedAction.set(e.id, selected);
     }
   }
 
@@ -805,10 +872,28 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         next.log.push({ text: `${actor.name} は腕を封じられて攻撃できない` });
         continue;
       }
-      const targetId = enemyCommands.get(actor.id);
-      const target = targetId ? find(next, targetId) : undefined;
-      const t = target && !target.isDown ? target : aliveSide(next, 'ally')[0];
-      if (t) basicAttack(next, actor, t, rng);
+      // §3.2 ③効果適用
+      const selectedAction = enemySelectedAction.get(actor.id);
+      const decoyTargetId = enemyDecoyTargets.get(actor.id);
+      if (selectedAction === null || selectedAction === undefined) {
+        // basic フォールバック: 通常攻撃
+        const target = decoyTargetId ? find(next, decoyTargetId) : undefined;
+        const t = target && !target.isDown ? target : aliveSide(next, 'ally')[0];
+        if (t) basicAttack(next, actor, t, rng);
+      } else {
+        // スキルアクション適用
+        const targets = resolveTargets(next, actor, selectedAction.target, decoyTargetId ?? '');
+        for (const effect of selectedAction.effects) {
+          applySkillEffect(next, actor, effect, selectedAction.element, 1, targets, rng);
+        }
+        // actionState 更新
+        if (!actor.actionState) actor.actionState = {};
+        actor.actionState[selectedAction.id] = {
+          lastUsedTurn: next.turn,
+          uses: (actor.actionState[selectedAction.id]?.uses ?? 0) + 1,
+        };
+        next.log.push({ text: `${actor.name} の${selectedAction.name}！` });
+      }
     } else {
       const cmd = cmdByActor.get(actor.id);
       if (!cmd || cmd.kind === 'guard' || cmd.kind === 'flee') continue;
@@ -917,16 +1002,29 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
 
 // ---- 報酬・結果反映 -------------------------------------------------------
 
-/** 勝利報酬（経験値・所持金。出現階でスケール）。 */
-export function battleRewards(state: BattleState): { exp: number; gold: number } {
+/**
+ * 勝利報酬（経験値・所持金。出現階でスケール）。
+ * deepestReached を渡すと §8.3 の下層ファーム減衰を適用する。
+ */
+export function battleRewards(
+  state: BattleState,
+  deepestReached?: number
+): { exp: number; gold: number } {
   let exp = 0;
   let gold = 0;
+  // §8.3 下層ファーム減衰（ドロップ率は据え置き）
+  const deepBand = deepestReached !== undefined ? encounterTier(deepestReached) : undefined;
+  const curBand = encounterTier(state.depth);
+  const decay =
+    deepBand !== undefined
+      ? Math.pow(BALANCE.FARM_EXP_DECAY_PER_BAND, Math.max(0, deepBand - curBand))
+      : 1;
   for (const e of state.enemies) {
     if (!e.enemyId) continue;
     const master = ENEMIES[e.enemyId];
     const scale = enemyScale(state.depth, master.refDepth);
-    exp += Math.round(master.exp * scale);
-    gold += Math.round(master.gold * scale);
+    exp += Math.round(master.exp * scale * decay);
+    gold += Math.round(master.gold * scale * decay);
   }
   return { exp, gold };
 }
@@ -952,7 +1050,8 @@ export interface LevelUpResult {
 /** 戦闘勝利時の各メンバーの経験値獲得・レベルアップ結果（リザルト画面用。純粋・副作用なし）。 */
 export function partyExpResults(save: SaveData, state: BattleState): LevelUpResult[] {
   if (state.outcome !== 'win' || !save.diveState) return [];
-  const { exp } = battleRewards(state);
+  const deepestReached = save.towerState.record.deepestReached;
+  const { exp } = battleRewards(state, deepestReached);
   const partyIds = new Set(save.diveState.party.map((p) => p.charId));
   const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
   const results: LevelUpResult[] = [];
@@ -1044,7 +1143,8 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
   const bestiary = { ...save.bestiary, monsters };
 
   if (win) {
-    const { exp, gold: dropGold } = battleRewards(state);
+    const deepestReached = save.towerState.record.deepestReached;
+    const { exp, gold: dropGold } = battleRewards(state, deepestReached);
     gold += dropGold;
     const partyIds = new Set(party.map((p) => p.charId));
     const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;

@@ -157,6 +157,8 @@ export interface Combatant {
   isSummon?: boolean;
   summonKind?: SummonKind; // 召喚体の種別（SUMMONS マスター参照）
   ownerId?: string; // 召喚主の charId
+  /** 敵スキルAI のアクション状態（§3）。戦闘中のみ。SaveData には出さない。 */
+  actionState?: Record<string, { lastUsedTurn: number; uses: number }>;
 }
 
 export interface DamageResult {
@@ -286,6 +288,10 @@ export interface EnemyMaster {
    * 未指定は 'zako' 扱い。ボスは isBoss:true も併せて立てる。
    */
   kind?: 'zako' | 'foe' | 'boss';
+  /** 敵スキルキット（§4）。ENEMY_KITS のキー。actions より低優先。 */
+  kit?: string;
+  /** 個別アクション定義（§4.3 ボス用）。kit より優先。 */
+  actions?: EnemyActionDef[];
 }
 
 /**
@@ -308,9 +314,36 @@ export interface SummonMaster {
 // 戦闘スキル定義（[03 §5]）。マスターデータ（関数値を含むため保存しない）。
 // ----------------------------------------------------------------------------
 
+// ----------------------------------------------------------------------------
+// 敵スキルAI（§3）
+// ----------------------------------------------------------------------------
+
+/**
+ * 敵の1アクション定義（§3.1）。既存 SkillEffectDef[] を再利用。
+ * target は陣営相対: enemyOne/enemyAll → 味方PTを攻撃 / self/allyAll → 自陣をバフ
+ */
+export interface EnemyActionDef {
+  id: string;
+  name: string;
+  element: Element;
+  target: TargetType;
+  effects: SkillEffectDef[];
+  weight: number; // 条件を満たすアクション間の重み付き抽選値（>0）
+  cond?: EnemyActionCond;
+}
+
+/** 敵アクションの解禁条件（§3.1）。すべて省略可。 */
+export interface EnemyActionCond {
+  hpBelow?: number; // 自HP割合がこの値以下で解禁（例 0.5）
+  hpAbove?: number; // 自HP割合がこの値以上で解禁
+  cooldown?: number; // 使用後このターン数は再使用不可
+  minTurn?: number; // 戦闘開始から minTurn ターン目以降で解禁（1始まり）
+  maxUses?: number; // 1戦闘あたり使用回数上限
+}
+
 export type SkillEffectDef =
   | { kind: 'damage'; power: (lv: number) => number; statBase: 'str' | 'int'; hits?: number }
-  | { kind: 'heal'; amount: (lv: number) => number }
+  | { kind: 'heal'; amount: (lv: number) => number; matkCoef?: 'one' | 'all' | 'minor' }
   | { kind: 'restoreTp'; amount: (lv: number) => number }
   | {
       kind: 'ailment';
