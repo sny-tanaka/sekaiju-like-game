@@ -113,12 +113,12 @@ export const FORGE = {
   MAX_LEVEL: 5, // 強化上限 +5
   /** 強化値1あたりの ATK/MAT 上昇（武器は両方、防具は DEF/MDF に適用）。 */
   STAT_PER_LEVEL: 2,
+  /** ティア連動係数: 強化+1の上昇 = round(STAT_PER_LEVEL * TIER_STEP^equipTier)（§7.3）。 */
+  TIER_STEP: 1.6,
   /** インゴット種別の強化量（[04 §4.1]）。 */
   INGOT_INC: { copper: 1, silver: 3, gold: 5 } as const,
   /** 断片が何個でインゴット1個に自動変換されるか（[04 §4.2]）。 */
   FRAGMENTS_PER_INGOT: 10,
-  /** リサイクルで得られる断片数（買値帯で増やす暫定。MVP は一律）。 */
-  RECYCLE_FRAGMENTS: 3,
 } as const;
 
 // ----------------------------------------------------------------------------

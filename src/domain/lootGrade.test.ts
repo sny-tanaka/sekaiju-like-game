@@ -54,9 +54,9 @@ describe('装備の周回グレード倍率（+50%/Lv）', () => {
     expect(gradeMult(1)).toBe(1);
     expect(gradeMult(2)).toBe(1.5);
     expect(gradeMult(3)).toBe(2);
-    // equip_short_sword は atk6 → grade2 で round(9)
-    expect(gradedBaseBonuses('equip_short_sword', 2).atk).toBe(9);
-    expect(gradedBaseBonuses('equip_short_sword', 3).atk).toBe(12);
+    // equip_short_sword は atk8（§7.2リバランス後）→ grade2 で round(12)、grade3 で round(16)
+    expect(gradedBaseBonuses('equip_short_sword', 2).atk).toBe(12);
+    expect(gradedBaseBonuses('equip_short_sword', 3).atk).toBe(16);
   });
 });
 
