@@ -59,6 +59,7 @@ for (const raceId of RACE_IDS) {
   for (const key of STAT_KEYS) {
     const v = statValue(raceId, key);
     const { min, max } = minMaxCache[key];
+    // 全種族が同値（差なし）の場合は中央（t=0.5→B）に落とす。
     const t = max === min ? 0.5 : (v - min) / (max - min);
     ranks[key] = toRank(t);
   }

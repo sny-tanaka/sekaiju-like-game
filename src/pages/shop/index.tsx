@@ -24,7 +24,7 @@ import { useGameState } from '@/store/gameState';
 
 // 確認待ちの売買操作（タップ1回での誤購入/誤売却を防ぐ。確認ダイアログ経由でのみ実行）。
 type Pending =
-  | { kind: 'buy'; id: string; name: string; price: number; maxQty: number }
+  | { kind: 'buy'; id: string; name: string; price: number }
   | { kind: 'sellItem'; itemId: string; grade: number; name: string; price: number; maxQty: number }
   | { kind: 'sellEquip'; id: string; name: string; price: number };
 
@@ -34,6 +34,10 @@ type EquipDetail = {
   name: string;
   ownedQty: number;
   price: number;
+  /** 買う=購入価格 / 売る=売却額。価格ラベルの出し分けに使う。 */
+  mode: 'buy' | 'sell';
+  /** 売る個体の周回グレード。未指定時はショップ表示グレードにフォールバック（買う側）。 */
+  grade?: number;
 };
 
 // 絞り込みカテゴリ（武器/防具/装飾品/アイテム/素材）。
@@ -208,7 +212,7 @@ export const Page = () => {
     if (!equipDetail) return null;
     const eq = EQUIPMENT[equipDetail.masterId];
     if (!eq) return null;
-    const grade = shopEquipGrade(save, equipDetail.masterId);
+    const grade = equipDetail.grade ?? shopEquipGrade(save, equipDetail.masterId);
     const bonuses = gradedBaseBonuses(equipDetail.masterId, grade);
     const slotLabel = EQUIP_SLOT_LABEL[eq.slot];
     const classNames = equipableClassNames(equipDetail.masterId);
@@ -230,7 +234,7 @@ export const Page = () => {
         luc: 'LUC',
       };
       for (const [k, v] of Object.entries(bonuses.statMods)) {
-        if (v) bonusParts.push(`${statLabelMap[k] ?? k}+${v}`);
+        if (v) bonusParts.push(`${statLabelMap[k] ?? k}${v >= 0 ? '+' : ''}${v}`);
       }
     }
 
@@ -270,7 +274,9 @@ export const Page = () => {
             <span>{eq.slot === 'accessory' ? '全職業' : classNames.join('・')}</span>
           </div>
           <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>価格</span>
+            <span className={styles.detailLabel}>
+              {equipDetail.mode === 'buy' ? '購入価格' : '売却額'}
+            </span>
             <span>{equipDetail.price} G</span>
           </div>
           <div className={styles.detailRow}>
@@ -376,6 +382,7 @@ export const Page = () => {
                           name: e.name,
                           ownedQty: qty,
                           price: e.price,
+                          mode: 'buy',
                         })
                       }
                     >
@@ -398,7 +405,6 @@ export const Page = () => {
                       id: e.id,
                       name: e.name,
                       price: e.price,
-                      maxQty: Math.max(1, Math.floor(gold / e.price)),
                     })
                   }
                 >
@@ -426,6 +432,8 @@ export const Page = () => {
                         name: r.name,
                         ownedQty: 1,
                         price: r.price,
+                        mode: 'sell',
+                        grade: r.inst.grade ?? 1,
                       })
                     }
                   >
