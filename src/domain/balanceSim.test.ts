@@ -63,7 +63,7 @@ function statsAtLv(raceId: RaceKey, lv: number): Stats {
   for (const k of keys) {
     s[k] = r.base[k] + r.growth[k] * (lv - 1);
   }
-  return s as Stats;
+  return s as unknown as Stats;
 }
 
 /** 標準武器 atk: round(round(8 × 1.62^tier) × weaponCoef) */
@@ -280,7 +280,7 @@ function skillTpCost(skillId: string, skillLv: number): number {
  * - DPS(戦士/拳聖/魔導士): TP≥コストでスキル / 不足で通常攻撃
  * - 盾(守護兵): TP≥3で挑発 / 不足で通常攻撃（ただし初ターンのみ挑発、以降は攻撃）
  */
-function makeCommands(state: BattleState, turn: number): BattleCommand[] {
+function makeCommands(state: BattleState, _turn: number): BattleCommand[] {
   const commands: BattleCommand[] = [];
   const aliveAllies = state.allies.filter((a) => !a.isDown);
   const aliveEnemies = state.enemies.filter((e) => !e.isDown);
