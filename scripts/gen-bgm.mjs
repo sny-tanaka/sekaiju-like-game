@@ -274,7 +274,7 @@ function normalize(samples) {
     const abs = Math.abs(samples[i]);
     if (abs > peak) peak = abs;
   }
-  const target = 0.707; // -3dBFS
+  const target = 0.5; // -6dBFS (控えめな背景音楽向け)
   const gain = peak > 0 ? target / peak : 1.0;
   const out = new Float64Array(samples.length);
   for (let i = 0; i < samples.length; i++) {
