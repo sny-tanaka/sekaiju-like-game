@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useSfx } from '@/audio/useSfx';
 import { MenuButton } from '@/components/common/MenuButton/MenuButton';
 import { startDive } from '@/domain/dive';
 import { useGameState } from '@/store/gameState';
@@ -11,6 +12,7 @@ import { useGameState } from '@/store/gameState';
 export const Page = () => {
   const navigate = useNavigate();
   const { save, exitToTitle, applyAndPersist } = useGameState();
+  const play = useSfx();
   const [warpOpen, setWarpOpen] = useState(false);
 
   // セーブが無い状態で直接来たらタイトルへ
@@ -28,12 +30,14 @@ export const Page = () => {
   const hasMembers = guild.members.length > 0;
 
   const handleExit = () => {
+    play('cancel');
     exitToTitle();
     navigate('/title');
   };
 
   // ダイブ開始（潜行中でなければ第1階から開始してオートセーブ）/ 潜行を再開
   const handleDive = async () => {
+    play('dive');
     if (!diveState) {
       await applyAndPersist((s) => startDive(s, 1));
     }
@@ -43,6 +47,7 @@ export const Page = () => {
   // 10層ワープ（[06 §5]）: 解放済みチェックポイントへ新規ダイブ開始。
   const checkpoints = towerState.warp.unlockedCheckpoints;
   const handleWarp = async (depth: number) => {
+    play('warp');
     setWarpOpen(false);
     await applyAndPersist((s) => startDive(s, depth));
     navigate('/dungeon');
@@ -88,6 +93,7 @@ export const Page = () => {
           }
           variant="primary"
           disabled={!hasMembers}
+          sfx={null}
           onClick={() => void handleDive()}
         />
         <MenuButton
@@ -100,6 +106,7 @@ export const Page = () => {
                 : `解放済み: ${checkpoints.map((d) => `${d}F`).join('・')}`
           }
           disabled={!hasMembers || checkpoints.length === 0 || !!diveState}
+          sfx={null}
           onClick={() => setWarpOpen(true)}
         />
         <MenuButton
@@ -157,7 +164,10 @@ export const Page = () => {
             <button
               type="button"
               className={styles.warpClose}
-              onClick={() => setWarpOpen(false)}
+              onClick={() => {
+                play('cancel');
+                setWarpOpen(false);
+              }}
             >
               とじる
             </button>

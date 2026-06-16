@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useSfx } from '@/audio/useSfx';
 import { SaveCard } from '@/components/common/SaveCard/SaveCard';
+import { SoundSettings } from '@/components/common/SoundSettings';
 import type { SaveMeta } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 import { getSaveMeta } from '@/store/saveStore';
@@ -15,11 +17,13 @@ type Mode = 'menu' | 'confirm' | 'guildName';
 export const Page = () => {
   const navigate = useNavigate();
   const { startNewGame, continueGame } = useGameState();
+  const play = useSfx();
   const [meta, setMeta] = useState<SaveMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<Mode>('menu');
   const [guildName, setGuildName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [soundOpen, setSoundOpen] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -31,31 +35,45 @@ export const Page = () => {
   const hasValidSave = meta !== null && !meta.corrupted;
 
   const handleContinue = useCallback(async () => {
+    play('decide');
     setBusy(true);
     const result = await continueGame();
     setBusy(false);
     if (result.ok) navigate('/town');
-  }, [continueGame, navigate]);
+  }, [continueGame, navigate, play]);
 
   // 「最初から」: 有効なセーブがあるなら確認、無ければそのままギルド名入力へ
   const handleNewGameStart = useCallback(() => {
+    play('decide');
     setGuildName('');
     setMode(hasValidSave ? 'confirm' : 'guildName');
-  }, [hasValidSave]);
+  }, [hasValidSave, play]);
 
   const confirmCreate = useCallback(async () => {
+    play('save');
     const name = guildName.trim() || 'ななしのギルド';
     setBusy(true);
     await startNewGame(name);
     setBusy(false);
     navigate('/town');
-  }, [guildName, startNewGame, navigate]);
+  }, [guildName, startNewGame, navigate, play]);
 
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
         <h1 className={styles.title}>世界樹ライク</h1>
         <p className={styles.subtitle}>無限タワー探索 RPG</p>
+        <button
+          type="button"
+          className={styles.gearBtn}
+          aria-label="サウンド設定"
+          onClick={() => {
+            play('cursor');
+            setSoundOpen(true);
+          }}
+        >
+          ⚙
+        </button>
       </header>
 
       <main className={styles.body}>
@@ -142,6 +160,33 @@ export const Page = () => {
       </main>
 
       <footer className={styles.foot}>v{__APP_VERSION__}</footer>
+
+      {soundOpen ? (
+        <div
+          className={styles.soundOverlay}
+          onClick={() => {
+            play('cursor');
+            setSoundOpen(false);
+          }}
+        >
+          <div
+            className={styles.soundPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SoundSettings />
+            <button
+              type="button"
+              className={styles.sub}
+              onClick={() => {
+                play('cursor');
+                setSoundOpen(false);
+              }}
+            >
+              とじる
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

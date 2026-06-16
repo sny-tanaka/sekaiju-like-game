@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useSfx } from '@/audio/useSfx';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
@@ -153,6 +154,7 @@ type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: n
 export const Page = () => {
   const navigate = useNavigate();
   const { save, applyAndPersist } = useGameState();
+  const play = useSfx();
   const rngRef = useRef<Rng | null>(null);
   const [state, setState] = useState<BattleState | null>(null);
   const [commands, setCommands] = useState<Record<string, AllyCmd>>({});
@@ -199,9 +201,10 @@ export const Page = () => {
   // エンカウント演出（issue #18）: 突入直後の暗転を一定時間で晴らす。
   useEffect(() => {
     if (!introFx) return;
+    play('encounter');
     const t = setTimeout(() => setIntroFx(false), 700);
     return () => clearTimeout(t);
-  }, [introFx]);
+  }, [introFx, play]);
 
   // 1ターン解決して逐次再生を開始する（issue #18）。入力状態をクリアする。
   const runTurn = useCallback(
@@ -275,6 +278,134 @@ export const Page = () => {
       setLevelQueue(expResults.filter((r) => r.toLevel > r.fromLevel));
     }
   }, [state?.outcome, anim, expResults]);
+
+  // 戦闘終了 SE（outcome が確定し、anim が終わったタイミングで1回鳴らす）。
+  const prevOutcomeRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!state) return;
+    const outcome = state.outcome;
+    if (outcome === 'ongoing') {
+      prevOutcomeRef.current = null;
+      return;
+    }
+    // anim がまだ再生中なら待つ（anim=null になってから鳴らす）
+    if (anim) return;
+    if (prevOutcomeRef.current === outcome) return; // 二重発火防止
+    prevOutcomeRef.current = outcome;
+    if (outcome === 'win') play('victory');
+    else if (outcome === 'lose') play('defeat');
+    else if (outcome === 'fled') play('flee');
+  }, [state, anim, play]);
+
+  // レベルアップ SE（levelQueue の先頭が表示されるたびに鳴らす）。
+  const prevLevelQueueLenRef = useRef(0);
+  useEffect(() => {
+    if (levelQueue.length > prevLevelQueueLenRef.current) {
+      // 新しく積まれた（配列が増えた）場合は levelup を鳴らさない（積み直し）
+    } else if (levelQueue.length > 0 && levelQueue.length < prevLevelQueueLenRef.current) {
+      // OKを押してキューが1つ減ったら次のレベルアップ表示 → levelup は次のレンダーで鳴らす
+    }
+    // キューが新規追加されたとき（0→n）に1回鳴らす
+    if (prevLevelQueueLenRef.current === 0 && levelQueue.length > 0) {
+      play('levelup');
+    } else if (prevLevelQueueLenRef.current > levelQueue.length && levelQueue.length > 0) {
+      // 次の1人表示
+      play('levelup');
+    }
+    prevLevelQueueLenRef.current = levelQueue.length;
+  }, [levelQueue.length, play]);
+
+  // ログ再生 SE: 1行ずつ再生されるたびにログテキストを解析して SE を鳴らす。
+  // 味方 ID セット（ダメージが味方か敵かの判定用）。
+  const allyIdSetRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (state) {
+      allyIdSetRef.current = new Set(state.allies.map((a) => a.id));
+    }
+  }, [state]);
+
+  const prevRevealedRef = useRef(0);
+  useEffect(() => {
+    if (!state || !anim) {
+      prevRevealedRef.current = 0;
+      return;
+    }
+    const revealed = anim.revealed;
+    if (revealed <= prevRevealedRef.current) return;
+    // 新しく表示されたログ行を処理
+    const newLines = state.log.slice(prevRevealedRef.current, revealed);
+    prevRevealedRef.current = revealed;
+
+    for (const line of newLines) {
+      const t = line.text;
+      // 逃走成功
+      if (t === 'うまく逃げ切れた！') {
+        play('flee');
+        break;
+      }
+      // 戦闘不能（「は倒れた」）
+      if (t.includes('は倒れた')) {
+        play('down');
+        continue;
+      }
+      // 回復魔法
+      if (t.includes('は回復魔法を使った')) {
+        play('heal');
+        continue;
+      }
+      // スキル発動（「の○○！」形式＝スキル名で発動）
+      if (
+        t.includes('のスキル') ||
+        (/の.+！$/.test(t) && !t.includes('の攻撃！') && !t.includes('ユニオン'))
+      ) {
+        play('skill');
+        continue;
+      }
+      // ユニオン
+      if (t.startsWith('ユニオン！')) {
+        play('skill');
+        continue;
+      }
+      // 状態異常付与
+      if (t.includes('になった')) {
+        play('debuff');
+        continue;
+      }
+      // バフ（態勢を整えた = guard/buff系）
+      if (
+        t.includes('は態勢を整えた') ||
+        t.includes('の構えを取った') ||
+        t.includes('を引きつけた') ||
+        t.includes('の障壁を張った')
+      ) {
+        play('buff');
+        continue;
+      }
+      // 通常攻撃命中（会心チェック）
+      if (t.includes('の攻撃！') && t.includes('ダメージ')) {
+        const isCritical = t.includes('（会心）');
+        // 被弾者が味方かどうかを判定（ログ文字列中の名前から特定は難しいのでsnapshotで判定）
+        const snap = line.snapshot;
+        const prevSnap = anim.base; // ターン開始時
+        let allyHit = false;
+        if (snap) {
+          for (const [id, cur] of Object.entries(snap)) {
+            if (allyIdSetRef.current.has(id)) {
+              const prev = prevSnap?.[id];
+              if (prev && cur.hp < prev.hp) {
+                allyHit = true;
+                break;
+              }
+            }
+          }
+        }
+        if (allyHit) play('damage');
+        play('attack');
+        if (isCritical) play('critical');
+        continue;
+      }
+    }
+  }, [state, anim, play]);
 
   const aliveEnemies = useMemo(() => state?.enemies.filter((e) => !e.isDown) ?? [], [state]);
   const aliveAllies = useMemo(() => state?.allies.filter((a) => !a.isDown) ?? [], [state]);
@@ -365,6 +496,7 @@ export const Page = () => {
 
   const handleResolve = useCallback(() => {
     if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
+    play('decide');
     const tgt = targetId ?? aliveEnemies[0]?.id ?? '';
     const list: BattleCommand[] = aliveAllies.map((a): BattleCommand => {
       const c = commands[a.id] ?? { kind: 'attack' };
@@ -402,7 +534,17 @@ export const Page = () => {
       });
     }
     runTurn(list);
-  }, [state, commands, commandTargets, targetId, aliveAllies, aliveEnemies, unionCmd, runTurn]);
+  }, [
+    state,
+    commands,
+    commandTargets,
+    targetId,
+    aliveAllies,
+    aliveEnemies,
+    unionCmd,
+    runTurn,
+    play,
+  ]);
 
   const handleFlee = useCallback(() => {
     if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
@@ -425,7 +567,8 @@ export const Page = () => {
     const char = save.guild.members.find((m) => m.id === ally.id);
     if (!char) return [];
     return Object.keys(char.learnedSkills).filter(
-      (sid) => sid in BATTLE_SKILLS && ally.tp >= BATTLE_SKILLS[sid].tpCost(ally.skillLevels?.[sid] ?? 1)
+      (sid) =>
+        sid in BATTLE_SKILLS && ally.tp >= BATTLE_SKILLS[sid].tpCost(ally.skillLevels?.[sid] ?? 1)
     );
   };
 
@@ -818,7 +961,9 @@ export const Page = () => {
                     >
                       <span className={styles.skillTop}>
                         <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
-                        <span className={styles.tp}>TP {BATTLE_SKILLS[sid].tpCost(active.skillLevels?.[sid] ?? 1)}</span>
+                        <span className={styles.tp}>
+                          TP {BATTLE_SKILLS[sid].tpCost(active.skillLevels?.[sid] ?? 1)}
+                        </span>
                       </span>
                       <span className={styles.skillSummary}>
                         {skillSummary(

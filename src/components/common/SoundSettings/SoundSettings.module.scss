@@ -1,0 +1,93 @@
+@use 'variables' as var;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 16px;
+  background-color: var.$white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px var.$shadow-light;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var.$text-dark;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 48px;
+}
+
+.label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var.$text-dark;
+  flex-shrink: 0;
+}
+
+// ミュートトグルボタン（スマホ前提の大きいタップ領域）
+.muteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var.$gray;
+  border-radius: 12px;
+  background-color: var.$primary;
+  color: var.$white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px var.$shadow-light;
+  transition: transform 0.05s ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &.muted {
+    background-color: var.$gray;
+    color: var.$text-dark;
+    border-color: var.$gray;
+  }
+}
+
+// 音量スライダー
+.sliderWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.slider {
+  flex: 1;
+  height: 6px;
+  cursor: pointer;
+  accent-color: var.$primary;
+
+  // スマホ前提：タップターゲットを広くする
+  padding: 12px 0;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.volumeValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var.$text-dark;
+  min-width: 40px;
+  text-align: right;
+}

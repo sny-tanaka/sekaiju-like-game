@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useSfx } from '@/audio/useSfx';
 import { FORGE } from '@/data/balance';
 import { EQUIPMENT } from '@/data/equipment';
 import {
@@ -23,6 +24,7 @@ type Pending =
 export const Page = () => {
   const navigate = useNavigate();
   const { save, applyAndPersist } = useGameState();
+  const play = useSfx();
   const [tab, setTab] = useState<'forge' | 'recycle'>('forge');
   const [pending, setPending] = useState<Pending | null>(null);
 
@@ -42,6 +44,7 @@ export const Page = () => {
   // 確認ダイアログで「はい」を押したときだけ実際に強化/分解を確定する。
   const confirmPending = () => {
     if (!pending) return;
+    play(pending.kind === 'forge' ? 'forge' : 'recycle');
     if (pending.kind === 'forge') {
       void applyAndPersist((s) => forgeWithIngot(s, pending.instanceId, pending.ingot).save);
     } else {
@@ -82,14 +85,20 @@ export const Page = () => {
         <button
           type="button"
           className={`${styles.tab} ${tab === 'forge' ? styles.tabActive : ''}`}
-          onClick={() => setTab('forge')}
+          onClick={() => {
+            play('cursor');
+            setTab('forge');
+          }}
         >
           強化
         </button>
         <button
           type="button"
           className={`${styles.tab} ${tab === 'recycle' ? styles.tabActive : ''}`}
-          onClick={() => setTab('recycle')}
+          onClick={() => {
+            play('cursor');
+            setTab('recycle');
+          }}
         >
           リサイクル
         </button>
@@ -181,7 +190,10 @@ export const Page = () => {
               <button
                 type="button"
                 className={styles.confirmCancel}
-                onClick={() => setPending(null)}
+                onClick={() => {
+                  play('cancel');
+                  setPending(null);
+                }}
               >
                 やめる
               </button>
