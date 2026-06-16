@@ -8,16 +8,16 @@ export const BALANCE = {
   LEVEL_CAP: 100,
   BOSS_INTERVAL: 10, // 何階ごとにボス階か（=ワープ間隔）
   BAND_SIZE: 10, // 敵プール帯の幅
-  ENEMY_SCALE_K: 0.06, // enemyScale の1層あたり伸び
+  ENEMY_SCALE_K: 0.05, // enemyScale の1層あたり伸び（0.06 → 0.05）
   // 成長（[01 §5]）: 素ステは線形。stat(Lv) = base + growth*(Lv-1)
   // 経験値（[01 §5]）: expToNext(Lv) = round(EXP_CURVE_BASE * Lv^EXP_CURVE_POW)
-  EXP_CURVE_BASE: 20,
-  EXP_CURVE_POW: 1.6,
+  EXP_CURVE_BASE: 14, // 20 → 14
+  EXP_CURVE_POW: 1.52, // 1.6 → 1.52
   // レベルアップ時の獲得 SP（平均）。Lv100 で総 SP ≈ 160 になるよう調整（端数は累計を四捨五入し、
   // 各レベルアップで +1 か +2 を配分する。spTotalForLevel / spGainOnLevelUp 参照）。
   SP_PER_LEVEL: 1.62,
   // ダメージ（[03 §7]）: 除算型
-  DAMAGE_DEF_K: 100, // dmg = base * K/(K+def)
+  DAMAGE_DEF_K: 120, // 100 → 120
   CRIT_MULT: 1.5,
   WEAK_MULT: 1.5,
   RESIST_MULT: 0.5,
@@ -37,15 +37,39 @@ export const BALANCE = {
   AILMENT_LUC_K: 0.01,
   AILMENT_MAX: 0.95,
   PARALYSIS_SKIP: 0.3, // 麻痺で行動不能になる確率
-  POISON_HP_RATIO: 0.05, // 毒の毎ターン割合ダメージ（magnitude 未指定時）
+  POISON_HP_RATIO: 0.03, // 毒の毎ターン割合ダメージ（magnitude 未指定時）（§15: 0.05→0.03）
   // TP 自然回復（[03 §2] ターン終了処理）: 毎ターン maxTp の割合だけ回復
-  TP_REGEN_RATIO: 0.05,
+  TP_REGEN_RATIO: 0.04, // 0.05 → 0.04（長期戦の消耗を効かせる）
   // ユニオン（[03 §9]）
   UNION_GAIN_PER_ACTION: [5, 15] as const,
   UNION_GAIN_ON_WIN: 15,
   // 下層ファーム減衰（[06 §9-7]）
   FARM_EXP_DECAY_PER_BAND: 0.85,
+  // ▼ 新規（§1 / §7.4 / §10）
+  ENEMY_ATTACK_POWER: 1.0, // 敵通常攻撃の倍率（将来微調整用）
+  HEAL_MATK_COEF_ONE: 0.7, // 単体回復＝flat + casterMatk*coef（§7.4）
+  HEAL_MATK_COEF_ALL: 0.45, // 全体回復
+  HEAL_MATK_COEF_MINOR: 0.3, // 歌・救護等の軽回復
+  SURPLUS_SP_PER_STAT: 4, // 余剰SP 4 ごとに全ステ +1（§10）
 } as const;
+
+// ----------------------------------------------------------------------------
+// 適正レベル・ティア スケジュール（§2）
+// ----------------------------------------------------------------------------
+
+/** 各ボス階の (適正Lv, 想定装備ティア)。ゲームロジックは参照しないが、テストが参照する。 */
+export const APPROPRIATE: Record<number, { lv: number; tier: number }> = {
+  10: { lv: 12, tier: 1 },
+  20: { lv: 23, tier: 2 },
+  30: { lv: 35, tier: 3 },
+  40: { lv: 47, tier: 4 },
+  50: { lv: 60, tier: 5 },
+  60: { lv: 72, tier: 5 },
+  70: { lv: 83, tier: 5 },
+  80: { lv: 92, tier: 5 },
+  90: { lv: 98, tier: 5 },
+  100: { lv: 100, tier: 5 },
+};
 
 // ----------------------------------------------------------------------------
 // 初期セーブ関連（設計書 05 §4.1 / 07 §4 ＋ ユーザー確定事項）
@@ -89,12 +113,12 @@ export const FORGE = {
   MAX_LEVEL: 5, // 強化上限 +5
   /** 強化値1あたりの ATK/MAT 上昇（武器は両方、防具は DEF/MDF に適用）。 */
   STAT_PER_LEVEL: 2,
+  /** ティア連動係数: 強化+1の上昇 = round(STAT_PER_LEVEL * TIER_STEP^equipTier)（§7.3）。 */
+  TIER_STEP: 1.6,
   /** インゴット種別の強化量（[04 §4.1]）。 */
   INGOT_INC: { copper: 1, silver: 3, gold: 5 } as const,
   /** 断片が何個でインゴット1個に自動変換されるか（[04 §4.2]）。 */
   FRAGMENTS_PER_INGOT: 10,
-  /** リサイクルで得られる断片数（買値帯で増やす暫定。MVP は一律）。 */
-  RECYCLE_FRAGMENTS: 3,
 } as const;
 
 // ----------------------------------------------------------------------------

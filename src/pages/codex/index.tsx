@@ -3,7 +3,11 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
+import { ENEMIES } from '@/data/enemies';
+import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import { codexSummary, monsterCodex } from '@/domain/codex';
+import type { EnemyId } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 
 // 図鑑 / 記録（[05 §1-2]）。到達記録（スコア）とモンスター図鑑の収集状況。
@@ -11,6 +15,8 @@ export const Page = () => {
   const navigate = useNavigate();
   const { save } = useGameState();
   const [tab, setTab] = useState<'record' | 'codex'>('record');
+  // 選択中のモンスター ID（タップで詳細展開）
+  const [selectedId, setSelectedId] = useState<EnemyId | null>(null);
 
   if (!save) {
     return (
@@ -24,6 +30,11 @@ export const Page = () => {
   const rec = save.towerState.record;
   const sum = codexSummary(save);
   const entries = monsterCodex(save);
+
+  const toggleEntry = (id: EnemyId, seen: boolean) => {
+    if (!seen) return; // 未遭遇は展開しない
+    setSelectedId((prev) => (prev === id ? null : id));
+  };
 
   return (
     <div className={styles.layout}>
@@ -95,25 +106,56 @@ export const Page = () => {
             {sum.dropsTotal}
           </div>
           <div className={styles.list}>
-            {entries.map((e) => (
-              <div
-                key={e.id}
-                className={`${styles.row} ${e.seen ? '' : styles.unseen}`}
-              >
-                <div className={styles.info}>
-                  <span className={styles.name}>
-                    {e.seen ? e.name : '？？？'}
-                    {e.defeated ? <span className={styles.badge}>撃破</span> : null}
-                  </span>
-                  <span className={styles.sub}>
-                    第{e.tierBand + 1}帯
-                    {e.seen && e.drops.length > 0
-                      ? '・' + e.drops.map((d) => (d.found ? d.name : '？')).join(' / ')
-                      : ''}
-                  </span>
+            {entries.map((e) => {
+              const isOpen = selectedId === e.id;
+              const master = ENEMIES[e.id];
+              return (
+                <div
+                  key={e.id}
+                  className={`${styles.row} ${e.seen ? '' : styles.unseen} ${e.seen ? styles.rowClickable : ''}`}
+                  role={e.seen ? 'button' : undefined}
+                  tabIndex={e.seen ? 0 : undefined}
+                  onClick={() => toggleEntry(e.id, e.seen)}
+                  onKeyDown={(ev) => {
+                    if (ev.key === 'Enter' || ev.key === ' ') toggleEntry(e.id, e.seen);
+                  }}
+                >
+                  <div className={styles.info}>
+                    <span className={styles.name}>
+                      {e.seen ? e.name : '？？？'}
+                      {e.defeated ? <span className={styles.badge}>撃破</span> : null}
+                      {e.seen ? <span className={styles.expand}>{isOpen ? '▲' : '▼'}</span> : null}
+                    </span>
+                    <span className={styles.sub}>
+                      第{e.tierBand + 1}帯
+                      {e.seen && e.drops.length > 0
+                        ? '・' + e.drops.map((d) => (d.found ? d.name : '？')).join(' / ')
+                        : ''}
+                    </span>
+                  </div>
+
+                  {/* §16: 耐性詳細（遭遇済みのみ展開表示） */}
+                  {isOpen && master ? (
+                    <div className={styles.resistDetail}>
+                      <div className={styles.resistSection}>
+                        <span className={styles.resistHead}>属性</span>
+                        <ResistBadges
+                          elementResist={master.resist}
+                          ailmentResist={undefined}
+                        />
+                      </div>
+                      <div className={styles.resistSection}>
+                        <span className={styles.resistHead}>状態異常</span>
+                        <ResistBadges
+                          elementResist={undefined}
+                          ailmentResist={resolveEnemyAilmentResist(e.id)}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

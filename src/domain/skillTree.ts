@@ -100,3 +100,31 @@ export function learnSkill(char: Character, skillId: SkillId): Character {
     },
   };
 }
+
+/**
+ * このキャラが吸収できる最大 SP（全スキルノードの maxLevel × 深さ別コストの総和
+ * から開始スキル無料 Lv1 ぶんを除いた値）。
+ * 余剰 SP を全ステ変換する際の閾値として使う（§10）。
+ */
+export function maxAbsorbableSp(char: Character): number {
+  const nodes = skillNodesFor(char);
+  // 開始スキル（職業ツリー先頭）の ID。無料付与なのでコスト計算から除く。
+  const starterSkillId = CLASSES[char.classId]?.skillTree.skills[0]?.skillId;
+  let total = 0;
+  for (const node of nodes) {
+    const cost = skillSpCost(char, node.skillId);
+    let lvs = node.maxLevel;
+    // 開始スキルは Lv1 無料（spent に含まれないので maxAbsorbable からも1Lv分除く）
+    if (node.skillId === starterSkillId) lvs = Math.max(0, lvs - 1);
+    total += cost * lvs;
+  }
+  return total;
+}
+
+/**
+ * char.skillPoints.total のうち、スキル習得に使い切れない余剰 SP。
+ * 4SP ごとに全ステ +1 へ自動変換される（§10）。
+ */
+export function surplusSp(char: Character): number {
+  return Math.max(0, char.skillPoints.total - maxAbsorbableSp(char));
+}

@@ -1,0 +1,66 @@
+@use 'variables' as var;
+
+// 耐性バッジ（[06 §16]）。
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.group {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.groupLabel {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.65;
+  min-width: 42px;
+  padding-top: 3px;
+  flex-shrink: 0;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+// 弱点: 赤系
+.weak {
+  color: #b71c1c;
+  background-color: #ffebee;
+  border: 1px solid #ef9a9a;
+}
+
+// 耐性: 青系
+.half {
+  color: #1a237e;
+  background-color: #e8eaf6;
+  border: 1px solid #9fa8da;
+}
+
+// 無効: グレー系
+.null {
+  color: #424242;
+  background-color: #eeeeee;
+  border: 1px solid #bdbdbd;
+}
+
+.none {
+  font-size: 11px;
+  opacity: 0.55;
+}

@@ -5,7 +5,13 @@ import styles from './style.module.scss';
 
 import { FORGE } from '@/data/balance';
 import { EQUIPMENT } from '@/data/equipment';
-import { equipDisplayName, forgeWithIngot, recycle, type IngotType } from '@/domain/forge';
+import {
+  equipDisplayName,
+  forgeWithIngot,
+  recycle,
+  recycleFragments,
+  type IngotType,
+} from '@/domain/forge';
 import { useGameState } from '@/store/gameState';
 
 // 確認待ちの操作（タップ1回での誤強化/誤分解を防ぐ。確認ダイアログ経由でのみ実行）。
@@ -131,7 +137,7 @@ export const Page = () => {
                       setPending({ kind: 'recycle', id: e.id, name: equipDisplayName(e) })
                     }
                   >
-                    分解（断片+{FORGE.RECYCLE_FRAGMENTS}）
+                    分解（断片+{recycleFragments(e.masterId)}）
                   </button>
                 )}
               </div>

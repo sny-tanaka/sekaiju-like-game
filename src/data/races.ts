@@ -23,6 +23,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
       ],
     },
     defaultClassId: 'class_warrior',
+    // ヒトは耐性なし（§15.5）
   },
   // 物理特化の大型種
   race_garon: {
@@ -40,6 +41,9 @@ export const RACES: Record<RaceId, RaceMaster> = {
       ],
     },
     defaultClassId: 'class_guardian',
+    // §15.5 ガロン: 壊耐性/火弱点、毒・脚封じ耐性/麻痺弱点
+    elementResist: { bash: 0.8, fire: 1.2 },
+    ailmentResist: { poison: 0.4, legBind: 0.7, paralysis: 1.2 },
   },
   // 魔法特化の小型種
   race_pix: {
@@ -57,6 +61,9 @@ export const RACES: Record<RaceId, RaceMaster> = {
       ],
     },
     defaultClassId: 'class_mage',
+    // §15.5 ピクス: 魔法耐性/物理弱点、盲目・頭封じ耐性/腕封じ・睡眠弱点
+    elementResist: { fire: 0.85, ice: 0.85, volt: 0.85, slash: 1.2, pierce: 1.2, bash: 1.2 },
+    ailmentResist: { blind: 0.5, headBind: 0.6, armBind: 1.3, sleep: 1.2 },
   },
   // 獣使い種
   race_therian: {
@@ -75,6 +82,9 @@ export const RACES: Record<RaceId, RaceMaster> = {
       ],
     },
     defaultClassId: 'class_ranger',
+    // §15.5 テリアン: 氷弱点、脚封じ・盲目耐性/睡眠弱点
+    elementResist: { ice: 1.2 },
+    ailmentResist: { legBind: 0.4, blind: 0.5, sleep: 1.2 },
   },
   // 月の民（魔法・幸運寄りの癒し手）
   race_lunar: {
@@ -92,6 +102,9 @@ export const RACES: Record<RaceId, RaceMaster> = {
       ],
     },
     defaultClassId: 'class_medic',
+    // §15.5 ルーナ: 氷耐性/火弱点、睡眠・頭封じ耐性/毒弱点
+    elementResist: { ice: 0.8, fire: 1.2 },
+    ailmentResist: { sleep: 0.4, headBind: 0.5, poison: 1.2 },
   },
   // 岩の民（高耐久・剛力）
   race_golan: {
@@ -109,5 +122,8 @@ export const RACES: Record<RaceId, RaceMaster> = {
       ],
     },
     defaultClassId: 'class_monk',
+    // §15.5 ゴラン: 物理全耐性/氷弱点、毒・麻痺耐性/盲目弱点
+    elementResist: { slash: 0.8, pierce: 0.8, bash: 0.8, ice: 1.2 },
+    ailmentResist: { poison: 0.3, paralysis: 0.5, blind: 1.2 },
   },
 };

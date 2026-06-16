@@ -179,6 +179,44 @@
   font-size: 14px;
 }
 
+// §16: モンスター行のタップ展開
+.rowClickable {
+  cursor: pointer;
+  user-select: none;
+
+  &:active {
+    background-color: #f5f5f5;
+  }
+}
+
+.expand {
+  font-size: 10px;
+  opacity: 0.5;
+  margin-left: auto;
+}
+
+// §16: 耐性詳細（展開時）
+.resistDetail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resistSection {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.resistHead {
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0.6;
+}
+
 .foot {
   margin-top: 16px;
 }

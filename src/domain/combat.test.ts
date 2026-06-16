@@ -51,7 +51,7 @@ describe('combat: scale', () => {
     expect(effectiveEnemyStats(enemy, 1)).toEqual(baseStats);
     const deeper = effectiveEnemyStats(enemy, 11); // +10階
     expect(deeper.str).toBeGreaterThan(baseStats.str);
-    // k=0.06 → 11階で 1 + 0.06*10 = 1.6 倍
+    // k=0.05 → 11階で 1 + 0.05*10 = 1.5 倍
     expect(deeper.str).toBe(Math.round(10 * (1 + BALANCE.ENEMY_SCALE_K * 10)));
   });
 });

@@ -157,6 +157,12 @@ export interface Combatant {
   isSummon?: boolean;
   summonKind?: SummonKind; // 召喚体の種別（SUMMONS マスター参照）
   ownerId?: string; // 召喚主の charId
+  /** 敵スキルAI のアクション状態（§3）。戦闘中のみ。SaveData には出さない。 */
+  actionState?: Record<string, { lastUsedTurn: number; uses: number }>;
+  /** 状態異常付与率倍率（[06 §15]）。敵=系統+種別デフォルト/味方=種族。0=完全無効。戦闘中のみ。 */
+  ailmentResist?: Partial<Record<AilmentType, number>>;
+  /** 味方の学習スキルLv（戦闘でスキル威力/消費に反映。敵は未使用）。戦闘中のみ。 */
+  skillLevels?: Record<SkillId, number>;
 }
 
 export interface DamageResult {
@@ -240,6 +246,10 @@ export interface RaceMaster {
   statGrowth: StatGrowth; // Lv ごとの各能力上昇量
   baseStatsAtLv1: Stats;
   raceSkillTree: SkillTreeDef; // 種族固有スキルツリー（ユニオンスキル・採集スキル等を含む）
+  /** 種族の属性被ダメ倍率（[06 §15]。敵 resist と同形。未指定=1.0）。 */
+  elementResist?: Partial<Record<Element, number>>;
+  /** 種族の状態異常付与率倍率（[06 §15]。0=完全無効。未指定=1.0）。 */
+  ailmentResist?: Partial<Record<AilmentType, number>>;
   /** 作成時に割り当てられる既定職業（[01 §4]）。Phase 0 の初期パーティ生成に使う。 */
   defaultClassId: ClassId;
 }
@@ -277,6 +287,8 @@ export interface EnemyMaster {
   gold: number; // 撃破時の所持金
   attackElement?: PhysElement; // 通常攻撃の物理属性（既定 bash）
   resist?: Partial<Record<Element, number>>; // 属性倍率（弱点1.5/耐性0.5/無効0）
+  /** 状態異常の付与率倍率（[06 §15]）。0=完全無効。未指定は kind 別デフォルト＋系統プロファイルで解決。 */
+  ailmentResist?: Partial<Record<AilmentType, number>>;
   /** 通常ドロップ（[04 §7]）。rate=0..1。撃破時に rng で抽選。 */
   drops?: { itemId: ItemId; rate: number }[];
   /** 階層ボスか（[06 §4]）。雑魚プール除外・ボス配置の判定に使う。 */
@@ -286,6 +298,10 @@ export interface EnemyMaster {
    * 未指定は 'zako' 扱い。ボスは isBoss:true も併せて立てる。
    */
   kind?: 'zako' | 'foe' | 'boss';
+  /** 敵スキルキット（§4）。ENEMY_KITS のキー。actions より低優先。 */
+  kit?: string;
+  /** 個別アクション定義（§4.3 ボス用）。kit より優先。 */
+  actions?: EnemyActionDef[];
 }
 
 /**
@@ -308,9 +324,36 @@ export interface SummonMaster {
 // 戦闘スキル定義（[03 §5]）。マスターデータ（関数値を含むため保存しない）。
 // ----------------------------------------------------------------------------
 
+// ----------------------------------------------------------------------------
+// 敵スキルAI（§3）
+// ----------------------------------------------------------------------------
+
+/**
+ * 敵の1アクション定義（§3.1）。既存 SkillEffectDef[] を再利用。
+ * target は陣営相対: enemyOne/enemyAll → 味方PTを攻撃 / self/allyAll → 自陣をバフ
+ */
+export interface EnemyActionDef {
+  id: string;
+  name: string;
+  element: Element;
+  target: TargetType;
+  effects: SkillEffectDef[];
+  weight: number; // 条件を満たすアクション間の重み付き抽選値（>0）
+  cond?: EnemyActionCond;
+}
+
+/** 敵アクションの解禁条件（§3.1）。すべて省略可。 */
+export interface EnemyActionCond {
+  hpBelow?: number; // 自HP割合がこの値以下で解禁（例 0.5）
+  hpAbove?: number; // 自HP割合がこの値以上で解禁
+  cooldown?: number; // 使用後このターン数は再使用不可
+  minTurn?: number; // 戦闘開始から minTurn ターン目以降で解禁（1始まり）
+  maxUses?: number; // 1戦闘あたり使用回数上限
+}
+
 export type SkillEffectDef =
   | { kind: 'damage'; power: (lv: number) => number; statBase: 'str' | 'int'; hits?: number }
-  | { kind: 'heal'; amount: (lv: number) => number }
+  | { kind: 'heal'; amount: (lv: number) => number; matkCoef?: 'one' | 'all' | 'minor' }
   | { kind: 'restoreTp'; amount: (lv: number) => number }
   | {
       kind: 'ailment';
