@@ -952,7 +952,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_summoner_soul_drain: {
     id: 'skill_summoner_soul_drain',
     name: '吸魂',
-    description: '単体に無属性魔法ダメージを与える。',
+    description: '単体に無属性魔法ダメージを与え、与ダメージの一部を自身のHPに吸収する。',
   },
   skill_summoner_tp_offering: {
     id: 'skill_summoner_tp_offering',
@@ -1171,7 +1171,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_medic_regen_balm: {
     id: 'skill_medic_regen_balm',
     name: 'リジェネバーム',
-    description: '味方1人のHPを大きく回復する。',
+    description: '味方1人に継続回復を付与し、数ターンにわたってHPを回復させる霊薬。',
   },
   skill_medic_salvation: {
     id: 'skill_medic_salvation',
@@ -1395,7 +1395,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_summoner_soul_render: {
     id: 'skill_summoner_soul_render',
     name: '魂喰らい',
-    description: '単体に極大の無属性魔法ダメージを与える奥義。',
+    description: '単体に極大の無属性魔法ダメージを与え、与ダメージの一部を自身のHPに吸収する奥義。',
   },
   passive_summoner_spirit_lore: {
     id: 'passive_summoner_spirit_lore',

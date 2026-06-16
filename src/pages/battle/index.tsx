@@ -86,7 +86,7 @@ const AILMENT_LABEL: Record<string, string> = {
 function effectLabel(e: SkillEffectDef, lv: number): string {
   switch (e.kind) {
     case 'damage':
-      return `${e.statBase === 'str' ? '物理' : '魔法'}威力${Math.round(e.power(lv) * 100)}%${e.hits && e.hits > 1 ? `×${e.hits}` : ''}`;
+      return `${e.statBase === 'str' ? '物理' : '魔法'}威力${Math.round(e.power(lv) * 100)}%${e.hits && e.hits > 1 ? `×${e.hits}` : ''}${e.drain ? '・吸収' : ''}`;
     case 'heal':
       return `HP回復${e.amount(lv)}`;
     case 'restoreTp':
@@ -109,6 +109,8 @@ function effectLabel(e: SkillEffectDef, lv: number): string {
       return '状態異常治療';
     case 'revive':
       return `蘇生(HP${Math.round(e.ratio(lv) * 100)}%)`;
+    case 'regen':
+      return `継続回復${e.amount(lv)}`;
     default:
       return '';
   }

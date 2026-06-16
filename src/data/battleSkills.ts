@@ -1281,7 +1281,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 3 + lv,
     element: 'almighty',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.2 + 0.18 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.2 + 0.18 * lv, drain: 0.3 }],
   },
   skill_summoner_tp_offering: {
     id: 'skill_summoner_tp_offering',
@@ -1645,7 +1645,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'almighty',
     target: 'allyOne',
-    effects: [{ kind: 'heal', amount: (lv) => 40 + 20 * lv }],
+    effects: [{ kind: 'regen', amount: (lv) => 20 + 8 * lv, turns: 3, matkCoef: 'minor' as const }],
   },
   skill_medic_salvation: {
     id: 'skill_medic_salvation',
@@ -2049,7 +2049,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'almighty',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.4 + 0.35 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.4 + 0.35 * lv, drain: 0.3 }],
   },
   skill_summoner_call_revenant: {
     id: 'skill_summoner_call_revenant',
