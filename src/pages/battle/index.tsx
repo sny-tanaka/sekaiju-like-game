@@ -425,7 +425,7 @@ export const Page = () => {
     const char = save.guild.members.find((m) => m.id === ally.id);
     if (!char) return [];
     return Object.keys(char.learnedSkills).filter(
-      (sid) => sid in BATTLE_SKILLS && ally.tp >= BATTLE_SKILLS[sid].tpCost(1)
+      (sid) => sid in BATTLE_SKILLS && ally.tp >= BATTLE_SKILLS[sid].tpCost(ally.skillLevels?.[sid] ?? 1)
     );
   };
 
@@ -818,7 +818,7 @@ export const Page = () => {
                     >
                       <span className={styles.skillTop}>
                         <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
-                        <span className={styles.tp}>TP {BATTLE_SKILLS[sid].tpCost(1)}</span>
+                        <span className={styles.tp}>TP {BATTLE_SKILLS[sid].tpCost(active.skillLevels?.[sid] ?? 1)}</span>
                       </span>
                       <span className={styles.skillSummary}>
                         {skillSummary(
