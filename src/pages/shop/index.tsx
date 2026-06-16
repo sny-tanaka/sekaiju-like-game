@@ -3,8 +3,8 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
-import { EQUIPMENT } from '@/data/equipment';
 import { EQUIP_SLOT_LABEL, WEAPON_TYPE_LABEL, ARMOR_TYPE_LABEL } from '@/data/equipLabels';
+import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
 import { equipDisplayName, gradedBaseBonuses } from '@/domain/forge';
 import { itemCount } from '@/domain/inventory';
@@ -220,7 +220,14 @@ export const Page = () => {
     if (bonuses.mdf) bonusParts.push(`MDF+${bonuses.mdf}`);
     if (bonuses.statMods) {
       const statLabelMap: Record<string, string> = {
-        hp: 'HP', tp: 'TP', str: 'STR', vit: 'VIT', agi: 'AGI', int: 'INT', mnd: 'MND', luc: 'LUC',
+        hp: 'HP',
+        tp: 'TP',
+        str: 'STR',
+        vit: 'VIT',
+        agi: 'AGI',
+        int: 'INT',
+        mnd: 'MND',
+        luc: 'LUC',
       };
       for (const [k, v] of Object.entries(bonuses.statMods)) {
         if (v) bonusParts.push(`${statLabelMap[k] ?? k}+${v}`);
@@ -260,9 +267,7 @@ export const Page = () => {
           )}
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>装備可能</span>
-            <span>
-              {eq.slot === 'accessory' ? '全職業' : classNames.join('・')}
-            </span>
+            <span>{eq.slot === 'accessory' ? '全職業' : classNames.join('・')}</span>
           </div>
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>価格</span>
