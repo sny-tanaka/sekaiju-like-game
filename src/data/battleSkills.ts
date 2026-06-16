@@ -428,7 +428,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 6 + lv,
     element: 'fire',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 0.9 + 0.15 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.0 + 0.2 * lv }],
   },
 
   // ---- 狩人（救護） ----
@@ -586,7 +586,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 7 + lv,
     element: 'almighty',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 0.9 + 0.15 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.0 + 0.2 * lv }],
   },
 
   // ---- 称号アクティブ（第2ツリー） ----
@@ -638,7 +638,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'bash',
     target: 'enemyOne',
     effects: [
-      { kind: 'damage', statBase: 'str', power: (lv) => 1.5 + 0.2 * lv },
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.75 + 0.25 * lv },
       { kind: 'ailment', ailment: 'headBind', chance: (lv) => 0.35 + 0.05 * lv, turns: 2 },
     ],
   },
@@ -666,7 +666,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'slash',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.1 + 0.18 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.3 + 0.25 * lv }],
   },
   skill_warrior_executioner: {
     id: 'skill_warrior_executioner',
@@ -675,7 +675,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'slash',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.0 + 0.3 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.2 + 0.3 * lv }],
   },
   skill_warrior_t_rampage: {
     id: 'skill_warrior_t_rampage',
@@ -712,7 +712,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'bash',
     target: 'enemyAll',
     effects: [
-      { kind: 'damage', statBase: 'str', power: (lv) => 0.85 + 0.13 * lv },
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.2 * lv },
       { kind: 'ailment', ailment: 'paralysis', chance: (lv) => 0.3 + 0.03 * lv, turns: 2 },
     ],
   },
@@ -776,7 +776,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'pierce',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.5 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.75 + 0.25 * lv }],
   },
   // ---- 魔導士 ----
   skill_mage_ice_storm: {
@@ -786,7 +786,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 6 + lv,
     element: 'ice',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 0.85 + 0.13 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.0 + 0.2 * lv }],
   },
   skill_mage_volt_storm: {
     id: 'skill_mage_volt_storm',
@@ -795,7 +795,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 6 + lv,
     element: 'volt',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 0.85 + 0.13 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.0 + 0.2 * lv }],
   },
   skill_mage_focus: {
     id: 'skill_mage_focus',
@@ -821,7 +821,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'fire',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.1 + 0.18 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.3 + 0.25 * lv }],
   },
   skill_mage_thunderbolt: {
     id: 'skill_mage_thunderbolt',
@@ -830,7 +830,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'volt',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.0 + 0.3 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.2 + 0.3 * lv }],
   },
   skill_mage_t_hellfire: {
     id: 'skill_mage_t_hellfire',
@@ -839,7 +839,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'fire',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.0 + 0.3 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.2 + 0.3 * lv }],
   },
   skill_mage_t_mana_surge: {
     id: 'skill_mage_t_mana_surge',
@@ -858,7 +858,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'pierce',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.5 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.75 + 0.25 * lv }],
   },
   skill_ranger_charged_shot: {
     id: 'skill_ranger_charged_shot',
@@ -867,7 +867,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'pierce',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.0 + 0.3 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.2 + 0.3 * lv }],
   },
   skill_ranger_rain_of_arrows: {
     id: 'skill_ranger_rain_of_arrows',
@@ -876,7 +876,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 7 + lv,
     element: 'pierce',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 0.85 + 0.13 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.2 * lv }],
   },
   skill_ranger_pin_shot: {
     id: 'skill_ranger_pin_shot',
@@ -906,7 +906,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'pierce',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.0 + 0.3 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.95 + 0.55 * lv }],
   },
   skill_ranger_t_camouflage: {
     id: 'skill_ranger_t_camouflage',
@@ -990,7 +990,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 7 + lv,
     element: 'slash',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 0.85 + 0.13 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.2 * lv }],
   },
   skill_dancer_inspire_dance: {
     id: 'skill_dancer_inspire_dance',
@@ -1042,7 +1042,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'slash',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.0 + 0.3 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.95 + 0.55 * lv }],
   },
   skill_dancer_t_lullaby: {
     id: 'skill_dancer_t_lullaby',
@@ -1103,7 +1103,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'bash',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.0 + 0.3 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.2 + 0.3 * lv }],
   },
   skill_grappler_t_chain_throw: {
     id: 'skill_grappler_t_chain_throw',
@@ -1205,7 +1205,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'almighty',
     target: 'enemyOne',
     effects: [
-      { kind: 'damage', statBase: 'int', power: (lv) => 2.0 + 0.3 * lv },
+      { kind: 'damage', statBase: 'int', power: (lv) => 2.2 + 0.3 * lv },
       { kind: 'ailment', ailment: 'paralysis', chance: (lv) => 0.35 + 0.05 * lv, turns: 2 },
     ],
   },
@@ -1262,7 +1262,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'almighty',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.5 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.6 + 0.4 * lv }],
   },
   // ---- 降霊術士 ----
   skill_summoner_call_familiar: {
@@ -1300,7 +1300,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'ice',
     target: 'enemyOne',
     effects: [
-      { kind: 'damage', statBase: 'int', power: (lv) => 1.5 + 0.2 * lv },
+      { kind: 'damage', statBase: 'int', power: (lv) => 1.75 + 0.25 * lv },
       { kind: 'ailment', ailment: 'paralysis', chance: (lv) => 0.35 + 0.05 * lv, turns: 2 },
     ],
   },
@@ -1311,7 +1311,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'almighty',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.1 + 0.18 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.3 + 0.25 * lv }],
   },
   skill_summoner_spirit_chase: {
     id: 'skill_summoner_spirit_chase',
@@ -1361,7 +1361,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'fire',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.5 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.75 + 0.25 * lv }],
   },
   skill_warrior_whirlwind: {
     id: 'skill_warrior_whirlwind',
@@ -1380,7 +1380,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'bash',
     target: 'enemyOne',
     effects: [
-      { kind: 'damage', statBase: 'str', power: (lv) => 1.7 + 0.2 * lv },
+      { kind: 'damage', statBase: 'str', power: (lv) => 2.2 + 0.3 * lv },
       { kind: 'ailment', ailment: 'armBind', chance: (lv) => 0.35 + 0.05 * lv, turns: 2 },
     ],
   },
@@ -1400,7 +1400,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'bash',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.4 + 0.35 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.7 + 0.4 * lv }],
   },
   skill_warrior_meteor_strike: {
     id: 'skill_warrior_meteor_strike',
@@ -1409,7 +1409,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 12 + lv,
     element: 'slash',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.3 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.6 + 0.3 * lv }],
   },
   // ---- 守護兵 ----
   skill_guardian_shield_throw: {
@@ -1420,7 +1420,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'bash',
     target: 'enemyAll',
     effects: [
-      { kind: 'damage', statBase: 'str', power: (lv) => 0.85 + 0.13 * lv },
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.3 + 0.25 * lv },
       { kind: 'ailment', ailment: 'paralysis', chance: (lv) => 0.3 + 0.03 * lv, turns: 2 },
     ],
   },
@@ -1431,7 +1431,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'pierce',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.5 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.75 + 0.25 * lv }],
   },
   skill_guardian_bulwark_stance: {
     id: 'skill_guardian_bulwark_stance',
@@ -1484,7 +1484,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'pierce',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.4 + 0.35 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.7 + 0.4 * lv }],
   },
   skill_guardian_great_wall: {
     id: 'skill_guardian_great_wall',
@@ -1542,7 +1542,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 12 + lv,
     element: 'ice',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.3 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.6 + 0.3 * lv }],
   },
   skill_mage_ragnarok: {
     id: 'skill_mage_ragnarok',
@@ -1551,7 +1551,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'almighty',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.4 + 0.35 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.7 + 0.4 * lv }],
   },
   // ---- 狩人 ----
   skill_ranger_double_shot: {
@@ -1570,7 +1570,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'pierce',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.3 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.6 + 0.3 * lv }],
   },
   skill_ranger_apollo_shot: {
     id: 'skill_ranger_apollo_shot',
@@ -1579,7 +1579,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'pierce',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.4 + 0.35 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.7 + 0.4 * lv }],
   },
   skill_ranger_binding_volley: {
     id: 'skill_ranger_binding_volley',
@@ -1589,7 +1589,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'pierce',
     target: 'enemyAll',
     effects: [
-      { kind: 'damage', statBase: 'str', power: (lv) => 0.92 + 0.16 * lv },
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.3 * lv },
       { kind: 'ailment', ailment: 'armBind', chance: (lv) => 0.3 + 0.03 * lv, turns: 2 },
     ],
   },
@@ -1768,7 +1768,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'slash',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.3 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.6 + 0.3 * lv }],
   },
   skill_dancer_dual_blade: {
     id: 'skill_dancer_dual_blade',
@@ -1844,7 +1844,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 7 + lv,
     element: 'bash',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 0.85 + 0.13 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 1.0 + 0.2 * lv }],
   },
   skill_monk_ki_guard: {
     id: 'skill_monk_ki_guard',
@@ -1888,7 +1888,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'bash',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.4 + 0.35 * lv }],
+    effects: [{ kind: 'damage', statBase: 'str', power: (lv) => 2.7 + 0.4 * lv }],
   },
   // ---- 呪術士 ----
   skill_hexer_drowsy_hex: {
@@ -1960,7 +1960,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'almighty',
     target: 'enemyOne',
     effects: [
-      { kind: 'damage', statBase: 'int', power: (lv) => 2.0 + 0.3 * lv },
+      { kind: 'damage', statBase: 'int', power: (lv) => 2.2 + 0.3 * lv },
       { kind: 'ailment', ailment: 'sleep', chance: (lv) => 0.35 + 0.05 * lv, turns: 2 },
     ],
   },
@@ -1972,7 +1972,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'almighty',
     target: 'enemyAll',
     effects: [
-      { kind: 'damage', statBase: 'int', power: (lv) => 1.3 + 0.2 * lv },
+      { kind: 'damage', statBase: 'int', power: (lv) => 1.6 + 0.3 * lv },
       { kind: 'ailment', ailment: 'poison', chance: (lv) => 0.3 + 0.03 * lv, turns: 3 },
     ],
   },
@@ -1996,7 +1996,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 6 + lv,
     element: 'ice',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 0.85 + 0.13 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.0 + 0.2 * lv }],
   },
   skill_summoner_soul_ward: {
     id: 'skill_summoner_soul_ward',
@@ -2031,7 +2031,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'almighty',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.5 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.75 + 0.25 * lv }],
   },
   skill_summoner_annihilation: {
     id: 'skill_summoner_annihilation',
@@ -2040,7 +2040,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 12 + lv,
     element: 'almighty',
     target: 'enemyAll',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.3 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.6 + 0.3 * lv }],
   },
   skill_summoner_soul_render: {
     id: 'skill_summoner_soul_render',
@@ -2049,7 +2049,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'almighty',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.4 + 0.35 * lv, drain: 0.3 }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 2.7 + 0.4 * lv, drain: 0.3 }],
   },
   skill_summoner_call_revenant: {
     id: 'skill_summoner_call_revenant',
