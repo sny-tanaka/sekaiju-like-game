@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -14,6 +13,7 @@ import {
   type IngotType,
 } from '@/domain/forge';
 import { useGameState } from '@/store/gameState';
+import { Redirect, useNavigation } from '@/store/navigation';
 
 // 確認待ちの操作（タップ1回での誤強化/誤分解を防ぐ。確認ダイアログ経由でのみ実行）。
 type Pending =
@@ -22,19 +22,14 @@ type Pending =
 
 // 鍛冶屋（[04 §4]）。所有装備（個体）の強化（インゴット消費）とリサイクル。
 export const Page = () => {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
   const play = useSfx();
   const [tab, setTab] = useState<'forge' | 'recycle'>('forge');
   const [pending, setPending] = useState<Pending | null>(null);
 
   if (!save) {
-    return (
-      <Navigate
-        to="/title"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'title' }} />;
   }
 
   const { copper, silver, gold } = save.forgeInventory.ingots;
@@ -159,7 +154,7 @@ export const Page = () => {
         <button
           type="button"
           className={styles.back}
-          onClick={() => navigate('/town')}
+          onClick={() => navigate({ name: 'town' })}
         >
           拠点へ戻る
         </button>

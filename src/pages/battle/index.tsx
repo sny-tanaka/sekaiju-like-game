@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -39,6 +38,7 @@ import type {
   UnionSkillDef,
 } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+import { Redirect, useNavigation } from '@/store/navigation';
 
 type AllyCmd =
   | { kind: 'attack' }
@@ -161,7 +161,7 @@ type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: n
 // 戦闘（[03]）。一括入力型ターン制。本家に倣い、味方は前衛/後衛の2段で表示し、
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
 export const Page = () => {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
   const play = useSfx();
   const { setBattleVariant } = useBgm();
@@ -493,10 +493,10 @@ export const Page = () => {
       const win = final.outcome === 'win';
       if (final.outcome === 'lose') {
         await applyAndPersist((s) => returnToTown(applyBattleResult(s, final)));
-        navigate('/town');
+        navigate({ name: 'town' });
       } else {
         await applyAndPersist((s) => resolveFoeBattle(applyBattleResult(s, final), win));
-        navigate('/dungeon');
+        navigate({ name: 'dungeon' });
       }
     },
     [applyAndPersist, navigate]
@@ -573,12 +573,7 @@ export const Page = () => {
   }, [state, aliveAllies, runTurn]);
 
   if (!save || !save.diveState) {
-    return (
-      <Navigate
-        to="/town"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'town' }} />;
   }
   if (!state) return <div className={styles.layout}>戦闘準備中...</div>;
 

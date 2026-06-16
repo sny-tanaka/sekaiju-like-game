@@ -1,6 +1,6 @@
 {
   "name": "sekaiju-like-game",
-  "version": "0.1.48",
+  "version": "0.1.49",
   "private": true,
   "type": "module",
   "scripts": {
@@ -23,8 +23,7 @@
   "dependencies": {
     "idb": "^8.0.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router": "^7.1.1"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

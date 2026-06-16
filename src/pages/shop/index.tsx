@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -22,6 +21,7 @@ import {
 } from '@/domain/shop';
 import type { EquipInstance, ItemId } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+import { Redirect, useNavigation } from '@/store/navigation';
 
 // 確認待ちの売買操作（タップ1回での誤購入/誤売却を防ぐ。確認ダイアログ経由でのみ実行）。
 type Pending =
@@ -68,7 +68,7 @@ const itemCategory = (id: string): ShopCat => {
 
 // ショップ（[04 §8]）。装備・消費アイテムの売買。カテゴリ絞り込み・並び替え対応。
 export const Page = () => {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
   const play = useSfx();
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
@@ -79,12 +79,7 @@ export const Page = () => {
   const [equipDetail, setEquipDetail] = useState<EquipDetail | null>(null);
 
   if (!save) {
-    return (
-      <Navigate
-        to="/title"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'title' }} />;
   }
 
   const gold = save.guild.gold;
@@ -480,7 +475,7 @@ export const Page = () => {
         <button
           type="button"
           className={styles.back}
-          onClick={() => navigate('/town')}
+          onClick={() => navigate({ name: 'town' })}
         >
           拠点へ戻る
         </button>

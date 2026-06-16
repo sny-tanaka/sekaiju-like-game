@@ -2,14 +2,13 @@
  * BgmProvider.tsx — シーン連動 BGM 再生プロバイダ
  *
  * - 最初のユーザー操作（pointerdown/keydown/touchstart）で AudioContext を生成
- * - react-router の useLocation で pathname を監視してルート→曲を切替
+ * - NavigationProvider の screen を監視してルート→曲を切替
  * - 音量/ミュートを localStorage で永続化
  * - iOS Safari 対策: ジェスチャー内で無音バッファを同期再生して AudioContext を解錠する
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useLocation } from 'react-router';
 
 import { BgmContext } from './bgmContext';
 import type { BattleVariant } from './bgmContext';
@@ -22,6 +21,9 @@ import foeTrack from './tracks/foe.json';
 import titleTrack from './tracks/title.json';
 import townTrack from './tracks/town.json';
 import type { BgmTrack } from './types';
+
+import type { ScreenName } from '@/store/navigation';
+import { useNavigation } from '@/store/navigation';
 
 // トラックID。戦闘系（battle/boss/foe）は /battle 内で敵種別により切替。
 type TrackId = 'title' | 'town' | 'explore' | 'battle' | 'boss' | 'foe';
@@ -36,21 +38,22 @@ const TRACK_MAP: Record<TrackId, BgmTrack> = {
 };
 
 /**
- * pathname → トラックID（null = 無音）。
- * /battle は敵種別で battle/boss/foe を切替えるため、ここでは扱わず BattleVariant 側に委ねる。
+ * screen.name → トラックID（null = 無音）。
+ * battle は敵種別で battle/boss/foe を切替えるため、ここでは扱わず BattleVariant 側に委ねる。
  */
-function pathnameToTrackId(pathname: string): TrackId | null {
-  if (pathname === '/title' || pathname === '/') return 'title';
+function screenToTrackId(name: ScreenName): TrackId | null {
+  if (name === 'title') return 'title';
   if (
-    pathname === '/town' ||
-    pathname === '/shop' ||
-    pathname === '/forge' ||
-    pathname.startsWith('/guild') ||
-    pathname === '/codex'
+    name === 'town' ||
+    name === 'shop' ||
+    name === 'forge' ||
+    name === 'guild' ||
+    name === 'guildChar' ||
+    name === 'codex'
   )
     return 'town';
-  if (pathname === '/dungeon') return 'explore';
-  return null;
+  if (name === 'dungeon') return 'explore';
+  return null; // battle は battleVariant 側で決まる
 }
 
 export const BgmProvider = ({ children }: { children: ReactNode }) => {
@@ -75,7 +78,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
   const volumeRef = useRef(initialSettings.volume);
   const mutedRef = useRef(initialSettings.muted);
 
-  const location = useLocation();
+  const { screen } = useNavigation();
 
   /**
    * iOS Safari 対策: ユーザージェスチャー内で無音バッファ(1フレーム)を同期再生して
@@ -152,10 +155,10 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [initAudioContext, unlockAudio]);
 
-  /** ルート＋戦闘バリアントから実際に再生するトラックを決める。 */
+  /** スクリーン＋戦闘バリアントから実際に再生するトラックを決める。 */
   useEffect(() => {
     const trackId: TrackId | null =
-      location.pathname === '/battle' ? battleVariant : pathnameToTrackId(location.pathname);
+      screen.name === 'battle' ? battleVariant : screenToTrackId(screen.name);
 
     if (playerRef.current) {
       const track = trackId ? TRACK_MAP[trackId] : null;
@@ -165,7 +168,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
       // AudioContext 未初期化時は保留
       pendingTrackIdRef.current = trackId;
     }
-  }, [location.pathname, battleVariant]);
+  }, [screen.name, battleVariant]);
 
   /** volume / muted が変わったらプレイヤーに反映し永続化。 */
   useEffect(() => {

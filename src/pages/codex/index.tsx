@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -10,10 +9,11 @@ import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import { codexSummary, monsterCodex } from '@/domain/codex';
 import type { EnemyId } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+import { Redirect, useNavigation } from '@/store/navigation';
 
 // 図鑑 / 記録（[05 §1-2]）。到達記録（スコア）とモンスター図鑑の収集状況。
 export const Page = () => {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const { save } = useGameState();
   const play = useSfx();
   const [tab, setTab] = useState<'record' | 'codex'>('record');
@@ -21,12 +21,7 @@ export const Page = () => {
   const [selectedId, setSelectedId] = useState<EnemyId | null>(null);
 
   if (!save) {
-    return (
-      <Navigate
-        to="/title"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'title' }} />;
   }
 
   const rec = save.towerState.record;
@@ -173,7 +168,7 @@ export const Page = () => {
         <button
           type="button"
           className={styles.back}
-          onClick={() => navigate('/town')}
+          onClick={() => navigate({ name: 'town' })}
         >
           拠点へ戻る
         </button>
