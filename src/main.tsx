@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router';
 import '@/index.scss';
 
 import App from '@/App';
+import { BgmProvider } from '@/audio/bgm/BgmProvider';
 import { SoundProvider } from '@/audio/SoundProvider';
 import { validateMasters } from '@/data/validateMasters';
 import { GameStateProvider } from '@/store/gameState';
@@ -21,9 +22,11 @@ if (!container) throw new Error('Failed to find #root element');
 createRoot(container).render(
   <BrowserRouter basename="/sekaiju-like-game">
     <SoundProvider>
-      <GameStateProvider>
-        <App />
-      </GameStateProvider>
+      <BgmProvider>
+        <GameStateProvider>
+          <App />
+        </GameStateProvider>
+      </BgmProvider>
     </SoundProvider>
   </BrowserRouter>
 );

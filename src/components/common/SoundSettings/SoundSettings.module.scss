@@ -17,6 +17,18 @@
   color: var.$text-dark;
 }
 
+.sectionTitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var.$text-dark;
+  opacity: 0.65;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var.$gray;
+  padding-bottom: 4px;
+}
+
 .row {
   display: flex;
   align-items: center;
