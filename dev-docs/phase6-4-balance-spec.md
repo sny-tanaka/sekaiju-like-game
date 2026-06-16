@@ -200,13 +200,13 @@ ea_bind_bite     : { name:'噛み砕き', element:<属性>, target:'enemyOne',
 eb_signature     : { name:'<ボス専用大技>', element:<属性>, target:'enemyOne',
    effects:[{kind:'damage',statBase:'str',power:()=>2.2}], weight:6, cond:{cooldown:4} }
 eb_aoe           : { name:'<全体攻撃>', element:<属性>, target:'enemyAll',
-   effects:[{kind:'damage',statBase:'str',power:()=>1.0}], weight:5, cond:{cooldown:3} }
+   effects:[{kind:'damage',statBase:'str',power:()=>1.0}], weight:7, cond:{cooldown:2} }  // §19: weight 5→7, cooldown 3→2（AoE圧強化）
 eb_self_buff     : { name:'力を溜める', element:'almighty', target:'self',
    effects:[{kind:'buff',stat:'patk',modifier:()=>1.35,turns:3,stackGroup:'atkBuff'}], weight:4, cond:{cooldown:5,hpAbove:0.5} }
 eb_def_buff      : { name:'守りを固める', element:'almighty', target:'self',
    effects:[{kind:'buff',stat:'pdef',modifier:()=>1.4,turns:3,stackGroup:'defBuff'}], weight:3, cond:{cooldown:6} }
 eb_enrage_aoe    : { name:'激昂', element:<属性>, target:'enemyAll',
-   effects:[{kind:'damage',statBase:'str',power:()=>1.4}], weight:8, cond:{hpBelow:0.5,cooldown:3} }
+   effects:[{kind:'damage',statBase:'str',power:()=>1.4}], weight:8, cond:{hpBelow:0.65,cooldown:3} }  // §19: hpBelow 0.5→0.65（激昂解禁を早める）
 eb_status_aoe    : { name:'<状態異常AoE>', element:'almighty', target:'enemyAll',
    effects:[{kind:'ailment',ailment:<毒/麻痺/盲目>,chance:()=>0.4,turns:3}], weight:4, cond:{hpBelow:0.6,cooldown:5} }
 ```
@@ -272,15 +272,15 @@ eb_status_aoe    : { name:'<状態異常AoE>', element:'almighty', target:'enemy
   例: しげみのオオツノジカ 58→174 / 腐肉の巨像 860→2580。
 - **ボス**: 下表の固定値（§13 `boss` sim で 18〜22t を確認して確定）。
 
-| ボス | 旧HP（§17以前） | 確定HP（§17 忠実シミュ収束） | §18 スキルLv反映後 HP | §18 確定str | ターン数（seed=93） |
-| --- | --- | --- | --- | --- | --- |
-| 門番のゴーレム(F10) | 220 | **9000** | **9000**（変更なし） | 18（変更なし） | 20t |
-| 山嶺の大猿王(F20) | 620 | **7000** | **9500** | 48 | 21t |
-| 氷晶の女王(F30) | 1300 | **18000** | **28000** | 140 | 22t |
-| 雷霆の覇王(F40) | 2500 | **13000** | **19000** | 130 | 21t |
-| 瘴気を統べる腐王(F50) | 4200 | **13500** | **18500** | 142（変更なし） | 20t |
+| ボス | 旧HP（§17以前） | 確定HP（§17 忠実シミュ収束） | §18 スキルLv反映後 HP | §19 AoE圧強化後 HP | §19 確定str | ターン数（seed=93） |
+| --- | --- | --- | --- | --- | --- | --- |
+| 門番のゴーレム(F10) | 220 | **9000** | **9000**（変更なし） | **9000**（変更なし） | 30（18→30） | 20t |
+| 山嶺の大猿王(F20) | 620 | **7000** | **9500** | **9500**（変更なし） | 48（変更なし） | 21t |
+| 氷晶の女王(F30) | 1300 | **18000** | **28000** | **28000**（変更なし） | 140（変更なし） | 20t |
+| 雷霆の覇王(F40) | 2500 | **13000** | **19000** | **19000**（変更なし） | 220（130→220） | 22t |
+| 瘴気を統べる腐王(F50) | 4200 | **13500** | **18500** | **16000**（18500→16000） | 142（変更なし） | 18t |
 
-> §17 確定値はスキルLv1固定での忠実シミュで収束したもの。§18（スキルLv反映バグ修正）後、パーティの火力・回復が向上したため、HPを約1.3〜1.5倍に再調整。また中間帯（F20/F30/F40）のボスはSTRも引き上げ（旧値の1.2〜2.2倍）、高Lvスキルによる回復力向上に対して適切な脅威を維持する。F10・F50はHPのみ or 据え置きで対応。CI対象（F10/F30/F50）は全てターン18〜22・勝利・最低HP率≤15% を満たす。F20/F40はCI非対象（faithful sim で確認）。
+> §19（AoE圧強化・AC1全5ボスCI化）: eb_aoe の weight 5→7・cooldown 3→2、eb_enrage_aoe の hpBelow 0.5→0.65 に変更し、ボスのAoE圧を大幅強化。これにより F10/F40 で非タンクへのAoE被ダメが増加→最低HP率≤15%達成。F50はAoE増加で回復消耗が増しターン数が 20→25 に伸びたため、HP を 18500→16000 に下げて 18 ターンに収束。全5ボスでCI（F20/F40 含め除外なし）を実施。
 
 ### 5.2 FOE の被ダメ強化
 
@@ -687,22 +687,17 @@ skillLv = clamp(1 + floor((charLv - 1) / 8), 1, skill.maxLevel)
 
 スキルLv反映でパーティの火力・回復が向上したため、ボスHPと一部ボスSTRを再調整。§5.1 参照。
 
-**CI対象（F10/F30/F50）の最終確認（seed=93）:**
+**CI対象（全5ボス F10/F20/F30/F40/F50）の最終確認（seed=93）【§19 AoE圧強化後】:**
 
-| ボス | HP | STR | ターン数 | win | minHpRatio |
-| --- | --- | --- | --- | --- | --- |
-| 門番のゴーレム(F10) | 9000 | 18 | 20t | ✓ | 0.120 |
-| 氷晶の女王(F30) | 28000 | 140 | 22t | ✓ | 0.003 |
-| 瘴気を統べる腐王(F50) | 18500 | 142 | 20t | ✓ | 0.068 |
-
-**非CI確認（F20/F40）:**
-
-| ボス | HP | STR | ターン数 | win | minHpRatio | 備考 |
+| ボス | HP | STR | ターン数 | win | minHpRatio | 判定 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 山嶺の大猿王(F20) | 9500 | 48 | 21t | ✓ | 0.300 | minHpRatio基準外（守護兵のdecoy効果が高すぎる） |
-| 雷霆の覇王(F40) | 19000 | 130 | 21t | ✓ | 0.442 | 同上 |
+| 門番のゴーレム(F10) | 9000 | 30 | 20t | ✓ | 0.071 | ✓ AC1達成 |
+| 山嶺の大猿王(F20) | 9500 | 48 | 21t | ✓ | 0.139 | ✓ AC1達成 |
+| 氷晶の女王(F30) | 28000 | 140 | 20t | ✓ | 0.035 | ✓ AC1達成 |
+| 雷霆の覇王(F40) | 19000 | 220 | 22t | ✓ | 0.043 | ✓ AC1達成 |
+| 瘴気を統べる腐王(F50) | 16000 | 142 | 18t | ✓ | 0.068 | ✓ AC1達成 |
 
-> F20/F40 でminHpRatio>0.15となるのは、適正Lv（lv=23/47）での守護兵挑発（skill_provoke lv=3/5）のdecoy重みが7となり、ボス攻撃の約66%を盾が吸収するため。ターン数・勝利条件は満たしており、「難しいが勝てる」設計意図は達成されている。実プレイでは最適な挑発管理ができない場面もあり、薬師のTPが枯渇した終盤では脅威となる。
+> §19 以降、F20/F40 の非CI除外は撤廃。全5ボスが CI（`balanceSim.test.ts`）で 18≤turns≤22 && win && 0<minHpRatio≤0.15 を恒久 assert する。AoE圧強化（eb_aoe weight:5→7, cooldown:3→2; eb_enrage_aoe hpBelow:0.5→0.65）により、挑発で単体攻撃を無力化していても全体攻撃で非タンクが削られ緊張感を維持する。
 
 ### 18.5 EXP変更
 

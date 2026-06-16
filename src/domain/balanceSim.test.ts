@@ -432,7 +432,7 @@ function runSim(
 describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
   /**
    * 設計目標: 18〜22ターン / 勝利 / 最低パーティHP率 ≤ 15%
-   * 代表階 F10/F30/F50 で検証（CI 時間節約のため全5体から3体に絞る）
+   * 全5ボス F10/F20/F30/F40/F50 で検証（除外なし）
    */
   const BOSS_CASES = [
     {
@@ -441,9 +441,19 @@ describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
       name: '門番のゴーレム',
     },
     {
+      floor: 20,
+      enemyId: 'enemy_t1_boss_mountain_lord' as EnemyId,
+      name: '山嶺の大猿王',
+    },
+    {
       floor: 30,
       enemyId: 'enemy_t2_boss_frost_monarch' as EnemyId,
       name: '氷晶の女王',
+    },
+    {
+      floor: 40,
+      enemyId: 'enemy_t3_boss_tempest_sovereign' as EnemyId,
+      name: '雷霆の覇王',
     },
     {
       floor: 50,
@@ -462,6 +472,7 @@ describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
       expect(result.win).toBe(true);
       expect(result.turns).toBeGreaterThanOrEqual(18);
       expect(result.turns).toBeLessThanOrEqual(22);
+      expect(result.minPartyHpRatio).toBeGreaterThan(0);
       expect(result.minPartyHpRatio).toBeLessThanOrEqual(0.15);
     });
   }
