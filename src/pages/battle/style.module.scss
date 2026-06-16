@@ -114,6 +114,21 @@
   box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.35);
 }
 
+// 味方対象選択中: タップ可能な味方カード
+.allySelectable {
+  border-color: #1565c0;
+  border-style: dashed;
+  cursor: pointer;
+}
+
+// 味方対象選択中: 現在選択されている対象
+.allyTargeted {
+  border-color: #1565c0;
+  border-style: solid;
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.4);
+  background-color: #e3f2fd;
+}
+
 .cardDecided {
   background-color: #f1f8e9;
 }
@@ -284,6 +299,13 @@
   opacity: 0.75;
 }
 
+// 味方対象選択モード時の対象表示
+.targetAlly {
+  color: #1565c0;
+  font-weight: 700;
+  opacity: 1;
+}
+
 // ---- ユニオン ----
 .unionBanner {
   display: flex;
@@ -336,6 +358,31 @@
   font-size: 12px;
   font-weight: 700;
   color: #e65100;
+}
+
+// 味方対象選択フェーズのヒント
+.allyTargetHint {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1565c0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+  line-height: 1.45;
+}
+
+.allyTargetSub {
+  font-size: 11px;
+  font-weight: 400;
+  color: #1565c0;
+  opacity: 0.8;
+}
+
+// 味方対象リストで選択されているボタン
+.allyTargetSelected {
+  border-color: #1565c0;
+  background-color: #e3f2fd;
 }
 
 .unionBtn {
