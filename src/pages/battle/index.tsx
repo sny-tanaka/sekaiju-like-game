@@ -905,7 +905,14 @@ export const Page = () => {
                     </div>
                     {def ? (
                       <div className={styles.unionBannerDesc}>
-                        {skillSummary(def.element, def.target, def.effects)}
+                        {skillSummary(
+                          def.element,
+                          def.target,
+                          def.effects,
+                          state.allies.find((a) => a.id === unionCmd.actorId)?.skillLevels?.[
+                            unionCmd.unionSkillId
+                          ] ?? 1
+                        )}
                         <br />
                         {def.description}
                       </div>
@@ -980,7 +987,8 @@ export const Page = () => {
                         {skillSummary(
                           BATTLE_SKILLS[sid].element,
                           BATTLE_SKILLS[sid].target,
-                          BATTLE_SKILLS[sid].effects
+                          BATTLE_SKILLS[sid].effects,
+                          active.skillLevels?.[sid] ?? 1
                         )}
                       </span>
                       <span className={styles.skillDesc}>{SKILLS[sid]?.description ?? ''}</span>
@@ -1033,7 +1041,10 @@ export const Page = () => {
                     {skillSummary(
                       unionSetup.def.element,
                       unionSetup.def.target,
-                      unionSetup.def.effects
+                      unionSetup.def.effects,
+                      state.allies.find((a) => a.id === unionSetup.actorId)?.skillLevels?.[
+                        unionSetup.def.id
+                      ] ?? 1
                     )}
                     <br />
                     {unionSetup.def.description}
@@ -1081,7 +1092,12 @@ export const Page = () => {
                       <div className={styles.unionInfo}>
                         ⚡ <strong>{def.name}</strong> 発動可（ゲージ100%）
                         <br />
-                        {skillSummary(def.element, def.target, def.effects)}
+                        {skillSummary(
+                          def.element,
+                          def.target,
+                          def.effects,
+                          active.skillLevels?.[def.id] ?? 1
+                        )}
                       </div>
                     );
                   })()}
