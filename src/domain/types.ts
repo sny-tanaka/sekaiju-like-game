@@ -161,6 +161,8 @@ export interface Combatant {
   actionState?: Record<string, { lastUsedTurn: number; uses: number }>;
   /** 状態異常付与率倍率（[06 §15]）。敵=系統+種別デフォルト/味方=種族。0=完全無効。戦闘中のみ。 */
   ailmentResist?: Partial<Record<AilmentType, number>>;
+  /** 味方の学習スキルLv（戦闘でスキル威力/消費に反映。敵は未使用）。戦闘中のみ。 */
+  skillLevels?: Record<SkillId, number>;
 }
 
 export interface DamageResult {

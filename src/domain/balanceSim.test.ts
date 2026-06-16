@@ -184,6 +184,7 @@ function buildAlly(def: MemberDef, lv: number, tier: number): Combatant {
     isDown: false,
     resist: race?.elementResist,
     ailmentResist: race?.ailmentResist,
+    skillLevels: buildSkillLevels(lv),
   };
 }
 
@@ -218,19 +219,60 @@ function buildEnemyCombatant(enemyId: EnemyId, index: number, depth: number): Co
 }
 
 // ============================================================================
+// スキルLvモデル（§2）
+// ============================================================================
+
+/**
+ * 適正キャラLvに応じたスキル学習Lv。
+ * skillLv = clamp(1 + floor((charLv - 1) / 8), 1, maxLevel)
+ */
+const SKILL_MAX_LEVEL: Record<string, number> = {
+  skill_power_slash: 5,
+  skill_triple_strike: 5,
+  skill_fire_bolt: 5,
+  skill_heal: 5,
+  skill_mass_heal: 5,
+  skill_provoke: 3,
+  skill_shield_bash: 5,
+};
+
+function skillLvAtCharLv(charLv: number, maxLevel: number): number {
+  return Math.max(1, Math.min(maxLevel, 1 + Math.floor((charLv - 1) / 8)));
+}
+
+function buildSkillLevels(charLv: number): Record<string, number> {
+  const levels: Record<string, number> = {};
+  for (const [skillId, maxLv] of Object.entries(SKILL_MAX_LEVEL)) {
+    levels[skillId] = skillLvAtCharLv(charLv, maxLv);
+  }
+  return levels;
+}
+
+// ============================================================================
 // スクリプトAI（§13.1 / §17-1）
 // ============================================================================
 
-// TP コスト定義（skill level=1 での実コスト）
-const SKILL_TP_COST: Record<string, number> = {
-  skill_provoke: 3,
-  skill_shield_bash: 3 + 1, // 3+lv at lv1
-  skill_power_slash: 3 + 1,
-  skill_triple_strike: 4 + 1,
-  skill_fire_bolt: 4 + 1,
-  skill_heal: 4 + 1,
-  skill_mass_heal: 8 + 1,
-};
+/** スキルの実TP消費を学習Lvで計算 */
+function skillTpCost(skillId: string, skillLv: number): number {
+  switch (skillId) {
+    case 'skill_provoke':
+      return 3; // tpCost = () => 3
+    case 'skill_shield_bash':
+      return 3 + skillLv;
+    case 'skill_power_slash':
+      return 3 + skillLv;
+    case 'skill_triple_strike':
+      return 4 + skillLv;
+    case 'skill_fire_bolt':
+      return 4 + skillLv;
+    case 'skill_heal':
+      return 4 + skillLv;
+    case 'skill_mass_heal':
+      return 8 + skillLv;
+    default:
+      return 5;
+  }
+}
 
 /**
  * 1ターン分の味方コマンドをスクリプトAIで生成する。
@@ -256,8 +298,10 @@ function makeCommands(state: BattleState, turn: number): BattleCommand[] {
       const critical = alive.filter((a) => a.hp / a.maxHp < 0.35);
       const hurt = alive.filter((a) => a.hp / a.maxHp < 0.7);
 
-      const healCost = SKILL_TP_COST['skill_heal'];
-      const massCost = SKILL_TP_COST['skill_mass_heal'];
+      const healSkillLv = ally.skillLevels?.['skill_heal'] ?? 1;
+      const massSkillLv = ally.skillLevels?.['skill_mass_heal'] ?? 1;
+      const healCost = skillTpCost('skill_heal', healSkillLv);
+      const massCost = skillTpCost('skill_mass_heal', massSkillLv);
 
       if (critical.length > 0 && ally.tp >= healCost) {
         // 最低HP の味方を単体ヒール
@@ -276,11 +320,10 @@ function makeCommands(state: BattleState, turn: number): BattleCommand[] {
         commands.push({ kind: 'attack', actorId: ally.id, targetId: firstEnemy.id });
       }
     } else if (def.role === 'shield') {
-      // 盾: 初ターンのみ挑発（decoy を張る）、以降は攻撃でTP節約
-      // 挑発は cooldown がないので毎ターン使えるが、TP を攻撃/スキルに回す
-      // turn 1 と decoy が切れたタイミング(3ターンごと)で挑発
+      // 盾: decoy が切れたら挑発、それ以外は攻撃でTP節約
       const hasDecoy = (ally.states ?? []).some((s) => s.kind === 'decoy');
-      const provoceCost = SKILL_TP_COST['skill_provoke'];
+      const provSkillLv = ally.skillLevels?.['skill_provoke'] ?? 1;
+      const provoceCost = skillTpCost('skill_provoke', provSkillLv);
       if (!hasDecoy && ally.tp >= provoceCost) {
         commands.push({
           kind: 'skill',
@@ -289,7 +332,8 @@ function makeCommands(state: BattleState, turn: number): BattleCommand[] {
           targetId: ally.id,
         });
       } else if (def.skillId && def.skillId !== 'skill_provoke') {
-        const cost = SKILL_TP_COST[def.skillId] ?? 5;
+        const skLv = ally.skillLevels?.[def.skillId] ?? 1;
+        const cost = skillTpCost(def.skillId, skLv);
         if (ally.tp >= cost) {
           commands.push({
             kind: 'skill',
@@ -305,7 +349,8 @@ function makeCommands(state: BattleState, turn: number): BattleCommand[] {
       }
     } else if (def.skillId) {
       // DPS: TP があればスキル、なければ通常攻撃
-      const cost = SKILL_TP_COST[def.skillId] ?? 5;
+      const skLv = ally.skillLevels?.[def.skillId] ?? 1;
+      const cost = skillTpCost(def.skillId, skLv);
       if (ally.tp >= cost) {
         commands.push({
           kind: 'skill',

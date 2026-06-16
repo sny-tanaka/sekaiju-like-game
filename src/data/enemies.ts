@@ -415,8 +415,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t1_boss_mountain_lord: {
     id: 'enemy_t1_boss_mountain_lord',
     name: '山嶺の大猿王',
-    // HP 固定 7000（§17 忠実シミュ確定値: seed=93 で turns=18, minHp=0.065）
-    baseStats: { hp: 7000, tp: 0, str: 40, vit: 34, agi: 12, int: 8, mnd: 18, luc: 8 },
+    // HP 固定（§17 忠実シミュ確定値・スキルLv反映後再調整）
+    baseStats: { hp: 9500, tp: 0, str: 48, vit: 34, agi: 12, int: 8, mnd: 18, luc: 8 },
     refDepth: 20,
     tierBand: 1,
     // exp ×6
@@ -610,8 +610,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t2_boss_frost_monarch: {
     id: 'enemy_t2_boss_frost_monarch',
     name: '氷晶の女王',
-    // HP 固定 18000（§17 忠実シミュ確定値: seed=93 で turns=20, minHp=0.096）
-    baseStats: { hp: 18000, tp: 0, str: 64, vit: 54, agi: 18, int: 16, mnd: 22, luc: 12 },
+    // HP 固定（§17 忠実シミュ確定値・スキルLv反映後再調整）
+    baseStats: { hp: 28000, tp: 0, str: 140, vit: 54, agi: 18, int: 16, mnd: 22, luc: 12 },
     refDepth: 30,
     tierBand: 2,
     // exp ×6
@@ -805,8 +805,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t3_boss_tempest_sovereign: {
     id: 'enemy_t3_boss_tempest_sovereign',
     name: '雷霆の覇王',
-    // HP 固定 13000（§17 忠実シミュ確定値: seed=93 で turns=21, minHp=0.035）
-    baseStats: { hp: 13000, tp: 0, str: 102, vit: 86, agi: 34, int: 22, mnd: 26, luc: 14 },
+    // HP 固定（§17 忠実シミュ確定値・スキルLv反映後再調整）
+    baseStats: { hp: 19000, tp: 0, str: 130, vit: 86, agi: 34, int: 22, mnd: 26, luc: 14 },
     refDepth: 40,
     tierBand: 3,
     // exp ×6
@@ -1024,8 +1024,8 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
   enemy_t4_boss_blight_sovereign: {
     id: 'enemy_t4_boss_blight_sovereign',
     name: '瘴気を統べる腐王',
-    // HP 固定 13500（§17 忠実シミュ確定値: seed=93 で turns=21, minHp=0.068）
-    baseStats: { hp: 13500, tp: 0, str: 142, vit: 122, agi: 16, int: 30, mnd: 64, luc: 26 },
+    // HP 固定（§17 忠実シミュ確定値・スキルLv反映後再調整）
+    baseStats: { hp: 18500, tp: 0, str: 142, vit: 122, agi: 16, int: 30, mnd: 64, luc: 26 },
     refDepth: 50,
     tierBand: 4,
     // exp ×6

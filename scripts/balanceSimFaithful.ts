@@ -166,6 +166,7 @@ function buildAlly(def: Def, lv: number, tier: number): Combatant {
     isDown: false,
     resist: race?.elementResist,
     ailmentResist: race?.ailmentResist,
+    skillLevels: buildSkillLevels(lv),
   };
 }
 
@@ -199,16 +200,55 @@ function buildEnemyCombatant(enemyId: EnemyId, index: number, depth: number): Co
 }
 
 // ============================================================================
-// スクリプトAI（§13.1 / §17-1）
+// スキルLvモデル（§2）
 // ============================================================================
-const SKILL_TP_COST: Record<string, number> = {
-  skill_provoke: 3,
-  skill_power_slash: 4,
+
+const SKILL_MAX_LEVEL: Record<string, number> = {
+  skill_power_slash: 5,
   skill_triple_strike: 5,
   skill_fire_bolt: 5,
   skill_heal: 5,
-  skill_mass_heal: 9,
+  skill_mass_heal: 5,
+  skill_provoke: 3,
+  skill_shield_bash: 5,
 };
+
+function skillLvAtCharLv(charLv: number, maxLevel: number): number {
+  return Math.max(1, Math.min(maxLevel, 1 + Math.floor((charLv - 1) / 8)));
+}
+
+function buildSkillLevels(charLv: number): Record<string, number> {
+  const levels: Record<string, number> = {};
+  for (const [skillId, maxLv] of Object.entries(SKILL_MAX_LEVEL)) {
+    levels[skillId] = skillLvAtCharLv(charLv, maxLv);
+  }
+  return levels;
+}
+
+// ============================================================================
+// スクリプトAI（§13.1 / §17-1）
+// ============================================================================
+
+function skillTpCost(skillId: string, skillLv: number): number {
+  switch (skillId) {
+    case 'skill_provoke':
+      return 3;
+    case 'skill_shield_bash':
+      return 3 + skillLv;
+    case 'skill_power_slash':
+      return 3 + skillLv;
+    case 'skill_triple_strike':
+      return 4 + skillLv;
+    case 'skill_fire_bolt':
+      return 4 + skillLv;
+    case 'skill_heal':
+      return 4 + skillLv;
+    case 'skill_mass_heal':
+      return 8 + skillLv;
+    default:
+      return 5;
+  }
+}
 
 function makeCommands(state: BattleState): BattleCommand[] {
   const commands: BattleCommand[] = [];
@@ -225,8 +265,10 @@ function makeCommands(state: BattleState): BattleCommand[] {
       const alive = aliveAllies;
       const critical = alive.filter((a) => a.hp / a.maxHp < 0.35);
       const hurt = alive.filter((a) => a.hp / a.maxHp < 0.7);
-      const healCost = SKILL_TP_COST['skill_heal'];
-      const massCost = SKILL_TP_COST['skill_mass_heal'];
+      const healSkillLv = ally.skillLevels?.['skill_heal'] ?? 1;
+      const massSkillLv = ally.skillLevels?.['skill_mass_heal'] ?? 1;
+      const healCost = skillTpCost('skill_heal', healSkillLv);
+      const massCost = skillTpCost('skill_mass_heal', massSkillLv);
       if (critical.length > 0 && ally.tp >= healCost) {
         const tgt = critical.reduce((a, b) => (a.hp < b.hp ? a : b));
         commands.push({ kind: 'skill', actorId: ally.id, skillId: 'skill_heal', targetId: tgt.id });
@@ -242,7 +284,8 @@ function makeCommands(state: BattleState): BattleCommand[] {
       }
     } else if (def.role === 'shield') {
       const hasDecoy = (ally.states ?? []).some((s) => s.kind === 'decoy');
-      const provoceCost = SKILL_TP_COST['skill_provoke'];
+      const provSkillLv = ally.skillLevels?.['skill_provoke'] ?? 1;
+      const provoceCost = skillTpCost('skill_provoke', provSkillLv);
       if (!hasDecoy && ally.tp >= provoceCost) {
         commands.push({
           kind: 'skill',
@@ -254,7 +297,8 @@ function makeCommands(state: BattleState): BattleCommand[] {
         commands.push({ kind: 'attack', actorId: ally.id, targetId: firstEnemy.id });
       }
     } else if (def.skillId) {
-      const cost = SKILL_TP_COST[def.skillId] ?? 5;
+      const skLv = ally.skillLevels?.[def.skillId] ?? 1;
+      const cost = skillTpCost(def.skillId, skLv);
       if (ally.tp >= cost) {
         commands.push({
           kind: 'skill',

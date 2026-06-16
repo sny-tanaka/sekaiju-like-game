@@ -127,6 +127,8 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
     resist: race?.elementResist,
     // 状態異常耐性（§15.2: 味方 Combatant.ailmentResist に race.ailmentResist を載せる）
     ailmentResist: race?.ailmentResist,
+    // 学習スキルLv（戦闘でスキル威力/消費に反映）
+    skillLevels: char.learnedSkills,
   };
 }
 
@@ -718,7 +720,7 @@ function resolveUnion(
     p.unionGauge = clamp(p.unionGauge - def.gaugeCostPerParticipant, 0, 100);
   }
   state.log.push({ text: `ユニオン！ ${activator.name} の${def.name}！` });
-  const level = 1; // MVP は Lv1 運用
+  const level = activator.skillLevels?.[cmd.unionSkillId] ?? 1;
   const targets = resolveTargets(state, activator, def.target, cmd.targetId);
   for (const effect of def.effects) {
     applySkillEffect(state, activator, effect, def.element, level, targets, rng);
@@ -957,7 +959,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           next.log.push({ text: `${actor.name} は頭を封じられてスキルを使えない` });
           continue;
         }
-        const level = 1; // 習得 Lv は呼び出し側で検証済み前提（MVP は Lv1 運用）
+        const level = actor.skillLevels?.[cmd.skillId] ?? 1;
         const cost = def.tpCost(level);
         if (actor.tp < cost) {
           next.log.push({ text: `${actor.name} は TP が足りない` });
