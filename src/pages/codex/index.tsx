@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useSfx } from '@/audio/useSfx';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { ENEMIES } from '@/data/enemies';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
@@ -14,6 +15,7 @@ import { useGameState } from '@/store/gameState';
 export const Page = () => {
   const navigate = useNavigate();
   const { save } = useGameState();
+  const play = useSfx();
   const [tab, setTab] = useState<'record' | 'codex'>('record');
   // 選択中のモンスター ID（タップで詳細展開）
   const [selectedId, setSelectedId] = useState<EnemyId | null>(null);
@@ -33,6 +35,7 @@ export const Page = () => {
 
   const toggleEntry = (id: EnemyId, seen: boolean) => {
     if (!seen) return; // 未遭遇は展開しない
+    play('cursor');
     setSelectedId((prev) => (prev === id ? null : id));
   };
 
@@ -46,14 +49,20 @@ export const Page = () => {
         <button
           type="button"
           className={`${styles.tab} ${tab === 'record' ? styles.tabActive : ''}`}
-          onClick={() => setTab('record')}
+          onClick={() => {
+            play('cursor');
+            setTab('record');
+          }}
         >
           到達記録
         </button>
         <button
           type="button"
           className={`${styles.tab} ${tab === 'codex' ? styles.tabActive : ''}`}
-          onClick={() => setTab('codex')}
+          onClick={() => {
+            play('cursor');
+            setTab('codex');
+          }}
         >
           図鑑
         </button>

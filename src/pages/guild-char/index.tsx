@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useSfx } from '@/audio/useSfx';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { SkillTree } from '@/components/common/SkillTree/SkillTree';
 import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
@@ -49,6 +50,7 @@ export const Page = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { save, applyAndPersist } = useGameState();
+  const play = useSfx();
   const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
   const [transferTo, setTransferTo] = useState<ClassId>(CLASS_IDS[0]);
   const [rbName, setRbName] = useState('');
@@ -223,7 +225,10 @@ export const Page = () => {
                   : []
           }
           char={char}
-          onLearn={(skillId) => void updateChar((c) => learnSkill(c, skillId))}
+          onLearn={(skillId) => {
+            play('create');
+            void updateChar((c) => learnSkill(c, skillId));
+          }}
         />
       </section>
 
@@ -249,7 +254,10 @@ export const Page = () => {
             type="button"
             className={styles.actBtn}
             disabled={transferTo === char.classId}
-            onClick={() => void applyAndPersist((s) => transferClassInSave(s, id, transferTo))}
+            onClick={() => {
+              play('decide');
+              void applyAndPersist((s) => transferClassInSave(s, id, transferTo));
+            }}
           >
             転職する
           </button>
@@ -344,6 +352,7 @@ export const Page = () => {
                 type="button"
                 className={styles.danger}
                 onClick={() => {
+                  play('create');
                   void applyAndPersist((s) =>
                     reincarnateInSave(s, id, {
                       raceId: rbRace,

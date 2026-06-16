@@ -1,6 +1,7 @@
 @use 'variables' as var;
 
 .layout {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -139,4 +140,47 @@
   text-align: center;
   font-size: 11px;
   opacity: 0.45;
+}
+
+/* ギアボタン（右上固定）*/
+.gearBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+/* サウンド設定モーダル */
+.soundOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.soundPanel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 20px 16px;
+  width: min(360px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 }

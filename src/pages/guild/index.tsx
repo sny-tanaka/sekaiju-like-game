@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useSfx } from '@/audio/useSfx';
 import { ClassInfoCard } from '@/components/creation/ClassInfoCard/ClassInfoCard';
 import { RaceInfoCard } from '@/components/creation/RaceInfoCard/RaceInfoCard';
 import {
@@ -40,6 +41,7 @@ function positionOf(save: SaveData, charId: string): Pos {
 export const Page = () => {
   const navigate = useNavigate();
   const { save, applyAndPersist } = useGameState();
+  const play = useSfx();
 
   const raceIds = Object.keys(RACES);
   const classIds = Object.keys(CLASSES);
@@ -77,12 +79,13 @@ export const Page = () => {
   const handleCreate = useCallback(async () => {
     const finalName = name.trim() || '名もなき冒険者';
     const char = createCharacter({ raceId, classId, name: finalName });
+    play('create');
     setBusy(true);
     await applyAndPersist((prev) => addCharacterToGuild(prev, char));
     setNotice(`${finalName}（${RACES[raceId]?.name} / ${CLASSES[classId]?.name}）を作成しました`);
     setName('');
     setBusy(false);
-  }, [name, raceId, classId, applyAndPersist]);
+  }, [name, raceId, classId, applyAndPersist, play]);
 
   if (!save) {
     return (
@@ -120,21 +123,30 @@ export const Page = () => {
         <button
           type="button"
           className={`${styles.tab} ${tab === 'roster' ? styles.tabActive : ''}`}
-          onClick={() => setTab('roster')}
+          onClick={() => {
+            play('cursor');
+            setTab('roster');
+          }}
         >
           作成・一覧
         </button>
         <button
           type="button"
           className={`${styles.tab} ${tab === 'party' ? styles.tabActive : ''}`}
-          onClick={() => setTab('party')}
+          onClick={() => {
+            play('cursor');
+            setTab('party');
+          }}
         >
           編成
         </button>
         <button
           type="button"
           className={`${styles.tab} ${tab === 'banish' ? styles.tabActive : ''}`}
-          onClick={() => setTab('banish')}
+          onClick={() => {
+            play('cursor');
+            setTab('banish');
+          }}
         >
           追放
         </button>
@@ -312,7 +324,10 @@ export const Page = () => {
                   key={`front_${idx}`}
                   type="button"
                   className={`${styles.slot} ${m ? styles.slotFilled : styles.slotEmpty}`}
-                  onClick={() => setPicker({ row: 'front', idx })}
+                  onClick={() => {
+                    play('cursor');
+                    setPicker({ row: 'front', idx });
+                  }}
                 >
                   {m ? (
                     <>
@@ -337,7 +352,10 @@ export const Page = () => {
                   key={`back_${idx}`}
                   type="button"
                   className={`${styles.slot} ${m ? styles.slotFilled : styles.slotEmpty}`}
-                  onClick={() => setPicker({ row: 'back', idx })}
+                  onClick={() => {
+                    play('cursor');
+                    setPicker({ row: 'back', idx });
+                  }}
                 >
                   {m ? (
                     <>
@@ -491,6 +509,7 @@ export const Page = () => {
                 type="button"
                 className={styles.confirmOk}
                 onClick={() => {
+                  play('cancel');
                   const id = banishTarget.id;
                   void applyAndPersist((s) => removeCharacterFromGuild(s, id));
                   setBanishId(null);

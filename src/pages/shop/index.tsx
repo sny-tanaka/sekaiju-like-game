@@ -3,7 +3,8 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
-import { EQUIP_SLOT_LABEL, WEAPON_TYPE_LABEL, ARMOR_TYPE_LABEL } from '@/data/equipLabels';
+import { useSfx } from '@/audio/useSfx';
+import { ARMOR_TYPE_LABEL, EQUIP_SLOT_LABEL, WEAPON_TYPE_LABEL } from '@/data/equipLabels';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
 import { equipDisplayName, gradedBaseBonuses } from '@/domain/forge';
@@ -69,6 +70,7 @@ const itemCategory = (id: string): ShopCat => {
 export const Page = () => {
   const navigate = useNavigate();
   const { save, applyAndPersist } = useGameState();
+  const play = useSfx();
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
   const [pending, setPending] = useState<Pending | null>(null);
   const [pendingQty, setPendingQty] = useState(1);
@@ -173,6 +175,7 @@ export const Page = () => {
   }
 
   const switchTab = (t: 'buy' | 'sell') => {
+    play('cursor');
     setTab(t);
     setFilter('all');
   };
@@ -186,6 +189,7 @@ export const Page = () => {
   // 確認ダイアログで「はい」を押したときだけ実際に売買を確定する。
   const confirmPending = () => {
     if (!pending) return;
+    play('coin');
     if (pending.kind === 'buy') {
       void applyAndPersist((s) => buyMany(s, pending.id, pendingQty));
     } else if (pending.kind === 'sellItem') {
@@ -547,7 +551,10 @@ export const Page = () => {
               <button
                 type="button"
                 className={styles.confirmCancel}
-                onClick={() => setPending(null)}
+                onClick={() => {
+                  play('cancel');
+                  setPending(null);
+                }}
               >
                 やめる
               </button>

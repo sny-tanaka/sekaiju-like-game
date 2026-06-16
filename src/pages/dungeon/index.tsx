@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useSfx } from '@/audio/useSfx';
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
@@ -42,6 +43,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export const Page = () => {
   const navigate = useNavigate();
   const { save, applySave, applyAndPersist } = useGameState();
+  const play = useSfx();
   // 移動中エンカウント抽選用の ephemeral 乱数（ダイブ内で1本。再開時は作り直し）
   const rngRef = useRef<Rng | null>(null);
   // タップ自動移動中フラグ（多重起動防止）
@@ -101,19 +103,21 @@ export const Page = () => {
       );
       return;
     }
+    play('item');
     void applyAndPersist(() => res.save);
     setNotice(`${res.itemId ? (ITEMS[res.itemId]?.name ?? '素材') : '素材'} を手に入れた`);
-  }, [save, applyAndPersist]);
+  }, [save, applyAndPersist, play]);
 
   const handleCook = useCallback(
     (recipeId: string) => {
       if (!save) return;
       const res = cook(save, recipeId);
       if (!res.ok) return;
+      play('cook');
       void applyAndPersist(() => res.save);
       setNotice(`${RECIPES[recipeId]?.name ?? '料理'} を作った`);
     },
-    [save, applyAndPersist]
+    [save, applyAndPersist, play]
   );
 
   const doMove = useCallback(
@@ -149,21 +153,25 @@ export const Page = () => {
         setNotice('強大な力に阻まれている。階層ボスを倒さねば先へ進めない。');
         return;
       }
+      play('dive');
       await applyAndPersist((s) => goDeeper(s));
     } else if (kind === 'stairsDown') {
       if (save.diveState!.depth <= 1) {
+        play('warp');
         await applyAndPersist((s) => returnToTown(s));
         navigate('/town');
       } else {
+        play('dive');
         await applyAndPersist((s) => goShallower(s));
       }
     }
-  }, [save, applyAndPersist, navigate]);
+  }, [save, applyAndPersist, navigate, play]);
 
   const handleReturn = useCallback(async () => {
+    play('warp');
     await applyAndPersist((s) => returnToTown(s));
     navigate('/town');
-  }, [applyAndPersist, navigate]);
+  }, [applyAndPersist, navigate, play]);
 
   const handleUseItem = useCallback(
     (itemId: string, charId?: string) => {
@@ -253,6 +261,7 @@ export const Page = () => {
           type="button"
           className={styles.menuBtn}
           onClick={() => {
+            play('cursor');
             setMenuCharId(null);
             setMenuOpen(true);
           }}
@@ -513,7 +522,10 @@ export const Page = () => {
       {menuOpen ? (
         <div
           className={styles.itemOverlay}
-          onClick={() => setMenuOpen(false)}
+          onClick={() => {
+            play('cursor');
+            setMenuOpen(false);
+          }}
         >
           <div
             className={styles.itemPanel}
@@ -640,7 +652,8 @@ export const Page = () => {
                   <SkillTree
                     nodes={nodes}
                     char={selected}
-                    onLearn={(skillId) =>
+                    onLearn={(skillId) => {
+                      play('create');
                       void applyAndPersist((s) => ({
                         ...s,
                         guild: {
@@ -649,8 +662,8 @@ export const Page = () => {
                             m.id === selected.id ? learnSkill(m, skillId) : m
                           ),
                         },
-                      }))
-                    }
+                      }));
+                    }}
                   />
                   <button
                     type="button"
