@@ -1,3 +1,4 @@
+import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS, sellPrice as itemSellPrice } from '@/data/items';
 import { gradeMult, gradedBaseBonuses } from '@/domain/forge';
@@ -129,6 +130,29 @@ export function sellEquipment(save: SaveData, instanceId: string): SaveData {
 }
 
 /**
+ * 複数購入: 所持金で買える上限（floor(gold/price) と qty の小さい方）まで購入する。
+ * 0個なら save をそのまま返す。装備は個体プールへ、消費品は倉庫へ qty 個追加。
+ */
+export function buyMany(save: SaveData, id: ItemId, qty: number): SaveData {
+  const grade = EQUIPMENT[id] ? shopEquipGrade(save, id) : 1;
+  const price = buyPriceOf(id, grade);
+  if (price === null || price <= 0 || qty <= 0) return save;
+  const maxAffordable = Math.floor(save.guild.gold / price);
+  const actualQty = Math.min(qty, maxAffordable);
+  if (actualQty <= 0) return save;
+  const totalCost = price * actualQty;
+  let next = save;
+  if (EQUIPMENT[id]) {
+    for (let i = 0; i < actualQty; i++) {
+      next = addEquipment(next, id, 0, grade);
+    }
+  } else {
+    next = addItem(next, id, actualQty);
+  }
+  return { ...next, guild: { ...next.guild, gold: next.guild.gold - totalCost } };
+}
+
+/**
  * 売却: 倉庫から指定グレードの素材/アイテムを qty 個売って所持金を得る。
  * 素材なら関連装備を恒久解放し、その装備のショップ表示グレードを「売った素材の周回グレード」に引き上げる（[06 §3]）。
  */
@@ -154,4 +178,27 @@ export function sell(save: SaveData, id: ItemId, qty = 1, grade = 1): SaveData {
     guild: { ...next.guild, gold: next.guild.gold + gain },
     shopStock: { ...next.shopStock, unlockedItemIds, unlockedGrades },
   };
+}
+
+/**
+ * 装備マスター ID から装備可能な職業名一覧を返す（CLASSES の定義順）。
+ * - accessory（装飾品）は全職業。
+ * - weapon は equipableWeaponTypes に eq.weaponType を含む職業。
+ * - armor は equipableArmorTypes に eq.armorType を含む職業。
+ */
+export function equipableClassNames(masterId: ItemId): string[] {
+  const eq = EQUIPMENT[masterId];
+  if (!eq) return [];
+  if (eq.slot === 'accessory') {
+    return Object.values(CLASSES).map((c) => c.name);
+  }
+  if (eq.slot === 'weapon') {
+    return Object.values(CLASSES)
+      .filter((c) => eq.weaponType !== undefined && c.equipableWeaponTypes.includes(eq.weaponType))
+      .map((c) => c.name);
+  }
+  // armor
+  return Object.values(CLASSES)
+    .filter((c) => eq.armorType !== undefined && c.equipableArmorTypes.includes(eq.armorType))
+    .map((c) => c.name);
 }

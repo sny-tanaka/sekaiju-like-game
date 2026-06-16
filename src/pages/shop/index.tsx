@@ -4,26 +4,37 @@ import { Navigate, useNavigate } from 'react-router';
 import styles from './style.module.scss';
 
 import { EQUIPMENT } from '@/data/equipment';
+import { EQUIP_SLOT_LABEL, WEAPON_TYPE_LABEL, ARMOR_TYPE_LABEL } from '@/data/equipLabels';
 import { ITEMS } from '@/data/items';
-import { equipDisplayName } from '@/domain/forge';
+import { equipDisplayName, gradedBaseBonuses } from '@/domain/forge';
 import { itemCount } from '@/domain/inventory';
 import {
-  buy,
+  buyMany,
+  equipableClassNames,
   equipSellValue,
   sell,
   sellEquipment,
   sellPriceOf,
   shopCatalog,
+  shopEquipGrade,
   type ShopEntry,
 } from '@/domain/shop';
-import type { EquipInstance } from '@/domain/types';
+import type { EquipInstance, ItemId } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 
 // 確認待ちの売買操作（タップ1回での誤購入/誤売却を防ぐ。確認ダイアログ経由でのみ実行）。
 type Pending =
-  | { kind: 'buy'; id: string; name: string; price: number }
-  | { kind: 'sellItem'; itemId: string; grade: number; name: string; price: number }
+  | { kind: 'buy'; id: string; name: string; price: number; maxQty: number }
+  | { kind: 'sellItem'; itemId: string; grade: number; name: string; price: number; maxQty: number }
   | { kind: 'sellEquip'; id: string; name: string; price: number };
+
+// 装備詳細モーダル用（#31）。
+type EquipDetail = {
+  masterId: ItemId;
+  name: string;
+  ownedQty: number;
+  price: number;
+};
 
 // 絞り込みカテゴリ（武器/防具/装飾品/アイテム/素材）。
 type ShopCat = 'weapon' | 'armor' | 'accessory' | 'item' | 'material';
@@ -56,8 +67,10 @@ export const Page = () => {
   const { save, applyAndPersist } = useGameState();
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
   const [pending, setPending] = useState<Pending | null>(null);
+  const [pendingQty, setPendingQty] = useState(1);
   const [filter, setFilter] = useState<ShopCat | 'all'>('all');
   const [sort, setSort] = useState<SortKey>('priceAsc');
+  const [equipDetail, setEquipDetail] = useState<EquipDetail | null>(null);
 
   if (!save) {
     return (
@@ -160,13 +173,19 @@ export const Page = () => {
     setFilter('all');
   };
 
+  // pending を開くときに qty を 1 にリセット。
+  const openPending = (p: Pending) => {
+    setPending(p);
+    setPendingQty(1);
+  };
+
   // 確認ダイアログで「はい」を押したときだけ実際に売買を確定する。
   const confirmPending = () => {
     if (!pending) return;
     if (pending.kind === 'buy') {
-      void applyAndPersist((s) => buy(s, pending.id));
+      void applyAndPersist((s) => buyMany(s, pending.id, pendingQty));
     } else if (pending.kind === 'sellItem') {
-      void applyAndPersist((s) => sell(s, pending.itemId, 1, pending.grade));
+      void applyAndPersist((s) => sell(s, pending.itemId, pendingQty, pending.grade));
     } else {
       void applyAndPersist((s) => sellEquipment(s, pending.id));
     }
@@ -175,6 +194,97 @@ export const Page = () => {
 
   const buyView = view(buyRows);
   const sellView = view(sellRows);
+
+  // 数量ステッパーの上限（buy: floor(gold/price)、sellItem: 所持 qty）。
+  const pendingMax =
+    pending && pending.kind !== 'sellEquip'
+      ? pending.kind === 'buy'
+        ? Math.max(1, Math.floor(gold / pending.price))
+        : pending.maxQty
+      : 1;
+
+  // 装備詳細モーダル用情報の組み立て（#31）。
+  const renderEquipDetail = () => {
+    if (!equipDetail) return null;
+    const eq = EQUIPMENT[equipDetail.masterId];
+    if (!eq) return null;
+    const grade = shopEquipGrade(save, equipDetail.masterId);
+    const bonuses = gradedBaseBonuses(equipDetail.masterId, grade);
+    const slotLabel = EQUIP_SLOT_LABEL[eq.slot];
+    const classNames = equipableClassNames(equipDetail.masterId);
+
+    const bonusParts: string[] = [];
+    if (bonuses.atk) bonusParts.push(`ATK+${bonuses.atk}`);
+    if (bonuses.mat) bonusParts.push(`MAT+${bonuses.mat}`);
+    if (bonuses.def) bonusParts.push(`DEF+${bonuses.def}`);
+    if (bonuses.mdf) bonusParts.push(`MDF+${bonuses.mdf}`);
+    if (bonuses.statMods) {
+      const statLabelMap: Record<string, string> = {
+        hp: 'HP', tp: 'TP', str: 'STR', vit: 'VIT', agi: 'AGI', int: 'INT', mnd: 'MND', luc: 'LUC',
+      };
+      for (const [k, v] of Object.entries(bonuses.statMods)) {
+        if (v) bonusParts.push(`${statLabelMap[k] ?? k}+${v}`);
+      }
+    }
+
+    return (
+      <div
+        className={styles.confirmOverlay}
+        onClick={() => setEquipDetail(null)}
+      >
+        <div
+          className={styles.confirmBox}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.detailHeader}>
+            <span className={styles.detailName}>{equipDetail.name}</span>
+            <span className={styles.detailSlot}>{slotLabel}</span>
+          </div>
+          {eq.slot === 'weapon' && eq.weaponType && (
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>武器種</span>
+              <span>{WEAPON_TYPE_LABEL[eq.weaponType]}</span>
+            </div>
+          )}
+          {eq.slot === 'armor' && eq.armorType && (
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>防具種</span>
+              <span>{ARMOR_TYPE_LABEL[eq.armorType]}</span>
+            </div>
+          )}
+          {bonusParts.length > 0 && (
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>性能</span>
+              <span>{bonusParts.join(' / ')}</span>
+            </div>
+          )}
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>装備可能</span>
+            <span>
+              {eq.slot === 'accessory' ? '全職業' : classNames.join('・')}
+            </span>
+          </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>価格</span>
+            <span>{equipDetail.price} G</span>
+          </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>所持数</span>
+            <span>{equipDetail.ownedQty}</span>
+          </div>
+          <div className={styles.confirmActions}>
+            <button
+              type="button"
+              className={styles.confirmCancel}
+              onClick={() => setEquipDetail(null)}
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={styles.layout}>
@@ -251,7 +361,24 @@ export const Page = () => {
                 className={styles.row}
               >
                 <div className={styles.info}>
-                  <span className={styles.name}>{e.name}</span>
+                  {e.kind === 'equip' ? (
+                    <button
+                      type="button"
+                      className={styles.nameBtn}
+                      onClick={() =>
+                        setEquipDetail({
+                          masterId: e.id as ItemId,
+                          name: e.name,
+                          ownedQty: qty,
+                          price: e.price,
+                        })
+                      }
+                    >
+                      {e.name}
+                    </button>
+                  ) : (
+                    <span className={styles.name}>{e.name}</span>
+                  )}
                   <span className={styles.note}>
                     {e.note ? `${e.note} ・ ` : ''}所持 {qty}
                   </span>
@@ -261,7 +388,13 @@ export const Page = () => {
                   className={styles.action}
                   disabled={gold < e.price}
                   onClick={() =>
-                    setPending({ kind: 'buy', id: e.id, name: e.name, price: e.price })
+                    openPending({
+                      kind: 'buy',
+                      id: e.id,
+                      name: e.name,
+                      price: e.price,
+                      maxQty: Math.max(1, Math.floor(gold / e.price)),
+                    })
                   }
                 >
                   {e.price} G
@@ -278,7 +411,24 @@ export const Page = () => {
               className={styles.row}
             >
               <div className={styles.info}>
-                <span className={styles.name}>{r.name}</span>
+                {r.kind === 'equip' ? (
+                  <button
+                    type="button"
+                    className={styles.nameBtn}
+                    onClick={() =>
+                      setEquipDetail({
+                        masterId: r.inst.masterId as ItemId,
+                        name: r.name,
+                        ownedQty: 1,
+                        price: r.price,
+                      })
+                    }
+                  >
+                    {r.name}
+                  </button>
+                ) : (
+                  <span className={styles.name}>{r.name}</span>
+                )}
                 <span className={styles.note}>
                   {CAT_LABEL[r.category]}
                   {r.kind === 'item' ? ` ・ 所持 ${r.qty}` : ''}
@@ -288,7 +438,7 @@ export const Page = () => {
                 type="button"
                 className={styles.action}
                 onClick={() =>
-                  setPending(
+                  openPending(
                     r.kind === 'equip'
                       ? { kind: 'sellEquip', id: r.inst.id, name: r.name, price: r.price }
                       : {
@@ -297,6 +447,7 @@ export const Page = () => {
                           grade: r.grade,
                           name: r.name,
                           price: r.price,
+                          maxQty: r.qty,
                         }
                   )
                 }
@@ -331,14 +482,54 @@ export const Page = () => {
             <div className={styles.confirmText}>
               {pending.kind === 'buy' ? (
                 <>
-                  <strong>{pending.name}</strong> を {pending.price} G で購入しますか？
+                  <strong>{pending.name}</strong> を購入しますか？
                 </>
-              ) : (
+              ) : pending.kind === 'sellEquip' ? (
                 <>
                   <strong>{pending.name}</strong> を {pending.price} G で売却しますか？
                 </>
+              ) : (
+                <>
+                  <strong>{pending.name}</strong> を売却しますか？
+                </>
               )}
             </div>
+            {/* 数量ステッパー（sellEquip は数量1固定なので非表示）。 */}
+            {pending.kind !== 'sellEquip' && (
+              <div className={styles.stepperRow}>
+                <button
+                  type="button"
+                  className={styles.stepperBtn}
+                  disabled={pendingQty <= 1}
+                  onClick={() => setPendingQty((q) => Math.max(1, q - 1))}
+                >
+                  −
+                </button>
+                <span className={styles.stepperVal}>{pendingQty}</span>
+                <button
+                  type="button"
+                  className={styles.stepperBtn}
+                  disabled={pendingQty >= pendingMax}
+                  onClick={() => setPendingQty((q) => Math.min(pendingMax, q + 1))}
+                >
+                  ＋
+                </button>
+                <button
+                  type="button"
+                  className={styles.stepperMax}
+                  disabled={pendingQty >= pendingMax}
+                  onClick={() => setPendingQty(pendingMax)}
+                >
+                  最大
+                </button>
+              </div>
+            )}
+            {/* 合計金額（sellEquip 以外）。 */}
+            {pending.kind !== 'sellEquip' && (
+              <div className={styles.totalRow}>
+                合計: <strong>{pending.price * pendingQty} G</strong>
+              </div>
+            )}
             <div className={styles.confirmActions}>
               <button
                 type="button"
@@ -358,6 +549,9 @@ export const Page = () => {
           </div>
         </div>
       ) : null}
+
+      {/* 装備詳細モーダル（#31）。 */}
+      {equipDetail ? renderEquipDetail() : null}
     </div>
   );
 };
