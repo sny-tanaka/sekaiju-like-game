@@ -143,8 +143,8 @@ export function eb_aoe(
     element,
     target: 'enemyAll',
     effects: [{ kind: 'damage', statBase: 'str', power: () => 1.0 }],
-    weight: 5,
-    cond: { cooldown: 3 },
+    weight: 7,
+    cond: { cooldown: 2 },
   };
 }
 
@@ -176,7 +176,7 @@ export function eb_def_buff(id: string): EnemyActionDef {
   };
 }
 
-/** 激昂ファクトリ（HP50%以下）: 全体×1.4 */
+/** 激昂ファクトリ（HP65%以下）: 全体×1.4 */
 export function eb_enrage_aoe(
   id: string,
   name: string,
@@ -189,7 +189,7 @@ export function eb_enrage_aoe(
     target: 'enemyAll',
     effects: [{ kind: 'damage', statBase: 'str', power: () => 1.4 }],
     weight: 8,
-    cond: { hpBelow: 0.5, cooldown: 3 },
+    cond: { hpBelow: 0.65, cooldown: 3 },
   };
 }
 
