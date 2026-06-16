@@ -1,0 +1,1 @@
+export { SoundSettings } from './SoundSettings';
