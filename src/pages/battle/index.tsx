@@ -160,6 +160,10 @@ export const Page = () => {
   const [skillMenu, setSkillMenu] = useState(false);
   const [itemMenu, setItemMenu] = useState(false);
   const [targetId, setTargetId] = useState<string | null>(null);
+  // コマンド単位の対象 ID（味方単体スキルで使用）。charId → targetId。
+  const [commandTargets, setCommandTargets] = useState<Record<string, string>>({});
+  // 味方単体スキル選択後の対象選択フェーズ（allyOne 確認中のスキル ID）。
+  const [allyTargetMenu, setAllyTargetMenu] = useState<SkillId | null>(null);
   const [busy, setBusy] = useState(false);
   // このターンに予約したユニオン（MVP: 1ターン1回）。
   const [unionCmd, setUnionCmd] = useState<UnionCmd | null>(null);
@@ -207,8 +211,10 @@ export const Page = () => {
       const final = resolveTurn(state, list, rngRef.current);
       setState(final);
       setCommands({});
+      setCommandTargets({});
       setSkillMenu(false);
       setItemMenu(false);
+      setAllyTargetMenu(null);
       setUnionCmd(null);
       setUnionSetup(null);
       setActiveId(null);
@@ -289,14 +295,37 @@ export const Page = () => {
   }, [state, aliveAllies, activeId, commands]);
 
   const allAssigned =
-    aliveAllies.length > 0 && aliveAllies.every((a) => commands[a.id] !== undefined);
+    aliveAllies.length > 0 &&
+    aliveAllies.every((a) => {
+      const cmd = commands[a.id];
+      if (!cmd) return false;
+      // allyOne スキルは対象 ID が確定していないと未入力扱い
+      if (cmd.kind === 'skill' && BATTLE_SKILLS[cmd.skillId]?.target === 'allyOne') {
+        return commandTargets[a.id] !== undefined;
+      }
+      return true;
+    });
 
   const assign = useCallback(
-    (charId: string, cmd: AllyCmd) => {
+    (charId: string, cmd: AllyCmd, allyTgtId?: string) => {
+      // allyOne スキルの場合: 対象 ID が渡されていなければ味方選択フェーズへ
+      if (cmd.kind === 'skill' && BATTLE_SKILLS[cmd.skillId]?.target === 'allyOne' && !allyTgtId) {
+        setSkillMenu(false);
+        setItemMenu(false);
+        setAllyTargetMenu(cmd.skillId);
+        // コマンドは一旦保留（対象決定後に完結させる）
+        setCommands((prev) => ({ ...prev, [charId]: cmd }));
+        return;
+      }
       const nextCommands = { ...commands, [charId]: cmd };
       setCommands(nextCommands);
+      // allyOne スキルの対象 ID を記録する
+      if (cmd.kind === 'skill' && allyTgtId) {
+        setCommandTargets((prev) => ({ ...prev, [charId]: allyTgtId }));
+      }
       setSkillMenu(false);
       setItemMenu(false);
+      setAllyTargetMenu(null);
       // 次の未入力キャラへ
       const next = aliveAllies.find((a) => a.id !== charId && !nextCommands[a.id]);
       setActiveId(next ? next.id : null);
@@ -325,8 +354,10 @@ export const Page = () => {
 
   const resetInput = useCallback(() => {
     setCommands({});
+    setCommandTargets({});
     setSkillMenu(false);
     setItemMenu(false);
+    setAllyTargetMenu(null);
     setUnionCmd(null);
     setUnionSetup(null);
     setActiveId(aliveAllies[0]?.id ?? null);
@@ -338,8 +369,23 @@ export const Page = () => {
     const list: BattleCommand[] = aliveAllies.map((a): BattleCommand => {
       const c = commands[a.id] ?? { kind: 'attack' };
       if (c.kind === 'guard') return { kind: 'guard', actorId: a.id };
-      if (c.kind === 'skill')
-        return { kind: 'skill', actorId: a.id, skillId: c.skillId, targetId: tgt };
+      if (c.kind === 'skill') {
+        const skillDef = BATTLE_SKILLS[c.skillId];
+        let skillTgt: string;
+        if (skillDef?.target === 'allyOne') {
+          // 味方単体: commandTargets に記録された対象、なければ発動者自身
+          skillTgt = commandTargets[a.id] ?? a.id;
+        } else if (skillDef?.target === 'allyAll') {
+          // 味方全体: 発動者自身でOK（エンジンが全体解決する）
+          skillTgt = a.id;
+        } else if (skillDef?.target === 'self') {
+          skillTgt = a.id;
+        } else {
+          // enemyOne / enemyRow / enemyAll: 敵ターゲット
+          skillTgt = tgt;
+        }
+        return { kind: 'skill', actorId: a.id, skillId: c.skillId, targetId: skillTgt };
+      }
       if (c.kind === 'item')
         return { kind: 'item', actorId: a.id, itemId: c.itemId, targetId: a.id };
       return { kind: 'attack', actorId: a.id, targetId: tgt };
@@ -356,7 +402,7 @@ export const Page = () => {
       });
     }
     runTurn(list);
-  }, [state, commands, targetId, aliveAllies, aliveEnemies, unionCmd, runTurn]);
+  }, [state, commands, commandTargets, targetId, aliveAllies, aliveEnemies, unionCmd, runTurn]);
 
   const handleFlee = useCallback(() => {
     if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
@@ -458,11 +504,18 @@ export const Page = () => {
   };
 
   const active = activeId ? aliveAllies.find((a) => a.id === activeId) : undefined;
+  // 味方対象選択モード: allyTargetMenu が設定されているとき。
+  const isAllyTargeting = allyTargetMenu !== null;
   const targetName = state.enemies.find((e) => e.id === targetId)?.name ?? '-';
   const rewards = battleRewards(state);
 
   const renderCard = (a: Combatant) => {
     const d = dispOf(a);
+    // 味方対象選択中: そのキャラが選ばれているか
+    const isAllyTargeted =
+      isAllyTargeting && activeId !== null && commandTargets[activeId] === a.id;
+    // 味方対象選択中: タップで対象選択できる（倒れていなければ）
+    const isAllySelectable = isAllyTargeting && !a.isDown;
     return (
       <button
         type="button"
@@ -470,15 +523,22 @@ export const Page = () => {
         className={[
           styles.card,
           d.isDown ? styles.down : '',
-          activeId === a.id ? styles.cardActive : '',
-          commands[a.id] ? styles.cardDecided : '',
+          isAllySelectable ? styles.allySelectable : activeId === a.id ? styles.cardActive : '',
+          isAllyTargeted ? styles.allyTargeted : '',
+          commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
           flashIds.has(a.id) ? styles.flash : '',
         ].join(' ')}
         disabled={a.isDown || state.outcome !== 'ongoing' || !!anim}
         onClick={() => {
-          setActiveId(a.id);
-          setSkillMenu(false);
-          setItemMenu(false);
+          if (isAllyTargeting && activeId) {
+            // 味方対象選択: クリックで対象確定
+            const cmd: AllyCmd = { kind: 'skill', skillId: allyTargetMenu! };
+            assign(activeId, cmd, a.id);
+          } else {
+            setActiveId(a.id);
+            setSkillMenu(false);
+            setItemMenu(false);
+          }
         }}
       >
         <div className={styles.cardName}>
@@ -534,7 +594,7 @@ export const Page = () => {
               type="button"
               key={e.id}
               className={`${styles.enemy} ${d.isDown ? styles.down : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
-              disabled={e.isDown || !!anim}
+              disabled={e.isDown || !!anim || isAllyTargeting}
               onClick={() => setTargetId(e.id)}
             >
               <span className={styles.enemyName}>
@@ -667,7 +727,13 @@ export const Page = () => {
         </div>
       ) : (
         <div className={styles.command}>
-          <div className={styles.target}>対象: {targetName}（敵をタップで変更）</div>
+          {isAllyTargeting ? (
+            <div className={`${styles.target} ${styles.targetAlly}`}>
+              {BATTLE_SKILLS[allyTargetMenu!]?.name ?? 'スキル'}: 味方をタップで対象を選択
+            </div>
+          ) : (
+            <div className={styles.target}>対象: {targetName}（敵をタップで変更）</div>
+          )}
           {unionCmd
             ? (() => {
                 const def = UNION_SKILLS[unionCmd.unionSkillId];
@@ -697,7 +763,51 @@ export const Page = () => {
           {active ? (
             <>
               <div className={styles.cmdHead}>{active.name} のコマンド</div>
-              {skillMenu ? (
+              {allyTargetMenu ? (
+                // 味方単体スキルの対象選択フェーズ（カードをタップで選択）
+                <div className={styles.skillList}>
+                  <div className={styles.allyTargetHint}>
+                    <strong>{BATTLE_SKILLS[allyTargetMenu]?.name}</strong> の対象を選択
+                    <br />
+                    <span className={styles.allyTargetSub}>上の味方カードをタップしてください</span>
+                  </div>
+                  {aliveAllies.map((a) => (
+                    <button
+                      type="button"
+                      key={a.id}
+                      className={[
+                        styles.skillBtn,
+                        commandTargets[active.id] === a.id ? styles.allyTargetSelected : '',
+                      ].join(' ')}
+                      onClick={() => {
+                        assign(active.id, { kind: 'skill', skillId: allyTargetMenu }, a.id);
+                      }}
+                    >
+                      <span className={styles.skillTop}>
+                        <span className={styles.skillName}>{a.name}</span>
+                        <span className={styles.tp}>
+                          HP {Math.max(0, dispOf(a).hp)}/{a.maxHp}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={styles.menuBack}
+                    onClick={() => {
+                      setAllyTargetMenu(null);
+                      // 選択中コマンドも未決定に戻す
+                      setCommands((prev) => {
+                        const next = { ...prev };
+                        delete next[active.id];
+                        return next;
+                      });
+                    }}
+                  >
+                    もどる
+                  </button>
+                </div>
+              ) : skillMenu ? (
                 <div className={styles.skillList}>
                   {usableSkills(active).map((sid) => (
                     <button
