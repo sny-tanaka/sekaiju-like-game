@@ -29,14 +29,20 @@ export class BgmPlayer {
   private loopIndex = 0; // 何ループ目か
   private scheduledUpTo = 0; // ここまでスケジュール済み（AudioContext 時刻）
 
+  // フェードイン目標音量（過渡値 ratchet 防止のため設定値を保持する）
+  private targetGain: number;
+
   constructor(ctx: AudioContext, masterGain: GainNode) {
     this.ctx = ctx;
     this.masterGain = masterGain;
+    // Provider はプレイヤー生成前に masterGain.gain.value をセット済みなので初期設定音量を取得
+    this.targetGain = masterGain.gain.value;
   }
 
   /** BGM 音量を反映（0..1, muted=true なら 0）。 */
   setGain(volume: number, muted: boolean): void {
     const target = muted ? 0 : volume;
+    this.targetGain = target;
     this.masterGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.02);
   }
 
@@ -90,14 +96,10 @@ export class BgmPlayer {
     this.loopIndex = 0;
     this.scheduledUpTo = startTime;
 
-    // フェードイン
-    const currentGain = this.masterGain.gain.value;
+    // フェードイン（targetGain を目標にすることで過渡値 ratchet を防ぐ）
     this.masterGain.gain.cancelScheduledValues(now);
     this.masterGain.gain.setValueAtTime(0, startTime);
-    this.masterGain.gain.linearRampToValueAtTime(
-      currentGain > 0 ? currentGain : 1,
-      startTime + FADE_SEC
-    );
+    this.masterGain.gain.linearRampToValueAtTime(this.targetGain, startTime + FADE_SEC);
 
     // スケジューラ起動
     this.intervalId = setInterval(() => {
