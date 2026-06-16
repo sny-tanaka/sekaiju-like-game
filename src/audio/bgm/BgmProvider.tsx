@@ -4,7 +4,6 @@
  * - 最初のユーザー操作（pointerdown/keydown/touchstart）で AudioContext を生成
  * - react-router の useLocation で pathname を監視してルート→曲を切替
  * - 音量/ミュートを localStorage で永続化
- * - iOS Safari 対策: ジェスチャー内で無音バッファを同期再生して AudioContext を解錠する
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,7 +12,7 @@ import { useLocation } from 'react-router';
 
 import { BgmContext } from './bgmContext';
 import type { BattleVariant } from './bgmContext';
-import { BgmPlayer, getAudioContextCtor } from './BgmPlayer';
+import { BgmPlayer } from './BgmPlayer';
 import { loadBgmSettings, saveBgmSettings } from './bgmSettings';
 import battleTrack from './tracks/battle.json';
 import bossTrack from './tracks/boss.json';
@@ -22,6 +21,8 @@ import foeTrack from './tracks/foe.json';
 import titleTrack from './tracks/title.json';
 import townTrack from './tracks/town.json';
 import type { BgmTrack } from './types';
+
+import { getSharedAudioContext, unlockSharedAudioContext } from '@/audio/sharedAudioContext';
 
 // トラックID。戦闘系（battle/boss/foe）は /battle 内で敵種別により切替。
 type TrackId = 'title' | 'town' | 'explore' | 'battle' | 'boss' | 'foe';
@@ -65,8 +66,6 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
   const masterGainRef = useRef<GainNode | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const initializedRef = useRef(false);
-  // iOS Safari の AudioContext 解錠（unlock）が済んだか
-  const audioUnlockedRef = useRef(false);
 
   // 初期化前に来たルート変更を覚えておく
   const pendingTrackIdRef = useRef<TrackId | null>(null);
@@ -77,39 +76,15 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
 
   const location = useLocation();
 
-  /**
-   * iOS Safari 対策: ユーザージェスチャー内で無音バッファ(1フレーム)を同期再生して
-   * AudioContext を解錠する。SE は buffer を同期再生して解錠されるが、BGM は
-   * setInterval スケジューリングのみでノードを同期起動しないため、別 context が
-   * 解錠されず無音になる。これを解消する。resume() も併せて呼ぶ。
-   */
-  const unlockAudio = useCallback((ctx: AudioContext) => {
-    if (ctx.state === 'suspended') {
-      void ctx.resume();
-    }
-    if (audioUnlockedRef.current) return;
-    try {
-      const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      source.start(0);
-      audioUnlockedRef.current = true;
-    } catch {
-      // 解錠失敗は致命的ではない（次のジェスチャーで再試行される）
-    }
-  }, []);
-
   /** AudioContext と BgmPlayer を初期化する。 */
   const initAudioContext = useCallback(() => {
     if (initializedRef.current) return;
-    const Ctor = getAudioContextCtor();
-    if (!Ctor) return; // SSR / jsdom
+    const ctx = getSharedAudioContext();
+    if (!ctx) return; // SSR / jsdom
 
     initializedRef.current = true;
 
     try {
-      const ctx = new Ctor();
       audioCtxRef.current = ctx;
       const masterGain = ctx.createGain();
       masterGain.gain.value = mutedRef.current ? 0 : volumeRef.current;
@@ -119,7 +94,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
       const player = new BgmPlayer(ctx, masterGain);
       playerRef.current = player;
 
-      unlockAudio(ctx);
+      unlockSharedAudioContext();
 
       // 保留中のトラックがあれば再生
       const pending = pendingTrackIdRef.current;
@@ -131,16 +106,13 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
       console.warn('[BgmProvider] AudioContext の初期化に失敗しました:', e);
     }
-  }, [unlockAudio]);
+  }, []);
 
   /** 最初のユーザー操作で AudioContext を遅延生成（自動再生ポリシー対策）。 */
   useEffect(() => {
     const handler = () => {
       initAudioContext();
-      const ctx = audioCtxRef.current;
-      if (ctx) {
-        unlockAudio(ctx);
-      }
+      unlockSharedAudioContext();
     };
     window.addEventListener('pointerdown', handler);
     window.addEventListener('keydown', handler);
@@ -150,7 +122,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
       window.removeEventListener('keydown', handler);
       window.removeEventListener('touchstart', handler);
     };
-  }, [initAudioContext, unlockAudio]);
+  }, [initAudioContext]);
 
   /** ルート＋戦闘バリアントから実際に再生するトラックを決める。 */
   useEffect(() => {

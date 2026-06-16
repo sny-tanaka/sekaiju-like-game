@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { SFX_IDS, SFX_GAIN, sfxUrl } from '@/audio/sfxManifest';
 import type { SfxId } from '@/audio/sfxManifest';
 import { loadSfxSettings, saveSfxSettings } from '@/audio/sfxSettings';
+import { getSharedAudioContext, unlockSharedAudioContext } from '@/audio/sharedAudioContext';
 import { SoundContext } from '@/audio/soundContext';
 
 // ============================================================================
@@ -12,13 +13,6 @@ import { SoundContext } from '@/audio/soundContext';
 
 export type { SoundContextValue } from '@/audio/soundContext';
 export { SoundContext } from '@/audio/soundContext';
-
-/** AudioContext のコンストラクタを環境に合わせて取得する（SSR / jsdom は undefined）。 */
-function getAudioContextConstructor(): typeof AudioContext | undefined {
-  if (typeof window === 'undefined') return undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (window as any).AudioContext ?? (window as any).webkitAudioContext ?? undefined;
-}
 
 const DEBOUNCE_MS = 30;
 
@@ -38,13 +32,12 @@ export const SoundProvider = ({ children }: { children: ReactNode }) => {
   /** AudioContext を初期化し、全 SE を並列 fetch→decode してキャッシュ。 */
   const initAudioContext = useCallback(() => {
     if (initializedRef.current) return;
-    const Ctor = getAudioContextConstructor();
-    if (!Ctor) return; // SSR / jsdom
+    const ctx = getSharedAudioContext();
+    if (!ctx) return; // SSR / jsdom
 
     initializedRef.current = true;
 
     try {
-      const ctx = new Ctor();
       audioCtxRef.current = ctx;
 
       const masterGain = ctx.createGain();
@@ -75,6 +68,7 @@ export const SoundProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handler = () => {
       initAudioContext();
+      unlockSharedAudioContext();
     };
     window.addEventListener('pointerdown', handler, { once: true });
     window.addEventListener('keydown', handler, { once: true });
