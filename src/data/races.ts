@@ -11,6 +11,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_human: {
     id: 'race_human',
     name: 'ヒト',
+    description: '純血なヒト族。突出した長所も短所もなく、あらゆる能力が平均的。どの職業にも無理なく適応できる万能種。',
     baseStatsAtLv1: { hp: 40, tp: 20, str: 8, vit: 8, agi: 8, int: 8, mnd: 8, luc: 8 },
     statGrowth: { hp: 8, tp: 4, str: 2, vit: 2, agi: 2, int: 2, mnd: 2, luc: 2 },
     // 種族スキル: ユニオン＋採集（バランス型は採掘・採取が得意）
@@ -29,6 +30,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_garon: {
     id: 'race_garon',
     name: 'ガロン',
+    description: '屈強な肉体を誇る大型種。高いHPと腕力で前線を支える物理の要だが、素早さと魔法は不得手。火属性に弱い。',
     baseStatsAtLv1: { hp: 55, tp: 12, str: 11, vit: 11, agi: 5, int: 4, mnd: 6, luc: 6 },
     statGrowth: { hp: 12, tp: 2, str: 3, vit: 3, agi: 1, int: 1, mnd: 2, luc: 2 },
     // 種族スキル: ユニオン＋採集（力自慢は伐採・狩猟が得意）
@@ -49,6 +51,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_pix: {
     id: 'race_pix',
     name: 'ピクス',
+    description: '魔力に愛された小型種。豊富なTPと高い知力・精神で魔法戦に長けるが、打たれ弱く物理攻撃に弱い。',
     baseStatsAtLv1: { hp: 28, tp: 32, str: 4, vit: 5, agi: 9, int: 12, mnd: 11, luc: 7 },
     statGrowth: { hp: 5, tp: 7, str: 1, vit: 1, agi: 2, int: 3, mnd: 3, luc: 2 },
     // 種族スキル: ユニオン＋採集（自然に親しむ種は採取・収穫が得意）
@@ -69,6 +72,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_therian: {
     id: 'race_therian',
     name: 'テリアン',
+    description: '野生の勘を宿す獣人種。素早さと幸運に優れ、命中・回避と手数で戦う。食料調達も得意だが氷属性に弱い。',
     baseStatsAtLv1: { hp: 38, tp: 18, str: 9, vit: 7, agi: 11, int: 6, mnd: 6, luc: 9 },
     statGrowth: { hp: 7, tp: 3, str: 2, vit: 2, agi: 3, int: 1, mnd: 1, luc: 3 },
     // 種族スキル: ユニオン＋採集（獣使い種は釣り・狩猟・収穫に長ける食料の要）
@@ -90,6 +94,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_lunar: {
     id: 'race_lunar',
     name: 'ルーナ',
+    description: '月の加護を受けた癒し手。精神と幸運が高く回復・補助に向き、TPと魔法防御が伸びる。体は脆い。',
     baseStatsAtLv1: { hp: 30, tp: 28, str: 5, vit: 6, agi: 8, int: 10, mnd: 12, luc: 10 },
     statGrowth: { hp: 5, tp: 6, str: 1, vit: 1, agi: 2, int: 3, mnd: 3, luc: 3 },
     // 種族スキル: ユニオン＋採集（採取・収穫に長ける）
@@ -110,6 +115,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_golan: {
     id: 'race_golan',
     name: 'ゴラン',
+    description: '岩のごとき体躯を持つ重厚種。最高峰のHP・防御・腕力を誇り物理に強いが、極端に鈍重で魔法を苦手とする。',
     baseStatsAtLv1: { hp: 60, tp: 10, str: 12, vit: 13, agi: 4, int: 3, mnd: 6, luc: 5 },
     statGrowth: { hp: 13, tp: 2, str: 3, vit: 3, agi: 1, int: 1, mnd: 1, luc: 2 },
     // 種族スキル: ユニオン＋採集（採掘・伐採に長ける）

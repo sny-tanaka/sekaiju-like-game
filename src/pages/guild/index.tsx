@@ -3,6 +3,8 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { ClassInfoCard } from '@/components/creation/ClassInfoCard/ClassInfoCard';
+import { RaceInfoCard } from '@/components/creation/RaceInfoCard/RaceInfoCard';
 import {
   FORMATION_BACK_SLOTS,
   FORMATION_FRONT_SLOTS,
@@ -169,6 +171,7 @@ export const Page = () => {
                 ))}
               </select>
             </label>
+            <RaceInfoCard raceId={raceId} />
             <label className={styles.field}>
               <span>職業</span>
               <select
@@ -185,6 +188,7 @@ export const Page = () => {
                 ))}
               </select>
             </label>
+            <ClassInfoCard classId={classId} />
             <button
               type="button"
               className={styles.primary}

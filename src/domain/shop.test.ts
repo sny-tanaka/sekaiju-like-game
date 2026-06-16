@@ -1,6 +1,15 @@
 import { itemCount } from '@/domain/inventory';
 import { createInitialSaveData } from '@/domain/saveData';
-import { buy, sell, sellEquipment, sellPriceOf, shopCatalog, unlockedTier } from '@/domain/shop';
+import {
+  buy,
+  buyMany,
+  equipableClassNames,
+  sell,
+  sellEquipment,
+  sellPriceOf,
+  shopCatalog,
+  unlockedTier,
+} from '@/domain/shop';
 import type { SaveData } from '@/domain/types';
 
 function richSave(gold: number): SaveData {
@@ -62,6 +71,52 @@ describe('shop', () => {
     save = sell(save, 'item_slime_jelly', 1);
     expect(save.shopStock.unlockedItemIds).toContain('equip_slime_shield');
     expect(shopCatalog(save).some((e) => e.id === 'equip_slime_shield')).toBe(true);
+  });
+
+  // --- #30 buyMany テスト ---
+  test('buyMany: 所持金潤沢なら qty 個ぶん gold が減り倉庫に入る', () => {
+    let save = richSave(1000);
+    save = buyMany(save, 'item_potion', 3); // ポーション30G × 3 = 90G
+    expect(save.guild.gold).toBe(910);
+    expect(itemCount(save, 'item_potion')).toBe(3);
+  });
+
+  test('buyMany: 所持金不足なら買える上限までに丸められ gold が負にならない', () => {
+    // ポーション30G、所持金70G → 最大2個まで
+    let save = richSave(70);
+    save = buyMany(save, 'item_potion', 5);
+    expect(save.guild.gold).toBeGreaterThanOrEqual(0);
+    expect(save.guild.gold).toBe(10); // 70 - 30*2 = 10
+    expect(itemCount(save, 'item_potion')).toBe(2);
+  });
+
+  test('buyMany: 装備を複数購入するとプールに個体が追加される', () => {
+    let save = richSave(500);
+    save = buyMany(save, 'equip_short_sword', 3); // 120G × 3 = 360G
+    expect(save.guild.gold).toBe(140);
+    expect(save.guild.equipment.filter((e) => e.masterId === 'equip_short_sword')).toHaveLength(3);
+  });
+
+  test('buyMany: 所持金が price 未満なら 0 個（save をそのまま返す）', () => {
+    const save = richSave(10);
+    const result = buyMany(save, 'item_potion', 3); // 30G 必要なのに10Gしかない
+    expect(result).toBe(save);
+  });
+
+  // --- #31 equipableClassNames テスト ---
+  test('equipableClassNames: sword 装備は戦士を含み魔導士を含まない', () => {
+    const names = equipableClassNames('equip_short_sword');
+    expect(names).toContain('戦士');
+    expect(names).not.toContain('魔導士');
+  });
+
+  test('equipableClassNames: accessory は全職業を返す', () => {
+    // equip_amulet は tier0 の装飾品 (slot === 'accessory')
+    const names = equipableClassNames('equip_amulet');
+    // 全職業分の名前が返ること（戦士・魔導士など代表を確認）
+    expect(names).toContain('戦士');
+    expect(names).toContain('魔導士');
+    expect(names.length).toBeGreaterThan(0);
   });
 
   test('消費アイテム・素材を売ると所持金が増え倉庫から減る（#16 回帰）', () => {

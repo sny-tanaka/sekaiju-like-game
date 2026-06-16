@@ -1,0 +1,89 @@
+@use 'variables' as var;
+
+.card {
+  padding: 12px 14px;
+  border: 1px solid var.$gray;
+  border-radius: 12px;
+  background-color: var.$white;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.raceName {
+  font-size: 14px;
+  font-weight: 800;
+  color: var.$text-dark;
+}
+
+.description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var.$text-dark;
+  opacity: 0.85;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.6;
+  margin-bottom: 6px;
+}
+
+.rankSection,
+.resistSection {
+  // empty wrapper — just flex column
+}
+
+.rankGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.rankChip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 2px;
+  border-radius: 8px;
+  font-weight: 700;
+  background-color: var.$gray;
+}
+
+.chipLabel {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.chipRank {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+// ランク別の色
+.rank_S {
+  background-color: #ffd54f;
+  color: #5d4037;
+}
+
+.rank_A {
+  background-color: #ef9a9a;
+  color: #b71c1c;
+}
+
+.rank_B {
+  background-color: #a5d6a7;
+  color: #1b5e20;
+}
+
+.rank_C {
+  background-color: #90caf9;
+  color: #0d47a1;
+}
+
+.rank_D {
+  background-color: #e0e0e0;
+  color: #424242;
+}

@@ -243,6 +243,7 @@ export interface PassiveSkillDef {
 export interface RaceMaster {
   id: RaceId;
   name: string;
+  description: string;
   statGrowth: StatGrowth; // Lv ごとの各能力上昇量
   baseStatsAtLv1: Stats;
   raceSkillTree: SkillTreeDef; // 種族固有スキルツリー（ユニオンスキル・採集スキル等を含む）
@@ -257,6 +258,7 @@ export interface RaceMaster {
 export interface ClassMaster {
   id: ClassId;
   name: string;
+  description: string;
   skillTree: SkillTreeDef; // 基本スキル + 達人スキル
   equipableWeaponTypes: WeaponType[];
   equipableArmorTypes: ArmorType[];
