@@ -5,12 +5,13 @@
  * bgmSettings のラウンドトリップが通ることを検証する。
  */
 
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, render } from '@testing-library/react';
 import { useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 
 import { BgmContext } from './bgmContext';
+import { BgmProvider } from './BgmProvider';
 import { loadBgmSettings, saveBgmSettings } from './bgmSettings';
 import { useBgm } from './useBgm';
 
@@ -153,5 +154,103 @@ describe('useBgm (BgmProvider あり, jsdom)', () => {
         result.current?.toggleMuted();
       });
     }).not.toThrow();
+  });
+});
+
+// ────────────────────────────────────────────────────────────────
+// BgmProvider AudioContext resume — pointerdown で resume() が呼ばれる
+// ────────────────────────────────────────────────────────────────
+describe('BgmProvider AudioContext resume', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let originalAudioContext: any;
+  let mockResumeFn: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    localStorage.clear();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    originalAudioContext = (window as any).AudioContext;
+
+    mockResumeFn = vi.fn(function (this: { state: string }) {
+      this.state = 'running';
+      return Promise.resolve();
+    });
+
+    const mockGain = () => ({
+      gain: {
+        value: 0,
+        setTargetAtTime: vi.fn(),
+        setValueAtTime: vi.fn(),
+        linearRampToValueAtTime: vi.fn(),
+        cancelScheduledValues: vi.fn(),
+      },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+    });
+
+    const mockOscillator = () => ({
+      type: 'sine',
+      frequency: { setValueAtTime: vi.fn() },
+      detune: { setValueAtTime: vi.fn() },
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      onended: null,
+      setPeriodicWave: vi.fn(),
+    });
+
+    const mockBufferSource = () => ({
+      buffer: null,
+      loop: false,
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      onended: null,
+    });
+
+    const mockBuffer = {
+      getChannelData: vi.fn(() => new Float32Array(2048)),
+    };
+
+    class MockAudioContext {
+      state = 'suspended';
+      currentTime = 0;
+      sampleRate = 44100;
+      destination = {};
+      resume = mockResumeFn;
+      createGain = vi.fn(mockGain);
+      createOscillator = vi.fn(mockOscillator);
+      createBufferSource = vi.fn(mockBufferSource);
+      createBuffer = vi.fn(() => mockBuffer);
+      createPeriodicWave = vi.fn(() => ({}));
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).AudioContext = MockAudioContext;
+  });
+
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).AudioContext = originalAudioContext;
+    localStorage.clear();
+  });
+
+  test('pointerdown イベントで AudioContext.resume() が呼ばれる', () => {
+    act(() => {
+      render(
+        <MemoryRouter initialEntries={['/title']}>
+          <BgmProvider>
+            <div />
+          </BgmProvider>
+        </MemoryRouter>
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(new Event('pointerdown'));
+    });
+
+    expect(mockResumeFn).toHaveBeenCalled();
   });
 });
