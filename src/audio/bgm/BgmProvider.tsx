@@ -62,6 +62,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
 
   const playerRef = useRef<BgmPlayer | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const initializedRef = useRef(false);
 
   // 初期化前に来たルート変更を覚えておく
@@ -83,6 +84,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const ctx = new Ctor();
+      audioCtxRef.current = ctx;
       const masterGain = ctx.createGain();
       masterGain.gain.value = mutedRef.current ? 0 : volumeRef.current;
       masterGain.connect(ctx.destination);
@@ -90,6 +92,10 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
 
       const player = new BgmPlayer(ctx, masterGain);
       playerRef.current = player;
+
+      if (ctx.state === 'suspended') {
+        void ctx.resume();
+      }
 
       // 保留中のトラックがあれば再生
       const pending = pendingTrackIdRef.current;
@@ -107,10 +113,14 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handler = () => {
       initAudioContext();
+      const ctx = audioCtxRef.current;
+      if (ctx && ctx.state === 'suspended') {
+        void ctx.resume();
+      }
     };
-    window.addEventListener('pointerdown', handler, { once: true });
-    window.addEventListener('keydown', handler, { once: true });
-    window.addEventListener('touchstart', handler, { once: true });
+    window.addEventListener('pointerdown', handler);
+    window.addEventListener('keydown', handler);
+    window.addEventListener('touchstart', handler);
     return () => {
       window.removeEventListener('pointerdown', handler);
       window.removeEventListener('keydown', handler);
