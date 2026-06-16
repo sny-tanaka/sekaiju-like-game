@@ -487,6 +487,7 @@ function applySkillEffect(
     case 'damage': {
       const hits = effect.hits ?? 1;
       const power = effect.power(level);
+      let drainTotal = 0; // ★追加
       for (const target of targets) {
         if (target.isDown) continue;
         let landed = false;
@@ -507,6 +508,14 @@ function applySkillEffect(
         }
         // 反応は「スキル×対象」単位で1回（多段でも追撃/反撃は1回。[03 §6.5]）。
         if (landed) triggerReactions(state, actor, target, element, total, rng);
+        drainTotal += total; // ★追加
+      }
+      // ★追加: HP吸収
+      if (effect.drain && drainTotal > 0 && !actor.isDown) {
+        const before = actor.hp;
+        actor.hp = clamp(actor.hp + Math.round(drainTotal * effect.drain), 0, actor.maxHp);
+        if (actor.hp > before)
+          state.log.push({ text: `${actor.name} は ${actor.hp - before} 吸収した` });
       }
       break;
     }
@@ -625,6 +634,32 @@ function applySkillEffect(
         target.ailments = [];
         state.log.push({ text: `${target.name} の状態異常が治療された` });
       }
+      break;
+    }
+    case 'revive': {
+      for (const target of targets) {
+        if (!target.isDown) continue; // 生存者には無効
+        target.isDown = false;
+        target.hp = clamp(Math.round(target.maxHp * effect.ratio(level)), 1, target.maxHp);
+        state.log.push({ text: `${actor.name} は ${target.name} を蘇生した（HP+${target.hp}）` });
+      }
+      break;
+    }
+    case 'regen': {
+      const flat = effect.amount(level);
+      const coef =
+        effect.matkCoef === 'one'
+          ? BALANCE.HEAL_MATK_COEF_ONE
+          : effect.matkCoef === 'all'
+            ? BALANCE.HEAL_MATK_COEF_ALL
+            : BALANCE.HEAL_MATK_COEF_MINOR;
+      const casterMatk = deriveCombat(actor.stats, actor.equip, actor.buffs, actor.passive).matk;
+      const amount = Math.round(flat + casterMatk * coef);
+      for (const target of targets) {
+        if (target.isDown) continue;
+        addState(target, { kind: 'regen', amount, remainingTurns: effect.turns });
+      }
+      state.log.push({ text: `${actor.name} は継続回復を付与した` });
       break;
     }
     default:
@@ -998,6 +1033,17 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       const dmg = poison.magnitude ?? Math.max(1, Math.floor(c.maxHp * BALANCE.POISON_HP_RATIO));
       dealDamage(c, dmg, next.log);
       next.log.push({ text: `${c.name} は毒で ${dmg} のダメージ` });
+    }
+  }
+  // リジェネ（継続回復・[issue #41]）。毒の後、残ターン減算の前にHPを回復する。
+  for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
+    if (c.isDown || !c.states) continue;
+    for (const s of c.states) {
+      if (s.kind !== 'regen') continue;
+      const before = c.hp;
+      c.hp = clamp(c.hp + s.amount, 0, c.maxHp);
+      if (c.hp > before)
+        next.log.push({ text: `${c.name} は ${c.hp - before} 回復した（リジェネ）` });
     }
   }
   for (const c of [...next.allies, ...next.enemies, ...next.summons]) {

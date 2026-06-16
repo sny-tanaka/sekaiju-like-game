@@ -122,7 +122,8 @@ export type CombatState =
       remainingTurns: number;
     }
   | { kind: 'decoy'; weight: number; remainingTurns: number }
-  | { kind: 'barrier'; absorb: number; remainingTurns: number };
+  | { kind: 'barrier'; absorb: number; remainingTurns: number }
+  | { kind: 'regen'; amount: number; remainingTurns: number };
 
 // ----------------------------------------------------------------------------
 // 戦闘の実行時モデル（[03]）。保存しない（戦闘開始時に生成・終了時に結果を反映）。
@@ -354,7 +355,13 @@ export interface EnemyActionCond {
 }
 
 export type SkillEffectDef =
-  | { kind: 'damage'; power: (lv: number) => number; statBase: 'str' | 'int'; hits?: number }
+  | {
+      kind: 'damage';
+      power: (lv: number) => number;
+      statBase: 'str' | 'int';
+      hits?: number;
+      drain?: number;
+    }
   | { kind: 'heal'; amount: (lv: number) => number; matkCoef?: 'one' | 'all' | 'minor' }
   | { kind: 'restoreTp'; amount: (lv: number) => number }
   | {
@@ -392,7 +399,16 @@ export type SkillEffectDef =
   // 障壁（[03 §6.5]）。付与中、被弾ダメージを総量 absorb まで肩代わりする。
   | { kind: 'barrier'; absorb: (lv: number) => number; turns: number }
   // 状態異常治療（[03 §6.6]）。対象の状態異常（封じ含む）を解除する。
-  | { kind: 'cleanse' };
+  | { kind: 'cleanse' }
+  // 蘇生（[issue #41]）。戦闘不能の対象を maxHp×ratio で復帰させる。対象が戦闘不能でなければ無効。
+  | { kind: 'revive'; ratio: (lv: number) => number }
+  // 継続回復（[issue #41]）。対象に regen 状態を付与し、毎ターン終了時に amount(+matk連動) を回復。
+  | {
+      kind: 'regen';
+      amount: (lv: number) => number;
+      turns: number;
+      matkCoef?: 'one' | 'all' | 'minor';
+    };
 
 export interface BattleSkillDef {
   id: SkillId;

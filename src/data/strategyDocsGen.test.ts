@@ -91,7 +91,8 @@ function effectStr(e: SkillEffectDef, max: number): string {
     case 'damage': {
       const base = e.statBase === 'str' ? '物理' : '魔法';
       const hits = e.hits && e.hits > 1 ? `×${e.hits}ヒット` : '';
-      return `${base}ダメージ 威力${range(e.power, max)}${hits}`;
+      const drain = e.drain ? `／HP吸収${Math.round(e.drain * 100)}%` : '';
+      return `${base}ダメージ 威力${range(e.power, max)}${hits}${drain}`;
     }
     case 'heal':
       return `HP回復 ${range(e.amount, max)}`;
@@ -115,6 +116,10 @@ function effectStr(e: SkillEffectDef, max: number): string {
       return `障壁（被弾を計${range(e.absorb, max)}まで肩代わり） / ${e.turns}ターン`;
     case 'cleanse':
       return `状態異常を全解除`;
+    case 'revive':
+      return `蘇生（HP${pctRange(e.ratio, max)}で復帰）`;
+    case 'regen':
+      return `継続回復 ${range(e.amount, max)}/ターン×${e.turns}ターン`;
     default:
       return '';
   }

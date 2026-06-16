@@ -86,7 +86,7 @@ const AILMENT_LABEL: Record<string, string> = {
 function effectLabel(e: SkillEffectDef, lv: number): string {
   switch (e.kind) {
     case 'damage':
-      return `${e.statBase === 'str' ? '物理' : '魔法'}威力${Math.round(e.power(lv) * 100)}%${e.hits && e.hits > 1 ? `×${e.hits}` : ''}`;
+      return `${e.statBase === 'str' ? '物理' : '魔法'}威力${Math.round(e.power(lv) * 100)}%${e.hits && e.hits > 1 ? `×${e.hits}` : ''}${e.drain ? '・吸収' : ''}`;
     case 'heal':
       return `HP回復${e.amount(lv)}`;
     case 'restoreTp':
@@ -107,9 +107,17 @@ function effectLabel(e: SkillEffectDef, lv: number): string {
       return '障壁';
     case 'cleanse':
       return '状態異常治療';
+    case 'revive':
+      return `蘇生(HP${Math.round(e.ratio(lv) * 100)}%)`;
+    case 'regen':
+      return `継続回復${e.amount(lv)}`;
     default:
       return '';
   }
+}
+
+function skillIsRevive(sid: string): boolean {
+  return !!BATTLE_SKILLS[sid]?.effects.some((e) => e.kind === 'revive');
 }
 
 /** 「属性・対象／効果…」の1行サマリ。 */
@@ -660,6 +668,9 @@ export const Page = () => {
   const active = activeId ? aliveAllies.find((a) => a.id === activeId) : undefined;
   // 味方対象選択モード: allyTargetMenu が設定されているとき。
   const isAllyTargeting = allyTargetMenu !== null;
+  const reviveTargeting = allyTargetMenu !== null && skillIsRevive(allyTargetMenu);
+  // 対象選択中に選べる味方（蘇生は戦闘不能のみ／その他は生存のみ）
+  const allyTargetCandidates = reviveTargeting ? state.allies.filter((a) => a.isDown) : aliveAllies;
   const targetName = state.enemies.find((e) => e.id === targetId)?.name ?? '-';
   const rewards = battleRewards(state);
 
@@ -668,8 +679,8 @@ export const Page = () => {
     // 味方対象選択中: そのキャラが選ばれているか
     const isAllyTargeted =
       isAllyTargeting && activeId !== null && commandTargets[activeId] === a.id;
-    // 味方対象選択中: タップで対象選択できる（倒れていなければ）
-    const isAllySelectable = isAllyTargeting && !a.isDown;
+    // 味方対象選択中: タップで対象選択できる（蘇生は戦闘不能のみ／その他は生存のみ）
+    const isAllySelectable = isAllyTargeting && (reviveTargeting ? a.isDown : !a.isDown);
     return (
       <button
         type="button"
@@ -682,7 +693,11 @@ export const Page = () => {
           commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
           flashIds.has(a.id) ? styles.flash : '',
         ].join(' ')}
-        disabled={a.isDown || state.outcome !== 'ongoing' || !!anim}
+        disabled={
+          state.outcome !== 'ongoing' ||
+          !!anim ||
+          (a.isDown && !(isAllyTargeting && reviveTargeting))
+        }
         onClick={() => {
           if (isAllyTargeting && activeId) {
             // 味方対象選択: クリックで対象確定
@@ -932,7 +947,7 @@ export const Page = () => {
                     <br />
                     <span className={styles.allyTargetSub}>上の味方カードをタップしてください</span>
                   </div>
-                  {aliveAllies.map((a) => (
+                  {allyTargetCandidates.map((a) => (
                     <button
                       type="button"
                       key={a.id}
