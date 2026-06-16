@@ -4,9 +4,11 @@ import { useNavigate } from 'react-router';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { AppUpdater } from '@/components/AppUpdater/AppUpdater';
 import { SaveCard } from '@/components/common/SaveCard/SaveCard';
 import { SoundSettings } from '@/components/common/SoundSettings';
 import type { SaveMeta } from '@/domain/types';
+import { useAppUpdate } from '@/hooks/useAppUpdate';
 import { useGameState } from '@/store/gameState';
 import { getSaveMeta } from '@/store/saveStore';
 
@@ -24,6 +26,7 @@ export const Page = () => {
   const [guildName, setGuildName] = useState('');
   const [busy, setBusy] = useState(false);
   const [soundOpen, setSoundOpen] = useState(false);
+  const { banner, checkForUpdate, isChecking, applyUpdate } = useAppUpdate();
 
   useEffect(() => {
     void (async () => {
@@ -159,7 +162,25 @@ export const Page = () => {
         )}
       </main>
 
-      <footer className={styles.foot}>v{__APP_VERSION__}</footer>
+      <footer className={styles.foot}>
+        <span className={styles.version}>v{__APP_VERSION__}</span>
+        <button
+          type="button"
+          className={styles.updateBtn}
+          disabled={isChecking}
+          onClick={() => {
+            play('cursor');
+            void checkForUpdate();
+          }}
+        >
+          {isChecking ? '確認中…' : '更新を確認'}
+        </button>
+      </footer>
+
+      <AppUpdater
+        banner={banner}
+        onApply={applyUpdate}
+      />
 
       {soundOpen ? (
         <div
