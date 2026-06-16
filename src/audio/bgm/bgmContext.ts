@@ -6,6 +6,9 @@ import { createContext } from 'react';
 // テストが外部アセットに依存しないようにする。
 // ============================================================================
 
+/** /battle 中に再生する戦闘曲のバリアント（戦闘画面が敵種別から設定）。 */
+export type BattleVariant = 'battle' | 'boss' | 'foe';
+
 export interface BgmContextValue {
   volume: number;
   muted: boolean;
@@ -13,6 +16,8 @@ export interface BgmContextValue {
   setMuted: (m: boolean) => void;
   toggleMuted: () => void;
   currentTrackId: string | null;
+  /** /battle 中の戦闘曲バリアントを設定する（null で解除）。 */
+  setBattleVariant: (v: BattleVariant | null) => void;
 }
 
 export const BgmContext = createContext<BgmContextValue | null>(null);

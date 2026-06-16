@@ -11,25 +11,33 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router';
 
 import { BgmContext } from './bgmContext';
+import type { BattleVariant } from './bgmContext';
 import { BgmPlayer, getAudioContextCtor } from './BgmPlayer';
 import { loadBgmSettings, saveBgmSettings } from './bgmSettings';
 import battleTrack from './tracks/battle.json';
+import bossTrack from './tracks/boss.json';
 import exploreTrack from './tracks/explore.json';
+import foeTrack from './tracks/foe.json';
 import titleTrack from './tracks/title.json';
 import townTrack from './tracks/town.json';
 import type { BgmTrack } from './types';
 
-// ルート → トラックID のマッピング
-type TrackId = 'title' | 'town' | 'explore' | 'battle';
+// トラックID。戦闘系（battle/boss/foe）は /battle 内で敵種別により切替。
+type TrackId = 'title' | 'town' | 'explore' | 'battle' | 'boss' | 'foe';
 
 const TRACK_MAP: Record<TrackId, BgmTrack> = {
   title: titleTrack as unknown as BgmTrack,
   town: townTrack as unknown as BgmTrack,
   explore: exploreTrack as unknown as BgmTrack,
   battle: battleTrack as unknown as BgmTrack,
+  boss: bossTrack as unknown as BgmTrack,
+  foe: foeTrack as unknown as BgmTrack,
 };
 
-/** pathname → トラックID（null = 無音） */
+/**
+ * pathname → トラックID（null = 無音）。
+ * /battle は敵種別で battle/boss/foe を切替えるため、ここでは扱わず BattleVariant 側に委ねる。
+ */
 function pathnameToTrackId(pathname: string): TrackId | null {
   if (pathname === '/title' || pathname === '/') return 'title';
   if (
@@ -41,7 +49,6 @@ function pathnameToTrackId(pathname: string): TrackId | null {
   )
     return 'town';
   if (pathname === '/dungeon') return 'explore';
-  if (pathname === '/battle') return 'battle';
   return null;
 }
 
@@ -50,6 +57,8 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
   const [volume, setVolumeState] = useState(initialSettings.volume);
   const [muted, setMutedState] = useState(initialSettings.muted);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+  // /battle 中の戦闘曲バリアント（戦闘画面が敵種別から設定。null=未設定）。
+  const [battleVariant, setBattleVariantState] = useState<BattleVariant | null>(null);
 
   const playerRef = useRef<BgmPlayer | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
@@ -109,9 +118,10 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [initAudioContext]);
 
-  /** ルート変化に応じて曲を切替。 */
+  /** ルート＋戦闘バリアントから実際に再生するトラックを決める。 */
   useEffect(() => {
-    const trackId = pathnameToTrackId(location.pathname);
+    const trackId: TrackId | null =
+      location.pathname === '/battle' ? battleVariant : pathnameToTrackId(location.pathname);
 
     if (playerRef.current) {
       const track = trackId ? TRACK_MAP[trackId] : null;
@@ -121,7 +131,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
       // AudioContext 未初期化時は保留
       pendingTrackIdRef.current = trackId;
     }
-  }, [location.pathname]);
+  }, [location.pathname, battleVariant]);
 
   /** volume / muted が変わったらプレイヤーに反映し永続化。 */
   useEffect(() => {
@@ -150,6 +160,10 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
     setMutedState((prev) => !prev);
   }, []);
 
+  const setBattleVariant = useCallback((v: BattleVariant | null) => {
+    setBattleVariantState(v);
+  }, []);
+
   return (
     <BgmContext.Provider
       value={{
@@ -159,6 +173,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
         setMuted,
         toggleMuted,
         currentTrackId,
+        setBattleVariant,
       }}
     >
       {children}

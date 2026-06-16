@@ -15,6 +15,7 @@ export const useBgm = (): BgmContextValue => {
       setMuted: () => {},
       toggleMuted: () => {},
       currentTrackId: null,
+      setBattleVariant: () => {},
     };
   }
   return ctx;

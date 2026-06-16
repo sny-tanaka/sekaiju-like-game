@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
+import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
@@ -155,6 +156,7 @@ export const Page = () => {
   const navigate = useNavigate();
   const { save, applyAndPersist } = useGameState();
   const play = useSfx();
+  const { setBattleVariant } = useBgm();
   const rngRef = useRef<Rng | null>(null);
   const [state, setState] = useState<BattleState | null>(null);
   const [commands, setCommands] = useState<Record<string, AllyCmd>>({});
@@ -197,6 +199,15 @@ export const Page = () => {
       setState(startBattle(save, rollEncounter(depth, rngRef.current)));
     }
   }, [save, state]);
+
+  // 敵種別に応じて戦闘BGMを切替（boss > foe > 通常battle）。/battle 離脱時に解除。
+  useEffect(() => {
+    if (!state) return;
+    const isBoss = state.enemies.some((e) => e.enemyId && ENEMIES[e.enemyId]?.kind === 'boss');
+    const isFoe = state.enemies.some((e) => e.enemyId && ENEMIES[e.enemyId]?.kind === 'foe');
+    setBattleVariant(isBoss ? 'boss' : isFoe ? 'foe' : 'battle');
+  }, [state, setBattleVariant]);
+  useEffect(() => () => setBattleVariant(null), [setBattleVariant]);
 
   // エンカウント演出（issue #18）: 突入直後の暗転を一定時間で晴らす。
   useEffect(() => {

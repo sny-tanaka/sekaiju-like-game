@@ -78,7 +78,15 @@ const TestBgmProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <BgmContext.Provider
-      value={{ volume, muted, setVolume, setMuted, toggleMuted, currentTrackId: null }}
+      value={{
+        volume,
+        muted,
+        setVolume,
+        setMuted,
+        toggleMuted,
+        currentTrackId: null,
+        setBattleVariant: () => {},
+      }}
     >
       {children}
     </BgmContext.Provider>
