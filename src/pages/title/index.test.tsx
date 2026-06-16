@@ -1,28 +1,25 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { deleteDB } from 'idb';
-import { MemoryRouter, Route, Routes } from 'react-router';
 
 import { createInitialSaveData } from '@/domain/saveData';
 import { Page as TitlePage } from '@/pages/title';
 import { GameStateProvider } from '@/store/gameState';
+import { NavigationProvider, useNavigation } from '@/store/navigation';
 import { _resetDbForTest, saveGame } from '@/store/saveStore';
+
+function Harness() {
+  const { screen } = useNavigation();
+  if (screen.name === 'town') return <div>拠点画面</div>;
+  return <TitlePage />;
+}
 
 function renderApp() {
   return render(
     <GameStateProvider>
-      <MemoryRouter initialEntries={['/title']}>
-        <Routes>
-          <Route
-            path="/title"
-            element={<TitlePage />}
-          />
-          <Route
-            path="/town"
-            element={<div>拠点画面</div>}
-          />
-        </Routes>
-      </MemoryRouter>
+      <NavigationProvider>
+        <Harness />
+      </NavigationProvider>
     </GameStateProvider>
   );
 }

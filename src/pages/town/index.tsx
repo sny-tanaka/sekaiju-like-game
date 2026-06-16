@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -7,22 +6,18 @@ import { useSfx } from '@/audio/useSfx';
 import { MenuButton } from '@/components/common/MenuButton/MenuButton';
 import { startDive } from '@/domain/dive';
 import { useGameState } from '@/store/gameState';
+import { Redirect, useNavigation } from '@/store/navigation';
 
 // 拠点（街）ハブ（[07 §2]）。各施設への導線を持つ。
 export const Page = () => {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const { save, exitToTitle, applyAndPersist } = useGameState();
   const play = useSfx();
   const [warpOpen, setWarpOpen] = useState(false);
 
   // セーブが無い状態で直接来たらタイトルへ
   if (!save) {
-    return (
-      <Navigate
-        to="/title"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'title' }} />;
   }
 
   const { guild, towerState, diveState } = save;
@@ -32,7 +27,7 @@ export const Page = () => {
   const handleExit = () => {
     play('cancel');
     exitToTitle();
-    navigate('/title');
+    navigate({ name: 'title' });
   };
 
   // ダイブ開始（潜行中でなければ第1階から開始してオートセーブ）/ 潜行を再開
@@ -41,7 +36,7 @@ export const Page = () => {
     if (!diveState) {
       await applyAndPersist((s) => startDive(s, 1));
     }
-    navigate('/dungeon');
+    navigate({ name: 'dungeon' });
   };
 
   // 10層ワープ（[06 §5]）: 解放済みチェックポイントへ新規ダイブ開始。
@@ -50,7 +45,7 @@ export const Page = () => {
     play('warp');
     setWarpOpen(false);
     await applyAndPersist((s) => startDive(s, depth));
-    navigate('/dungeon');
+    navigate({ name: 'dungeon' });
   };
 
   return (
@@ -112,22 +107,22 @@ export const Page = () => {
         <MenuButton
           label="ギルド管理"
           description="編成・キャラ作成"
-          onClick={() => navigate('/guild')}
+          onClick={() => navigate({ name: 'guild' })}
         />
         <MenuButton
           label="ショップ"
           description="装備・アイテム売買"
-          onClick={() => navigate('/shop')}
+          onClick={() => navigate({ name: 'shop' })}
         />
         <MenuButton
           label="鍛冶屋"
           description="装備の強化・リサイクル"
-          onClick={() => navigate('/forge')}
+          onClick={() => navigate({ name: 'forge' })}
         />
         <MenuButton
           label="図鑑 / 記録"
           description="到達記録・モンスター図鑑"
-          onClick={() => navigate('/codex')}
+          onClick={() => navigate({ name: 'codex' })}
         />
       </main>
 

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -10,6 +9,7 @@ import { SoundSettings } from '@/components/common/SoundSettings';
 import type { SaveMeta } from '@/domain/types';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
 import { useGameState } from '@/store/gameState';
+import { useNavigation } from '@/store/navigation';
 import { getSaveMeta } from '@/store/saveStore';
 
 type Mode = 'menu' | 'confirm' | 'guildName';
@@ -17,7 +17,7 @@ type Mode = 'menu' | 'confirm' | 'guildName';
 // タイトル（[07 §1・§6]）。セーブは1つ。
 // 「つづきから」で読込、「最初から」は確認ダイアログを挟んでから新規作成。
 export const Page = () => {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const { startNewGame, continueGame } = useGameState();
   const play = useSfx();
   const [meta, setMeta] = useState<SaveMeta | null>(null);
@@ -42,7 +42,7 @@ export const Page = () => {
     setBusy(true);
     const result = await continueGame();
     setBusy(false);
-    if (result.ok) navigate('/town');
+    if (result.ok) navigate({ name: 'town' });
   }, [continueGame, navigate, play]);
 
   // 「最初から」: 有効なセーブがあるなら確認、無ければそのままギルド名入力へ
@@ -58,7 +58,7 @@ export const Page = () => {
     setBusy(true);
     await startNewGame(name);
     setBusy(false);
-    navigate('/town');
+    navigate({ name: 'town' });
   }, [guildName, startNewGame, navigate, play]);
 
   return (

@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -35,13 +34,14 @@ import { availableSP, learnSkill } from '@/domain/skillTree';
 import { computeBaseStats } from '@/domain/stats';
 import type { Dir, Rng } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+import { Redirect, useNavigation } from '@/store/navigation';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // 探索（ダンジョン）。自動生成1階のグリッド移動＋自動マップ＋エンカウントゲージ。
 // 階段で上下移動、帰還で拠点へ。オートセーブは階移動・帰還時（[05 §4]）。
 export const Page = () => {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const { save, applySave, applyAndPersist } = useGameState();
   const play = useSfx();
   // 移動中エンカウント抽選用の ephemeral 乱数（ダイブ内で1本。再開時は作り直し）
@@ -131,7 +131,7 @@ export const Page = () => {
       void applyAndPersist(() => result.save);
       if (result.triggered) {
         // ダミー戦闘へ（戦闘ロジックは Phase 2）。戻ると探索を継続。
-        navigate('/battle');
+        navigate({ name: 'battle' });
       }
     },
     [save, applyAndPersist, navigate]
@@ -159,7 +159,7 @@ export const Page = () => {
       if (save.diveState!.depth <= 1) {
         play('warp');
         await applyAndPersist((s) => returnToTown(s));
-        navigate('/town');
+        navigate({ name: 'town' });
       } else {
         play('dive');
         await applyAndPersist((s) => goShallower(s));
@@ -170,7 +170,7 @@ export const Page = () => {
   const handleReturn = useCallback(async () => {
     play('warp');
     await applyAndPersist((s) => returnToTown(s));
-    navigate('/town');
+    navigate({ name: 'town' });
   }, [applyAndPersist, navigate, play]);
 
   const handleUseItem = useCallback(
@@ -182,7 +182,7 @@ export const Page = () => {
       if (!result.save.diveState) {
         // 帰還の糸など → 拠点へ
         setItemOpen(false);
-        navigate('/town');
+        navigate({ name: 'town' });
       }
     },
     [save, applyAndPersist, navigate]
@@ -207,7 +207,7 @@ export const Page = () => {
             return r.save;
           });
           if (triggered) {
-            navigate('/battle');
+            navigate({ name: 'battle' });
             return;
           }
           if (!moved) return; // 進めなくなったら中断（経路上に想定外の障害）
@@ -232,20 +232,10 @@ export const Page = () => {
   );
 
   if (!save) {
-    return (
-      <Navigate
-        to="/title"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'title' }} />;
   }
   if (!dive || !floor) {
-    return (
-      <Navigate
-        to="/town"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'town' }} />;
   }
 
   const stairKind = stairsAt(save);

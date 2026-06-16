@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -18,6 +17,7 @@ import { formationCount, setSlot } from '@/domain/formation';
 import { addCharacterToGuild, createCharacter, removeCharacterFromGuild } from '@/domain/saveData';
 import type { Character, ClassId, RaceId, Row, SaveData } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+import { Redirect, useNavigation } from '@/store/navigation';
 
 type Tab = 'roster' | 'party' | 'banish';
 type Pos = '前衛' | '後衛' | '控え';
@@ -39,7 +39,7 @@ function positionOf(save: SaveData, charId: string): Pos {
 
 // ギルド管理（[01 §9]・issue #26）。作成＋一覧 / 編成 / 追放の3タブ構成。
 export const Page = () => {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
   const play = useSfx();
 
@@ -88,12 +88,7 @@ export const Page = () => {
   }, [name, raceId, classId, applyAndPersist, play]);
 
   if (!save) {
-    return (
-      <Navigate
-        to="/title"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'title' }} />;
   }
 
   const isFull = members.length >= GUILD_MEMBER_LIMIT;
@@ -284,7 +279,7 @@ export const Page = () => {
                       <button
                         type="button"
                         className={styles.memberMain}
-                        onClick={() => navigate(`/guild/char/${m.id}`)}
+                        onClick={() => navigate({ name: 'guildChar', id: m.id })}
                       >
                         <span className={styles.memberName}>
                           {m.name}
@@ -408,7 +403,7 @@ export const Page = () => {
         <button
           type="button"
           className={styles.sub}
-          onClick={() => navigate('/town')}
+          onClick={() => navigate({ name: 'town' })}
         >
           拠点へ戻る
         </button>

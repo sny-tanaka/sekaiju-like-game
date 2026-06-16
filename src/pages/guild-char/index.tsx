@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router';
 
 import styles from './style.module.scss';
 
@@ -24,6 +23,7 @@ import { availableSP, learnSkill } from '@/domain/skillTree';
 import { computeBaseStats } from '@/domain/stats';
 import type { Character, ClassId, EquipSlotKey, RaceId, SaveData, StatKey } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
+import { Redirect, useNavigation } from '@/store/navigation';
 
 const RACE_IDS = Object.keys(RACES);
 const CLASS_IDS = Object.keys(CLASSES);
@@ -46,9 +46,8 @@ const STAT_ROWS: { key: StatKey; label: string }[] = [
 ];
 
 // キャラ詳細（[01 §10]）。ステータス・装備・スキル振り。
-export const Page = () => {
-  const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+export const Page = ({ id }: { id: string }) => {
+  const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
   const play = useSfx();
   const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
@@ -59,21 +58,11 @@ export const Page = () => {
   const [rbOpen, setRbOpen] = useState(false);
 
   if (!save) {
-    return (
-      <Navigate
-        to="/title"
-        replace
-      />
-    );
+    return <Redirect to={{ name: 'title' }} />;
   }
   const char = save.guild.members.find((m) => m.id === id);
-  if (!char || !id) {
-    return (
-      <Navigate
-        to="/guild"
-        replace
-      />
-    );
+  if (!char) {
+    return <Redirect to={{ name: 'guild' }} />;
   }
 
   const stats = computeBaseStats(char);
@@ -381,7 +370,7 @@ export const Page = () => {
         <button
           type="button"
           className={styles.back}
-          onClick={() => navigate('/guild')}
+          onClick={() => navigate({ name: 'guild' })}
         >
           もどる
         </button>

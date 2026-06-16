@@ -8,12 +8,13 @@
 import { renderHook, act, render } from '@testing-library/react';
 import { useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router';
 
 import { BgmContext } from './bgmContext';
 import { BgmProvider } from './BgmProvider';
 import { loadBgmSettings, saveBgmSettings } from './bgmSettings';
 import { useBgm } from './useBgm';
+
+import { NavigationProvider } from '@/store/navigation';
 
 // ────────────────────────────────────────────────────────────────
 // bgmSettings ラウンドトリップ
@@ -95,9 +96,9 @@ const TestBgmProvider = ({ children }: { children: ReactNode }) => {
 };
 
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <MemoryRouter>
+  <NavigationProvider>
     <TestBgmProvider>{children}</TestBgmProvider>
-  </MemoryRouter>
+  </NavigationProvider>
 );
 
 // ────────────────────────────────────────────────────────────────
@@ -242,11 +243,11 @@ describe('BgmProvider AudioContext resume', () => {
   test('pointerdown イベントで AudioContext.resume() が呼ばれる', () => {
     act(() => {
       render(
-        <MemoryRouter initialEntries={['/title']}>
+        <NavigationProvider>
           <BgmProvider>
             <div />
           </BgmProvider>
-        </MemoryRouter>
+        </NavigationProvider>
       );
     });
 
@@ -260,11 +261,11 @@ describe('BgmProvider AudioContext resume', () => {
   test('pointerdown で無音バッファが同期再生される（iOS 解錠）', () => {
     act(() => {
       render(
-        <MemoryRouter initialEntries={['/title']}>
+        <NavigationProvider>
           <BgmProvider>
             <div />
           </BgmProvider>
-        </MemoryRouter>
+        </NavigationProvider>
       );
     });
 
