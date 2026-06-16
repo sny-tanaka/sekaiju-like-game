@@ -4,6 +4,7 @@
  * - 最初のユーザー操作（pointerdown/keydown/touchstart）で AudioContext を生成
  * - react-router の useLocation で pathname を監視してルート→曲を切替
  * - 音量/ミュートを localStorage で永続化
+ * - iOS Safari 対策: ジェスチャー内で無音バッファを同期再生して AudioContext を解錠する
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -64,6 +65,8 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
   const masterGainRef = useRef<GainNode | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const initializedRef = useRef(false);
+  // iOS Safari の AudioContext 解錠（unlock）が済んだか
+  const audioUnlockedRef = useRef(false);
 
   // 初期化前に来たルート変更を覚えておく
   const pendingTrackIdRef = useRef<TrackId | null>(null);
@@ -73,6 +76,29 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
   const mutedRef = useRef(initialSettings.muted);
 
   const location = useLocation();
+
+  /**
+   * iOS Safari 対策: ユーザージェスチャー内で無音バッファ(1フレーム)を同期再生して
+   * AudioContext を解錠する。SE は buffer を同期再生して解錠されるが、BGM は
+   * setInterval スケジューリングのみでノードを同期起動しないため、別 context が
+   * 解錠されず無音になる。これを解消する。resume() も併せて呼ぶ。
+   */
+  const unlockAudio = useCallback((ctx: AudioContext) => {
+    if (ctx.state === 'suspended') {
+      void ctx.resume();
+    }
+    if (audioUnlockedRef.current) return;
+    try {
+      const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      audioUnlockedRef.current = true;
+    } catch {
+      // 解錠失敗は致命的ではない（次のジェスチャーで再試行される）
+    }
+  }, []);
 
   /** AudioContext と BgmPlayer を初期化する。 */
   const initAudioContext = useCallback(() => {
@@ -93,9 +119,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
       const player = new BgmPlayer(ctx, masterGain);
       playerRef.current = player;
 
-      if (ctx.state === 'suspended') {
-        void ctx.resume();
-      }
+      unlockAudio(ctx);
 
       // 保留中のトラックがあれば再生
       const pending = pendingTrackIdRef.current;
@@ -107,15 +131,15 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
       console.warn('[BgmProvider] AudioContext の初期化に失敗しました:', e);
     }
-  }, []);
+  }, [unlockAudio]);
 
   /** 最初のユーザー操作で AudioContext を遅延生成（自動再生ポリシー対策）。 */
   useEffect(() => {
     const handler = () => {
       initAudioContext();
       const ctx = audioCtxRef.current;
-      if (ctx && ctx.state === 'suspended') {
-        void ctx.resume();
+      if (ctx) {
+        unlockAudio(ctx);
       }
     };
     window.addEventListener('pointerdown', handler);
@@ -126,7 +150,7 @@ export const BgmProvider = ({ children }: { children: ReactNode }) => {
       window.removeEventListener('keydown', handler);
       window.removeEventListener('touchstart', handler);
     };
-  }, [initAudioContext]);
+  }, [initAudioContext, unlockAudio]);
 
   /** ルート＋戦闘バリアントから実際に再生するトラックを決める。 */
   useEffect(() => {

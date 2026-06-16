@@ -164,6 +164,7 @@ describe('BgmProvider AudioContext resume', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let originalAudioContext: any;
   let mockResumeFn: ReturnType<typeof vi.fn>;
+  let mockBufferSourceStartFn: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     localStorage.clear();
@@ -174,6 +175,8 @@ describe('BgmProvider AudioContext resume', () => {
       this.state = 'running';
       return Promise.resolve();
     });
+
+    mockBufferSourceStartFn = vi.fn();
 
     const mockGain = () => ({
       gain: {
@@ -204,7 +207,7 @@ describe('BgmProvider AudioContext resume', () => {
       loop: false,
       connect: vi.fn(),
       disconnect: vi.fn(),
-      start: vi.fn(),
+      start: mockBufferSourceStartFn,
       stop: vi.fn(),
       onended: null,
     });
@@ -252,5 +255,24 @@ describe('BgmProvider AudioContext resume', () => {
     });
 
     expect(mockResumeFn).toHaveBeenCalled();
+  });
+
+  test('pointerdown で無音バッファが同期再生される（iOS 解錠）', () => {
+    act(() => {
+      render(
+        <MemoryRouter initialEntries={['/title']}>
+          <BgmProvider>
+            <div />
+          </BgmProvider>
+        </MemoryRouter>
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(new Event('pointerdown'));
+    });
+
+    // unlockAudio で createBufferSource().start(0) が呼ばれること
+    expect(mockBufferSourceStartFn).toHaveBeenCalledWith(0);
   });
 });
