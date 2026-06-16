@@ -234,3 +234,106 @@
   background-color: #6fae46;
   color: #fff;
 }
+
+// 数量ステッパー（#30）
+.stepperRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stepperBtn {
+  min-width: 40px;
+  min-height: 40px;
+  border: 1px solid #cfd8c5;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.stepperVal {
+  min-width: 48px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.stepperMax {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var.$primary;
+  border-radius: 8px;
+  background-color: #e3f2fd;
+  color: var.$primary;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.totalRow {
+  text-align: center;
+  font-size: 14px;
+  color: #4c5a3c;
+}
+
+// 装備名をタップ可能にするボタン（#31）
+.nameBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var.$primary;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+}
+
+// 装備詳細モーダル（#31）
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.detailName {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.detailSlot {
+  font-size: 12px;
+  padding: 2px 8px;
+  border: 1px solid var.$gray;
+  border-radius: 999px;
+  background-color: #f5f5f5;
+}
+
+.detailRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.detailLabel {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
