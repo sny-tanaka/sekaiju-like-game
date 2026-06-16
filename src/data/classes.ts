@@ -12,6 +12,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_warrior: {
     id: 'class_warrior',
     name: '戦士',
+    description: '剣と斧の連携追撃・反撃を備えた前衛物理アタッカー。剣／斧で攻め筋が分岐する。',
     skillTree: {
       skills: [
         { skillId: 'skill_power_slash', maxLevel: 5 },
@@ -105,6 +106,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_guardian: {
     id: 'class_guardian',
     name: '守護兵',
+    description: '盾と挑発で敵を引きつけ、障壁と反撃で味方を守る前衛タンク。',
     skillTree: {
       skills: [
         { skillId: 'skill_shield_bash', maxLevel: 5 },
@@ -198,6 +200,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_mage: {
     id: 'class_mage',
     name: '魔導士',
+    description: '火・氷・雷の属性魔法で敵を殲滅する後衛アタッカー。',
     skillTree: {
       skills: [
         { skillId: 'skill_fire_bolt', maxLevel: 5 },
@@ -299,6 +302,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_ranger: {
     id: 'class_ranger',
     name: '狩人',
+    description: '弓の射撃・部位封じ・召喚獣・救護をこなす器用な後衛。',
     skillTree: {
       skills: [
         { skillId: 'skill_aimed_shot', maxLevel: 5 },
@@ -407,6 +411,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_medic: {
     id: 'class_medic',
     name: '薬師',
+    description: '回復・状態異常治療・防御支援の要となるメインヒーラー。',
     skillTree: {
       skills: [
         { skillId: 'skill_heal', maxLevel: 5 },
@@ -510,6 +515,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_dancer: {
     id: 'class_dancer',
     name: '剣舞士',
+    description: '舞と歌でパーティを強化・回復し、剣舞で攻撃もこなす支援職。',
     skillTree: {
       skills: [
         { skillId: 'skill_war_dance', maxLevel: 3 },
@@ -613,6 +619,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_monk: {
     id: 'class_monk',
     name: '拳聖',
+    description: '素手の多段攻撃・部位封じ・反撃を操る近接アタッカー。',
     skillTree: {
       skills: [
         { skillId: 'skill_triple_strike', maxLevel: 5 },
@@ -711,6 +718,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_hexer: {
     id: 'class_hexer',
     name: '呪術士',
+    description: '状態異常と弱体で敵を崩すデバッファー。',
     skillTree: {
       skills: [
         { skillId: 'skill_venom_hex', maxLevel: 5 },
@@ -809,6 +817,7 @@ export const CLASSES: Record<ClassId, ClassMaster> = {
   class_summoner: {
     id: 'class_summoner',
     name: '降霊術士',
+    description: '死霊を召喚・使役し、障壁と爆裂で戦う変則召喚職。',
     skillTree: {
       skills: [
         { skillId: 'skill_call_wraith', maxLevel: 3 },
