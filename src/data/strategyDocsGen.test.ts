@@ -115,6 +115,8 @@ function effectStr(e: SkillEffectDef, max: number): string {
       return `障壁（被弾を計${range(e.absorb, max)}まで肩代わり） / ${e.turns}ターン`;
     case 'cleanse':
       return `状態異常を全解除`;
+    case 'revive':
+      return `蘇生（HP${pctRange(e.ratio, max)}で復帰）`;
     default:
       return '';
   }

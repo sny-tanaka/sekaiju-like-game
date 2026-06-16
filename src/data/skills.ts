@@ -768,7 +768,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_medic_t_revive_light: {
     id: 'skill_medic_t_revive_light',
     name: '蘇生の光',
-    description: '味方全体のHPを絶大に回復する聖者の奇跡。',
+    description: '戦闘不能の味方1人を癒やしの光で蘇生する聖者の奇跡（HPを大きく回復して復帰）。',
   },
   passive_medic_t_blessing: {
     id: 'passive_medic_t_blessing',
@@ -804,7 +804,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_dancer_revival_dance: {
     id: 'skill_dancer_revival_dance',
     name: '蘇生の舞',
-    description: '味方全体のHPを回復する癒しの舞。',
+    description: '戦闘不能の味方1人を蘇らせる祈りの舞（HPの一部を回復して復帰）。',
   },
   passive_dancer_grace: {
     id: 'passive_dancer_grace',
@@ -1201,7 +1201,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_medic_revive_draft: {
     id: 'skill_medic_revive_draft',
     name: '蘇生薬',
-    description: '味方全体のTPを回復させる。',
+    description: '戦闘不能の味方1人を復帰させる秘薬（HPの一部を回復して蘇生）。',
   },
   skill_medic_weakening_smoke: {
     id: 'skill_medic_weakening_smoke',

@@ -627,6 +627,15 @@ function applySkillEffect(
       }
       break;
     }
+    case 'revive': {
+      for (const target of targets) {
+        if (!target.isDown) continue; // 生存者には無効
+        target.isDown = false;
+        target.hp = clamp(Math.round(target.maxHp * effect.ratio(level)), 1, target.maxHp);
+        state.log.push({ text: `${actor.name} は ${target.name} を蘇生した（HP+${target.hp}）` });
+      }
+      break;
+    }
     default:
       break;
   }

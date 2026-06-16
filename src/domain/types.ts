@@ -392,7 +392,9 @@ export type SkillEffectDef =
   // 障壁（[03 §6.5]）。付与中、被弾ダメージを総量 absorb まで肩代わりする。
   | { kind: 'barrier'; absorb: (lv: number) => number; turns: number }
   // 状態異常治療（[03 §6.6]）。対象の状態異常（封じ含む）を解除する。
-  | { kind: 'cleanse' };
+  | { kind: 'cleanse' }
+  // 蘇生（[issue #41]）。戦闘不能の対象を maxHp×ratio で復帰させる。対象が戦闘不能でなければ無効。
+  | { kind: 'revive'; ratio: (lv: number) => number };
 
 export interface BattleSkillDef {
   id: SkillId;

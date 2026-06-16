@@ -741,7 +741,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 8 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'barrier', absorb: (lv) => 25 + 12 * lv, turns: 3 }],
+    effects: [{ kind: 'barrier', absorb: (lv) => 35 + 15 * lv, turns: 3 }],
   },
   skill_guardian_retribution: {
     id: 'skill_guardian_retribution',
@@ -753,8 +753,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     effects: [
       {
         kind: 'counter',
-        chance: (lv) => 0.4 + 0.05 * lv,
-        power: (lv) => 1.1 + 0.1 * lv,
+        chance: (lv) => 0.54 + 0.04 * lv,
+        power: (lv) => 1.2 + 0.1 * lv,
         statBase: 'str',
         turns: 3,
       },
@@ -934,7 +934,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'almighty',
     target: 'allyOne',
     // §7.4 回復魔力連動 (one): flat + casterMatk * 0.70
-    effects: [{ kind: 'heal', amount: (lv) => 20 + 5 * lv, matkCoef: 'one' as const }],
+    effects: [{ kind: 'heal', amount: (lv) => 30 + 10 * lv, matkCoef: 'one' as const }],
   },
   skill_medic_party_cure: {
     id: 'skill_medic_party_cure',
@@ -944,7 +944,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'almighty',
     target: 'allyAll',
     // §7.4 回復魔力連動 (all): flat + casterMatk * 0.45
-    effects: [{ kind: 'heal', amount: (lv) => 10 + 3 * lv, matkCoef: 'all' as const }],
+    effects: [{ kind: 'heal', amount: (lv) => 18 + 6 * lv, matkCoef: 'all' as const }],
   },
   skill_medic_tp_tonic: {
     id: 'skill_medic_tp_tonic',
@@ -970,9 +970,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tree: 'title',
     tpCost: (lv) => 10 + lv,
     element: 'almighty',
-    target: 'allyAll',
-    // §7.4 回復魔力連動 (minor): flat + casterMatk * 0.30 (蘇生の光)
-    effects: [{ kind: 'heal', amount: (lv) => 8 + 2 * lv, matkCoef: 'minor' as const }],
+    target: 'allyOne',
+    effects: [{ kind: 'revive', ratio: (lv) => 0.3 + 0.1 * lv }],
   },
   skill_medic_t_stimulant: {
     id: 'skill_medic_t_stimulant',
@@ -1033,8 +1032,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tree: 'master',
     tpCost: (lv) => 8 + lv,
     element: 'almighty',
-    target: 'allyAll',
-    effects: [{ kind: 'heal', amount: (lv) => 10 + 3 * lv, matkCoef: 'all' as const }],
+    target: 'allyOne',
+    effects: [{ kind: 'revive', ratio: (lv) => 0.2 + 0.1 * lv }],
   },
   skill_dancer_t_finale: {
     id: 'skill_dancer_t_finale',
@@ -1381,7 +1380,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'bash',
     target: 'enemyOne',
     effects: [
-      { kind: 'damage', statBase: 'str', power: (lv) => 1.5 + 0.2 * lv },
+      { kind: 'damage', statBase: 'str', power: (lv) => 1.7 + 0.2 * lv },
       { kind: 'ailment', ailment: 'armBind', chance: (lv) => 0.35 + 0.05 * lv, turns: 2 },
     ],
   },
@@ -1462,7 +1461,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     effects: [
       {
         kind: 'counter',
-        chance: (lv) => 0.5 + 0.04 * lv,
+        chance: (lv) => 0.58 + 0.04 * lv,
         power: (lv) => 1.3 + 0.1 * lv,
         statBase: 'str',
         turns: 3,
@@ -1476,7 +1475,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 6 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'barrier', absorb: (lv) => 30 + 15 * lv, turns: 2 }],
+    effects: [{ kind: 'barrier', absorb: (lv) => 38 + 15 * lv, turns: 2 }],
   },
   skill_guardian_dragon_lance: {
     id: 'skill_guardian_dragon_lance',
@@ -1494,7 +1493,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 10 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'barrier', absorb: (lv) => 40 + 15 * lv, turns: 3 }],
+    effects: [{ kind: 'barrier', absorb: (lv) => 43 + 15 * lv, turns: 3 }],
   },
   // ---- 魔導士 ----
   skill_mage_fire_lance: {
@@ -1504,7 +1503,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'fire',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.5 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.75 + 0.25 * lv }],
   },
   skill_mage_frost_lance: {
     id: 'skill_mage_frost_lance',
@@ -1514,7 +1513,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'ice',
     target: 'enemyOne',
     effects: [
-      { kind: 'damage', statBase: 'int', power: (lv) => 1.5 + 0.2 * lv },
+      { kind: 'damage', statBase: 'int', power: (lv) => 1.75 + 0.25 * lv },
       { kind: 'ailment', ailment: 'paralysis', chance: (lv) => 0.35 + 0.05 * lv, turns: 2 },
     ],
   },
@@ -1525,7 +1524,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'volt',
     target: 'enemyOne',
-    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.5 + 0.2 * lv }],
+    effects: [{ kind: 'damage', statBase: 'int', power: (lv) => 1.75 + 0.25 * lv }],
   },
   skill_mage_mana_charge: {
     id: 'skill_mage_mana_charge',
@@ -1590,7 +1589,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     element: 'pierce',
     target: 'enemyAll',
     effects: [
-      { kind: 'damage', statBase: 'str', power: (lv) => 0.85 + 0.13 * lv },
+      { kind: 'damage', statBase: 'str', power: (lv) => 0.92 + 0.16 * lv },
       { kind: 'ailment', ailment: 'armBind', chance: (lv) => 0.3 + 0.03 * lv, turns: 2 },
     ],
   },
@@ -1707,8 +1706,8 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tree: 'master',
     tpCost: (lv) => 8 + lv,
     element: 'almighty',
-    target: 'allyAll',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 6 + 3 * lv }],
+    target: 'allyOne',
+    effects: [{ kind: 'revive', ratio: (lv) => 0.2 + 0.1 * lv }],
   },
   skill_medic_weakening_smoke: {
     id: 'skill_medic_weakening_smoke',
@@ -2006,7 +2005,7 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     tpCost: (lv) => 5 + lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'barrier', absorb: (lv) => 25 + 12 * lv, turns: 3 }],
+    effects: [{ kind: 'barrier', absorb: (lv) => 33 + 12 * lv, turns: 3 }],
   },
   skill_summoner_spirit_veil: {
     id: 'skill_summoner_spirit_veil',
