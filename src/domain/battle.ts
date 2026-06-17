@@ -1131,6 +1131,10 @@ export interface LevelUpResult {
   /** 適用後の現在経験値と次レベルに必要な経験値（バー表示用。Lv上限なら expToNext=0）。 */
   exp: number;
   expToNext: number;
+  /** 戦闘前の、現レベル内での経験値（バー開始位置）。 */
+  fromExp: number;
+  /** 戦闘前レベルの次レベル必要経験値（Lv上限なら 0）。 */
+  fromExpToNext: number;
   /** レベルアップした場合の素ステータス増分（しなければ空）。 */
   statGains: Partial<Stats>;
 }
@@ -1142,9 +1146,25 @@ export function partyExpResults(save: SaveData, state: BattleState): LevelUpResu
   const { exp } = battleRewards(state, deepestReached);
   const partyIds = new Set(save.diveState.party.map((p) => p.charId));
   const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
+  const downedIds = new Set(state.allies.filter((a) => a.isDown).map((a) => a.id));
   const results: LevelUpResult[] = [];
   for (const m of save.guild.members) {
     if (!partyIds.has(m.id)) continue;
+    if (downedIds.has(m.id)) {
+      results.push({
+        charId: m.id,
+        name: m.name,
+        gainedExp: 0,
+        fromLevel: m.level,
+        toLevel: m.level,
+        exp: m.exp,
+        expToNext: canGainExp(m.level) ? expToNext(m.level) : 0,
+        fromExp: m.exp,
+        fromExpToNext: canGainExp(m.level) ? expToNext(m.level) : 0,
+        statGains: {},
+      });
+      continue;
+    }
     const after = grantExpToChar(m, share);
     const statGains: Partial<Stats> = {};
     if (after.level > m.level) {
@@ -1163,6 +1183,8 @@ export function partyExpResults(save: SaveData, state: BattleState): LevelUpResu
       toLevel: after.level,
       exp: after.exp,
       expToNext: canGainExp(after.level) ? expToNext(after.level) : 0,
+      fromExp: m.exp,
+      fromExpToNext: canGainExp(m.level) ? expToNext(m.level) : 0,
       statGains,
     });
   }
@@ -1236,7 +1258,10 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     gold += dropGold;
     const partyIds = new Set(party.map((p) => p.charId));
     const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
-    members = members.map((m) => (partyIds.has(m.id) ? grantExpToChar(m, share) : m));
+    const downedIds = new Set(state.allies.filter((a) => a.isDown).map((a) => a.id));
+    members = members.map((m) =>
+      partyIds.has(m.id) && !downedIds.has(m.id) ? grantExpToChar(m, share) : m
+    );
   }
 
   // 戦闘をまたいで残る召喚体（[03 §8]）: 生存かつ persistsAfterBattle のみ次戦闘へ持ち越す。

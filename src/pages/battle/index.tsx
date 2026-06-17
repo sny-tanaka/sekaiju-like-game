@@ -4,6 +4,7 @@ import styles from './style.module.scss';
 
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
+import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
@@ -669,6 +670,9 @@ export const Page = () => {
   const targetName = state.enemies.find((e) => e.id === targetId)?.name ?? '-';
   const rewards = battleRewards(state);
 
+  // 経験値バーのアニメーションは、レベルアップダイアログを全て閉じた後に開始する（issue #50）。
+  const expAnimStart = state.outcome === 'win' && !anim && levelQueue.length === 0;
+
   const renderCard = (a: Combatant) => {
     const d = dispOf(a);
     // 味方対象選択中: そのキャラが選ばれているか
@@ -706,9 +710,11 @@ export const Page = () => {
         }}
       >
         <div className={styles.cardName}>
-          {a.name}
-          {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
-          {ailmentMark(a)}
+          <span className={styles.cardNameText}>{a.name}</span>
+          <span className={styles.cardMarks}>
+            {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
+            {ailmentMark(a)}
+          </span>
         </div>
         <div className={styles.cardJob}>{classNameOf(a)}</div>
         <StatBar
@@ -736,7 +742,7 @@ export const Page = () => {
           />
           <span className={styles.gaugeLabel}>U {a.unionGauge}%</span>
         </div>
-        {commands[a.id] ? <div className={styles.cardCmd}>▶ {cmdLabel(a)}</div> : null}
+        <div className={styles.cardCmd}>{commands[a.id] ? `▶ ${cmdLabel(a)}` : ' '}</div>
       </button>
     );
   };
@@ -762,8 +768,8 @@ export const Page = () => {
               onClick={() => setTargetId(e.id)}
             >
               <span className={styles.enemyName}>
-                {e.name}
-                {ailmentMark(e)}
+                <span className={styles.enemyNameText}>{e.name}</span>
+                <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
               </span>
               <StatBar
                 value={d.hp}
@@ -772,8 +778,8 @@ export const Page = () => {
                 showValue={false}
               />
               {/* §16: 選択中の敵の耐性コンパクト表示 */}
-              {isTargeted && master ? (
-                <div className={styles.enemyResist}>
+              <div className={styles.enemyResist}>
+                {isTargeted && master ? (
                   <ResistBadges
                     elementResist={master.resist}
                     ailmentResist={
@@ -781,8 +787,8 @@ export const Page = () => {
                     }
                     compact
                   />
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </button>
           );
         })}
@@ -847,7 +853,7 @@ export const Page = () => {
               <div className={styles.resultBody}>
                 経験値 {rewards.exp} ／ {rewards.gold} G を獲得
               </div>
-              {/* 各キャラの次レベルまでの経験値バー（issue #18） */}
+              {/* 各キャラの次レベルまでの経験値バー（issue #50） */}
               <div className={styles.expList}>
                 {expResults.map((r) => (
                   <div
@@ -855,24 +861,23 @@ export const Page = () => {
                     className={styles.expRow}
                   >
                     <span className={styles.expName}>
-                      {r.name}
+                      <span className={styles.expNameText}>{r.name}</span>
                       <span className={styles.expLv}>
-                        Lv{r.toLevel}
                         {r.toLevel > r.fromLevel ? (
-                          <span className={styles.expUp}> ↑{r.toLevel - r.fromLevel}</span>
-                        ) : null}
+                          <span className={styles.expUp}>
+                            Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
+                          </span>
+                        ) : (
+                          <>Lv{r.toLevel}</>
+                        )}
                       </span>
                     </span>
-                    <StatBar
-                      value={r.expToNext > 0 ? r.exp : 1}
-                      max={r.expToNext > 0 ? r.expToNext : 1}
-                      color="#ffca28"
-                      showValue={false}
+                    <BattleExpBar
+                      fromLevel={r.fromLevel}
+                      fromExp={r.fromExp}
+                      gainedExp={r.gainedExp}
+                      start={expAnimStart}
                     />
-                    <span className={styles.expNum}>
-                      {r.expToNext > 0 ? `次まで ${Math.max(0, r.expToNext - r.exp)}` : 'MAX'}
-                      {r.gainedExp > 0 ? `（+${r.gainedExp}）` : ''}
-                    </span>
                   </div>
                 ))}
               </div>

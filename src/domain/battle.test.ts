@@ -758,4 +758,63 @@ describe('battle: partyExpResults（issue #18 リザルト）', () => {
     const state = startBattle(save, ['enemy_slime']);
     expect(partyExpResults(save, state)).toEqual([]);
   });
+
+  test('戦闘不能の味方は経験値を得ない（生存者は得る）', () => {
+    // 2人パーティを作る
+    let base = createInitialSaveData('戦闘ギルド');
+    base = addCharacterToGuild(
+      base,
+      createCharacter({ raceId: 'race_garon', classId: 'class_warrior', name: '戦士A' })
+    );
+    base = addCharacterToGuild(
+      base,
+      createCharacter({ raceId: 'race_garon', classId: 'class_warrior', name: '戦士B' })
+    );
+    const save = startDive(base, 1);
+
+    let state = startBattle(save, ['enemy_slime']);
+    const rng = createRng(7);
+    for (let i = 0; i < 30 && state.outcome === 'ongoing'; i++) {
+      state = resolveTurn(state, attackAll(state), rng);
+    }
+    expect(state.outcome).toBe('win');
+    expect(state.allies.length).toBeGreaterThanOrEqual(2);
+
+    // 先頭の味方を戦闘不能にする
+    const downId = state.allies[0].id;
+    state = {
+      ...state,
+      allies: state.allies.map((a) => (a.id === downId ? { ...a, hp: 0, isDown: true } : a)),
+    };
+
+    const results = partyExpResults(save, state);
+    const downed = results.find((r) => r.charId === downId);
+    expect(downed?.gainedExp).toBe(0);
+    expect(downed?.fromLevel).toBe(downed?.toLevel);
+
+    // 生存している別の味方は経験値を得る
+    const aliveResult = results.find((r) => r.charId !== downId);
+    expect(aliveResult?.gainedExp).toBeGreaterThan(0);
+
+    // 実適用（applyBattleResult）でも戦闘不能者のレベル・経験値は変化しない
+    const before = save.guild.members.find((m) => m.id === downId)!;
+    const after = applyBattleResult(save, state);
+    const afterM = after.guild.members.find((m) => m.id === downId)!;
+    expect(afterM.level).toBe(before.level);
+    expect(afterM.exp).toBe(before.exp);
+  });
+
+  test('fromExp は戦闘前の現レベル内経験値と一致する', () => {
+    const save = diveSave();
+    let state = startBattle(save, ['enemy_slime']);
+    const rng = createRng(7);
+    for (let i = 0; i < 30 && state.outcome === 'ongoing'; i++) {
+      state = resolveTurn(state, attackAll(state), rng);
+    }
+    expect(state.outcome).toBe('win');
+    const results = partyExpResults(save, state);
+    const r = results[0];
+    const member = save.guild.members.find((m) => m.id === r.charId)!;
+    expect(r.fromExp).toBe(member.exp);
+  });
 });
