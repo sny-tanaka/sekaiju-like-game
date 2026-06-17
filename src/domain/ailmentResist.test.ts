@@ -313,7 +313,7 @@ describe('RACES 種族別耐性プロファイル（§15.5）', () => {
     expect(lunar.ailmentResist?.poison).toBeCloseTo(1.2);
   });
 
-  test('ゴラン: 物理全耐性(0.8)、ice弱点(1.2)、poison耐性(0.3)、blind弱点(1.2)', () => {
+  test('ドーム: 物理全耐性(0.8)、ice弱点(1.2)、poison耐性(0.3)、blind弱点(1.2)', () => {
     const golan = RACES['race_golan'];
     expect(golan.elementResist?.slash).toBeCloseTo(0.8);
     expect(golan.elementResist?.pierce).toBeCloseTo(0.8);

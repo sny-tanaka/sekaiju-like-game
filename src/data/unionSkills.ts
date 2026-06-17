@@ -86,7 +86,7 @@ export const UNION_SKILLS: Record<SkillId, UnionSkillDef> = {
       },
     ],
   },
-  // ゴラン（岩・力）: 敵全体に大震撃。協力者1名が必要。
+  // ドーム（岩・力）: 敵全体に大震撃。協力者1名が必要。
   skill_union_quake: {
     id: 'skill_union_quake',
     name: '大震撃',
