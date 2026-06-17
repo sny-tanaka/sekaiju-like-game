@@ -611,7 +611,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     id: 'enemy_t2_boss_frost_monarch',
     name: '氷晶の女王',
     // HP 固定（§17 忠実シミュ確定値・スキルLv反映後再調整）
-    baseStats: { hp: 28000, tp: 0, str: 140, vit: 54, agi: 18, int: 16, mnd: 22, luc: 12 },
+    baseStats: { hp: 28000, tp: 0, str: 98, vit: 54, agi: 18, int: 16, mnd: 22, luc: 12 },
     refDepth: 30,
     tierBand: 2,
     // exp ×6

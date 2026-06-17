@@ -1054,7 +1054,9 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           if (eff.kind === 'heal') {
             target.hp = clamp(target.hp + eff.amount(1), 0, target.maxHp);
           } else if (eff.kind === 'restoreTp') {
-            target.tp = clamp(target.tp + eff.amount(1), 0, target.maxTp);
+            // ratio 指定があれば最大TPの割合で回復（高レベルでも有効）。なければ固定値。
+            const add = eff.ratio ? Math.round(target.maxTp * eff.ratio) : eff.amount(1);
+            target.tp = clamp(target.tp + add, 0, target.maxTp);
           }
         }
         next.consumedItems.push(cmd.itemId);

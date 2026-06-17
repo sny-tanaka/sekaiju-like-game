@@ -170,8 +170,8 @@ export const enemyScale = (depth: number, refDepth: number): number =>
 
 /** TP消費算定の効果別係数（初期値）。 */
 export const SKILL_TP = {
-  Kd: 1.95, // damage 係数
-  Pd: 3, // damage 指数（power^Pd）
+  Kd: 2.83, // damage 係数（200%=TP16 を固定して再フィット）
+  Pd: 2.5, // damage 指数（power^Pd）。高威力の効率低下を緩やかに（3→2.5）
   Kh: 0.35, // heal 係数
   Ka: 8, // ailment 係数
   Kb: 15, // buff/debuff 係数
