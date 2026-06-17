@@ -27,6 +27,7 @@ import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
 import { itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
+import { computeSkillTpCost } from '@/domain/skillCost';
 import type {
   BattleCommand,
   BattleState,
@@ -596,7 +597,8 @@ export const Page = () => {
     if (!char) return [];
     return Object.keys(char.learnedSkills).filter(
       (sid) =>
-        sid in BATTLE_SKILLS && ally.tp >= BATTLE_SKILLS[sid].tpCost(ally.skillLevels?.[sid] ?? 1)
+        sid in BATTLE_SKILLS &&
+        ally.tp >= computeSkillTpCost(BATTLE_SKILLS[sid], ally.skillLevels?.[sid] ?? 1)
     );
   };
 
@@ -1014,7 +1016,8 @@ export const Page = () => {
                       <span className={styles.skillTop}>
                         <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
                         <span className={styles.tp}>
-                          TP {BATTLE_SKILLS[sid].tpCost(active.skillLevels?.[sid] ?? 1)}
+                          TP{' '}
+                          {computeSkillTpCost(BATTLE_SKILLS[sid], active.skillLevels?.[sid] ?? 1)}
                         </span>
                       </span>
                       <span className={styles.skillSummary}>

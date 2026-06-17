@@ -20,6 +20,7 @@ import { enemyLapForDepth } from '@/domain/encounterTable';
 import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computePassiveMods } from '@/domain/passives';
+import { computeSkillTpCost } from '@/domain/skillCost';
 import { computeBaseStats } from '@/domain/stats';
 import type {
   ActiveAilment,
@@ -678,16 +679,16 @@ function applySkillEffect(
       break;
     }
     case 'restoreTp': {
-      const flat = effect.amount(level);
-      // 対象全員（使用者を含む）の TP を回復する。
+      // 対象全員（使用者を含む）の TP を回復する。ratio 指定時は各自の最大TPの割合で回復。
       // 全体回復(allyAll)は使用者の消費TP(tpCost)を回復量の約2倍に設定してあるため、
       // 使用者本人は実質 TP が減る（純増しない）。自己回復(self)は回復が消費を上回ってよい。
       for (const t of targets) {
         if (t.isDown) continue;
-        t.tp = clamp(t.tp + flat, 0, t.maxTp);
+        const add = effect.ratio ? Math.round(t.maxTp * effect.ratio) : effect.amount(level);
+        t.tp = clamp(t.tp + add, 0, t.maxTp);
       }
       state.log.push({
-        text: `${actor.name} は ${target === 'self' ? 'TP' : '味方のTP'} を ${flat} 回復した`,
+        text: `${actor.name} は ${target === 'self' ? 'TP' : '味方のTP'} を回復した`,
       });
       break;
     }
@@ -1033,7 +1034,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           continue;
         }
         const level = actor.skillLevels?.[cmd.skillId] ?? 1;
-        const cost = def.tpCost(level);
+        const cost = computeSkillTpCost(def, level);
         if (actor.tp < cost) {
           next.log.push({ text: `${actor.name} は TP が足りない` });
           continue;
@@ -1053,7 +1054,9 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           if (eff.kind === 'heal') {
             target.hp = clamp(target.hp + eff.amount(1), 0, target.maxHp);
           } else if (eff.kind === 'restoreTp') {
-            target.tp = clamp(target.tp + eff.amount(1), 0, target.maxTp);
+            // ratio 指定があれば最大TPの割合で回復（高レベルでも有効）。なければ固定値。
+            const add = eff.ratio ? Math.round(target.maxTp * eff.ratio) : eff.amount(1);
+            target.tp = clamp(target.tp + add, 0, target.maxTp);
           }
         }
         next.consumedItems.push(cmd.itemId);
@@ -1064,7 +1067,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (aliveSide(next, 'enemy').length === 0 || aliveSide(next, 'ally').length === 0) break;
   }
 
-  // ターン終了処理: 毒ダメージ → TP自然回復 → バフ/状態異常の残ターン減算（召喚体も含む）
+  // ターン終了処理: 毒ダメージ → バフ/状態異常の残ターン減算（召喚体も含む）
   for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
     if (c.isDown) continue;
     const poison = c.ailments.find((a) => a.type === 'poison');
@@ -1087,10 +1090,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     }
   }
   for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
-    if (!c.isDown && c.maxTp > 0) {
-      // TP 自然回復（[03 §2]）。TP枯渇での詰みを防ぐ。
-      c.tp = Math.min(c.maxTp, c.tp + Math.ceil(c.maxTp * BALANCE.TP_REGEN_RATIO));
-    }
+    // 戦闘中の TP 自然回復は廃止（issue #57 第2弾）。TP はアイテム/スキルで管理する有限資源とする。
     c.buffs = c.buffs
       .map((b) => ({ ...b, remainingTurns: b.remainingTurns - 1 }))
       .filter((b) => b.remainingTurns > 0);

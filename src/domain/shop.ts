@@ -2,7 +2,7 @@ import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS, sellPrice as itemSellPrice } from '@/data/items';
 import { gradeMult, gradedBaseBonuses } from '@/domain/forge';
-import { addEquipment, addItem, removeItem } from '@/domain/inventory';
+import { addEquipment, addItem, itemCount, removeItem } from '@/domain/inventory';
 import type { EquipInstance, ItemId, SaveData } from '@/domain/types';
 
 // ============================================================================
@@ -104,12 +104,17 @@ export function sellPriceOf(id: ItemId, grade = 1): number {
   return 0;
 }
 
-/** 購入: 所持金が足りれば 1 個購入。装備は解放グレードの個体としてプールへ、消費品は倉庫へ。 */
+/** 購入: 所持金が足りれば 1 個購入。装備は解放グレードの個体としてプールへ、消費品は倉庫へ。maxStack 到達済みなら購入不可。 */
 export function buy(save: SaveData, id: ItemId): SaveData {
   const grade = EQUIPMENT[id] ? shopEquipGrade(save, id) : 1;
   const price = buyPriceOf(id, grade);
   if (price === null || price <= 0) return save;
   if (save.guild.gold < price) return save;
+  // 消費アイテムで maxStack に達していれば購入不可
+  if (!EQUIPMENT[id] && ITEMS[id]) {
+    const maxStack = ITEMS[id].maxStack;
+    if (maxStack !== undefined && itemCount(save, id) >= maxStack) return save;
+  }
   const next = EQUIPMENT[id] ? addEquipment(save, id, 0, grade) : addItem(save, id, 1);
   return { ...next, guild: { ...next.guild, gold: next.guild.gold - price } };
 }
@@ -131,6 +136,7 @@ export function sellEquipment(save: SaveData, instanceId: string): SaveData {
 
 /**
  * 複数購入: 所持金で買える上限（floor(gold/price) と qty の小さい方）まで購入する。
+ * 消費アイテムは maxStack を超える分は購入しない（代金もその分だけ）。
  * 0個なら save をそのまま返す。装備は個体プールへ、消費品は倉庫へ qty 個追加。
  */
 export function buyMany(save: SaveData, id: ItemId, qty: number): SaveData {
@@ -138,7 +144,16 @@ export function buyMany(save: SaveData, id: ItemId, qty: number): SaveData {
   const price = buyPriceOf(id, grade);
   if (price === null || price <= 0 || qty <= 0) return save;
   const maxAffordable = Math.floor(save.guild.gold / price);
-  const actualQty = Math.min(qty, maxAffordable);
+  let actualQty = Math.min(qty, maxAffordable);
+  // 消費アイテムで maxStack が設定されている場合、上限を超えないよう制限
+  if (!EQUIPMENT[id] && ITEMS[id]) {
+    const maxStack = ITEMS[id].maxStack;
+    if (maxStack !== undefined) {
+      const current = itemCount(save, id);
+      const room = Math.max(0, maxStack - current);
+      actualQty = Math.min(actualQty, room);
+    }
+  }
   if (actualQty <= 0) return save;
   const totalCost = price * actualQty;
   let next = save;

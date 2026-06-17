@@ -85,15 +85,16 @@ describe('restoreTp: 全体TP回復スキル（allyAll）', () => {
     const afterAlly1 = after.allies.find((a) => a.id === 'ally1')!;
     const afterAlly2 = after.allies.find((a) => a.id === 'ally2')!;
 
-    // 使用者: 60 - 20(tpCost) + 10(amount) + 4(自然回復) = 54
+    // 使用者: 60 - 20(tpCost) + 10(amount) = 50
+    // TP自然回復は廃止（issue #57 第2弾）のため自然回復なし
     // tpCost(20) - amount(10) = 10 の実質マイナス（消費 > 回復）
-    expect(afterActor.tp).toBe(54);
+    expect(afterActor.tp).toBe(50);
 
-    // 他の味方: amount(10) 回復 + 自然回復(4)
-    // ally1: 20 + 10 + 4 = 34
-    expect(afterAlly1.tp).toBe(34);
-    // ally2: 10 + 10 + 4 = 24
-    expect(afterAlly2.tp).toBe(24);
+    // 他の味方: amount(10) 回復のみ（自然回復なし）
+    // ally1: 20 + 10 = 30
+    expect(afterAlly1.tp).toBe(30);
+    // ally2: 10 + 10 = 20
+    expect(afterAlly2.tp).toBe(20);
   });
 
   test('回復量が maxTp でクランプされる', () => {
@@ -115,7 +116,7 @@ describe('restoreTp: 全体TP回復スキル（allyAll）', () => {
     const after = resolveTurn(state, [cmd], createRng(1));
 
     const afterAlly1 = after.allies.find((a) => a.id === 'ally1')!;
-    // 94 + 10(amount) + 自然回復(4) = 108 → maxTp=100 でクランプ
+    // 94 + 10(amount) = 104 → maxTp=100 でクランプ（自然回復廃止）
     expect(afterAlly1.tp).toBe(100);
   });
 });
@@ -146,15 +147,16 @@ describe('restoreTp: 自己回復スキル（self）', () => {
     const after = resolveTurn(state, [cmd], createRng(1));
 
     const afterActor = after.allies.find((a) => a.id === 'monk')!;
-    // tp: 50 - 4(tpCost) + 8(amount) + 4(自然回復) = 58
+    // tp: 50 - 4(tpCost) + 8(amount) = 54
+    // TP自然回復は廃止（issue #57 第2弾）のため自然回復なし
     // スキルによる純増: +4（回復8 - 消費4 = 4）
-    expect(afterActor.tp).toBe(58);
+    expect(afterActor.tp).toBe(54);
   });
 
   test('Lv3 でも純増する（回復 > 消費）', () => {
-    // Lv3: tpCost = 3+3=6, amount = 6+2*3=12
+    // Lv3: tpCost = 0.5*(6+2*3) = 0.5*12 = 6（computeSkillTpCost で算出）, amount = 6+2*3=12
     // スキル純増分: amount(12) - tpCost(6) = +6
-    // TP自然回復: Math.ceil(100 * 0.04) = 4
+    // TP自然回復は廃止（issue #57 第2弾）
     const actor = makeCombatant('monk', { tp: 50, maxTp: 100 });
     actor.skillLevels = { [skillId]: 3 };
 
@@ -170,9 +172,9 @@ describe('restoreTp: 自己回復スキル（self）', () => {
     const after = resolveTurn(state, [cmd], createRng(1));
 
     const afterActor = after.allies.find((a) => a.id === 'monk')!;
-    // tp: 50 - 6(tpCost) + 12(amount) + 4(自然回復) = 60
+    // tp: 50 - 6(tpCost) + 12(amount) = 56
     // スキルによる純増: +6（回復12 - 消費6 = 6）
-    expect(afterActor.tp).toBe(60);
+    expect(afterActor.tp).toBe(56);
   });
 
   test('maxTp でクランプされる', () => {
@@ -192,7 +194,7 @@ describe('restoreTp: 自己回復スキル（self）', () => {
     const after = resolveTurn(state, [cmd], createRng(1));
 
     const afterActor = after.allies.find((a) => a.id === 'monk')!;
-    // 98 - 4 + 8 + 4 = 106 → maxTp=100 でクランプ
+    // 98 - 4(tpCost) + 8(amount) = 102 → maxTp=100 でクランプ（自然回復廃止）
     expect(afterActor.tp).toBe(100);
   });
 });
@@ -224,11 +226,12 @@ describe('restoreTp: resolveTurn 経由での TP 変化順序', () => {
     const afterActor = after.allies.find((a) => a.id === 'summoner')!;
     const afterAlly = after.allies.find((a) => a.id === 'ally1')!;
 
-    // 使用者: 30 - 20(tpCost) + 10(amount) + 4(自然回復) = 24
+    // 使用者: 30 - 20(tpCost) + 10(amount) = 20
+    // TP自然回復は廃止（issue #57 第2弾）のため自然回復なし
     // 実質マイナス: tpCost(20) - amount(10) = 10 ぶんTP減
-    expect(afterActor.tp).toBe(24);
-    // 味方: 0 + 10(amount) + 4(自然回復) = 14
-    expect(afterAlly.tp).toBe(14);
+    expect(afterActor.tp).toBe(20);
+    // 味方: 0 + 10(amount) = 10（自然回復なし）
+    expect(afterAlly.tp).toBe(10);
   });
 
   test('TP不足（actor.tp < tpCost）では全体TP回復スキルが発動しない', () => {
@@ -252,9 +255,10 @@ describe('restoreTp: resolveTurn 経由での TP 変化順序', () => {
     const afterActor = after.allies.find((a) => a.id === 'medic')!;
     const afterAlly = after.allies.find((a) => a.id === 'ally1')!;
 
-    // スキル不発：actor は TP消費なし＋自然回復(4)のみ
-    expect(afterActor.tp).toBe(10 + 4); // 14
-    // ally も回復されない＋自然回復(4)のみ
-    expect(afterAlly.tp).toBe(0 + 4); // 4
+    // スキル不発：actor は TP消費なし（自然回復廃止）のみ
+    // TP自然回復は廃止（issue #57 第2弾）のため自然回復なし
+    expect(afterActor.tp).toBe(10); // 変化なし
+    // ally も回復されない（自然回復なし）
+    expect(afterAlly.tp).toBe(0); // 変化なし
   });
 });
