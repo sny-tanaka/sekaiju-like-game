@@ -1,27 +1,27 @@
 if (!self.define) {
   let e,
-    s = {};
-  const i = (i, n) => (
-    (i = new URL(i + '.js', n).href),
-    s[i] ||
-      new Promise((s) => {
+    i = {};
+  const s = (s, n) => (
+    (s = new URL(s + '.js', n).href),
+    i[s] ||
+      new Promise((i) => {
         if ('document' in self) {
           const e = document.createElement('script');
-          ((e.src = i), (e.onload = s), document.head.appendChild(e));
-        } else ((e = i), importScripts(i), s());
+          ((e.src = s), (e.onload = i), document.head.appendChild(e));
+        } else ((e = s), importScripts(s), i());
       }).then(() => {
-        let e = s[i];
-        if (!e) throw new Error(`Module ${i} didn’t register its module`);
+        let e = i[s];
+        if (!e) throw new Error(`Module ${s} didn’t register its module`);
         return e;
       })
   );
   self.define = (n, r) => {
     const o = e || ('document' in self ? document.currentScript.src : '') || location.href;
-    if (s[o]) return;
-    let c = {};
-    const l = (e) => i(e, o),
-      t = { module: { uri: o }, exports: c, require: l };
-    s[o] = Promise.all(n.map((e) => t[e] || l(e))).then((e) => (r(...e), c));
+    if (i[o]) return;
+    let l = {};
+    const c = (e) => s(e, o),
+      t = { module: { uri: o }, exports: l, require: c };
+    i[o] = Promise.all(n.map((e) => t[e] || c(e))).then((e) => (r(...e), l));
   };
 }
 define(['./workbox-1ef09536'], function (e) {
@@ -31,14 +31,14 @@ define(['./workbox-1ef09536'], function (e) {
   }),
     e.precacheAndRoute(
       [
-        { url: 'index.html', revision: '25994894068a2a1f89939228927aadc0' },
+        { url: 'index.html', revision: 'fb7076b69416e1306082b15382f80994' },
         { url: 'icon-512.png', revision: 'aea6735f0e3902695c58dbca460dc603' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
         { url: 'assets/workbox-window.prod.es5-BIl4cyR9.js', revision: null },
         { url: 'assets/stairs-up-DhyZlujG.png', revision: null },
         { url: 'assets/stairs-down-BjaF19rU.png', revision: null },
-        { url: 'assets/index-CVdXsgE8.js', revision: null },
+        { url: 'assets/index-B__HKL0l.js', revision: null },
         { url: 'assets/index-BOZJ8XsL.css', revision: null },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
