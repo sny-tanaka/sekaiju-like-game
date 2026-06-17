@@ -243,3 +243,84 @@ bonus[key]     = Math.round(STAT_TOTAL × w[key] / sumW)  // 合計がSTAT_TOTAL
 | ルーナ | 17 | 41 | 15 | 15 | 30 | 45 | 41 | 35 | 239 |
 | ドーム | 52 | 17 | 36 | 54 | 18 | 18 | 17 | 28 | 240 |
 
+## 消費TP算定式（computeSkillTpCost）
+
+スキルの消費TPは効果別TP価値の合算で算出する統一モデル。
+
+```
+消費TP = max(1, round(Σ 各効果のTP価値))
+```
+
+### 効果別算定式
+
+| 効果種別 | 式 |
+| --- | --- |
+| damage | `Kd × (威力 × ヒット数)^Pd × (1 + 0.6×ドレイン率) × T` |
+| heal | `Kh × 回復量 × T` |
+| restoreTp | `0.5 × 量`（self）/ `2.0 × 量`（その他） |
+| ailment | `Ka × 付与率 × 継続ターン × 深刻度 × T` |
+| buff/debuff | `Kb × |倍率-1| × 継続ターン × T` |
+| summon | `Ksummon（固定値）` |
+| counter | `Kcounter × 発動率 × 威力 × ターン` |
+| chase | `Kchase × 威力 × ターン` |
+| decoy | `Kdecoy × ターン` |
+| barrier | `Kbarrier × 吸収量` |
+| regen | `Kregen × 回復量 × ターン × T` |
+| cleanse | `Kcleanse × T` |
+| revive | `Krevive + Kreviveratio × 割合×100` |
+
+> T（対象範囲倍率）: 単体=1.0 / 列=1.5 / 全体=2.0
+
+### 係数 SKILL_TP
+
+| 係数 | 値 | 意味 |
+| --- | --- | --- |
+| Kd | 2.83 | damage 係数 |
+| Pd | 2.5 | damage 指数（高威力の効率低下を緩やかに） |
+| Kh | 0.35 | heal 係数 |
+| Ka | 8 | ailment 係数 |
+| Kb | 15 | buff/debuff 係数 |
+| Ksummon | 14 | summon 固定値 |
+| Kcounter | 2.5 | counter 係数 |
+| Kchase | 2 | chase 係数 |
+| Kdecoy | 2.5 | decoy 係数 |
+| Kbarrier | 0.3 | barrier 係数 |
+| Kregen | 0.4 | regen 係数 |
+| Kcleanse | 6 | cleanse 係数 |
+| Krevive | 12 | revive 固定部分 |
+| Kreviveratio | 0.15 | revive 割合部分 |
+
+### 状態異常の深刻度 AILMENT_SEVERITY
+
+| 状態異常 | 深刻度 |
+| --- | --- |
+| headBind | 1 |
+| armBind | 1 |
+| legBind | 1 |
+| sleep | 1.3 |
+| paralysis | 1.2 |
+| instantDeath | 2.5 |
+| poison | 0.5 |
+| blind | 0.7 |
+| confusion | 0.9 |
+| curse | 0.8 |
+
+### 対象範囲倍率 T
+
+| 対象 | 倍率 |
+| --- | --- |
+| 単体（enemyOne/allyOne/self） | 1.0 |
+| 列（enemyRow） | 1.5 |
+| 全体（enemyAll/allyAll） | 2.0 |
+
+## TP管理
+
+- **戦闘中のTP自然回復: なし**（issue #57 第2弾で廃止）。TPはアイテム/スキルで管理する。
+- **TP回復アイテム3種**（戦闘・フィールド両方で使用可能）:
+
+| アイテム | 回復量 | 購入価格 | 所持上限 |
+| --- | --- | --- | --- |
+| まほうのは | 最大TP×10% | 20G | 30個 |
+| よいまほうのは | 最大TP×20% | 60G | 15個 |
+| とくぶつまほうのは | 最大TP×30% | 140G | 8個 |
+

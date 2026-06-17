@@ -363,7 +363,7 @@ export type SkillEffectDef =
       drain?: number;
     }
   | { kind: 'heal'; amount: (lv: number) => number; matkCoef?: 'one' | 'all' | 'minor' }
-  | { kind: 'restoreTp'; amount: (lv: number) => number }
+  | { kind: 'restoreTp'; amount: (lv: number) => number; ratio?: number }
   | {
       kind: 'ailment';
       ailment: AilmentType;
@@ -517,6 +517,8 @@ export interface ItemMaster {
   effects?: SkillEffectDef[];
   /** 使用可能な場面。未指定は使用不可（素材等）。 */
   useContext?: ('battle' | 'field')[];
+  /** 1スタックの所持上限。未指定は上限なし（素材等）。効果が高いほど低くする。 */
+  maxStack?: number;
 }
 
 export interface EquipmentMaster {

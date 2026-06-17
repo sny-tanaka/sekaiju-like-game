@@ -10,6 +10,7 @@ import { resolve } from 'node:path';
 import { test, expect } from 'vitest';
 
 import {
+  AILMENT_SEVERITY,
   APPROPRIATE,
   BALANCE,
   CLASS_CHANGE_LEVEL_PENALTY,
@@ -17,6 +18,7 @@ import {
   GUILD_MEMBER_LIMIT,
   PARTY_MAX,
   REBIRTH,
+  SKILL_TP,
   STARTING_GOLD,
   TITLE_BONUS_SP,
   UNLOCK,
@@ -472,6 +474,75 @@ export function generateStrategyDocs(): void {
     const rb = rebirthStatBonusForRace(rid);
     const total = statKeys.reduce((s, k) => s + (rb[k] ?? 0), 0);
     balance += `| ${RACES[rid].name} | ${statKeys.map((k) => rb[k] ?? 0).join(' | ')} | ${total} |\n`;
+  }
+  balance += '\n';
+
+  // §12 消費TP算定式
+  balance += `## 消費TP算定式（computeSkillTpCost）\n\n`;
+  balance += `スキルの消費TPは効果別TP価値の合算で算出する統一モデル。\n\n`;
+  balance += `\`\`\`\n`;
+  balance += `消費TP = max(1, round(Σ 各効果のTP価値))\n`;
+  balance += `\`\`\`\n\n`;
+  balance += `### 効果別算定式\n\n`;
+  balance += `| 効果種別 | 式 |\n| --- | --- |\n`;
+  balance += `| damage | \`Kd × (威力 × ヒット数)^Pd × (1 + 0.6×ドレイン率) × T\` |\n`;
+  balance += `| heal | \`Kh × 回復量 × T\` |\n`;
+  balance += `| restoreTp | \`0.5 × 量\`（self）/ \`2.0 × 量\`（その他） |\n`;
+  balance += `| ailment | \`Ka × 付与率 × 継続ターン × 深刻度 × T\` |\n`;
+  balance += `| buff/debuff | \`Kb × |倍率-1| × 継続ターン × T\` |\n`;
+  balance += `| summon | \`Ksummon（固定値）\` |\n`;
+  balance += `| counter | \`Kcounter × 発動率 × 威力 × ターン\` |\n`;
+  balance += `| chase | \`Kchase × 威力 × ターン\` |\n`;
+  balance += `| decoy | \`Kdecoy × ターン\` |\n`;
+  balance += `| barrier | \`Kbarrier × 吸収量\` |\n`;
+  balance += `| regen | \`Kregen × 回復量 × ターン × T\` |\n`;
+  balance += `| cleanse | \`Kcleanse × T\` |\n`;
+  balance += `| revive | \`Krevive + Kreviveratio × 割合×100\` |\n\n`;
+  balance += `> T（対象範囲倍率）: 単体=1.0 / 列=1.5 / 全体=2.0\n\n`;
+  balance += `### 係数 SKILL_TP\n\n`;
+  balance += `| 係数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| Kd | ${SKILL_TP.Kd} | damage 係数 |\n`;
+  balance += `| Pd | ${SKILL_TP.Pd} | damage 指数（高威力の効率低下を緩やかに） |\n`;
+  balance += `| Kh | ${SKILL_TP.Kh} | heal 係数 |\n`;
+  balance += `| Ka | ${SKILL_TP.Ka} | ailment 係数 |\n`;
+  balance += `| Kb | ${SKILL_TP.Kb} | buff/debuff 係数 |\n`;
+  balance += `| Ksummon | ${SKILL_TP.Ksummon} | summon 固定値 |\n`;
+  balance += `| Kcounter | ${SKILL_TP.Kcounter} | counter 係数 |\n`;
+  balance += `| Kchase | ${SKILL_TP.Kchase} | chase 係数 |\n`;
+  balance += `| Kdecoy | ${SKILL_TP.Kdecoy} | decoy 係数 |\n`;
+  balance += `| Kbarrier | ${SKILL_TP.Kbarrier} | barrier 係数 |\n`;
+  balance += `| Kregen | ${SKILL_TP.Kregen} | regen 係数 |\n`;
+  balance += `| Kcleanse | ${SKILL_TP.Kcleanse} | cleanse 係数 |\n`;
+  balance += `| Krevive | ${SKILL_TP.Krevive} | revive 固定部分 |\n`;
+  balance += `| Kreviveratio | ${SKILL_TP.Kreviveratio} | revive 割合部分 |\n\n`;
+  balance += `### 状態異常の深刻度 AILMENT_SEVERITY\n\n`;
+  balance += `| 状態異常 | 深刻度 |\n| --- | --- |\n`;
+  for (const [ail, sev] of Object.entries(AILMENT_SEVERITY)) {
+    balance += `| ${ail} | ${sev} |\n`;
+  }
+  balance += '\n';
+  balance += `### 対象範囲倍率 T\n\n`;
+  balance += `| 対象 | 倍率 |\n| --- | --- |\n`;
+  balance += `| 単体（enemyOne/allyOne/self） | 1.0 |\n`;
+  balance += `| 列（enemyRow） | 1.5 |\n`;
+  balance += `| 全体（enemyAll/allyAll） | 2.0 |\n\n`;
+
+  // §13 TP管理
+  balance += `## TP管理\n\n`;
+  balance += `- **戦闘中のTP自然回復: なし**（issue #57 第2弾で廃止）。TPはアイテム/スキルで管理する。\n`;
+  balance += `- **TP回復アイテム3種**（戦闘・フィールド両方で使用可能）:\n\n`;
+  balance += `| アイテム | 回復量 | 購入価格 | 所持上限 |\n| --- | --- | --- | --- |\n`;
+  const tpItems = ['item_tp_herb', 'item_tp_herb_mid', 'item_tp_herb_hi'];
+  for (const id of tpItems) {
+    const it = ITEMS[id];
+    if (!it) continue;
+    const ratioEff = it.effects?.find((e) => e.kind === 'restoreTp');
+    const ratioVal =
+      ratioEff && ratioEff.kind === 'restoreTp' && ratioEff.ratio !== undefined
+        ? ratioEff.ratio
+        : undefined;
+    const ratio = ratioVal !== undefined ? `最大TP×${ratioVal * 100}%` : '―';
+    balance += `| ${it.name} | ${ratio} | ${it.buyPrice}G | ${it.maxStack ?? '―'}個 |\n`;
   }
   balance += '\n';
 

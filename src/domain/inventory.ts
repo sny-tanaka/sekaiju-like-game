@@ -1,5 +1,6 @@
 import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
+import { ITEMS } from '@/data/items';
 import type { Character, EquipInstance, EquipSlotKey, ItemId, SaveData } from '@/domain/types';
 
 // ============================================================================
@@ -18,13 +19,18 @@ export function itemCount(save: SaveData, itemId: ItemId, grade?: number): numbe
     .reduce((a, s) => a + s.qty, 0);
 }
 
-/** 倉庫にアイテムを加える（grade 既定=1。grade>1 は周回グレード素材）。 */
+/** 倉庫にアイテムを加える（grade 既定=1。grade>1 は周回グレード素材）。maxStack を超える分は切り捨てる。 */
 export function addItem(save: SaveData, itemId: ItemId, qty = 1, grade = 1): SaveData {
   if (qty <= 0) return save;
+  const maxStack = ITEMS[itemId]?.maxStack;
   const storage = [...save.guild.storage];
   const idx = storage.findIndex((s) => s.itemId === itemId && stackGrade(s) === grade);
-  if (idx >= 0) storage[idx] = { ...storage[idx], qty: storage[idx].qty + qty };
-  else storage.push(grade > 1 ? { itemId, qty, grade } : { itemId, qty });
+  const currentQty = idx >= 0 ? storage[idx].qty : 0;
+  // maxStack が指定されている場合、上限を超えないようにクランプ
+  const addQty = maxStack !== undefined ? Math.min(qty, Math.max(0, maxStack - currentQty)) : qty;
+  if (addQty <= 0) return save;
+  if (idx >= 0) storage[idx] = { ...storage[idx], qty: currentQty + addQty };
+  else storage.push(grade > 1 ? { itemId, qty: addQty, grade } : { itemId, qty: addQty });
   return { ...save, guild: { ...save.guild, storage } };
 }
 
