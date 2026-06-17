@@ -84,10 +84,11 @@ export const STARTING_GOLD = 500;
 /** ギルドのメンバー上限（[01 §9]）。 */
 export const GUILD_MEMBER_LIMIT = 30;
 
-/** 出撃パーティの最大人数（前衛3 + 後衛2 = 5。確定）。 */
+/** 出撃パーティの最大人数（前衛・後衛それぞれ最大3、合計は5まで）。 */
 export const FORMATION_FRONT_SLOTS = 3;
-export const FORMATION_BACK_SLOTS = 2;
-export const PARTY_MAX = FORMATION_FRONT_SLOTS + FORMATION_BACK_SLOTS;
+export const FORMATION_BACK_SLOTS = 3;
+/** 出撃パーティの合計人数上限（各列は最大3だが合計は5まで）。 */
+export const PARTY_MAX = 5;
 
 // ----------------------------------------------------------------------------
 // 進行解放トリガー（設計書 06 §8。到達階でシステムを解放する）

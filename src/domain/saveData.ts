@@ -2,6 +2,7 @@ import {
   FORMATION_BACK_SLOTS,
   FORMATION_FRONT_SLOTS,
   GUILD_MEMBER_LIMIT,
+  PARTY_MAX,
   STARTING_GOLD,
 } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
@@ -95,8 +96,10 @@ export function emptyFormation(): PartyFormation {
   };
 }
 
-/** 編成に空きがあれば charId を配置する（前衛→後衛の順）。空きが無ければそのまま返す。 */
+/** 編成に空きがあれば charId を配置する（前衛→後衛の順）。空きが無いか合計が PARTY_MAX に達していれば返す。 */
 function placeInFormation(formation: PartyFormation, charId: string): PartyFormation {
+  const current = [...formation.front, ...formation.back].filter((id) => id !== null).length;
+  if (current >= PARTY_MAX) return formation;
   const frontIdx = formation.front.indexOf(null);
   if (frontIdx !== -1) {
     const front = [...formation.front];

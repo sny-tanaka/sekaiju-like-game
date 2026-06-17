@@ -686,7 +686,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_mage_t_mana_surge: {
     id: 'skill_mage_t_mana_surge',
     name: 'マナサージ',
-    description: '自身のTPを回復する賢者の秘術。',
+    description: '自身のTPを回復する賢者の秘術（消費分と同程度の回復なので純増しない）。',
   },
   // ---- 狩人 ----
   skill_ranger_piercing_arrow: {
@@ -753,7 +753,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_medic_tp_tonic: {
     id: 'skill_medic_tp_tonic',
     name: 'TPトニック',
-    description: '味方全体のTPを回復させる。',
+    description: '自分のTPを大きく消費して他の味方のTPを回復させる。',
   },
   skill_medic_blind_powder: {
     id: 'skill_medic_blind_powder',
@@ -778,7 +778,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_medic_t_stimulant: {
     id: 'skill_medic_t_stimulant',
     name: '気付け薬',
-    description: '味方全体のTPを回復させる。',
+    description: '自分のTPを大きく消費して他の味方のTPを回復させる。',
   },
   passive_medic_t_alchemy: {
     id: 'passive_medic_t_alchemy',
@@ -885,7 +885,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_zen_t_meditation: {
     id: 'skill_zen_t_meditation',
     name: '瞑想',
-    description: '自身のTPを回復する。',
+    description: '自身のTPを回復する（消費分と同程度の回復なので純増しない）。',
   },
   // ---- 呪術士 ----
   skill_hexer_paralyze_hex: {
@@ -957,7 +957,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_summoner_tp_offering: {
     id: 'skill_summoner_tp_offering',
     name: '供物の儀',
-    description: '味方全体のTPを回復する。',
+    description: '自分のTPを大きく消費して他の味方のTPを回復する（自己犠牲の供物）。',
   },
   skill_summoner_grave_chill: {
     id: 'skill_summoner_grave_chill',
@@ -1094,7 +1094,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_mage_mana_charge: {
     id: 'skill_mage_mana_charge',
     name: 'マナチャージ',
-    description: '自身のTPを回復する魔導士の秘術。',
+    description: '自身のTPを回復する魔導士の秘術（消費分と同程度の回復なので純増しない）。',
   },
   skill_mage_absolute_zero: {
     id: 'skill_mage_absolute_zero',
@@ -1262,7 +1262,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_dancer_mana_song: {
     id: 'skill_dancer_mana_song',
     name: '律動の歌',
-    description: '味方全体のTPを回復させる。',
+    description: '自分のTPを大きく消費して他の味方のTPを回復させる歌。',
   },
   passive_dancer_blade_mastery: {
     id: 'passive_dancer_blade_mastery',
@@ -1303,7 +1303,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_monk_breathing: {
     id: 'skill_monk_breathing',
     name: '吐納',
-    description: '自身のTPを回復する呼吸法。',
+    description: '自身のTPを回復する呼吸法（消費分と同程度の回復なので純増しない）。',
   },
   skill_monk_seven_star: {
     id: 'skill_monk_seven_star',

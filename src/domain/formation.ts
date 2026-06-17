@@ -1,8 +1,8 @@
-import { FORMATION_BACK_SLOTS, FORMATION_FRONT_SLOTS } from '@/data/balance';
+import { FORMATION_BACK_SLOTS, FORMATION_FRONT_SLOTS, PARTY_MAX } from '@/data/balance';
 import type { Character, Row, SaveData } from '@/domain/types';
 
 // ============================================================================
-// パーティ編成（隊列）の変更（[01 §9]）。前衛3 + 後衛5 の最大5人。
+// パーティ編成（隊列）の変更（[01 §9]）。前衛・後衛それぞれ最大3、合計最大5人。
 // 同一キャラが複数スロットに入らないよう、配置時に既存スロットから除外する。
 // 編成に入っていないメンバーは「控え」（ダイブに参加しない）。
 // ============================================================================
@@ -30,6 +30,11 @@ const slotLen = (row: Row) => (row === 'front' ? FORMATION_FRONT_SLOTS : FORMATI
 export function setSlot(save: SaveData, row: Row, idx: number, charId: string | null): SaveData {
   if (idx < 0 || idx >= slotLen(row)) return save;
   if (charId !== null && !save.guild.members.some((m) => m.id === charId)) return save;
+
+  // 合計人数の上限（新規追加のみ制限。既に編成内のキャラの移動は許可）。
+  if (charId !== null && !isInFormation(save, charId) && formationCount(save) >= PARTY_MAX) {
+    return save;
+  }
 
   // 全スロットから charId を除去
   const front = save.guild.party.front.map((id) => (id === charId ? null : id));

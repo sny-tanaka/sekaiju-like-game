@@ -439,33 +439,42 @@ export const Page = () => {
             {members.length === 0 ? (
               <p className={styles.empty}>団員がいません。</p>
             ) : (
-              <ul className={styles.pickerList}>
-                {members.map((m) => {
-                  const pos = positionOf(save, m.id);
-                  const here = slotMemberId(picker.row, picker.idx) === m.id;
-                  return (
-                    <li key={m.id}>
-                      <button
-                        type="button"
-                        className={`${styles.pickerItem} ${here ? styles.pickerItemActive : ''}`}
-                        onClick={() =>
-                          void applyAndPersist((s) =>
-                            setSlot(s, picker.row, picker.idx, m.id)
-                          ).then(() => setPicker(null))
-                        }
-                      >
-                        <span className={styles.memberName}>
-                          {m.name}
-                          <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>
-                            {pos}
+              <>
+                {formationCount(save) >= PARTY_MAX ? (
+                  <p className={styles.notice}>出撃は最大{PARTY_MAX}人です（現在満員）。</p>
+                ) : null}
+                <ul className={styles.pickerList}>
+                  {members.map((m) => {
+                    const pos = positionOf(save, m.id);
+                    const here = slotMemberId(picker.row, picker.idx) === m.id;
+                    // 編成外で満員の場合は配置ボタンを無効化（既に編成内なら移動として許可）
+                    const isBenched = pos === '控え';
+                    const disabled = isBenched && formationCount(save) >= PARTY_MAX;
+                    return (
+                      <li key={m.id}>
+                        <button
+                          type="button"
+                          className={`${styles.pickerItem} ${here ? styles.pickerItemActive : ''}`}
+                          disabled={disabled}
+                          onClick={() =>
+                            void applyAndPersist((s) =>
+                              setSlot(s, picker.row, picker.idx, m.id)
+                            ).then(() => setPicker(null))
+                          }
+                        >
+                          <span className={styles.memberName}>
+                            {m.name}
+                            <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>
+                              {pos}
+                            </span>
                           </span>
-                        </span>
-                        <span className={styles.memberSub}>{memberLine(m)}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+                          <span className={styles.memberSub}>{memberLine(m)}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
             )}
             <button
               type="button"

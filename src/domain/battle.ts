@@ -676,6 +676,19 @@ function applySkillEffect(
       state.log.push({ text: `${actor.name} は継続回復を付与した` });
       break;
     }
+    case 'restoreTp': {
+      const flat = effect.amount(level);
+      // 全体回復（allyAll）は使用者本人を対象外にし「自己犠牲で味方を回復」。
+      // 自己回復（self）は対象が自分のみなので自分を回復する。
+      const others = targets.filter((t) => t.id !== actor.id && !t.isDown);
+      const recipients = others.length > 0 ? others : targets.filter((t) => !t.isDown);
+      for (const t of recipients) t.tp = clamp(t.tp + flat, 0, t.maxTp);
+      const selfOnly = recipients.length === 1 && recipients[0].id === actor.id;
+      state.log.push({
+        text: `${actor.name} は ${selfOnly ? '' : '味方の'}TP を ${flat} 回復した`,
+      });
+      break;
+    }
     default:
       break;
   }

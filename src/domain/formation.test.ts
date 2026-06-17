@@ -44,4 +44,41 @@ describe('formation', () => {
     expect(setSlot(save, 'front', 0, 'nope')).toBe(save);
     expect(setSlot(save, 'back', 9, save.guild.members[0].id)).toBe(save);
   });
+
+  // issue #57: 前後衛最大3・合計5人上限テスト
+  test('後衛に3人配置できる', () => {
+    const { save, ids } = guildOf(3);
+    let s = save;
+    // addCharacterToGuild が前衛に詰めていくので、全員を後衛に移す
+    s = setSlot(s, 'back', 0, ids[0]);
+    s = setSlot(s, 'back', 1, ids[1]);
+    s = setSlot(s, 'back', 2, ids[2]);
+    expect(s.guild.party.back.filter((id) => id !== null)).toHaveLength(3);
+    expect(formationCount(s)).toBe(3);
+  });
+
+  test('5人まで配置でき、6人目（控え）は追加できない', () => {
+    const { save, ids } = guildOf(6);
+    let s = save;
+    // addCharacterToGuild で先頭5人が自動配置される（前衛3 + 後衛2）
+    // 6人目は控えにとどまる
+    expect(formationCount(s)).toBe(5);
+    expect(isInFormation(s, ids[5])).toBe(false);
+    // 手動でも追加を試みると弾かれる
+    const before = s;
+    s = setSlot(s, 'back', 2, ids[5]);
+    expect(s).toBe(before); // 変更されない（参照同一）
+  });
+
+  test('既に編成内のキャラの列移動は人数が変わらない', () => {
+    const { save, ids } = guildOf(5);
+    // 5人全員が編成済み
+    expect(formationCount(save)).toBe(5);
+    // ids[0] が前衛にいる状態で後衛へ移動（人数変化なし）
+    expect(isInFormation(save, ids[0])).toBe(true);
+    const moved = setSlot(save, 'back', 2, ids[0]);
+    expect(formationCount(moved)).toBe(5);
+    expect(moved.guild.party.back[2]).toBe(ids[0]);
+    expect(moved.guild.party.front.includes(ids[0])).toBe(false);
+  });
 });
