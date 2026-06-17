@@ -41,6 +41,9 @@ import type {
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
+// 経験値バーのアニメーション時間(ms)。BattleExpBar の durationMs 既定値と一致させる（issue #52）。
+const EXP_ANIM_MS = 1000;
+
 type AllyCmd =
   | { kind: 'attack' }
   | { kind: 'guard' }
@@ -193,6 +196,8 @@ export const Page = () => {
   const [outroFx, setOutroFx] = useState<'win' | 'lose' | 'fled' | null>(null);
   // レベルアップダイアログの表示待ち行列（issue #18）。
   const [levelQueue, setLevelQueue] = useState<LevelUpResult[]>([]);
+  // 経験値バーのアニメーションが完了したか（issue #52: バーが伸び切ってからレベルアップ）。
+  const [expDone, setExpDone] = useState(false);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -292,11 +297,19 @@ export const Page = () => {
     () => (state && state.outcome === 'win' && save ? partyExpResults(save, state) : []),
     [state, save]
   );
-  // 再生完了後、レベルアップしたキャラのダイアログを順に出すため行列へ積む。
+  // 経験値バーのアニメーション(EXP_ANIM_MS)が終わってからレベルアップダイアログを積む（issue #52）。
+  // 「バーが伸び切ってからレベルアップ」が自然なため、ダイアログ表示を遅延させる。
   useEffect(() => {
-    if (state?.outcome === 'win' && !anim) {
-      setLevelQueue(expResults.filter((r) => r.toLevel > r.fromLevel));
-    }
+    if (state?.outcome !== 'win' || anim) return;
+    const ups = expResults.filter((r) => r.toLevel > r.fromLevel);
+    const t = setTimeout(
+      () => {
+        if (ups.length > 0) setLevelQueue(ups);
+        setExpDone(true);
+      },
+      ups.length > 0 ? EXP_ANIM_MS + 250 : EXP_ANIM_MS
+    );
+    return () => clearTimeout(t);
   }, [state?.outcome, anim, expResults]);
 
   // 戦闘終了 SE（outcome が確定し、anim が終わったタイミングで1回鳴らす）。
@@ -401,8 +414,8 @@ export const Page = () => {
         play('buff');
         continue;
       }
-      // 通常攻撃命中（会心チェック）
-      if (t.includes('の攻撃！') && t.includes('ダメージ')) {
+      // ダメージ命中（通常攻撃＋スキルの clean ダメージ行・会心チェック）
+      if (/ に \d+ ダメージ/.test(t)) {
         const isCritical = t.includes('（会心）');
         // 被弾者が味方かどうかを判定（ログ文字列中の名前から特定は難しいのでsnapshotで判定）
         const snap = line.snapshot;
@@ -670,8 +683,8 @@ export const Page = () => {
   const targetName = state.enemies.find((e) => e.id === targetId)?.name ?? '-';
   const rewards = battleRewards(state);
 
-  // 経験値バーのアニメーションは、レベルアップダイアログを全て閉じた後に開始する（issue #50）。
-  const expAnimStart = state.outcome === 'win' && !anim && levelQueue.length === 0;
+  // 経験値バーは戦況再生が終わったらすぐ開始する（issue #52: バーが伸び切ってからレベルアップ演出）。
+  const expAnimStart = state.outcome === 'win' && !anim;
 
   const renderCard = (a: Combatant) => {
     const d = dispOf(a);
@@ -844,55 +857,61 @@ export const Page = () => {
           </button>
         </div>
       ) : state.outcome !== 'ongoing' ? (
-        <div className={styles.result}>
-          <div className={styles.resultTitle}>
-            {state.outcome === 'win' ? '勝利！' : state.outcome === 'fled' ? '逃走した' : '全滅...'}
-          </div>
-          {state.outcome === 'win' ? (
-            <>
-              <div className={styles.resultBody}>
-                経験値 {rewards.exp} ／ {rewards.gold} G を獲得
-              </div>
-              {/* 各キャラの次レベルまでの経験値バー（issue #50） */}
-              <div className={styles.expList}>
-                {expResults.map((r) => (
-                  <div
-                    key={r.charId}
-                    className={styles.expRow}
-                  >
-                    <span className={styles.expName}>
-                      <span className={styles.expNameText}>{r.name}</span>
-                      <span className={styles.expLv}>
-                        {r.toLevel > r.fromLevel ? (
-                          <span className={styles.expUp}>
-                            Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
-                          </span>
-                        ) : (
-                          <>Lv{r.toLevel}</>
-                        )}
+        <div className={styles.resultOverlay}>
+          <div className={styles.result}>
+            <div className={styles.resultTitle}>
+              {state.outcome === 'win'
+                ? '勝利！'
+                : state.outcome === 'fled'
+                  ? '逃走した'
+                  : '全滅...'}
+            </div>
+            {state.outcome === 'win' ? (
+              <>
+                <div className={styles.resultBody}>
+                  経験値 {rewards.exp} ／ {rewards.gold} G を獲得
+                </div>
+                {/* 各キャラの次レベルまでの経験値バー（issue #50） */}
+                <div className={styles.expList}>
+                  {expResults.map((r) => (
+                    <div
+                      key={r.charId}
+                      className={styles.expRow}
+                    >
+                      <span className={styles.expName}>
+                        <span className={styles.expNameText}>{r.name}</span>
+                        <span className={styles.expLv}>
+                          {r.toLevel > r.fromLevel ? (
+                            <span className={styles.expUp}>
+                              Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
+                            </span>
+                          ) : (
+                            <>Lv{r.toLevel}</>
+                          )}
+                        </span>
                       </span>
-                    </span>
-                    <BattleExpBar
-                      fromLevel={r.fromLevel}
-                      fromExp={r.fromExp}
-                      gainedExp={r.gainedExp}
-                      start={expAnimStart}
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : state.outcome === 'lose' ? (
-            <div className={styles.resultBody}>拠点へ帰還する</div>
-          ) : null}
-          <button
-            type="button"
-            className={styles.primary}
-            disabled={busy || levelQueue.length > 0}
-            onClick={() => void finish(state)}
-          >
-            つづける
-          </button>
+                      <BattleExpBar
+                        fromLevel={r.fromLevel}
+                        fromExp={r.fromExp}
+                        gainedExp={r.gainedExp}
+                        start={expAnimStart}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : state.outcome === 'lose' ? (
+              <div className={styles.resultBody}>拠点へ帰還する</div>
+            ) : null}
+            <button
+              type="button"
+              className={styles.primary}
+              disabled={busy || levelQueue.length > 0 || (expAnimStart && !expDone)}
+              onClick={() => void finish(state)}
+            >
+              つづける
+            </button>
+          </div>
         </div>
       ) : (
         <div className={styles.command}>

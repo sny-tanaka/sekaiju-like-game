@@ -327,7 +327,7 @@ function strikeOnce(
   target: Combatant,
   p: { statBase: 'str' | 'int'; power: number; element: Element },
   rng: Rng,
-  opts: { actorUnion?: number } = {}
+  opts: { actorUnion?: number; clean?: boolean } = {}
 ): { hit: boolean; dealt: number } {
   if (target.isDown) return { hit: false, dealt: 0 };
   const res = computeDamage(
@@ -352,7 +352,9 @@ function strikeOnce(
   // 障壁で全吸収（dealt=0）した場合はダメージログを省く（「障壁で防いだ」は consumeBarrier で出力済み）。
   if (dealt > 0) {
     state.log.push({
-      text: `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
+      text: opts.clean
+        ? `${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`
+        : `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
     });
   }
   return { hit: true, dealt };
@@ -384,7 +386,8 @@ function triggerReactions(
         target,
         attacker,
         { statBase: st.statBase, power: st.power, element: el },
-        rng
+        rng,
+        { clean: true }
       );
       if (attacker.isDown) break;
     }
@@ -402,7 +405,8 @@ function triggerReactions(
           ch,
           target,
           { statBase: st.statBase, power: st.power, element: st.element },
-          rng
+          rng,
+          { clean: true }
         );
       }
     }
@@ -499,7 +503,8 @@ function applySkillEffect(
             actor,
             target,
             { statBase: effect.statBase, power, element },
-            rng
+            rng,
+            { clean: true }
           );
           if (r.hit) {
             landed = true;
@@ -960,6 +965,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       } else {
         // スキルアクション適用
         const targets = resolveTargets(next, actor, selectedAction.target, decoyTargetId ?? '');
+        next.log.push({ text: `${actor.name} の${selectedAction.name}！` });
         for (const effect of selectedAction.effects) {
           applySkillEffect(next, actor, effect, selectedAction.element, 1, targets, rng);
         }
@@ -969,7 +975,6 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           lastUsedTurn: next.turn,
           uses: (actor.actionState[selectedAction.id]?.uses ?? 0) + 1,
         };
-        next.log.push({ text: `${actor.name} の${selectedAction.name}！` });
       }
     } else {
       const cmd = cmdByActor.get(actor.id);
@@ -1003,6 +1008,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         actor.tp -= cost;
         gainUnion(actor, 10);
         const targets = skillTargets(next, actor, def, cmd.targetId);
+        next.log.push({ text: `${actor.name} の${def.name}！` });
         for (const effect of def.effects) {
           applySkillEffect(next, actor, effect, def.element, level, targets, rng);
         }
