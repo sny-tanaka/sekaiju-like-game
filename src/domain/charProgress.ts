@@ -124,6 +124,11 @@ export function rebirthStatBonusForRace(raceId: RaceId): Partial<Record<StatKey,
     sumW += w[k];
   }
   const out: Partial<Record<StatKey, number>> = {};
+  // 全種族の成長が 0 等で sumW=0 になった場合は均等配分にフォールバック（0除算=NaN を防ぐ）。
+  if (sumW === 0) {
+    for (const k of keys) out[k] = Math.round(REBIRTH.STAT_TOTAL / keys.length);
+    return out;
+  }
   for (const k of keys) out[k] = Math.round((REBIRTH.STAT_TOTAL * w[k]) / sumW);
   return out;
 }

@@ -76,6 +76,9 @@ function migrateV2toV3(old: Record<string, unknown>): Record<string, unknown> {
       if (!isObj(rb)) return m; // 転生未経験はそのまま（rebirthBonus 無し）
       // 既に新形式なら触らない
       if ('stats' in rb) return m;
+      // 旧仕様は「全ステ一律 allStats」だったため全ステへ同値展開＝数値的に正確に引き継ぐ。
+      // 旧データには転生回数・転生時の種族の記録が無いため count=1 とする
+      // （以降の転生から種族配分で累積。旧転生者のみ初回ボーナスが均等値になる）。
       const all = typeof rb.allStats === 'number' ? rb.allStats : 0;
       const stats: Record<string, number> = {};
       for (const k of STAT_KEYS) stats[k] = all;
