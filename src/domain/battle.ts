@@ -1145,8 +1145,10 @@ export function partyExpResults(save: SaveData, state: BattleState): LevelUpResu
   const deepestReached = save.towerState.record.deepestReached;
   const { exp } = battleRewards(state, deepestReached);
   const partyIds = new Set(save.diveState.party.map((p) => p.charId));
-  const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
   const downedIds = new Set(state.allies.filter((a) => a.isDown).map((a) => a.id));
+  // 経験値は生存している出撃メンバーのみで分配する（戦闘不能者は取り分なし。issue #50）
+  const aliveCount = [...partyIds].filter((id) => !downedIds.has(id)).length;
+  const share = aliveCount > 0 ? Math.floor(exp / aliveCount) : 0;
   const results: LevelUpResult[] = [];
   for (const m of save.guild.members) {
     if (!partyIds.has(m.id)) continue;
@@ -1257,8 +1259,10 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     const { exp, gold: dropGold } = battleRewards(state, deepestReached);
     gold += dropGold;
     const partyIds = new Set(party.map((p) => p.charId));
-    const share = partyIds.size > 0 ? Math.floor(exp / partyIds.size) : 0;
     const downedIds = new Set(state.allies.filter((a) => a.isDown).map((a) => a.id));
+    // 経験値は生存している出撃メンバーのみで分配する（issue #50）
+    const aliveCount = [...partyIds].filter((id) => !downedIds.has(id)).length;
+    const share = aliveCount > 0 ? Math.floor(exp / aliveCount) : 0;
     members = members.map((m) =>
       partyIds.has(m.id) && !downedIds.has(m.id) ? grantExpToChar(m, share) : m
     );

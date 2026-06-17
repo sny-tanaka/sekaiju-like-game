@@ -795,6 +795,9 @@ describe('battle: partyExpResults（issue #18 リザルト）', () => {
     // 生存している別の味方は経験値を得る
     const aliveResult = results.find((r) => r.charId !== downId);
     expect(aliveResult?.gainedExp).toBeGreaterThan(0);
+    // 生存者が1人なら、その1人に報酬経験値が全額入る（÷生存者数 の検証。issue #50）
+    const reward = battleRewards(state, save.towerState.record.deepestReached).exp;
+    expect(aliveResult?.gainedExp).toBe(reward);
 
     // 実適用（applyBattleResult）でも戦闘不能者のレベル・経験値は変化しない
     const before = save.guild.members.find((m) => m.id === downId)!;
