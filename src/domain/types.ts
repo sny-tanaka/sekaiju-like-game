@@ -535,10 +535,14 @@ export interface EquipmentMaster {
 // キャラクター・ギルド（[01]）
 // ============================================================================
 
-/** 転生由来の補正（[01 §7]）。 */
+/** 転生由来の補正（[01 §7]）。転生のたびに累積する。 */
 export interface RebirthBonus {
-  allStats: number; // 全能力に加算
-  bonusSp: number; // 追加 SP
+  /** 各能力への永続加算（種族配分で偏る）。未指定ステは 0 扱い。 */
+  stats: Partial<Record<StatKey, number>>;
+  /** 追加 SP（累積）。 */
+  bonusSp: number;
+  /** 転生回数（累積。UI 表示・将来拡張用）。 */
+  count: number;
 }
 
 /**

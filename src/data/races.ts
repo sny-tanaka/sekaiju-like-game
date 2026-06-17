@@ -11,7 +11,8 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_human: {
     id: 'race_human',
     name: 'ヒト',
-    description: '純血なヒト族。突出した長所も短所もなく、あらゆる能力が平均的。どの職業にも無理なく適応できる万能種。',
+    description:
+      '純血なヒト族。突出した長所も短所もなく、あらゆる能力が平均的。どの職業にも無理なく適応できる万能種。',
     baseStatsAtLv1: { hp: 40, tp: 20, str: 8, vit: 8, agi: 8, int: 8, mnd: 8, luc: 8 },
     statGrowth: { hp: 8, tp: 4, str: 2, vit: 2, agi: 2, int: 2, mnd: 2, luc: 2 },
     // 種族スキル: ユニオン＋採集（バランス型は採掘・採取が得意）
@@ -26,13 +27,14 @@ export const RACES: Record<RaceId, RaceMaster> = {
     defaultClassId: 'class_warrior',
     // ヒトは耐性なし（§15.5）
   },
-  // 物理特化の大型種
+  // 物理攻撃特化の大型種（アタッカー）
   race_garon: {
     id: 'race_garon',
     name: 'ガロン',
-    description: '屈強な肉体を誇る大型種。高いHPと腕力で前線を支える物理の要だが、素早さと魔法は不得手。火属性に弱い。',
-    baseStatsAtLv1: { hp: 55, tp: 12, str: 11, vit: 11, agi: 5, int: 4, mnd: 6, luc: 6 },
-    statGrowth: { hp: 12, tp: 2, str: 3, vit: 3, agi: 1, int: 1, mnd: 2, luc: 2 },
+    description:
+      'すさまじい腕力を誇る大型種。種族屈指の攻撃力で敵を粉砕する物理アタッカー。打たれ強さは並で、素早さと魔法は不得手。火属性に弱い。',
+    baseStatsAtLv1: { hp: 52, tp: 12, str: 13, vit: 9, agi: 6, int: 4, mnd: 6, luc: 6 },
+    statGrowth: { hp: 12, tp: 2, str: 3, vit: 2, agi: 1, int: 1, mnd: 2, luc: 2 },
     // 種族スキル: ユニオン＋採集（力自慢は伐採・狩猟が得意）
     raceSkillTree: {
       skills: [
@@ -42,7 +44,7 @@ export const RACES: Record<RaceId, RaceMaster> = {
         { skillId: 'skill_hunting', maxLevel: 1 },
       ],
     },
-    defaultClassId: 'class_guardian',
+    defaultClassId: 'class_monk',
     // §15.5 ガロン: 壊耐性/火弱点、毒・脚封じ耐性/麻痺弱点
     elementResist: { bash: 0.8, fire: 1.2 },
     ailmentResist: { poison: 0.4, legBind: 0.7, paralysis: 1.2 },
@@ -51,7 +53,8 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_pix: {
     id: 'race_pix',
     name: 'ピクス',
-    description: '魔力に愛された小型種。豊富なTPと高い知力・精神で魔法戦に長けるが、打たれ弱く物理攻撃に弱い。',
+    description:
+      '魔力に愛された小型種。豊富なTPと高い知力・精神で魔法戦に長けるが、打たれ弱く物理攻撃に弱い。',
     baseStatsAtLv1: { hp: 28, tp: 32, str: 4, vit: 5, agi: 9, int: 12, mnd: 11, luc: 7 },
     statGrowth: { hp: 5, tp: 7, str: 1, vit: 1, agi: 2, int: 3, mnd: 3, luc: 2 },
     // 種族スキル: ユニオン＋採集（自然に親しむ種は採取・収穫が得意）
@@ -72,7 +75,8 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_therian: {
     id: 'race_therian',
     name: 'テリアン',
-    description: '野生の勘を宿す獣人種。素早さと幸運に優れ、命中・回避と手数で戦う。食料調達も得意だが氷属性に弱い。',
+    description:
+      '野生の勘を宿す獣人種。素早さと幸運に優れ、命中・回避と手数で戦う。食料調達も得意だが氷属性に弱い。',
     baseStatsAtLv1: { hp: 38, tp: 18, str: 9, vit: 7, agi: 11, int: 6, mnd: 6, luc: 9 },
     statGrowth: { hp: 7, tp: 3, str: 2, vit: 2, agi: 3, int: 1, mnd: 1, luc: 3 },
     // 種族スキル: ユニオン＋採集（獣使い種は釣り・狩猟・収穫に長ける食料の要）
@@ -94,7 +98,8 @@ export const RACES: Record<RaceId, RaceMaster> = {
   race_lunar: {
     id: 'race_lunar',
     name: 'ルーナ',
-    description: '月の加護を受けた癒し手。精神と幸運が高く回復・補助に向き、TPと魔法防御が伸びる。体は脆い。',
+    description:
+      '月の加護を受けた癒し手。精神と幸運が高く回復・補助に向き、TPと魔法防御が伸びる。体は脆い。',
     baseStatsAtLv1: { hp: 30, tp: 28, str: 5, vit: 6, agi: 8, int: 10, mnd: 12, luc: 10 },
     statGrowth: { hp: 5, tp: 6, str: 1, vit: 1, agi: 2, int: 3, mnd: 3, luc: 3 },
     // 種族スキル: ユニオン＋採集（採取・収穫に長ける）
@@ -111,13 +116,14 @@ export const RACES: Record<RaceId, RaceMaster> = {
     elementResist: { ice: 0.8, fire: 1.2 },
     ailmentResist: { sleep: 0.4, headBind: 0.5, poison: 1.2 },
   },
-  // 岩の民（高耐久・剛力）
+  // 岩の民（高耐久・防御特化のタンク）
   race_golan: {
     id: 'race_golan',
-    name: 'ゴラン',
-    description: '岩のごとき体躯を持つ重厚種。最高峰のHP・防御・腕力を誇り物理に強いが、極端に鈍重で魔法を苦手とする。',
-    baseStatsAtLv1: { hp: 60, tp: 10, str: 12, vit: 13, agi: 4, int: 3, mnd: 6, luc: 5 },
-    statGrowth: { hp: 13, tp: 2, str: 3, vit: 3, agi: 1, int: 1, mnd: 1, luc: 2 },
+    name: 'ドーム',
+    description:
+      '岩のごとき体躯を持つ重厚種。最高峰のHPと防御で前線を支える鉄壁のタンク。攻撃力は控えめで、極端に鈍重、魔法を苦手とする。氷属性に弱い。',
+    baseStatsAtLv1: { hp: 60, tp: 10, str: 9, vit: 12, agi: 4, int: 3, mnd: 6, luc: 5 },
+    statGrowth: { hp: 13, tp: 2, str: 2, vit: 3, agi: 1, int: 1, mnd: 1, luc: 2 },
     // 種族スキル: ユニオン＋採集（採掘・伐採に長ける）
     raceSkillTree: {
       skills: [
@@ -127,8 +133,8 @@ export const RACES: Record<RaceId, RaceMaster> = {
         { skillId: 'skill_logging', maxLevel: 1 },
       ],
     },
-    defaultClassId: 'class_monk',
-    // §15.5 ゴラン: 物理全耐性/氷弱点、毒・麻痺耐性/盲目弱点
+    defaultClassId: 'class_guardian',
+    // §15.5 ドーム: 物理全耐性/氷弱点、毒・麻痺耐性/盲目弱点
     elementResist: { slash: 0.8, pierce: 0.8, bash: 0.8, ice: 1.2 },
     ailmentResist: { poison: 0.3, paralysis: 0.5, blind: 1.2 },
   },

@@ -137,7 +137,7 @@ export const SKILLS: Record<SkillId, SkillMaster> = {
   skill_union_quake: {
     id: 'skill_union_quake',
     name: '大震撃',
-    description: '敵全体に大きな壊打を与えるユニオンスキル（ゴラン・2名）。',
+    description: '敵全体に大きな壊打を与えるユニオンスキル（ドーム・2名）。',
   },
 
   // ---- Phase 6-2 追加スキル ----

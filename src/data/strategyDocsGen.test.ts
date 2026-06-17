@@ -9,6 +9,22 @@ import { resolve } from 'node:path';
 
 import { test, expect } from 'vitest';
 
+import {
+  APPROPRIATE,
+  BALANCE,
+  CLASS_CHANGE_LEVEL_PENALTY,
+  FORGE,
+  GUILD_MEMBER_LIMIT,
+  PARTY_MAX,
+  REBIRTH,
+  STARTING_GOLD,
+  TITLE_BONUS_SP,
+  UNLOCK,
+  enemyScale,
+  expToNext,
+  spGainOnLevelUp,
+  spTotalForLevel,
+} from '@/data/balance';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { CLASSES } from '@/data/classes';
 import { ENEMIES } from '@/data/enemies';
@@ -19,6 +35,7 @@ import { SKILLS } from '@/data/skills';
 import { SUMMONS } from '@/data/summons';
 import { TITLES } from '@/data/titles';
 import { UNION_SKILLS } from '@/data/unionSkills';
+import { rebirthStatBonusForRace } from '@/domain/charProgress';
 import { skillDepth, spCostForDepth } from '@/domain/skillTree';
 import type { BattleSkillDef, SkillEffectDef, SkillTreeNode, StatKey } from '@/domain/types';
 
@@ -61,15 +78,14 @@ const STAT_LABEL: Record<StatKey, string> = {
 };
 
 const n2 = (v: number) => `${Math.round(v * 100) / 100}`;
-const range = (f: (lv: number) => number, max: number) =>
-  f(1) === f(max) ? n2(f(1)) : `${n2(f(1))}→${n2(f(max))}`;
-const pctRange = (f: (lv: number) => number, max: number) => {
-  const a = Math.round(f(1) * 100);
-  const b = Math.round(f(max) * 100);
-  return a === b ? `${a}%` : `${a}%→${b}%`;
-};
-const tpStr = (def: BattleSkillDef, max: number) =>
-  def.tpCost(1) === def.tpCost(max) ? `${def.tpCost(1)}` : `${def.tpCost(1)}→${def.tpCost(max)}`;
+
+// 全レベル列挙ヘルパ（設計書 §2.1）
+const allLv = (f: (lv: number) => number, max: number) =>
+  Array.from({ length: max }, (_, i) => n2(f(i + 1))).join('/');
+const allLvPct = (f: (lv: number) => number, max: number) =>
+  Array.from({ length: max }, (_, i) => `${Math.round(f(i + 1) * 100)}%`).join('/');
+const tpAll = (def: BattleSkillDef, max: number) =>
+  Array.from({ length: max }, (_, i) => def.tpCost(i + 1)).join('/');
 
 function ailmentLabel(a: string): string {
   const m: Record<string, string> = {
@@ -86,44 +102,46 @@ function ailmentLabel(a: string): string {
   };
   return m[a] ?? a;
 }
+
 function effectStr(e: SkillEffectDef, max: number): string {
   switch (e.kind) {
     case 'damage': {
       const base = e.statBase === 'str' ? '物理' : '魔法';
       const hits = e.hits && e.hits > 1 ? `×${e.hits}ヒット` : '';
       const drain = e.drain ? `／HP吸収${Math.round(e.drain * 100)}%` : '';
-      return `${base}ダメージ 威力${range(e.power, max)}${hits}${drain}`;
+      return `${base}ダメージ 威力${allLv(e.power, max)}${hits}${drain}`;
     }
     case 'heal':
-      return `HP回復 ${range(e.amount, max)}`;
+      return `HP回復 ${allLv(e.amount, max)}`;
     case 'restoreTp':
-      return `TP回復 ${range(e.amount, max)}`;
+      return `TP回復 ${allLv(e.amount, max)}`;
     case 'buff': {
       const verb = e.modifier(1) < 1 ? '低下' : '上昇';
-      return `${BUFFSTAT[e.stat]}${verb} ×${range(e.modifier, max)} / ${e.turns}ターン`;
+      return `${BUFFSTAT[e.stat]}${verb} ×${allLv(e.modifier, max)} / ${e.turns}ターン`;
     }
     case 'ailment':
-      return `${ailmentLabel(e.ailment)} 付与 ${pctRange(e.chance, max)} / ${e.turns}ターン`;
+      return `${ailmentLabel(e.ailment)} 付与 ${allLvPct(e.chance, max)} / ${e.turns}ターン`;
     case 'summon':
       return `召喚: ${SUMMONS[e.summonKind]?.name ?? e.summonKind}`;
     case 'counter':
-      return `反撃の構え 発動率${pctRange(e.chance, max)}・威力${range(e.power, max)} / ${e.turns}ターン`;
+      return `反撃の構え 発動率${allLvPct(e.chance, max)}・威力${allLv(e.power, max)} / ${e.turns}ターン`;
     case 'chase':
-      return `連携追撃の構え 威力${range(e.power, max)} / ${e.turns}ターン`;
+      return `連携追撃の構え 威力${allLv(e.power, max)} / ${e.turns}ターン`;
     case 'decoy':
-      return `挑発（狙われ重み +${range(e.weight, max)}） / ${e.turns}ターン`;
+      return `挑発（狙われ重み +${allLv(e.weight, max)}） / ${e.turns}ターン`;
     case 'barrier':
-      return `障壁（被弾を計${range(e.absorb, max)}まで肩代わり） / ${e.turns}ターン`;
+      return `障壁（被弾を計${allLv(e.absorb, max)}まで肩代わり） / ${e.turns}ターン`;
     case 'cleanse':
       return `状態異常を全解除`;
     case 'revive':
-      return `蘇生（HP${pctRange(e.ratio, max)}で復帰）`;
+      return `蘇生（HP${allLvPct(e.ratio, max)}で復帰）`;
     case 'regen':
-      return `継続回復 ${range(e.amount, max)}/ターン×${e.turns}ターン`;
+      return `継続回復 ${allLv(e.amount, max)}/ターン×${e.turns}ターン`;
     default:
       return '';
   }
 }
+
 function passiveStr(skillId: string, max: number): string {
   const def = PASSIVE_SKILLS[skillId];
   if (!def) return '';
@@ -139,18 +157,24 @@ function passiveStr(skillId: string, max: number): string {
     { k: 'maxTp', label: '最大TP' },
   ];
   for (const { k, label } of keys) {
-    const a = def.mods(1)[k];
-    const b = def.mods(max)[k];
-    if (a === undefined || b === undefined) continue;
-    parts.push(`${label} +${Math.round((a - 1) * 100)}%→+${Math.round((b - 1) * 100)}%`);
+    const allVals = Array.from({ length: max }, (_, i) => def.mods(i + 1)[k]).filter(
+      (v): v is number => v !== undefined
+    );
+    if (allVals.length === 0) continue;
+    const pctVals = allVals.map((v) => `+${Math.round((v - 1) * 100)}%`);
+    parts.push(`${label} ${pctVals.join('/')}`);
   }
-  const cA = def.mods(1).crit;
-  const cB = def.mods(max).crit;
-  if (cA !== undefined && cB !== undefined)
-    parts.push(`クリ率 +${Math.round(cA * 100)}%→+${Math.round(cB * 100)}%`);
+  const critVals = Array.from({ length: max }, (_, i) => def.mods(i + 1).crit).filter(
+    (v): v is number => v !== undefined
+  );
+  if (critVals.length > 0) {
+    const pctVals = critVals.map((v) => `+${Math.round(v * 100)}%`);
+    parts.push(`クリ率 ${pctVals.join('/')}`);
+  }
   const cond = def.weaponType ? `（${def.weaponType} 装備時のみ）` : '';
   return `常時: ${parts.join('・')}${cond}`;
 }
+
 function nodeRow(node: SkillTreeNode, sp: number): string {
   const id = node.skillId;
   const max = node.maxLevel;
@@ -163,7 +187,7 @@ function nodeRow(node: SkillTreeNode, sp: number): string {
     return `| ${name} | パッシブ | ${max} | ${sp} | ― | ― | ― | ${passiveStr(id, max)} | ${req} |`;
   if (id in BATTLE_SKILLS) {
     const def = BATTLE_SKILLS[id];
-    return `| ${name} | アクティブ(${TREE[def.tree]}) | ${max} | ${sp} | ${tpStr(def, max)} | ${TARGET[def.target]} | ${ELEM[def.element]} | ${def.effects.map((e) => effectStr(e, max)).join('／')} | ${req} |`;
+    return `| ${name} | アクティブ(${TREE[def.tree]}) | ${max} | ${sp} | ${tpAll(def, max)} | ${TARGET[def.target]} | ${ELEM[def.element]} | ${def.effects.map((e) => effectStr(e, max)).join('／')} | ${req} |`;
   }
   if (id in UNION_SKILLS) {
     const u = UNION_SKILLS[id];
@@ -181,7 +205,7 @@ function treeTable(nodes: SkillTreeNode[]): string {
 }
 
 const TABLE_HEAD =
-  '| スキル | 種別 | 最大Lv | 習得SP/Lv | TP | 対象 | 属性 | 効果（Lv1→最大Lv） | 前提 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |';
+  '| スキル | 種別 | 最大Lv | 習得SP/Lv | TP | 対象 | 属性 | 効果（Lv1..最大Lv の全レベル値） | 前提 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |';
 const classOrder = [
   'class_warrior',
   'class_guardian',
@@ -214,11 +238,13 @@ const raceOrder = [
 ];
 const raceRole: Record<string, string> = {
   race_human: 'バランス型。クセがなく、どの職業にも適応する。',
-  race_garon: '物理特化の大型種。高HP・高STRだが素早さと知力に乏しい。',
+  race_garon:
+    '物理攻撃特化のアタッカー。種族屈指の STR を持つが VIT は控えめ。素早さ・魔法は不得手。',
   race_pix: '魔法特化の小型種。高TP・高INT/MNDだが打たれ弱い。',
   race_therian: '獣使い種。素早く幸運が高い、命中・回避と食料調達に長ける。',
   race_lunar: '月の民。魔法・幸運寄りの癒し手で、魔法防御とTPが伸びる。',
-  race_golan: '岩の民。最高峰の耐久と剛力を持つが、極端に鈍重。',
+  race_golan:
+    '防御特化のタンク（種族名: ドーム）。最高峰の HP・VIT で前線を支えるが攻撃力は控えめ、極端に鈍重。',
 };
 const statKeys: StatKey[] = ['hp', 'tp', 'str', 'vit', 'agi', 'int', 'mnd', 'luc'];
 
@@ -227,7 +253,10 @@ export function generateStrategyDocs(): void {
   const out = resolve(process.cwd(), 'strategy-docs');
   mkdirSync(out, { recursive: true });
 
-  let classes = `# 職業（クラス）一覧\n\n> 数値は \`src/data\` のマスターデータから自動生成（\`yarn gen:docs\`）。スキルは**レベルで自動習得ではなく SP で習得**し、表の「前提」を満たすと解放される（3段の前提チェーン。詳細は [README](./README.md)）。\n\n`;
+  const classesIntro =
+    `# 職業（クラス）一覧\n\n` +
+    `> 数値は \`src/data\` のマスターデータから自動生成（\`yarn gen:docs\`）。スキルは**レベルで自動習得ではなく SP で習得**し、表の「前提」を満たすと解放される（3段の前提チェーン。詳細は [README](./README.md)）。数値は各レベル値を \`/\` 区切りで全レベル分記載。\n\n`;
+  let classes = classesIntro;
   for (const cid of classOrder) {
     const c = CLASSES[cid];
     classes += `## ${c.name}（全${c.skillTree.skills.length}スキル）\n\n${classRole[cid] ?? ''}\n\n`;
@@ -237,7 +266,10 @@ export function generateStrategyDocs(): void {
   }
   writeFileSync(resolve(out, 'classes.md'), classes, 'utf-8');
 
-  let races = `# 種族（レース）一覧\n\n> 基礎ステータスは種族で決まり、Lvごとに成長値ぶん上昇する（\`stat(Lv) = 初期値 + 成長 × (Lv-1)\`）。種族スキル（ユニオン・採集・種族パッシブ）は**転職しても保持**される。\n\n`;
+  const racesIntro =
+    `# 種族（レース）一覧\n\n` +
+    `> 基礎ステータスは種族で決まり、Lvごとに成長値ぶん上昇する（\`stat(Lv) = 初期値 + 成長 × (Lv-1)\`）。種族スキル（ユニオン・採集・種族パッシブ）は**転職しても保持**される。数値は各レベル値を \`/\` 区切りで全レベル分記載。\n\n`;
+  let races = racesIntro;
   for (const rid of raceOrder) {
     const r = RACES[rid];
     races += `## ${r.name}\n\n${raceRole[rid] ?? ''}\n\n- **既定職業（作成時の初期値）**: ${CLASSES[r.defaultClassId]?.name ?? r.defaultClassId}\n\n`;
@@ -250,7 +282,10 @@ export function generateStrategyDocs(): void {
   }
   writeFileSync(resolve(out, 'races.md'), races, 'utf-8');
 
-  let titles = `# 称号（二つ名 / 第2スキルツリー）一覧\n\n> 到達階20で解放。1職業につき2種から1つ選び、第2スキルツリー（各3スキル）と**成長傾向の補正**を得る（習得時 SP+5）。称号は転職で外れる。\n\n`;
+  const titlesIntro =
+    `# 称号（二つ名 / 第2スキルツリー）一覧\n\n` +
+    `> 到達階20で解放。1職業につき2種から1つ選び、第2スキルツリー（各3スキル）と**成長傾向の補正**を得る（習得時 SP+5）。称号は転職で外れる。数値は各レベル値を \`/\` 区切りで全レベル分記載。\n\n`;
+  let titles = titlesIntro;
   for (const cid of classOrder) {
     for (const tid of CLASSES[cid].titleOptions) {
       const t = TITLES[tid];
@@ -312,6 +347,134 @@ export function generateStrategyDocs(): void {
   for (const it of Object.values(ITEMS).filter((i) => i.category === 'material'))
     enemies += `| ${it.name} | ${it.description} |\n`;
   writeFileSync(resolve(out, 'enemies.md'), enemies, 'utf-8');
+
+  // ---- balance.md（§2.3 バランス定数一覧）----
+  let balance = `# バランス定数（balance.md）\n\n`;
+  balance += `> 本書は \`src/data/balance.ts\` から自動生成。調整はこのファイル（と各マスター）を編集し \`yarn gen:docs\` で再生成。\n\n`;
+
+  // §1 基本進行
+  balance += `## 基本進行\n\n`;
+  balance += `| 定数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| LEVEL_CAP | ${BALANCE.LEVEL_CAP} | レベル上限 |\n`;
+  balance += `| BOSS_INTERVAL | ${BALANCE.BOSS_INTERVAL} | 何階ごとにボス階か（＝ワープ間隔） |\n`;
+  balance += `| BAND_SIZE | ${BALANCE.BAND_SIZE} | 敵プール帯の幅 |\n`;
+  balance += `| ENEMY_SCALE_K | ${BALANCE.ENEMY_SCALE_K} | enemyScale の1層あたり伸び |\n\n`;
+
+  // §2 レベル別テーブル（Lv1〜100全行）
+  balance += `## レベル別テーブル（Lv1〜${BALANCE.LEVEL_CAP}）\n\n`;
+  balance += `> 経験値式: \`expToNext(Lv) = round(${BALANCE.EXP_CURVE_BASE} × Lv^${BALANCE.EXP_CURVE_POW})\`\n`;
+  balance += `> SP式: \`spTotal(Lv) = round(${BALANCE.SP_PER_LEVEL} × (Lv-1))\`\n\n`;
+  balance += `| Lv | 次Lvまで必要EXP | 累計SP | そのLvで得るSP |\n| --- | --- | --- | --- |\n`;
+  for (let lv = 1; lv <= BALANCE.LEVEL_CAP; lv++) {
+    balance += `| ${lv} | ${expToNext(lv)} | ${spTotalForLevel(lv)} | ${lv === 1 ? 0 : spGainOnLevelUp(lv)} |\n`;
+  }
+  balance += '\n';
+
+  // §3 適正レベル/ティア
+  balance += `## 適正レベル/ティア（APPROPRIATE）\n\n`;
+  balance += `| ボス階 | 適正Lv | 装備ティア |\n| --- | --- | --- |\n`;
+  for (const [depth, val] of Object.entries(APPROPRIATE)) {
+    balance += `| ${depth} | ${val.lv} | ${val.tier} |\n`;
+  }
+  balance += '\n';
+
+  // §4 ダメージ式の係数
+  balance += `## ダメージ式の係数\n\n`;
+  balance += `| 定数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| DAMAGE_DEF_K | ${BALANCE.DAMAGE_DEF_K} | 防御係数（除算型ダメージ軽減） |\n`;
+  balance += `| CRIT_MULT | ${BALANCE.CRIT_MULT} | 会心倍率 |\n`;
+  balance += `| WEAK_MULT | ${BALANCE.WEAK_MULT} | 弱点属性倍率 |\n`;
+  balance += `| RESIST_MULT | ${BALANCE.RESIST_MULT} | 耐性属性倍率 |\n`;
+  balance += `| BACK_ROW_MELEE_MULT | ${BALANCE.BACK_ROW_MELEE_MULT} | 後衛の近接物理補正（攻撃側・防御側で独立乗算） |\n`;
+  balance += `| DMG_VARIANCE | ${BALANCE.DMG_VARIANCE[0]}〜${BALANCE.DMG_VARIANCE[1]} | ダメージブレ幅 |\n\n`;
+
+  // §5 命中・クリティカル
+  balance += `## 命中・クリティカル\n\n`;
+  balance += `| 定数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| BASE_HIT | ${BALANCE.BASE_HIT} | 基礎命中率 |\n`;
+  balance += `| HIT_AGI_K | ${BALANCE.HIT_AGI_K} | AGI差1あたりの命中補正 |\n`;
+  balance += `| HIT_MIN | ${BALANCE.HIT_MIN} | 命中率の下限 |\n`;
+  balance += `| BLIND_ACC_PENALTY | ${BALANCE.BLIND_ACC_PENALTY} | 盲目による命中ペナルティ |\n`;
+  balance += `| CRIT_BASE | ${BALANCE.CRIT_BASE} | 基礎クリティカル率 |\n`;
+  balance += `| CRIT_LUC_K | ${BALANCE.CRIT_LUC_K} | LUC差1あたりのクリ率補正 |\n`;
+  balance += `| CRIT_MIN | ${BALANCE.CRIT_MIN} | クリ率の下限 |\n`;
+  balance += `| CRIT_MAX | ${BALANCE.CRIT_MAX} | クリ率の上限 |\n\n`;
+
+  // §6 状態異常・TP回復・ユニオン・回復係数など
+  balance += `## 状態異常・TP回復・ユニオン・回復係数\n\n`;
+  balance += `| 定数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| AILMENT_LUC_K | ${BALANCE.AILMENT_LUC_K} | LUC差1あたりの状態異常付与補正 |\n`;
+  balance += `| AILMENT_MAX | ${BALANCE.AILMENT_MAX} | 状態異常付与率の上限 |\n`;
+  balance += `| PARALYSIS_SKIP | ${BALANCE.PARALYSIS_SKIP} | 麻痺で行動不能になる確率 |\n`;
+  balance += `| POISON_HP_RATIO | ${BALANCE.POISON_HP_RATIO} | 毒の毎ターン割合ダメージ（magnitude未指定時） |\n`;
+  balance += `| TP_REGEN_RATIO | ${BALANCE.TP_REGEN_RATIO} | 毎ターン終了時のTP自然回復率 |\n`;
+  balance += `| UNION_GAIN_PER_ACTION | ${BALANCE.UNION_GAIN_PER_ACTION[0]}〜${BALANCE.UNION_GAIN_PER_ACTION[1]} | 行動1回あたりのユニオンゲージ増加量 |\n`;
+  balance += `| UNION_GAIN_ON_WIN | ${BALANCE.UNION_GAIN_ON_WIN} | 戦闘勝利時のユニオンゲージ増加量 |\n`;
+  balance += `| FARM_EXP_DECAY_PER_BAND | ${BALANCE.FARM_EXP_DECAY_PER_BAND} | 下層ファーム時の帯あたりEXP減衰率 |\n`;
+  balance += `| ENEMY_ATTACK_POWER | ${BALANCE.ENEMY_ATTACK_POWER} | 敵通常攻撃の倍率 |\n`;
+  balance += `| HEAL_MATK_COEF_ONE | ${BALANCE.HEAL_MATK_COEF_ONE} | 単体回復スキルの魔法攻撃係数 |\n`;
+  balance += `| HEAL_MATK_COEF_ALL | ${BALANCE.HEAL_MATK_COEF_ALL} | 全体回復スキルの魔法攻撃係数 |\n`;
+  balance += `| HEAL_MATK_COEF_MINOR | ${BALANCE.HEAL_MATK_COEF_MINOR} | 軽回復（歌・救護等）の魔法攻撃係数 |\n`;
+  balance += `| SURPLUS_SP_PER_STAT | ${BALANCE.SURPLUS_SP_PER_STAT} | 余剰SP何点で全ステ+1 |\n\n`;
+
+  // §7 敵スケール
+  balance += `## 敵スケール\n\n`;
+  balance += `> \`enemyScale(depth, refDepth) = 1 + ${BALANCE.ENEMY_SCALE_K} × (depth - refDepth)\`\n\n`;
+  balance += `| refDepth | depth=10 | depth=30 | depth=50 | depth=80 | depth=110 |\n| --- | --- | --- | --- | --- | --- |\n`;
+  for (const ref of [10, 30, 50]) {
+    balance += `| ${ref} | ${enemyScale(10, ref).toFixed(2)} | ${enemyScale(30, ref).toFixed(2)} | ${enemyScale(50, ref).toFixed(2)} | ${enemyScale(80, ref).toFixed(2)} | ${enemyScale(110, ref).toFixed(2)} |\n`;
+  }
+  balance += '\n';
+
+  // §8 鍛冶
+  balance += `## 鍛冶（FORGE）\n\n`;
+  balance += `| 定数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| MAX_LEVEL | ${FORGE.MAX_LEVEL} | 強化上限 |\n`;
+  balance += `| STAT_PER_LEVEL | ${FORGE.STAT_PER_LEVEL} | 強化値1あたりのATK/MAT上昇 |\n`;
+  balance += `| TIER_STEP | ${FORGE.TIER_STEP} | ティア連動係数 |\n`;
+  balance += `| INGOT_INC.copper | ${FORGE.INGOT_INC.copper} | 銅インゴットの強化量 |\n`;
+  balance += `| INGOT_INC.silver | ${FORGE.INGOT_INC.silver} | 銀インゴットの強化量 |\n`;
+  balance += `| INGOT_INC.gold | ${FORGE.INGOT_INC.gold} | 金インゴットの強化量 |\n`;
+  balance += `| FRAGMENTS_PER_INGOT | ${FORGE.FRAGMENTS_PER_INGOT} | 断片何個でインゴット1個 |\n\n`;
+
+  // §9 解放・コスト
+  balance += `## 解放・コスト\n\n`;
+  balance += `| 定数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| UNLOCK.TITLE_DEPTH | ${UNLOCK.TITLE_DEPTH} | 称号（第2スキルツリー）解放到達階 |\n`;
+  balance += `| UNLOCK.REBIRTH_MIN_LEVEL | ${UNLOCK.REBIRTH_MIN_LEVEL} | 転生可能レベル（Lv上限到達時のみ） |\n`;
+  balance += `| CLASS_CHANGE_LEVEL_PENALTY | ${CLASS_CHANGE_LEVEL_PENALTY} | 転職時のレベル低下量 |\n`;
+  balance += `| TITLE_BONUS_SP | ${TITLE_BONUS_SP} | 称号習得時のボーナスSP |\n\n`;
+
+  // §10 初期値
+  balance += `## 初期値\n\n`;
+  balance += `| 定数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| STARTING_GOLD | ${STARTING_GOLD} | ニューゲーム開始時の所持金 |\n`;
+  balance += `| GUILD_MEMBER_LIMIT | ${GUILD_MEMBER_LIMIT} | ギルドのメンバー上限 |\n`;
+  balance += `| PARTY_MAX | ${PARTY_MAX} | 出撃パーティの最大人数（前衛3+後衛2） |\n\n`;
+
+  // §11 転生（REBIRTH）
+  balance += `## 転生（REBIRTH）\n\n`;
+  balance += `> 仕様: Lv${UNLOCK.REBIRTH_MIN_LEVEL}到達時のみ可能。転生後はLv1から再スタート。永続ボーナスは累積（転生のたびに加算・頭打ちなし）。ボーナスは転生時に選んだ種族の成長傾向に応じて配分。\n\n`;
+  balance += `| 定数 | 値 | 意味 |\n| --- | --- | --- |\n`;
+  balance += `| STAT_TOTAL | ${REBIRTH.STAT_TOTAL} | 1回の転生で配る全ステ合計ボーナスポイント（基準30×8ステ）。種族傾向で按分。 |\n`;
+  balance += `| BONUS_SP | ${REBIRTH.BONUS_SP} | 1回の転生で得る追加SP（種族非依存・固定・累積） |\n\n`;
+  balance += `### 配分式\n\n`;
+  balance += `\`\`\`\n`;
+  balance += `avgGrowth[key] = (Σ_r RACES[r].statGrowth[key]) / N  // 全種族のステ別平均成長\n`;
+  balance += `w[key]         = RACES[raceId].statGrowth[key] / avgGrowth[key]  // 対象種族の相対重み\n`;
+  balance += `sumW           = Σ_key w[key]\n`;
+  balance += `bonus[key]     = Math.round(STAT_TOTAL × w[key] / sumW)  // 合計がSTAT_TOTALになるよう正規化\n`;
+  balance += `\`\`\`\n\n`;
+  balance += `### 全種族の転生ボーナス配分（1回あたり）\n\n`;
+  balance += `| 種族 | HP | TP | STR | VIT | AGI | INT | MND | LUC | 合計 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n`;
+  for (const rid of raceOrder) {
+    const rb = rebirthStatBonusForRace(rid);
+    const total = statKeys.reduce((s, k) => s + (rb[k] ?? 0), 0);
+    balance += `| ${RACES[rid].name} | ${statKeys.map((k) => rb[k] ?? 0).join(' | ')} | ${total} |\n`;
+  }
+  balance += '\n';
+
+  writeFileSync(resolve(out, 'balance.md'), balance, 'utf-8');
 }
 
 test('strategy-docs generator', () => {

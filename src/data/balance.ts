@@ -97,7 +97,15 @@ export const PARTY_MAX = FORMATION_FRONT_SLOTS + FORMATION_BACK_SLOTS;
 // 個別の「条件付き職業」の解放階は今後 ClassMaster 側に定義しうる（[01 §4]）。
 export const UNLOCK = {
   TITLE_DEPTH: 20, // 称号（第2スキルツリー）解放
-  REBIRTH_MIN_LEVEL: 30, // 転生可能な最低レベル
+  REBIRTH_MIN_LEVEL: 100, // 転生可能レベル（Lv上限到達時のみ）
+} as const;
+
+/** 転生（[01 §7]）。Lv100到達時のみ・Lv1再スタート・永続ボーナスは累積。 */
+export const REBIRTH = {
+  /** 1回の転生で配る「全ステ合計」ボーナスポイント（= 基準 30 × 8 ステ）。種族の成長傾向で按分する。 */
+  STAT_TOTAL: 240,
+  /** 1回の転生で得る追加 SP（種族非依存・固定・累積）。 */
+  BONUS_SP: 10,
 } as const;
 
 /** 転職時のレベル低下（[01 §6]）。 */
