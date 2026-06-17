@@ -36,6 +36,7 @@ import { SUMMONS } from '@/data/summons';
 import { TITLES } from '@/data/titles';
 import { UNION_SKILLS } from '@/data/unionSkills';
 import { rebirthStatBonusForRace } from '@/domain/charProgress';
+import { computeSkillTpCost } from '@/domain/skillCost';
 import { skillDepth, spCostForDepth } from '@/domain/skillTree';
 import type { BattleSkillDef, SkillEffectDef, SkillTreeNode, StatKey } from '@/domain/types';
 
@@ -85,7 +86,7 @@ const allLv = (f: (lv: number) => number, max: number) =>
 const allLvPct = (f: (lv: number) => number, max: number) =>
   Array.from({ length: max }, (_, i) => `${Math.round(f(i + 1) * 100)}%`).join('/');
 const tpAll = (def: BattleSkillDef, max: number) =>
-  Array.from({ length: max }, (_, i) => def.tpCost(i + 1)).join('/');
+  Array.from({ length: max }, (_, i) => computeSkillTpCost(def, i + 1)).join('/');
 
 function ailmentLabel(a: string): string {
   const m: Record<string, string> = {
@@ -407,7 +408,7 @@ export function generateStrategyDocs(): void {
   balance += `| AILMENT_MAX | ${BALANCE.AILMENT_MAX} | 状態異常付与率の上限 |\n`;
   balance += `| PARALYSIS_SKIP | ${BALANCE.PARALYSIS_SKIP} | 麻痺で行動不能になる確率 |\n`;
   balance += `| POISON_HP_RATIO | ${BALANCE.POISON_HP_RATIO} | 毒の毎ターン割合ダメージ（magnitude未指定時） |\n`;
-  balance += `| TP_REGEN_RATIO | ${BALANCE.TP_REGEN_RATIO} | 毎ターン終了時のTP自然回復率 |\n`;
+  // TP_REGEN_RATIO は廃止済み（issue #57 第2弾）
   balance += `| UNION_GAIN_PER_ACTION | ${BALANCE.UNION_GAIN_PER_ACTION[0]}〜${BALANCE.UNION_GAIN_PER_ACTION[1]} | 行動1回あたりのユニオンゲージ増加量 |\n`;
   balance += `| UNION_GAIN_ON_WIN | ${BALANCE.UNION_GAIN_ON_WIN} | 戦闘勝利時のユニオンゲージ増加量 |\n`;
   balance += `| FARM_EXP_DECAY_PER_BAND | ${BALANCE.FARM_EXP_DECAY_PER_BAND} | 下層ファーム時の帯あたりEXP減衰率 |\n`;

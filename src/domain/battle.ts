@@ -20,6 +20,7 @@ import { enemyLapForDepth } from '@/domain/encounterTable';
 import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computePassiveMods } from '@/domain/passives';
+import { computeSkillTpCost } from '@/domain/skillCost';
 import { computeBaseStats } from '@/domain/stats';
 import type {
   ActiveAilment,
@@ -1033,7 +1034,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           continue;
         }
         const level = actor.skillLevels?.[cmd.skillId] ?? 1;
-        const cost = def.tpCost(level);
+        const cost = computeSkillTpCost(def, level);
         if (actor.tp < cost) {
           next.log.push({ text: `${actor.name} は TP が足りない` });
           continue;
@@ -1064,7 +1065,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (aliveSide(next, 'enemy').length === 0 || aliveSide(next, 'ally').length === 0) break;
   }
 
-  // ターン終了処理: 毒ダメージ → TP自然回復 → バフ/状態異常の残ターン減算（召喚体も含む）
+  // ターン終了処理: 毒ダメージ → バフ/状態異常の残ターン減算（召喚体も含む）
   for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
     if (c.isDown) continue;
     const poison = c.ailments.find((a) => a.type === 'poison');
@@ -1087,10 +1088,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     }
   }
   for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
-    if (!c.isDown && c.maxTp > 0) {
-      // TP 自然回復（[03 §2]）。TP枯渇での詰みを防ぐ。
-      c.tp = Math.min(c.maxTp, c.tp + Math.ceil(c.maxTp * BALANCE.TP_REGEN_RATIO));
-    }
+    // 戦闘中の TP 自然回復は廃止（issue #57 第2弾）。TP はアイテム/スキルで管理する有限資源とする。
     c.buffs = c.buffs
       .map((b) => ({ ...b, remainingTurns: b.remainingTurns - 1 }))
       .filter((b) => b.remainingTurns > 0);

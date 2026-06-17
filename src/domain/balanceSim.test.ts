@@ -12,12 +12,14 @@
  */
 
 import { APPROPRIATE, expToNext } from '@/data/balance';
+import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { ENEMIES } from '@/data/enemies';
 import { RACES } from '@/data/races';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import { buildSimBattleState, resolveTurn } from '@/domain/battle';
 import { effectiveEnemyStats } from '@/domain/combat';
 import { createRng } from '@/domain/rng';
+import { computeSkillTpCost } from '@/domain/skillCost';
 import type {
   BattleCommand,
   BattleState,
@@ -252,26 +254,11 @@ function buildSkillLevels(charLv: number): Record<string, number> {
 // スクリプトAI（§13.1 / §17-1）
 // ============================================================================
 
-/** スキルの実TP消費を学習Lvで計算 */
+/** スキルの実TP消費を学習Lvで計算（computeSkillTpCost を使って本体実装と一致させる） */
 function skillTpCost(skillId: string, skillLv: number): number {
-  switch (skillId) {
-    case 'skill_provoke':
-      return 3; // tpCost = () => 3
-    case 'skill_shield_bash':
-      return 3 + skillLv;
-    case 'skill_power_slash':
-      return 3 + skillLv;
-    case 'skill_triple_strike':
-      return 4 + skillLv;
-    case 'skill_fire_bolt':
-      return 4 + skillLv;
-    case 'skill_heal':
-      return 4 + skillLv;
-    case 'skill_mass_heal':
-      return 8 + skillLv;
-    default:
-      return 5;
-  }
+  const def = BATTLE_SKILLS[skillId];
+  if (!def) return 5;
+  return computeSkillTpCost(def, skillLv);
 }
 
 /**
@@ -280,13 +267,29 @@ function skillTpCost(skillId: string, skillLv: number): number {
  * - DPS(戦士/拳聖/魔導士): TP≥コストでスキル / 不足で通常攻撃
  * - 盾(守護兵): TP≥3で挑発 / 不足で通常攻撃（ただし初ターンのみ挑発、以降は攻撃）
  */
-function makeCommands(state: BattleState, _turn: number): BattleCommand[] {
+/** balanceSim: 各キャラの「まほうのは」(TP+15) 持ち込み数の想定（TP補給の戦術を反映）。 */
+const HERB_PER_CHAR = 5;
+
+function makeCommands(
+  state: BattleState,
+  _turn: number,
+  herbStock: Map<string, number>
+): BattleCommand[] {
   const commands: BattleCommand[] = [];
   const aliveAllies = state.allies.filter((a) => !a.isDown);
   const aliveEnemies = state.enemies.filter((e) => !e.isDown);
   if (aliveEnemies.length === 0 || aliveAllies.length === 0) return commands;
 
   const firstEnemy = aliveEnemies[0];
+
+  // TP不足時に「まほうのは」(TP+15) で補給する（在庫があれば。1ターン消費）。使えたら true。
+  const tryUseHerb = (ally: Combatant): boolean => {
+    const stock = herbStock.get(ally.id) ?? 0;
+    if (stock <= 0) return false;
+    herbStock.set(ally.id, stock - 1);
+    commands.push({ kind: 'item', actorId: ally.id, itemId: 'item_tp_herb', targetId: ally.id });
+    return true;
+  };
 
   for (const ally of aliveAllies) {
     const def = PARTY_DEFS.find((d) => d.id === ally.id);
@@ -315,6 +318,10 @@ function makeCommands(state: BattleState, _turn: number): BattleCommand[] {
           skillId: 'skill_mass_heal',
           targetId: ally.id,
         });
+      } else if (critical.length > 0 && ally.tp < healCost && tryUseHerb(ally)) {
+        // 回復が必要だが TP 不足 → まほうのは で補給
+      } else if (hurt.length >= 2 && ally.tp < massCost && tryUseHerb(ally)) {
+        // 同上
       } else {
         // 通常攻撃（TP節約 or 全員フルHP）
         commands.push({ kind: 'attack', actorId: ally.id, targetId: firstEnemy.id });
@@ -348,7 +355,7 @@ function makeCommands(state: BattleState, _turn: number): BattleCommand[] {
         commands.push({ kind: 'attack', actorId: ally.id, targetId: firstEnemy.id });
       }
     } else if (def.skillId) {
-      // DPS: TP があればスキル、なければ通常攻撃
+      // DPS: TP があればスキル / TP不足ならハーブ補給 / 在庫尽きたら通常攻撃
       const skLv = ally.skillLevels?.[def.skillId] ?? 1;
       const cost = skillTpCost(def.skillId, skLv);
       if (ally.tp >= cost) {
@@ -358,6 +365,8 @@ function makeCommands(state: BattleState, _turn: number): BattleCommand[] {
           skillId: def.skillId as string,
           targetId: firstEnemy.id,
         });
+      } else if (tryUseHerb(ally)) {
+        // TP不足 → まほうのは で補給（次ターンにスキル）
       } else {
         commands.push({ kind: 'attack', actorId: ally.id, targetId: firstEnemy.id });
       }
@@ -396,6 +405,8 @@ function runSim(
   let state = buildSimBattleState(allies, enemies, depth);
   const rng: Rng = createRng(seed);
   let minPartyHpRatio = 1.0;
+  const herbStock = new Map<string, number>();
+  for (const a of allies) herbStock.set(a.id, HERB_PER_CHAR);
 
   for (let t = 0; t < maxTurns; t++) {
     if (state.outcome !== 'ongoing') break;
@@ -408,7 +419,7 @@ function runSim(
       }
     }
 
-    const cmds = makeCommands(state, state.turn);
+    const cmds = makeCommands(state, state.turn, herbStock);
     state = resolveTurn(state, cmds, rng);
   }
 

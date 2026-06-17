@@ -166,7 +166,6 @@
 | AILMENT_MAX | 0.95 | 状態異常付与率の上限 |
 | PARALYSIS_SKIP | 0.3 | 麻痺で行動不能になる確率 |
 | POISON_HP_RATIO | 0.03 | 毒の毎ターン割合ダメージ（magnitude未指定時） |
-| TP_REGEN_RATIO | 0.04 | 毎ターン終了時のTP自然回復率 |
 | UNION_GAIN_PER_ACTION | 5〜15 | 行動1回あたりのユニオンゲージ増加量 |
 | UNION_GAIN_ON_WIN | 15 | 戦闘勝利時のユニオンゲージ増加量 |
 | FARM_EXP_DECAY_PER_BAND | 0.85 | 下層ファーム時の帯あたりEXP減衰率 |

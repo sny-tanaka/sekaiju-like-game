@@ -414,7 +414,6 @@ export interface BattleSkillDef {
   id: SkillId;
   name: string;
   tree: 'base' | 'master' | 'race' | 'title';
-  tpCost: (lv: number) => number;
   element: Element;
   target: TargetType;
   effects: SkillEffectDef[];

@@ -38,8 +38,7 @@ export const BALANCE = {
   AILMENT_MAX: 0.95,
   PARALYSIS_SKIP: 0.3, // 麻痺で行動不能になる確率
   POISON_HP_RATIO: 0.03, // 毒の毎ターン割合ダメージ（magnitude 未指定時）（§15: 0.05→0.03）
-  // TP 自然回復（[03 §2] ターン終了処理）: 毎ターン maxTp の割合だけ回復
-  TP_REGEN_RATIO: 0.04, // 0.05 → 0.04（長期戦の消耗を効かせる）
+  // 戦闘中の TP 自然回復は廃止（issue #57 第2弾）。TP はアイテム/スキルで管理する。
   // ユニオン（[03 §9]）
   UNION_GAIN_PER_ACTION: [5, 15] as const,
   UNION_GAIN_ON_WIN: 15,
@@ -162,3 +161,41 @@ export const canGainExp = (level: number): boolean => level < BALANCE.LEVEL_CAP;
 /** 出現階に応じた敵ステータス係数（[06 §3]）。 */
 export const enemyScale = (depth: number, refDepth: number): number =>
   1 + BALANCE.ENEMY_SCALE_K * (depth - refDepth);
+
+// ----------------------------------------------------------------------------
+// スキルTP消費算定係数（設計書: dev-docs/tp-cost-model.md §1）
+// computeSkillTpCost が参照する係数オブジェクト。値の意味は設計書を参照。
+// 係数の最終調整は balanceSim を回してディレクターが iterate する。
+// ----------------------------------------------------------------------------
+
+/** TP消費算定の効果別係数（初期値）。 */
+export const SKILL_TP = {
+  Kd: 1.95, // damage 係数
+  Pd: 3, // damage 指数（power^Pd）
+  Kh: 0.35, // heal 係数
+  Ka: 8, // ailment 係数
+  Kb: 15, // buff/debuff 係数
+  Ksummon: 14, // summon 固定値
+  Kcounter: 2.5, // counter 係数
+  Kchase: 2.0, // chase 係数
+  Kdecoy: 2.5, // decoy 係数
+  Kbarrier: 0.3, // barrier 係数
+  Kregen: 0.4, // regen 係数
+  Kcleanse: 6, // cleanse 係数
+  Krevive: 12, // revive 固定部分
+  Kreviveratio: 0.15, // revive 割合部分
+} as const;
+
+/** 状態異常の強さ（ailment TP価値の乗数）。 */
+export const AILMENT_SEVERITY: Record<string, number> = {
+  headBind: 1.0,
+  armBind: 1.0,
+  legBind: 1.0,
+  sleep: 1.3,
+  paralysis: 1.2,
+  instantDeath: 2.5,
+  poison: 0.5,
+  blind: 0.7,
+  confusion: 0.9,
+  curse: 0.8,
+};
