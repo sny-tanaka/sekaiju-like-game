@@ -16368,9 +16368,9 @@ const Ze = {
       id: 'race_garon',
       name: 'ガロン',
       description:
-        '屈強な肉体を誇る大型種。高いHPと腕力で前線を支える物理の要だが、素早さと魔法は不得手。火属性に弱い。',
-      baseStatsAtLv1: { hp: 55, tp: 12, str: 11, vit: 11, agi: 5, int: 4, mnd: 6, luc: 6 },
-      statGrowth: { hp: 12, tp: 2, str: 3, vit: 3, agi: 1, int: 1, mnd: 2, luc: 2 },
+        'すさまじい腕力を誇る大型種。種族屈指の攻撃力で敵を粉砕する物理アタッカー。打たれ強さは並で、素早さと魔法は不得手。火属性に弱い。',
+      baseStatsAtLv1: { hp: 52, tp: 12, str: 13, vit: 9, agi: 6, int: 4, mnd: 6, luc: 6 },
+      statGrowth: { hp: 12, tp: 2, str: 3, vit: 2, agi: 1, int: 1, mnd: 2, luc: 2 },
       raceSkillTree: {
         skills: [
           { skillId: 'skill_union_smash', maxLevel: 3 },
@@ -16379,7 +16379,7 @@ const Ze = {
           { skillId: 'skill_hunting', maxLevel: 1 },
         ],
       },
-      defaultClassId: 'class_guardian',
+      defaultClassId: 'class_monk',
       elementResist: { bash: 0.8, fire: 1.2 },
       ailmentResist: { poison: 0.4, legBind: 0.7, paralysis: 1.2 },
     },
@@ -16443,11 +16443,11 @@ const Ze = {
     },
     race_golan: {
       id: 'race_golan',
-      name: 'ゴラン',
+      name: 'ドーム',
       description:
-        '岩のごとき体躯を持つ重厚種。最高峰のHP・防御・腕力を誇り物理に強いが、極端に鈍重で魔法を苦手とする。',
-      baseStatsAtLv1: { hp: 60, tp: 10, str: 12, vit: 13, agi: 4, int: 3, mnd: 6, luc: 5 },
-      statGrowth: { hp: 13, tp: 2, str: 3, vit: 3, agi: 1, int: 1, mnd: 1, luc: 2 },
+        '岩のごとき体躯を持つ重厚種。最高峰のHPと防御で前線を支える鉄壁のタンク。攻撃力は控えめで、極端に鈍重、魔法を苦手とする。氷属性に弱い。',
+      baseStatsAtLv1: { hp: 60, tp: 10, str: 9, vit: 12, agi: 4, int: 3, mnd: 6, luc: 5 },
+      statGrowth: { hp: 13, tp: 2, str: 2, vit: 3, agi: 1, int: 1, mnd: 1, luc: 2 },
       raceSkillTree: {
         skills: [
           { skillId: 'skill_union_quake', maxLevel: 3 },
@@ -16456,7 +16456,7 @@ const Ze = {
           { skillId: 'skill_logging', maxLevel: 1 },
         ],
       },
-      defaultClassId: 'class_monk',
+      defaultClassId: 'class_guardian',
       elementResist: { slash: 0.8, pierce: 0.8, bash: 0.8, ice: 1.2 },
       ailmentResist: { poison: 0.3, paralysis: 0.5, blind: 1.2 },
     },
@@ -16590,7 +16590,7 @@ const Ze = {
     skill_union_quake: {
       id: 'skill_union_quake',
       name: '大震撃',
-      description: '敵全体に大きな壊打を与えるユニオンスキル（ゴラン・2名）。',
+      description: '敵全体に大きな壊打を与えるユニオンスキル（ドーム・2名）。',
     },
     skill_cleave: { id: 'skill_cleave', name: 'なぎ払い', description: '敵全体に斬撃ダメージ。' },
     skill_volt_bolt: {
@@ -27947,7 +27947,7 @@ const z9 = 2500,
         m.jsxs('footer', {
           className: Ge.foot,
           children: [
-            m.jsxs('span', { className: Ge.version, children: ['v', '0.1.53'] }),
+            m.jsxs('span', { className: Ge.version, children: ['v', '0.1.54'] }),
             m.jsx('button', {
               type: 'button',
               className: Ge.updateBtn,
