@@ -250,18 +250,25 @@ const isBuffImmune = (c: Combatant): boolean =>
 
 const elementMult = (target: Combatant, element: Element): number => target.resist?.[element] ?? 1;
 
-function dealDamage(target: Combatant, dmg: number, log: BattleState['log']): void {
+/**
+ * HP を減算し、睡眠解除・戦闘不能の状態変更を行う。
+ * 「目を覚ました」「倒れた！」のログは呼び出し側がダメージ本文の後に push できるよう、
+ * テキストの配列で返す（ダメージ→撃破の順序を保つため。ログ順バグ修正）。
+ */
+function dealDamage(target: Combatant, dmg: number): string[] {
+  const logs: string[] = [];
   target.hp = clamp(target.hp - dmg, 0, target.maxHp);
   // 睡眠は被ダメージで解除（[03 §6]）。
   if (dmg > 0 && target.ailments.some((a) => a.type === 'sleep')) {
     target.ailments = target.ailments.filter((a) => a.type !== 'sleep');
-    log.push({ text: `${target.name} は目を覚ました` });
+    logs.push(`${target.name} は目を覚ました`);
   }
   if (target.hp === 0 && !target.isDown) {
     target.isDown = true;
     target.unionGauge = Math.floor(target.unionGauge / 2); // 戦闘不能で保有ゲージ半減
-    log.push({ text: `${target.name} は倒れた！` });
+    logs.push(`${target.name} は倒れた！`);
   }
+  return logs;
 }
 
 function gainUnion(c: Combatant, amount: number): void {
@@ -346,7 +353,7 @@ function strikeOnce(
     return { hit: false, dealt: 0 };
   }
   const dealt = consumeBarrier(target, res.damage, state.log);
-  dealDamage(target, dealt, state.log);
+  const dealLogs = dealDamage(target, dealt);
   if (opts.actorUnion) gainUnion(actor, opts.actorUnion);
   gainUnion(target, 5);
   // 障壁で全吸収（dealt=0）した場合はダメージログを省く（「障壁で防いだ」は consumeBarrier で出力済み）。
@@ -357,6 +364,8 @@ function strikeOnce(
         : `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
     });
   }
+  // 撃破・起床ログはダメージ本文の後に出す（「ダメージ→倒れた」の順序を保つ）。
+  for (const text of dealLogs) state.log.push({ text });
   return { hit: true, dealt };
 }
 
@@ -1037,8 +1046,9 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     const poison = c.ailments.find((a) => a.type === 'poison');
     if (poison) {
       const dmg = poison.magnitude ?? Math.max(1, Math.floor(c.maxHp * BALANCE.POISON_HP_RATIO));
-      dealDamage(c, dmg, next.log);
+      const dealLogs = dealDamage(c, dmg);
       next.log.push({ text: `${c.name} は毒で ${dmg} のダメージ` });
+      for (const text of dealLogs) next.log.push({ text });
     }
   }
   // リジェネ（継続回復・[issue #41]）。毒の後、残ターン減算の前にHPを回復する。
