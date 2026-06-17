@@ -1,9 +1,9 @@
-import { spTotalForLevel } from '@/data/balance';
+import { REBIRTH, spTotalForLevel } from '@/data/balance';
 import {
   acquireTitle,
   canAcquireTitle,
   canReincarnate,
-  lookupRebirthBonus,
+  rebirthStatBonusForRace,
   reincarnate,
   reincarnateInSave,
   transferClass,
@@ -76,11 +76,123 @@ describe('transferClassInSave', () => {
   });
 });
 
+describe('rebirthStatBonusForRace', () => {
+  test('ガロンは STR が全ステ中で最大（攻撃型）', () => {
+    const bonus = rebirthStatBonusForRace('race_garon');
+    const values = Object.values(bonus).filter((v): v is number => v !== undefined);
+    const str = bonus.str ?? 0;
+    expect(str).toBeGreaterThan(0);
+    expect(str).toBe(Math.max(...values));
+  });
+
+  test('ドームは VIT が STR より大きく（防御型）、HP も大きい', () => {
+    const bonus = rebirthStatBonusForRace('race_golan');
+    const vit = bonus.vit ?? 0;
+    const str = bonus.str ?? 0;
+    expect(vit).toBeGreaterThan(str);
+    // HP も十分に大きいこと
+    const hp = bonus.hp ?? 0;
+    expect(hp).toBeGreaterThan(0);
+  });
+
+  test('ヒトはほぼ均等配分（最大-最小の差が小さい）', () => {
+    const bonus = rebirthStatBonusForRace('race_human');
+    const values = Object.values(bonus).filter((v): v is number => v !== undefined);
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    // ヒト（バランス型）は最大-最小が他種族より小さい
+    expect(max - min).toBeLessThan(20);
+  });
+
+  test('8ステ合計はおおむね STAT_TOTAL（235〜245）', () => {
+    for (const raceId of ['race_human', 'race_garon', 'race_golan']) {
+      const bonus = rebirthStatBonusForRace(raceId);
+      const total = Object.values(bonus).reduce((s, v) => s + (v ?? 0), 0);
+      expect(total).toBeGreaterThanOrEqual(235);
+      expect(total).toBeLessThanOrEqual(245);
+    }
+  });
+});
+
+describe('canReincarnate', () => {
+  test('Lv99 → false', () => {
+    const c = warrior({ level: 99 });
+    expect(canReincarnate(c)).toBe(false);
+  });
+
+  test('Lv100 → true', () => {
+    const c = warrior({ level: 100 });
+    expect(canReincarnate(c)).toBe(true);
+  });
+});
+
+describe('reincarnate', () => {
+  test('Lv100未満では転生できない', () => {
+    const c = warrior({ level: 99 });
+    expect(canReincarnate(c)).toBe(false);
+    expect(reincarnate(c, { raceId: 'race_pix', classId: 'class_mage', name: 'B' })).toBe(c);
+  });
+
+  test('Lv100 ガロンで転生: level=1, exp=0, id維持, rebirthBonus正常', () => {
+    const c = warrior({ level: 100 });
+    const r = reincarnate(c, { raceId: 'race_garon', classId: 'class_warrior', name: 'G' });
+    expect(r.id).toBe(c.id);
+    expect(r.level).toBe(1);
+    expect(r.exp).toBe(0);
+    expect(r.rebirthBonus?.count).toBe(1);
+    expect(r.rebirthBonus?.bonusSp).toBe(REBIRTH.BONUS_SP); // = 10
+  });
+
+  test('Lv100 ガロンで転生: STR が全ステ中で最大', () => {
+    const c = warrior({ level: 100 });
+    const r = reincarnate(c, { raceId: 'race_garon', classId: 'class_warrior', name: 'G' });
+    const stats = r.rebirthBonus?.stats ?? {};
+    const values = Object.values(stats).filter((v): v is number => v !== undefined);
+    const str = stats.str ?? 0;
+    expect(str).toBe(Math.max(...values));
+  });
+
+  test('Lv100 ガロンで転生: 8ステ合計が 235〜245', () => {
+    const c = warrior({ level: 100 });
+    const r = reincarnate(c, { raceId: 'race_garon', classId: 'class_warrior', name: 'G' });
+    const stats = r.rebirthBonus?.stats ?? {};
+    const total = Object.values(stats).reduce((s, v) => s + (v ?? 0), 0);
+    expect(total).toBeGreaterThanOrEqual(235);
+    expect(total).toBeLessThanOrEqual(245);
+  });
+
+  test('Lv100 ガロンで転生: skillPoints.total === spTotalForLevel(1) + BONUS_SP (=10)', () => {
+    const c = warrior({ level: 100 });
+    const r = reincarnate(c, { raceId: 'race_garon', classId: 'class_warrior', name: 'G' });
+    expect(r.skillPoints.total).toBe(spTotalForLevel(1) + REBIRTH.BONUS_SP);
+  });
+
+  test('累積: 2回転生すると count=2, bonusSp=20, ステが両方ぶん増えている', () => {
+    // 1回目: ガロン
+    const c = warrior({ level: 100 });
+    const r1 = reincarnate(c, { raceId: 'race_garon', classId: 'class_warrior', name: 'G' });
+    expect(r1.rebirthBonus?.count).toBe(1);
+    expect(r1.rebirthBonus?.bonusSp).toBe(10);
+    const statsAfter1 = r1.rebirthBonus?.stats ?? {};
+
+    // 2回目: ドーム（Lv100 まで上げた前提）
+    const r1at100 = { ...r1, level: 100 };
+    const r2 = reincarnate(r1at100, { raceId: 'race_golan', classId: 'class_guardian', name: 'D' });
+    expect(r2.rebirthBonus?.count).toBe(2);
+    expect(r2.rebirthBonus?.bonusSp).toBe(20);
+
+    // 累積: 1回目ガロン由来の str と 2回目ドーム由来の vit が両方 1回ぶんより増えている
+    const statsAfter2 = r2.rebirthBonus?.stats ?? {};
+    expect(statsAfter2.str ?? 0).toBeGreaterThan(statsAfter1.str ?? 0);
+    expect(statsAfter2.vit ?? 0).toBeGreaterThan(statsAfter1.vit ?? 0);
+  });
+});
+
 describe('reincarnateInSave', () => {
   test('装備は失わず倉庫へ戻してから作り直す', () => {
     let save: SaveData = createInitialSaveData('g');
     const c = createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: 'A' });
-    save = addCharacterToGuild(save, { ...c, level: 50 });
+    save = addCharacterToGuild(save, { ...c, level: 100 });
     save = addEquipment(save, 'equip_iron_armor');
     save = equipItem(save, c.id, save.guild.equipment[0].id);
 
@@ -91,41 +203,10 @@ describe('reincarnateInSave', () => {
     expect(m.equipment.armor).toBeNull();
     // プールへ返却
     expect(save.guild.equipment.some((e) => e.masterId === 'equip_iron_armor')).toBe(true);
-    expect(m.rebirthBonus).toEqual({ allStats: 6, bonusSp: 6 });
-  });
-});
-
-describe('reincarnate', () => {
-  test('レベル下限未満では転生できない', () => {
-    const c = warrior({ level: 20 });
-    expect(canReincarnate(c)).toBe(false);
-    expect(reincarnate(c, { raceId: 'race_pix', classId: 'class_mage', name: 'B' })).toBe(c);
-  });
-
-  test('Lv50 転生で開始Lv25・ボーナス付与・id維持', () => {
-    const c = warrior({ level: 50 });
-    expect(canReincarnate(c)).toBe(true);
-    const r = reincarnate(c, { raceId: 'race_pix', classId: 'class_mage', name: 'B' });
-    expect(r.id).toBe(c.id);
-    expect(r.raceId).toBe('race_pix');
-    expect(r.classId).toBe('class_mage');
-    expect(r.level).toBe(25); // floor(50/2)
-    expect(r.rebirthBonus).toEqual({ allStats: 6, bonusSp: 6 });
-    // 開始Lv分の通常SP + ボーナスSP
-    expect(r.skillPoints.total).toBe(spTotalForLevel(25) + 6);
-  });
-
-  test('開始レベルは上限30', () => {
-    const c = warrior({ level: 100 });
-    const r = reincarnate(c, { raceId: 'race_human', classId: 'class_warrior', name: 'C' });
-    expect(r.level).toBe(30);
-    expect(r.rebirthBonus).toEqual({ allStats: 20, bonusSp: 10 });
-  });
-
-  test('lookupRebirthBonus の境界', () => {
-    expect(lookupRebirthBonus(29)).toBeNull();
-    expect(lookupRebirthBonus(30)).toEqual({ allStats: 2, bonusSp: 4 });
-    expect(lookupRebirthBonus(70)).toEqual({ allStats: 10, bonusSp: 8 });
+    // 新形式の rebirthBonus
+    expect(m.rebirthBonus?.count).toBe(1);
+    expect(m.rebirthBonus?.bonusSp).toBe(REBIRTH.BONUS_SP);
+    expect(m.rebirthBonus?.stats).toBeDefined();
   });
 });
 

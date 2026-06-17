@@ -14,6 +14,7 @@ import {
   acquireTitle,
   canAcquireTitle,
   canReincarnate,
+  rebirthStatBonusForRace,
   reincarnateInSave,
   transferClassInSave,
 } from '@/domain/charProgress';
@@ -295,9 +296,31 @@ export const Page = ({ id }: { id: string }) => {
         ) : (
           <div className={styles.rbForm}>
             <p className={styles.warn}>
-              ※ 作り直して強い新人になります（開始Lv {Math.min(30, Math.floor(char.level / 2))}
-              ・ボーナス付き）。
+              ※ 作り直して強い新人になります（開始Lv 1（やり直し）・種族に応じた永続ボーナス付き）。
             </p>
+            {char.rebirthBonus && (
+              <p className={styles.warn}>
+                現在の累積ボーナス（転生{char.rebirthBonus.count}回）:{' '}
+                {Object.entries(char.rebirthBonus.stats)
+                  .filter(([, v]) => v && v > 0)
+                  .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
+                  .map(([k, v]) => `${k.toUpperCase()}+${v}`)
+                  .join(' / ')}
+              </p>
+            )}
+            {(() => {
+              const preview = rebirthStatBonusForRace(rbRace);
+              const previewStr = Object.entries(preview)
+                .filter(([, v]) => v && v > 0)
+                .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
+                .map(([k, v]) => `${k.toUpperCase()}+${v}`)
+                .join(', ');
+              return (
+                <p className={styles.warn}>
+                  {RACES[rbRace]?.name}で転生 → 今回付与: {previewStr}
+                </p>
+              );
+            })()}
             <input
               className={styles.input}
               type="text"

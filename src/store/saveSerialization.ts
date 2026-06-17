@@ -20,6 +20,8 @@ export type LoadResult = { ok: true; data: SaveData } | { ok: false; reason: str
 const MIGRATIONS: Record<number, (old: Record<string, unknown>) => Record<string, unknown>> = {
   // v1 → v2: 装備のインスタンス化（Phase 4-5b）＋採集/食材枠（4-5a）の正規化。
   1: (old) => migrateV1toV2(old),
+  // v2 → v3: 転生ボーナスを per-stat 化（issue #55）。
+  2: (old) => migrateV2toV3(old),
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
@@ -59,6 +61,29 @@ function migrateV1toV2(old: Record<string, unknown>): Record<string, unknown> {
 
   // 料理レシピ解放リスト（4-5a で追加）。欠落していれば空で補完（既定解放は新規開始時のみ）。
   if (!Array.isArray(next.unlockedRecipeIds)) next.unlockedRecipeIds = [];
+  return next;
+}
+
+/** v2→v3: 旧 rebirthBonus {allStats, bonusSp} を per-stat 形式 {stats, bonusSp, count} へ変換。 */
+function migrateV2toV3(old: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...old, schemaVersion: 3 };
+  const STAT_KEYS = ['hp', 'tp', 'str', 'vit', 'agi', 'int', 'mnd', 'luc'] as const;
+  const guild = isObj(next.guild) ? { ...next.guild } : {};
+  if (Array.isArray(guild.members)) {
+    guild.members = guild.members.map((m) => {
+      if (!isObj(m)) return m;
+      const rb = m.rebirthBonus;
+      if (!isObj(rb)) return m; // 転生未経験はそのまま（rebirthBonus 無し）
+      // 既に新形式なら触らない
+      if ('stats' in rb) return m;
+      const all = typeof rb.allStats === 'number' ? rb.allStats : 0;
+      const stats: Record<string, number> = {};
+      for (const k of STAT_KEYS) stats[k] = all;
+      const bonusSp = typeof rb.bonusSp === 'number' ? rb.bonusSp : 0;
+      return { ...m, rebirthBonus: { stats, bonusSp, count: 1 } };
+    });
+  }
+  next.guild = guild;
   return next;
 }
 

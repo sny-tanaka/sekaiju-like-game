@@ -27,7 +27,8 @@ import type {
 
 /** SaveData の論理バージョン（migration 用。IndexedDB の DB バージョンとは別物）。 */
 // v2: 装備のインスタンス化（Phase 4-5b）。採集/食材枠（4-5a）も v2 で正規化する。
-export const CURRENT_SCHEMA_VERSION = 2;
+// v3: 転生ボーナスを per-stat 化（issue #55）。
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export const DEFAULT_SETTINGS: GameSettings = {
   autoMap: 'on',

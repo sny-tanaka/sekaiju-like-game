@@ -1,5 +1,6 @@
 import {
   CLASS_CHANGE_LEVEL_PENALTY,
+  REBIRTH,
   spTotalForLevel,
   TITLE_BONUS_SP,
   UNLOCK,
@@ -14,8 +15,8 @@ import type {
   ClassId,
   EquipSlotKey,
   RaceId,
-  RebirthBonus,
   SaveData,
+  StatKey,
   TitleId,
 } from '@/domain/types';
 
@@ -109,57 +110,57 @@ export function transferClassInSave(save: SaveData, charId: string, newClassId: 
 
 // ---- 転生 ----------------------------------------------------------------
 
-interface RebirthRow {
-  min: number;
-  max: number;
-  allStats: number;
-  bonusSp: number;
-}
-// [01 §7.2] 転生ボーナステーブル
-const REBIRTH_TABLE: RebirthRow[] = [
-  { min: 30, max: 34, allStats: 2, bonusSp: 4 },
-  { min: 35, max: 39, allStats: 3, bonusSp: 4 },
-  { min: 40, max: 44, allStats: 4, bonusSp: 5 },
-  { min: 45, max: 49, allStats: 5, bonusSp: 5 },
-  { min: 50, max: 54, allStats: 6, bonusSp: 6 },
-  { min: 55, max: 59, allStats: 7, bonusSp: 6 },
-  { min: 60, max: 64, allStats: 8, bonusSp: 7 },
-  { min: 65, max: 69, allStats: 9, bonusSp: 7 },
-  { min: 70, max: 99, allStats: 10, bonusSp: 8 },
-  { min: 100, max: 100, allStats: 20, bonusSp: 10 },
-];
-
-/** 転生ボーナス（[01 §7.2]）。最低レベル未満は null。 */
-export function lookupRebirthBonus(level: number): RebirthBonus | null {
-  const row = REBIRTH_TABLE.find((r) => level >= r.min && level <= r.max);
-  return row ? { allStats: row.allStats, bonusSp: row.bonusSp } : null;
+/** 転生1回ぶんの種族別ステ配分（[01 §7]）。種族の成長傾向に比例して STAT_TOTAL を按分する。 */
+export function rebirthStatBonusForRace(raceId: RaceId): Partial<Record<StatKey, number>> {
+  const races = Object.values(RACES);
+  const keys: StatKey[] = ['hp', 'tp', 'str', 'vit', 'agi', 'int', 'mnd', 'luc'];
+  const avg: Record<string, number> = {};
+  for (const k of keys) avg[k] = races.reduce((s, r) => s + r.statGrowth[k], 0) / races.length;
+  const target = RACES[raceId];
+  const w: Record<string, number> = {};
+  let sumW = 0;
+  for (const k of keys) {
+    w[k] = avg[k] > 0 ? target.statGrowth[k] / avg[k] : 0;
+    sumW += w[k];
+  }
+  const out: Partial<Record<StatKey, number>> = {};
+  for (const k of keys) out[k] = Math.round((REBIRTH.STAT_TOTAL * w[k]) / sumW);
+  return out;
 }
 
-/** 転生可能か（レベル下限）。 */
+/** 転生可能か（Lv上限=100到達時のみ）。 */
 export function canReincarnate(char: Character): boolean {
   return char.level >= UNLOCK.REBIRTH_MIN_LEVEL;
 }
 
 /**
- * 転生（[01 §7]）。レベル上限到達/到達前のキャラを作り直し、ボーナス付きの新人にする。
- * 開始レベルは転生時の半分（上限30）。ボーナスは直前転生分のみ（累積しない）。
+ * 転生（[01 §7]）。Lv100到達時のみ可能。Lv1再スタート。永続ボーナスは累積。
+ * ボーナスは転生時に選んだ種族の成長傾向に応じて配分。
  * 同じ id を維持し、種族・職業・名前は再選択する（引き継がない）。
  */
 export function reincarnate(
   char: Character,
   next: { raceId: RaceId; classId: ClassId; name: string }
 ): Character {
-  const bonus = lookupRebirthBonus(char.level);
-  if (!bonus) return char; // 下限未満
-  const startLv = Math.min(30, Math.floor(char.level / 2));
+  if (!canReincarnate(char)) return char;
+  const inc = rebirthStatBonusForRace(next.raceId);
+  const prev = char.rebirthBonus;
+  // 各ステを累積加算
+  const stats: Partial<Record<StatKey, number>> = { ...(prev?.stats ?? {}) };
+  for (const [k, v] of Object.entries(inc)) {
+    stats[k as StatKey] = (stats[k as StatKey] ?? 0) + (v ?? 0);
+  }
+  const bonusSp = (prev?.bonusSp ?? 0) + REBIRTH.BONUS_SP;
+  const count = (prev?.count ?? 0) + 1;
+
   const base = createCharacter({ ...next, id: char.id });
-  // startLv 分の通常 SP ＋ ボーナス SP
-  const total = spTotalForLevel(startLv) + bonus.bonusSp;
+  // Lv1 再スタート。SP は Lv1分(=0) ＋ 累積ボーナスSP。
+  const total = spTotalForLevel(1) + bonusSp; // = bonusSp
   return {
     ...base,
-    level: Math.max(1, startLv),
+    level: 1,
     exp: 0,
-    rebirthBonus: bonus,
+    rebirthBonus: { stats, bonusSp, count },
     skillPoints: { total, spent: base.skillPoints.spent },
   };
 }

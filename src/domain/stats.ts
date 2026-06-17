@@ -7,7 +7,7 @@ import type { Character, StatKey, Stats } from '@/domain/types';
 // ============================================================================
 // ステータス算出（[01 §2.2 / §5]）。
 // 素ステは保存せず常に導出する。式の形:
-//   stat(Lv) = baseStatsAtLv1 + (statGrowth + titleGrowthModifier) * (Lv-1) + rebirthBonus
+//   stat(Lv) = baseStatsAtLv1 + (statGrowth + titleGrowthModifier) * (Lv-1) + rebirthBonus.stats[key]
 // 線形成長（敵も線形スケールなので相対関係を保ちやすい）。
 // ============================================================================
 
@@ -23,14 +23,15 @@ export function computeBaseStats(char: Character): Stats {
   const level = Math.max(1, Math.min(char.level, BALANCE.LEVEL_CAP));
   const levelSteps = level - 1;
   const titleGrowth = char.titleId ? TITLES[char.titleId]?.growthModifier : undefined;
-  const rebirthAll = char.rebirthBonus?.allStats ?? 0;
+  const rebirthStats = char.rebirthBonus?.stats; // ステ別加算
 
   const surplusBonus = Math.floor(surplusSp(char) / BALANCE.SURPLUS_SP_PER_STAT);
 
   const result = {} as Stats;
   for (const key of STAT_KEYS) {
     const growth = race.statGrowth[key] + (titleGrowth?.[key] ?? 0);
-    result[key] = race.baseStatsAtLv1[key] + growth * levelSteps + rebirthAll + surplusBonus;
+    result[key] =
+      race.baseStatsAtLv1[key] + growth * levelSteps + (rebirthStats?.[key] ?? 0) + surplusBonus;
   }
   return result;
 }
