@@ -679,19 +679,16 @@ function applySkillEffect(
     }
     case 'restoreTp': {
       const flat = effect.amount(level);
-      if (target === 'self') {
-        // 自己回復: 使用者自身の TP を回復する（純増しない設計＝消費と相殺）。
-        actor.tp = clamp(actor.tp + flat, 0, actor.maxTp);
-        state.log.push({ text: `${actor.name} は TP を ${flat} 回復した` });
-      } else {
-        // 全体回復: 使用者は対象外。自己犠牲で他の生存味方の TP を回復する
-        // （使用者が最後の生存者でも本人は回復しない）。
-        const recipients = targets.filter((t) => t.id !== actor.id && !t.isDown);
-        for (const t of recipients) t.tp = clamp(t.tp + flat, 0, t.maxTp);
-        if (recipients.length > 0) {
-          state.log.push({ text: `${actor.name} は味方の TP を ${flat} 回復した` });
-        }
+      // 対象全員（使用者を含む）の TP を回復する。
+      // 全体回復(allyAll)は使用者の消費TP(tpCost)を回復量の約2倍に設定してあるため、
+      // 使用者本人は実質 TP が減る（純増しない）。自己回復(self)は回復が消費を上回ってよい。
+      for (const t of targets) {
+        if (t.isDown) continue;
+        t.tp = clamp(t.tp + flat, 0, t.maxTp);
       }
+      state.log.push({
+        text: `${actor.name} は ${target === 'self' ? 'TP' : '味方のTP'} を ${flat} 回復した`,
+      });
       break;
     }
     default:

@@ -1,6 +1,11 @@
 /**
  * TP回復スキル（restoreTp エフェクト）のテスト（issue #57）。
  * resolveTurn / applySkillEffect を通じて挙動を検証する。
+ *
+ * 新仕様:
+ *   - 全体回復(allyAll): 使用者を含む全員を回復。使用者の tpCost は amount の約2倍で設定されているため
+ *     実質マイナス（tpCost - amount > 0 ぶん減る）。
+ *   - 自己回復(self): 回復量 > 消費TP（純増OK）。
  */
 import { buildSimBattleState, resolveTurn } from '@/domain/battle';
 import { createRng } from '@/domain/rng';
@@ -57,8 +62,9 @@ function makeDummyEnemy(id: string): Combatant {
 describe('restoreTp: 全体TP回復スキル（allyAll）', () => {
   const skillId = 'skill_medic_tp_tonic';
 
-  test('使用者のTPは回復されず（むしろ tpCost 分減る）、他の生存味方のTPが回復する', () => {
-    // Lv1 の skill_medic_tp_tonic: tpCost = 10+2*1=12, amount = 5+2*1=7
+  test('使用者を含む全員のTPが回復されるが、使用者は実質マイナス（消費 > 回復）になる', () => {
+    // Lv1 の skill_medic_tp_tonic: tpCost = 16+4*1=20, amount = 8+2*1=10
+    // TP自然回復: Math.ceil(100 * 0.04) = 4
     const actor = makeCombatant('medic', { tp: 60, maxTp: 100 });
     actor.skillLevels = { [skillId]: 1 };
 
@@ -79,23 +85,24 @@ describe('restoreTp: 全体TP回復スキル（allyAll）', () => {
     const afterAlly1 = after.allies.find((a) => a.id === 'ally1')!;
     const afterAlly2 = after.allies.find((a) => a.id === 'ally2')!;
 
-    // 使用者は tpCost(12) 減るがTP回復対象外。ターン終了のTP自然回復: Math.ceil(100*0.04)=4
-    // tp: 60 - 12 + 4 = 52
-    expect(afterActor.tp).toBe(52);
+    // 使用者: 60 - 20(tpCost) + 10(amount) + 4(自然回復) = 54
+    // tpCost(20) - amount(10) = 10 の実質マイナス（消費 > 回復）
+    expect(afterActor.tp).toBe(54);
 
-    // 他の味方は amount(7) 回復 + 自然回復(4)
-    // ally1: 20 + 7 + 4 = 31
-    expect(afterAlly1.tp).toBe(31);
-    // ally2: 10 + 7 + 4 = 21
-    expect(afterAlly2.tp).toBe(21);
+    // 他の味方: amount(10) 回復 + 自然回復(4)
+    // ally1: 20 + 10 + 4 = 34
+    expect(afterAlly1.tp).toBe(34);
+    // ally2: 10 + 10 + 4 = 24
+    expect(afterAlly2.tp).toBe(24);
   });
 
   test('回復量が maxTp でクランプされる', () => {
+    // Lv1: tpCost=20, amount=10
     const actor = makeCombatant('medic', { tp: 60, maxTp: 100 });
     actor.skillLevels = { [skillId]: 1 };
 
     // 既にほぼ満タンの味方
-    const ally1 = makeCombatant('ally1', { tp: 96, maxTp: 100 });
+    const ally1 = makeCombatant('ally1', { tp: 94, maxTp: 100 });
     const enemy = makeDummyEnemy('enemy_0');
 
     const state = buildSimBattleState([actor, ally1], [enemy], 1);
@@ -108,7 +115,7 @@ describe('restoreTp: 全体TP回復スキル（allyAll）', () => {
     const after = resolveTurn(state, [cmd], createRng(1));
 
     const afterAlly1 = after.allies.find((a) => a.id === 'ally1')!;
-    // 96 + 7 + 自然回復(4) = 107 → maxTp=100 でクランプ
+    // 94 + 10(amount) + 自然回復(4) = 108 → maxTp=100 でクランプ
     expect(afterAlly1.tp).toBe(100);
   });
 });
@@ -120,9 +127,10 @@ describe('restoreTp: 全体TP回復スキル（allyAll）', () => {
 describe('restoreTp: 自己回復スキル（self）', () => {
   const skillId = 'skill_monk_breathing';
 
-  test('使用者のTPが net 0（消費と回復が相殺）になる（自然回復は別途加算）', () => {
-    // Lv1 の skill_monk_breathing: tpCost = 4+1=5, amount = 4+1=5
-    // ターン終了時のTP自然回復: Math.ceil(100 * 0.04) = 4
+  test('使用者のTPが純増する（回復 > 消費）', () => {
+    // Lv1 の skill_monk_breathing: tpCost = 3+1=4, amount = 6+2*1=8
+    // TP自然回復: Math.ceil(100 * 0.04) = 4
+    // スキル純増分: amount(8) - tpCost(4) = +4
     const actor = makeCombatant('monk', { tp: 50, maxTp: 100 });
     actor.skillLevels = { [skillId]: 1 };
 
@@ -138,14 +146,15 @@ describe('restoreTp: 自己回復スキル（self）', () => {
     const after = resolveTurn(state, [cmd], createRng(1));
 
     const afterActor = after.allies.find((a) => a.id === 'monk')!;
-    // tp: 50 - cost(5) + amount(5) + 自然回復(4) = 54
-    // net 0 とは「スキル効果自体が cost と amount を相殺する」という意味（自然回復は別途加算）
-    expect(afterActor.tp).toBe(54);
+    // tp: 50 - 4(tpCost) + 8(amount) + 4(自然回復) = 58
+    // スキルによる純増: +4（回復8 - 消費4 = 4）
+    expect(afterActor.tp).toBe(58);
   });
 
-  test('Lv3 でも消費と回復が相殺（net 0）、自然回復は別途加算', () => {
-    // Lv3: tpCost = 4+3=7, amount = 4+3=7
-    // ターン終了時のTP自然回復: Math.ceil(100 * 0.04) = 4
+  test('Lv3 でも純増する（回復 > 消費）', () => {
+    // Lv3: tpCost = 3+3=6, amount = 6+2*3=12
+    // スキル純増分: amount(12) - tpCost(6) = +6
+    // TP自然回復: Math.ceil(100 * 0.04) = 4
     const actor = makeCombatant('monk', { tp: 50, maxTp: 100 });
     actor.skillLevels = { [skillId]: 3 };
 
@@ -161,8 +170,30 @@ describe('restoreTp: 自己回復スキル（self）', () => {
     const after = resolveTurn(state, [cmd], createRng(1));
 
     const afterActor = after.allies.find((a) => a.id === 'monk')!;
-    // tp: 50 - cost(7) + amount(7) + 自然回復(4) = 54（net スキル分は 0）
-    expect(afterActor.tp).toBe(54);
+    // tp: 50 - 6(tpCost) + 12(amount) + 4(自然回復) = 60
+    // スキルによる純増: +6（回復12 - 消費6 = 6）
+    expect(afterActor.tp).toBe(60);
+  });
+
+  test('maxTp でクランプされる', () => {
+    // Lv1: tpCost=4, amount=8
+    const actor = makeCombatant('monk', { tp: 98, maxTp: 100 });
+    actor.skillLevels = { [skillId]: 1 };
+
+    const enemy = makeDummyEnemy('enemy_0');
+
+    const state = buildSimBattleState([actor], [enemy], 1);
+    const cmd: BattleCommand = {
+      kind: 'skill',
+      actorId: actor.id,
+      skillId,
+      targetId: actor.id,
+    };
+    const after = resolveTurn(state, [cmd], createRng(1));
+
+    const afterActor = after.allies.find((a) => a.id === 'monk')!;
+    // 98 - 4 + 8 + 4 = 106 → maxTp=100 でクランプ
+    expect(afterActor.tp).toBe(100);
   });
 });
 
@@ -171,8 +202,9 @@ describe('restoreTp: 自己回復スキル（self）', () => {
 // ============================================================================
 
 describe('restoreTp: resolveTurn 経由での TP 変化順序', () => {
-  test('全体TP回復の使用者はコスト消費のみで回復されない', () => {
-    // skill_summoner_tp_offering: Lv1 tpCost=12, amount=7
+  test('全体TP回復の使用者もTPが回復されるが実質マイナス（消費 > 回復）', () => {
+    // skill_summoner_tp_offering: Lv1 tpCost=16+4=20, amount=8+2=10
+    // TP自然回復: Math.ceil(100 * 0.04) = 4
     const skillId = 'skill_summoner_tp_offering';
     const actor = makeCombatant('summoner', { tp: 30, maxTp: 100 });
     actor.skillLevels = { [skillId]: 1 };
@@ -192,9 +224,37 @@ describe('restoreTp: resolveTurn 経由での TP 変化順序', () => {
     const afterActor = after.allies.find((a) => a.id === 'summoner')!;
     const afterAlly = after.allies.find((a) => a.id === 'ally1')!;
 
-    // 使用者: 30 - 12 + 自然回復(Math.ceil(100*0.04)=4) = 22（TP回復スキルは使用者に適用されない）
-    expect(afterActor.tp).toBe(22);
-    // 味方: 0 + 7 + 自然回復(4) = 11
-    expect(afterAlly.tp).toBe(11);
+    // 使用者: 30 - 20(tpCost) + 10(amount) + 4(自然回復) = 24
+    // 実質マイナス: tpCost(20) - amount(10) = 10 ぶんTP減
+    expect(afterActor.tp).toBe(24);
+    // 味方: 0 + 10(amount) + 4(自然回復) = 14
+    expect(afterAlly.tp).toBe(14);
+  });
+
+  test('TP不足（actor.tp < tpCost）では全体TP回復スキルが発動しない', () => {
+    // skill_medic_tp_tonic Lv1: tpCost=20
+    const skillId = 'skill_medic_tp_tonic';
+    const actor = makeCombatant('medic', { tp: 10, maxTp: 100 }); // tp < tpCost(20)
+    actor.skillLevels = { [skillId]: 1 };
+
+    const ally = makeCombatant('ally1', { tp: 0, maxTp: 100 });
+    const enemy = makeDummyEnemy('enemy_0');
+
+    const state = buildSimBattleState([actor, ally], [enemy], 1);
+    const cmd: BattleCommand = {
+      kind: 'skill',
+      actorId: actor.id,
+      skillId,
+      targetId: '',
+    };
+    const after = resolveTurn(state, [cmd], createRng(1));
+
+    const afterActor = after.allies.find((a) => a.id === 'medic')!;
+    const afterAlly = after.allies.find((a) => a.id === 'ally1')!;
+
+    // スキル不発：actor は TP消費なし＋自然回復(4)のみ
+    expect(afterActor.tp).toBe(10 + 4); // 14
+    // ally も回復されない＋自然回復(4)のみ
+    expect(afterAlly.tp).toBe(0 + 4); // 4
   });
 });
