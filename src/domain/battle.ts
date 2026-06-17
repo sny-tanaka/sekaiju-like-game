@@ -494,7 +494,8 @@ function applySkillEffect(
   element: Element,
   level: number,
   targets: Combatant[],
-  rng: Rng
+  rng: Rng,
+  target: TargetType
 ): void {
   switch (effect.kind) {
     case 'damage': {
@@ -678,15 +679,19 @@ function applySkillEffect(
     }
     case 'restoreTp': {
       const flat = effect.amount(level);
-      // 全体回復（allyAll）は使用者本人を対象外にし「自己犠牲で味方を回復」。
-      // 自己回復（self）は対象が自分のみなので自分を回復する。
-      const others = targets.filter((t) => t.id !== actor.id && !t.isDown);
-      const recipients = others.length > 0 ? others : targets.filter((t) => !t.isDown);
-      for (const t of recipients) t.tp = clamp(t.tp + flat, 0, t.maxTp);
-      const selfOnly = recipients.length === 1 && recipients[0].id === actor.id;
-      state.log.push({
-        text: `${actor.name} は ${selfOnly ? '' : '味方の'}TP を ${flat} 回復した`,
-      });
+      if (target === 'self') {
+        // 自己回復: 使用者自身の TP を回復する（純増しない設計＝消費と相殺）。
+        actor.tp = clamp(actor.tp + flat, 0, actor.maxTp);
+        state.log.push({ text: `${actor.name} は TP を ${flat} 回復した` });
+      } else {
+        // 全体回復: 使用者は対象外。自己犠牲で他の生存味方の TP を回復する
+        // （使用者が最後の生存者でも本人は回復しない）。
+        const recipients = targets.filter((t) => t.id !== actor.id && !t.isDown);
+        for (const t of recipients) t.tp = clamp(t.tp + flat, 0, t.maxTp);
+        if (recipients.length > 0) {
+          state.log.push({ text: `${actor.name} は味方の TP を ${flat} 回復した` });
+        }
+      }
       break;
     }
     default:
@@ -785,7 +790,7 @@ function resolveUnion(
   const level = activator.skillLevels?.[cmd.unionSkillId] ?? 1;
   const targets = resolveTargets(state, activator, def.target, cmd.targetId);
   for (const effect of def.effects) {
-    applySkillEffect(state, activator, effect, def.element, level, targets, rng);
+    applySkillEffect(state, activator, effect, def.element, level, targets, rng, def.target);
   }
 }
 
@@ -989,7 +994,16 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         const targets = resolveTargets(next, actor, selectedAction.target, decoyTargetId ?? '');
         next.log.push({ text: `${actor.name} の${selectedAction.name}！` });
         for (const effect of selectedAction.effects) {
-          applySkillEffect(next, actor, effect, selectedAction.element, 1, targets, rng);
+          applySkillEffect(
+            next,
+            actor,
+            effect,
+            selectedAction.element,
+            1,
+            targets,
+            rng,
+            selectedAction.target
+          );
         }
         // actionState 更新
         if (!actor.actionState) actor.actionState = {};
@@ -1032,7 +1046,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         const targets = skillTargets(next, actor, def, cmd.targetId);
         next.log.push({ text: `${actor.name} の${def.name}！` });
         for (const effect of def.effects) {
-          applySkillEffect(next, actor, effect, def.element, level, targets, rng);
+          applySkillEffect(next, actor, effect, def.element, level, targets, rng, def.target);
         }
       } else if (cmd.kind === 'item') {
         const item = ITEMS[cmd.itemId];
