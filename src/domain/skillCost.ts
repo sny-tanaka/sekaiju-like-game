@@ -48,11 +48,9 @@ function effectValue(e: SkillEffectDef, lv: number, target: TargetType): number 
     }
     case 'restoreTp': {
       // self=純増可（0.5倍）、それ以外=全体付与で本人実質マイナス（2.0倍）。T は掛けない。
-      if (target === 'self') {
-        return 0.5 * e.amount(lv);
-      } else {
-        return 2.0 * e.amount(lv);
-      }
+      // ratio 指定時は最大TPを 100 と仮定した代理値で見積もる（ratio スキルの過小評価を防ぐ）。
+      const base = e.ratio ? e.ratio * 100 : e.amount(lv);
+      return (target === 'self' ? 0.5 : 2.0) * base;
     }
     case 'ailment': {
       const sev = AILMENT_SEVERITY[e.ailment] ?? 1.0;

@@ -101,13 +101,13 @@ function Op() {
             O[0] = ue;
             e: for (var ye = 0, ce = O.length, g = ce >>> 1; ye < g; ) {
               var j = 2 * (ye + 1) - 1,
-                A = O[j],
+                E = O[j],
                 K = j + 1,
                 se = O[K];
-              if (0 > c(A, ue))
-                K < ce && 0 > c(se, A)
+              if (0 > c(E, ue))
+                K < ce && 0 > c(se, E)
                   ? ((O[ye] = se), (O[K] = ue), (ye = K))
-                  : ((O[ye] = A), (O[j] = ue), (ye = j));
+                  : ((O[ye] = E), (O[j] = ue), (ye = j));
               else if (K < ce && 0 > c(se, ue)) ((O[ye] = se), (O[K] = ue), (ye = K));
               else break e;
             }
@@ -142,7 +142,7 @@ function Op() {
           $ = !1,
           G = !1,
           V = !1,
-          E = typeof setTimeout == 'function' ? setTimeout : null,
+          A = typeof setTimeout == 'function' ? setTimeout : null,
           M = typeof clearTimeout == 'function' ? clearTimeout : null,
           Q = typeof setImmediate < 'u' ? setImmediate : null;
         function C(O) {
@@ -223,10 +223,10 @@ function Op() {
             }));
         } else
           W = function () {
-            E(ie, 0);
+            A(ie, 0);
           };
         function H(O, ee) {
-          x = E(function () {
+          x = A(function () {
             O(l.unstable_now());
           }, ee);
         }
@@ -393,34 +393,34 @@ function Dp() {
     },
     G = Object.assign,
     V = {};
-  function E(g, j, A) {
-    ((this.props = g), (this.context = j), (this.refs = V), (this.updater = A || $));
+  function A(g, j, E) {
+    ((this.props = g), (this.context = j), (this.refs = V), (this.updater = E || $));
   }
-  ((E.prototype.isReactComponent = {}),
-    (E.prototype.setState = function (g, j) {
+  ((A.prototype.isReactComponent = {}),
+    (A.prototype.setState = function (g, j) {
       if (typeof g != 'object' && typeof g != 'function' && g != null)
         throw Error(
           'takes an object of state variables to update or a function which returns an object of state variables.'
         );
       this.updater.enqueueSetState(this, g, j, 'setState');
     }),
-    (E.prototype.forceUpdate = function (g) {
+    (A.prototype.forceUpdate = function (g) {
       this.updater.enqueueForceUpdate(this, g, 'forceUpdate');
     }));
   function M() {}
-  M.prototype = E.prototype;
-  function Q(g, j, A) {
-    ((this.props = g), (this.context = j), (this.refs = V), (this.updater = A || $));
+  M.prototype = A.prototype;
+  function Q(g, j, E) {
+    ((this.props = g), (this.context = j), (this.refs = V), (this.updater = E || $));
   }
   var C = (Q.prototype = new M());
-  ((C.constructor = Q), G(C, E.prototype), (C.isPureReactComponent = !0));
+  ((C.constructor = Q), G(C, A.prototype), (C.isPureReactComponent = !0));
   var de = Array.isArray;
   function P() {}
   var x = { H: null, A: null, T: null, S: null },
     N = Object.prototype.hasOwnProperty;
-  function D(g, j, A) {
-    var K = A.ref;
-    return { $$typeof: l, type: g, key: j, ref: K !== void 0 ? K : null, props: A };
+  function D(g, j, E) {
+    var K = E.ref;
+    return { $$typeof: l, type: g, key: j, ref: K !== void 0 ? K : null, props: E };
   }
   function te(g, j) {
     return D(g.type, j, g.props);
@@ -432,8 +432,8 @@ function Dp() {
     var j = { '=': '=0', ':': '=2' };
     return (
       '$' +
-      g.replace(/[=:]/g, function (A) {
-        return j[A];
+      g.replace(/[=:]/g, function (E) {
+        return j[E];
       })
     );
   }
@@ -470,7 +470,7 @@ function Dp() {
     }
     throw g;
   }
-  function O(g, j, A, K, se) {
+  function O(g, j, E, K, se) {
     var me = typeof g;
     (me === 'undefined' || me === 'boolean') && (g = null);
     var ke = !1;
@@ -489,7 +489,7 @@ function Dp() {
               ke = !0;
               break;
             case b:
-              return ((ke = g._init), O(ke(g._payload), j, A, K, se));
+              return ((ke = g._init), O(ke(g._payload), j, E, K, se));
           }
       }
     if (ke)
@@ -497,16 +497,16 @@ function Dp() {
         (se = se(g)),
         (ke = K === '' ? '.' + xe(g, 0) : K),
         de(se)
-          ? ((A = ''),
-            ke != null && (A = ke.replace(he, '$&/') + '/'),
-            O(se, j, A, '', function (xt) {
+          ? ((E = ''),
+            ke != null && (E = ke.replace(he, '$&/') + '/'),
+            O(se, j, E, '', function (xt) {
               return xt;
             }))
           : se != null &&
             (ie(se) &&
               (se = te(
                 se,
-                A +
+                E +
                   (se.key == null || (g && g.key === se.key)
                     ? ''
                     : ('' + se.key).replace(he, '$&/') + '/') +
@@ -519,12 +519,12 @@ function Dp() {
     var Se = K === '' ? '.' : K + ':';
     if (de(g))
       for (var Ae = 0; Ae < g.length; Ae++)
-        ((K = g[Ae]), (me = Se + xe(K, Ae)), (ke += O(K, j, A, me, se)));
+        ((K = g[Ae]), (me = Se + xe(K, Ae)), (ke += O(K, j, E, me, se)));
     else if (((Ae = L(g)), typeof Ae == 'function'))
       for (g = Ae.call(g), Ae = 0; !(K = g.next()).done; )
-        ((K = K.value), (me = Se + xe(K, Ae++)), (ke += O(K, j, A, me, se)));
+        ((K = K.value), (me = Se + xe(K, Ae++)), (ke += O(K, j, E, me, se)));
     else if (me === 'object') {
-      if (typeof g.then == 'function') return O(H(g), j, A, K, se);
+      if (typeof g.then == 'function') return O(H(g), j, E, K, se);
       throw (
         (j = String(g)),
         Error(
@@ -536,13 +536,13 @@ function Dp() {
     }
     return ke;
   }
-  function ee(g, j, A) {
+  function ee(g, j, E) {
     if (g == null) return g;
     var K = [],
       se = 0;
     return (
       O(g, K, '', '', function (me) {
-        return j.call(A, me, se++);
+        return j.call(E, me, se++);
       }),
       K
     );
@@ -552,11 +552,11 @@ function Dp() {
       var j = g._result;
       ((j = j()),
         j.then(
-          function (A) {
-            (g._status === 0 || g._status === -1) && ((g._status = 1), (g._result = A));
+          function (E) {
+            (g._status === 0 || g._status === -1) && ((g._status = 1), (g._result = E));
           },
-          function (A) {
-            (g._status === 0 || g._status === -1) && ((g._status = 2), (g._result = A));
+          function (E) {
+            (g._status === 0 || g._status === -1) && ((g._status = 2), (g._result = E));
           }
         ),
         g._status === -1 && ((g._status = 0), (g._result = j)));
@@ -587,13 +587,13 @@ function Dp() {
           },
     ce = {
       map: ee,
-      forEach: function (g, j, A) {
+      forEach: function (g, j, E) {
         ee(
           g,
           function () {
             j.apply(this, arguments);
           },
-          A
+          E
         );
       },
       count: function (g) {
@@ -621,7 +621,7 @@ function Dp() {
   return (
     (we.Activity = y),
     (we.Children = ce),
-    (we.Component = E),
+    (we.Component = A),
     (we.Fragment = u),
     (we.Profiler = c),
     (we.PureComponent = Q),
@@ -642,7 +642,7 @@ function Dp() {
     (we.cacheSignal = function () {
       return null;
     }),
-    (we.cloneElement = function (g, j, A) {
+    (we.cloneElement = function (g, j, E) {
       if (g == null) throw Error('The argument must be a React element, but you passed ' + g + '.');
       var K = G({}, g.props),
         se = g.key;
@@ -655,7 +655,7 @@ function Dp() {
             (me === 'ref' && j.ref === void 0) ||
             (K[me] = j[me]);
       var me = arguments.length - 2;
-      if (me === 1) K.children = A;
+      if (me === 1) K.children = E;
       else if (1 < me) {
         for (var ke = Array(me), Se = 0; Se < me; Se++) ke[Se] = arguments[Se + 2];
         K.children = ke;
@@ -677,7 +677,7 @@ function Dp() {
         g
       );
     }),
-    (we.createElement = function (g, j, A) {
+    (we.createElement = function (g, j, E) {
       var K,
         se = {},
         me = null;
@@ -685,7 +685,7 @@ function Dp() {
         for (K in (j.key !== void 0 && (me = '' + j.key), j))
           N.call(j, K) && K !== 'key' && K !== '__self' && K !== '__source' && (se[K] = j[K]);
       var ke = arguments.length - 2;
-      if (ke === 1) se.children = A;
+      if (ke === 1) se.children = E;
       else if (1 < ke) {
         for (var Se = Array(ke), Ae = 0; Ae < ke; Ae++) Se[Ae] = arguments[Ae + 2];
         se.children = Se;
@@ -709,17 +709,17 @@ function Dp() {
     }),
     (we.startTransition = function (g) {
       var j = x.T,
-        A = {};
-      x.T = A;
+        E = {};
+      x.T = E;
       try {
         var K = g(),
           se = x.S;
-        (se !== null && se(A, K),
+        (se !== null && se(E, K),
           typeof K == 'object' && K !== null && typeof K.then == 'function' && K.then(P, ye));
       } catch (me) {
         ye(me);
       } finally {
-        (j !== null && A.types !== null && (j.types = A.types), (x.T = j));
+        (j !== null && E.types !== null && (j.types = E.types), (x.T = j));
       }
     }),
     (we.unstable_useCacheRefresh = function () {
@@ -728,8 +728,8 @@ function Dp() {
     (we.use = function (g) {
       return x.H.use(g);
     }),
-    (we.useActionState = function (g, j, A) {
-      return x.H.useActionState(g, j, A);
+    (we.useActionState = function (g, j, E) {
+      return x.H.useActionState(g, j, E);
     }),
     (we.useCallback = function (g, j) {
       return x.H.useCallback(g, j);
@@ -750,8 +750,8 @@ function Dp() {
     (we.useId = function () {
       return x.H.useId();
     }),
-    (we.useImperativeHandle = function (g, j, A) {
-      return x.H.useImperativeHandle(g, j, A);
+    (we.useImperativeHandle = function (g, j, E) {
+      return x.H.useImperativeHandle(g, j, E);
     }),
     (we.useInsertionEffect = function (g, j) {
       return x.H.useInsertionEffect(g, j);
@@ -765,8 +765,8 @@ function Dp() {
     (we.useOptimistic = function (g, j) {
       return x.H.useOptimistic(g, j);
     }),
-    (we.useReducer = function (g, j, A) {
-      return x.H.useReducer(g, j, A);
+    (we.useReducer = function (g, j, E) {
+      return x.H.useReducer(g, j, E);
     }),
     (we.useRef = function (g) {
       return x.H.useRef(g);
@@ -774,8 +774,8 @@ function Dp() {
     (we.useState = function (g) {
       return x.H.useState(g);
     }),
-    (we.useSyncExternalStore = function (g, j, A) {
-      return x.H.useSyncExternalStore(g, j, A);
+    (we.useSyncExternalStore = function (g, j, E) {
+      return x.H.useSyncExternalStore(g, j, E);
     }),
     (we.useTransition = function () {
       return x.H.useTransition();
@@ -1110,7 +1110,7 @@ function Hp() {
     $ = Symbol.for('react.portal'),
     G = Symbol.for('react.fragment'),
     V = Symbol.for('react.strict_mode'),
-    E = Symbol.for('react.profiler'),
+    A = Symbol.for('react.profiler'),
     M = Symbol.for('react.consumer'),
     Q = Symbol.for('react.context'),
     C = Symbol.for('react.forward_ref'),
@@ -1134,7 +1134,7 @@ function Hp() {
     switch (e) {
       case G:
         return 'Fragment';
-      case E:
+      case A:
         return 'Profiler';
       case V:
         return 'StrictMode';
@@ -1184,7 +1184,7 @@ function Hp() {
   function j(e) {
     0 > ce || ((e.current = ye[ce]), (ye[ce] = null), ce--);
   }
-  function A(e, t) {
+  function E(e, t) {
     (ce++, (ye[ce] = e.current), (e.current = t));
   }
   var K = g(null),
@@ -1192,7 +1192,7 @@ function Hp() {
     me = g(null),
     ke = g(null);
   function Se(e, t) {
-    switch ((A(me, t), A(se, e), A(K, null), t.nodeType)) {
+    switch ((E(me, t), E(se, e), E(K, null), t.nodeType)) {
       case 9:
       case 11:
         e = (e = t.documentElement) && (e = e.namespaceURI) ? H_(e) : 0;
@@ -1211,16 +1211,16 @@ function Hp() {
               e = 0;
           }
     }
-    (j(K), A(K, e));
+    (j(K), E(K, e));
   }
   function Ae() {
     (j(K), j(se), j(me));
   }
   function xt(e) {
-    e.memoizedState !== null && A(ke, e);
+    e.memoizedState !== null && E(ke, e);
     var t = K.current,
       i = U_(t, e.type);
-    t !== i && (A(se, e), A(K, i));
+    t !== i && (E(se, e), E(K, i));
   }
   function qt(e) {
     (se.current === e && (j(K), j(se)), ke.current === e && (j(ke), (Wn._currentValue = ue)));
@@ -3000,8 +3000,8 @@ Error generating stack: ` +
         case V:
           ((_ = 8), (s |= 24));
           break;
-        case E:
-          return ((e = Yt(12, i, t, s | 2)), (e.elementType = E), (e.lanes = r), e);
+        case A:
+          return ((e = Yt(12, i, t, s | 2)), (e.elementType = A), (e.lanes = r), e);
         case de:
           return ((e = Yt(13, i, t, s)), (e.elementType = de), (e.lanes = r), e);
         case P:
@@ -3221,7 +3221,7 @@ Error generating stack: ` +
     Ul = null,
     Oi = null;
   function nl(e, t, i) {
-    (A(Gr, t._currentValue), (t._currentValue = i));
+    (E(Gr, t._currentValue), (t._currentValue = i));
   }
   function Ci(e) {
     ((e._currentValue = Gr.current), j(Gr));
@@ -3427,7 +3427,7 @@ Error generating stack: ` +
     return e !== null ? e : Qe.pooledCache;
   }
   function $s(e, t) {
-    t === null ? A($l, $l.current) : A($l, t.pool);
+    t === null ? E($l, $l.current) : E($l, t.pool);
   }
   function Tc() {
     var e = Xr();
@@ -3991,10 +3991,10 @@ Error generating stack: ` +
   var Aa = g(null),
     Qs = g(0);
   function Ic(e, t) {
-    ((e = Vi), A(Qs, e), A(Aa, t), (Vi = e | t.baseLanes));
+    ((e = Vi), E(Qs, e), E(Aa, t), (Vi = e | t.baseLanes));
   }
   function Wr() {
-    (A(Qs, Vi), A(Aa, Aa.current));
+    (E(Qs, Vi), E(Aa, Aa.current));
   }
   function eu() {
     ((Vi = Qs.current), j(Aa), j(Qs));
@@ -4003,18 +4003,18 @@ Error generating stack: ` +
     ni = null;
   function ul(e) {
     var t = e.alternate;
-    (A(rt, rt.current & 1),
-      A(Vt, e),
+    (E(rt, rt.current & 1),
+      E(Vt, e),
       ni === null && (t === null || Aa.current !== null || t.memoizedState !== null) && (ni = e));
   }
   function tu(e) {
-    (A(rt, rt.current), A(Vt, e), ni === null && (ni = e));
+    (E(rt, rt.current), E(Vt, e), ni === null && (ni = e));
   }
   function Oc(e) {
-    e.tag === 22 ? (A(rt, rt.current), A(Vt, e), ni === null && (ni = e)) : ml();
+    e.tag === 22 ? (E(rt, rt.current), E(Vt, e), ni === null && (ni = e)) : ml();
   }
   function ml() {
-    (A(rt, rt.current), A(Vt, Vt.current));
+    (E(rt, rt.current), E(Vt, Vt.current));
   }
   function Kt(e) {
     (j(Vt), ni === e && (ni = null), j(rt));
@@ -5895,7 +5895,7 @@ Error generating stack: ` +
       h = (_ & 2) !== 0;
     if (
       (h ? ((_ = (_ & 1) | 2), (t.flags |= 128)) : (_ &= 1),
-      A(rt, _),
+      E(rt, _),
       Nt(e, t, a, i),
       (a = Oe ? Tn : 0),
       !h && e !== null && (e.flags & 128) !== 0)
@@ -6000,7 +6000,7 @@ Error generating stack: ` +
         if (
           ((s = t.memoizedState),
           s !== null && ((s.rendering = null), (s.tail = null), (s.lastEffect = null)),
-          A(rt, rt.current),
+          E(rt, rt.current),
           a)
         )
           break;
@@ -6538,7 +6538,7 @@ Error generating stack: ` +
                     i !== null;
                   )
                     (vc(i, e), (i = i.sibling));
-                  return (A(rt, (rt.current & 1) | 2), Oe && Ii(t, a.treeForkCount), t.child);
+                  return (E(rt, (rt.current & 1) | 2), Oe && Ii(t, a.treeForkCount), t.child);
                 }
                 e = e.sibling;
               }
@@ -6574,7 +6574,7 @@ Error generating stack: ` +
             (a.renderingStartTime = St()),
             (e.sibling = null),
             (i = rt.current),
-            A(rt, s ? (i & 1) | 2 : i & 1),
+            E(rt, s ? (i & 1) | 2 : i & 1),
             Oe && Ii(t, a.treeForkCount),
             e)
           : (We(t), null);
@@ -11895,8 +11895,8 @@ const L4 = ({
       const L = performance.now(),
         $ = (G) => {
           const V = Math.min(1, (G - L) / f),
-            E = 1 - (1 - V) * (1 - V);
-          (k(E * u), V < 1 && (v.current = requestAnimationFrame($)));
+            A = 1 - (1 - V) * (1 - V);
+          (k(A * u), V < 1 && (v.current = requestAnimationFrame($)));
         };
       return (
         (v.current = requestAnimationFrame($)),
@@ -18511,8 +18511,8 @@ function kh(l, n, u, d) {
     L = q && l.row === 'back' ? Me.BACK_ROW_MELEE_MULT : 1,
     $ = q && n.row === 'back' ? Me.BACK_ROW_MELEE_MULT : 1,
     G = L * $,
-    [V, E] = Me.DMG_VARIANCE,
-    M = V + d.next() * (E - V);
+    [V, A] = Me.DMG_VARIANCE,
+    M = V + d.next() * (A - V);
   let Q = y * u.elementMultiplier * G * M;
   const C = Vd(
       Me.CRIT_BASE +
@@ -19312,8 +19312,10 @@ function Ih(l, n, u) {
     }
     case 'heal':
       return Gt.Kh * l.amount(n) * d;
-    case 'restoreTp':
-      return u === 'self' ? 0.5 * l.amount(n) : 2 * l.amount(n);
+    case 'restoreTp': {
+      const c = l.ratio ? l.ratio * 100 : l.amount(n);
+      return (u === 'self' ? 0.5 : 2) * c;
+    }
     case 'ailment': {
       const c = E4[l.ailment] ?? 1;
       return Gt.Ka * l.chance(n) * l.turns * c * d;
@@ -20160,9 +20162,12 @@ function K0(l, n, u, d, c, f, o, k) {
       break;
     }
     case 'restoreTp': {
-      const v = u.amount(c);
-      for (const p of f) p.isDown || (p.tp = Pt(p.tp + v, 0, p.maxTp));
-      l.log.push({ text: `${n.name} は ${k === 'self' ? 'TP' : '味方のTP'} を ${v} 回復した` });
+      for (const v of f) {
+        if (v.isDown) continue;
+        const p = u.ratio ? Math.round(v.maxTp * u.ratio) : u.amount(c);
+        v.tp = Pt(v.tp + p, 0, v.maxTp);
+      }
+      l.log.push({ text: `${n.name} は ${k === 'self' ? 'TP' : '味方のTP'} を回復した` });
       break;
     }
   }
@@ -20222,7 +20227,7 @@ function e3(l, n, u) {
   for (const y of d.effects) K0(l, c, y, d.element, v, p, u, d.target);
 }
 function t3(l, n, u) {
-  var $, G, V, E, M, Q, C, de, P;
+  var $, G, V, A, M, Q, C, de, P;
   if (l.outcome !== 'ongoing') return l;
   const d = structuredClone({ ...l, log: [] }),
     c = d.log.push.bind(d.log);
@@ -20305,9 +20310,9 @@ function t3(l, n, u) {
             continue;
           if (g.cooldown !== void 0) {
             const j =
-              ((E = (V = W.actionState) == null ? void 0 : V[ce.id]) == null
+              ((A = (V = W.actionState) == null ? void 0 : V[ce.id]) == null
                 ? void 0
-                : E.lastUsedTurn) ?? -1 / 0;
+                : A.lastUsedTurn) ?? -1 / 0;
             if (ie - j < g.cooldown) continue;
           }
         }
@@ -20586,10 +20591,10 @@ function D5(l, n) {
       { exp: $, gold: G } = pm(n, L);
     k += G;
     const V = new Set(f.map((C) => C.charId)),
-      E = new Set(n.allies.filter((C) => C.isDown).map((C) => C.id)),
-      M = [...V].filter((C) => !E.has(C)).length,
+      A = new Set(n.allies.filter((C) => C.isDown).map((C) => C.id)),
+      M = [...V].filter((C) => !A.has(C)).length,
       Q = M > 0 ? Math.floor($ / M) : 0;
-    o = o.map((C) => (V.has(C.id) && !E.has(C.id) ? If(C, Q) : C));
+    o = o.map((C) => (V.has(C.id) && !A.has(C.id) ? If(C, Q) : C));
   }
   const b = n.summons
     .filter((L) => {
@@ -20733,8 +20738,8 @@ function u3(l, n, u, d, c) {
           de < G && ((G = de), ($ = M));
         }
         if (!$) break;
-        const E = q($);
-        if (E === 'contact' || E === 'blocked' || V) break;
+        const A = q($);
+        if (A === 'contact' || A === 'blocked' || V) break;
       }
     else {
       const L = y.patrol;
@@ -20894,10 +20899,10 @@ function g3(l, n) {
   for (let P = 0; P < c; P++)
     for (let x = 0; x < d; x++) L[P][x] > V && ((V = L[P][x]), ($ = x), (G = P));
   ((f[q][y].event = { kind: 'stairsDown' }), (f[G][$].event = { kind: 'stairsUp' }));
-  const E = hf(l),
+  const A = hf(l),
     M = [];
   if (ms(l)) {
-    const P = o3(E);
+    const P = o3(A);
     if (P) {
       const x = _3(f, $, G, d, c) ?? { x: $, y: G };
       M.push({
@@ -20912,7 +20917,7 @@ function g3(l, n) {
       });
     }
   } else {
-    const P = c3(E),
+    const P = c3(A),
       x = 1 + Math.floor(l / 8);
     for (let N = 0; N < x && P.length > 0; N++) {
       let D = n.int(d),
@@ -20961,7 +20966,7 @@ function g3(l, n) {
     width: d,
     height: c,
     cells: f,
-    encounterTable: `band_${E}`,
+    encounterTable: `band_${A}`,
     foeSpawns: M,
     gatheringPoints: Q,
     bgmId: ms(l) ? 'bgm_boss' : 'bgm_dungeon',
@@ -21906,7 +21911,7 @@ const gg = () => {
       [b, y] = B.useState(null),
       [q, L] = B.useState(!1),
       [$, G] = B.useState(!1),
-      [V, E] = B.useState(null),
+      [V, A] = B.useState(null),
       [M, Q] = B.useState({}),
       [C, de] = B.useState(null),
       [P, x] = B.useState(!1),
@@ -21917,7 +21922,7 @@ const gg = () => {
       [O, ee] = B.useState(!0),
       [ue, ye] = B.useState(null),
       [ce, g] = B.useState([]),
-      [j, A] = B.useState(!1);
+      [j, E] = B.useState(!1);
     (B.useEffect(() => {
       if (o || !(n != null && n.diveState)) return;
       const w = n.diveState.depth,
@@ -22008,7 +22013,7 @@ const gg = () => {
       const w = me.filter((ae) => ae.toLevel > ae.fromLevel),
         le = setTimeout(
           () => {
-            (w.length > 0 && g(w), A(!0));
+            (w.length > 0 && g(w), E(!0));
           },
           w.length > 0 ? J5 + 250 : J5
         );
@@ -22112,7 +22117,7 @@ const gg = () => {
       ),
       et = B.useMemo(() => (o == null ? void 0 : o.allies.filter((w) => !w.isDown)) ?? [], [o]);
     (B.useEffect(() => {
-      qt.length > 0 && !qt.some((w) => w.id === V) && E(qt[0].id);
+      qt.length > 0 && !qt.some((w) => w.id === V) && A(qt[0].id);
     }, [qt, V]),
       B.useEffect(() => {
         if ((o == null ? void 0 : o.outcome) !== 'ongoing' || (b && et.some((le) => le.id === b)))
@@ -22383,7 +22388,7 @@ const gg = () => {
                 type: 'button',
                 className: `${Z.enemy} ${le.isDown ? Z.down : ''} ${ae ? Z.targeted : ''} ${xe.has(w.id) ? Z.flash : ''}`,
                 disabled: w.isDown || !!W || ki,
-                onClick: () => E(w.id),
+                onClick: () => A(w.id),
                 children: [
                   m.jsxs('span', {
                     className: Z.enemyName,
@@ -23533,7 +23538,7 @@ const Pl = {
       const G = p.current;
       if (!G) return;
       const V = new Set(n),
-        E = new Set(o),
+        A = new Set(o),
         M = new Map(l.gatheringPoints.map((ie) => [`${ie.cell.x},${ie.cell.y}`, ie.type])),
         Q = window.devicePixelRatio || 1;
       ((G.width = q * Q), (G.height = L * Q));
@@ -23577,7 +23582,7 @@ const Pl = {
               ((C.imageSmoothingEnabled = !1), C.drawImage(ee, ye, ce, ue, ue));
             }
           } else if ((O == null ? void 0 : O.kind) === 'gather') {
-            const ee = E.has(`${W},${ie}`),
+            const ee = A.has(`${W},${ie}`),
               ue = M.get(`${W},${ie}`);
             ((C.globalAlpha = ee ? 0.35 : 1),
               (C.font = `${Math.floor(y * 0.7)}px sans-serif`),
@@ -23627,9 +23632,9 @@ const Pl = {
     const $ = (G) => {
       if (!v) return;
       const V = G.currentTarget.getBoundingClientRect(),
-        E = Math.floor(((G.clientX - V.left) / V.width) * l.width),
+        A = Math.floor(((G.clientX - V.left) / V.width) * l.width),
         M = Math.floor(((G.clientY - V.top) / V.height) * l.height);
-      E >= 0 && M >= 0 && E < l.width && M < l.height && v(E, M);
+      A >= 0 && M >= 0 && A < l.width && M < l.height && v(A, M);
     };
     return m.jsx('canvas', {
       ref: p,
@@ -23726,15 +23731,15 @@ const o6 = {
         const $ = o,
           G = k,
           V = $ / 2,
-          E = G / 2,
+          A = G / 2,
           M = c6(l, n, u, f),
           Q = (P) => {
             const x = Math.pow(_6, P);
             return {
               l: V - ($ / 2) * x,
               r: V + ($ / 2) * x,
-              t: E - (G / 2) * x,
-              b: E + (G / 2) * x,
+              t: A - (G / 2) * x,
+              b: A + (G / 2) * x,
             };
           },
           C = (P, x, N = !1) => {
@@ -23896,7 +23901,7 @@ const o6 = {
   ev = ({ nodes: l, char: n, onLearn: u }) => {
     const [d, c] = B.useState(null),
       f = B.useMemo(() => {
-        var E;
+        var A;
         const v = new Map(l.map((M) => [M.skillId, M])),
           p = new Map(),
           b = (M, Q = 0) => {
@@ -23919,7 +23924,7 @@ const o6 = {
           for (const Q of y[M] ?? []) {
             const C = l[Q];
             let de = 0;
-            if (M > 0 && (E = C.requires) != null && E.length) {
+            if (M > 0 && (A = C.requires) != null && A.length) {
               const x = C.requires.map((N) => q.get(N.skillId)).filter((N) => N !== void 0);
               x.length && (de = Math.min(...x));
             }
@@ -23989,7 +23994,7 @@ const o6 = {
                 var V;
                 const y = Fa(n, v.skillId),
                   q = y >= v.maxLevel,
-                  L = (v.requires ?? []).every((E) => Fa(n, E.skillId) >= E.level),
+                  L = (v.requires ?? []).every((A) => Fa(n, A.skillId) >= A.level),
                   $ = Ef(n, v.skillId),
                   G = [
                     Ze.node,
@@ -24076,8 +24081,8 @@ const o6 = {
                           ' ',
                           k.requires
                             .map((V) => {
-                              var E;
-                              return `${((E = Pa[V.skillId]) == null ? void 0 : E.name) ?? V.skillId} Lv${V.level}`;
+                              var A;
+                              return `${((A = Pa[V.skillId]) == null ? void 0 : A.name) ?? V.skillId} Lv${V.level}`;
                             })
                             .join('・'),
                         ],
@@ -24264,9 +24269,11 @@ function K6(l, n, u) {
     y = k.tp,
     q = !1;
   for (const V of d.effects ?? [])
-    V.kind === 'heal'
-      ? ((b = Math.min(p.hp, b + V.amount(1))), (q = !0))
-      : V.kind === 'restoreTp' && ((y = Math.min(p.tp, y + V.amount(1))), (q = !0));
+    if (V.kind === 'heal') ((b = Math.min(p.hp, b + V.amount(1))), (q = !0));
+    else if (V.kind === 'restoreTp') {
+      const A = V.ratio ? Math.round(p.tp * V.ratio) : V.amount(1);
+      ((y = Math.min(p.tp, y + A)), (q = !0));
+    }
   if (!q) return { save: l, ok: !1, message: 'いま使う効果がない' };
   const L = l.diveState.party.map((V) => (V.charId === u ? { ...V, hp: b, tp: y } : V));
   return {
@@ -24287,7 +24294,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
       [y, q] = B.useState(!1),
       [L, $] = B.useState(null),
       [G, V] = B.useState('class'),
-      [E, M] = B.useState(null),
+      [A, M] = B.useState(null),
       [Q, C] = B.useState(null),
       de = (n == null ? void 0 : n.diveState) ?? null,
       P = B.useMemo(() => {
@@ -24337,13 +24344,13 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
       }, [n, d, c]),
       W = B.useCallback(
         (g) => {
-          var A;
+          var E;
           if (!n) return;
           const j = $6(n, g);
           j.ok &&
             (c('cook'),
             d(() => j.save),
-            M(`${((A = sn[g]) == null ? void 0 : A.name) ?? '料理'} を作った`));
+            M(`${((E = sn[g]) == null ? void 0 : E.name) ?? '料理'} を作った`));
         },
         [n, d, c]
       ),
@@ -24383,8 +24390,8 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
       ee = B.useCallback(
         (g, j) => {
           if (!n) return;
-          const A = K6(n, g, j);
-          A.ok && (d(() => A.save), A.save.diveState || (v(!1), l({ name: 'town' })));
+          const E = K6(n, g, j);
+          E.ok && (d(() => E.save), E.save.diveState || (v(!1), l({ name: 'town' })));
         },
         [n, d, l]
       ),
@@ -24395,15 +24402,15 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
             try {
               for (const j of g) {
                 if (!f.current) continue;
-                let A = !1,
+                let E = !1,
                   K = !1;
                 if (
                   (await d((se) => {
                     if (!se.diveState) return se;
                     const me = U5(se, j, f.current);
-                    return ((A = me.triggered), (K = me.moved), me.save);
+                    return ((E = me.triggered), (K = me.moved), me.save);
                   }),
-                  A)
+                  E)
                 ) {
                   l({ name: 'battle' });
                   return;
@@ -24422,8 +24429,8 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
         (g, j) => {
           if (!de || !P || o.current) return;
           f.current || (f.current = jl((n.masterSeed ^ 2654435769) >>> 0));
-          const A = r3(P, de.pos, { x: g, y: j });
-          A && A.length > 0 && ue(A);
+          const E = r3(P, de.pos, { x: g, y: j });
+          E && E.length > 0 && ue(E);
         },
         [de, P, n, ue]
       );
@@ -24540,7 +24547,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
             onClick: () => b(!0),
             children: '🍳 調理する',
           }),
-        E && m.jsx('p', { className: oe.notice, children: E }),
+        A && m.jsx('p', { className: oe.notice, children: A }),
         k
           ? m.jsx('div', {
               className: oe.itemOverlay,
@@ -24552,9 +24559,9 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                   m.jsx('div', { className: oe.itemTitle, children: 'どうぐ・食料' }),
                   (() => {
                     const g = [...n.guild.storage, ...(n.guild.foodStorage ?? [])].filter((j) => {
-                      var A, K;
+                      var E, K;
                       return (
-                        ((K = (A = Je[j.itemId]) == null ? void 0 : A.useContext) == null
+                        ((K = (E = Je[j.itemId]) == null ? void 0 : E.useContext) == null
                           ? void 0
                           : K.includes('field')) && j.qty > 0
                       );
@@ -24565,7 +24572,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                           children: '使える道具がありません。',
                         })
                       : g.map((j) => {
-                          const A = Je[j.itemId],
+                          const E = Je[j.itemId],
                             K = j.itemId === 'item_return_thread';
                           return m.jsxs(
                             'div',
@@ -24575,12 +24582,12 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                                 m.jsxs('div', {
                                   className: oe.itemName,
                                   children: [
-                                    A.name,
+                                    E.name,
                                     ' ×',
                                     j.qty,
                                     m.jsx('span', {
                                       className: oe.itemDesc,
-                                      children: A.description,
+                                      children: E.description,
                                     }),
                                   ],
                                 }),
@@ -24590,7 +24597,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                                       className: oe.itemUse,
                                       onClick: () =>
                                         C({
-                                          message: `${A.name} を使いますか？`,
+                                          message: `${E.name} を使いますか？`,
                                           okLabel: '使う',
                                           onYes: () => ee(j.itemId),
                                         }),
@@ -24611,7 +24618,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                                             className: oe.itemTarget,
                                             onClick: () =>
                                               C({
-                                                message: `${me.name} に ${A.name} を使いますか？`,
+                                                message: `${me.name} に ${E.name} を使いますか？`,
                                                 okLabel: '使う',
                                                 onYes: () => ee(j.itemId, se.charId),
                                               }),
@@ -24670,7 +24677,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                         })
                       : g.map((j) => {
                           var se;
-                          const A = tv(n, j.id),
+                          const E = tv(n, j.id),
                             K = j.ingredients
                               .map((me) => {
                                 var ke;
@@ -24708,7 +24715,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                                 m.jsx('button', {
                                   type: 'button',
                                   className: oe.itemUse,
-                                  disabled: !A,
+                                  disabled: !E,
                                   onClick: () =>
                                     C({
                                       message: `${j.name} を作りますか？`,
@@ -24838,7 +24845,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                       ],
                     });
                   const j = Fi(g),
-                    A =
+                    E =
                       G === 'class'
                         ? (((K = Re[g.classId]) == null ? void 0 : K.skillTree.skills) ?? [])
                         : G === 'race'
@@ -24892,7 +24899,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                         ),
                       }),
                       m.jsx(ev, {
-                        nodes: A,
+                        nodes: E,
                         char: g,
                         onLearn: (Se) => {
                           (c('create'),
@@ -25026,13 +25033,13 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
             : u((G) => jh(G, o.id).save),
           k(null));
       },
-      $ = (G, V, E, M, Q) =>
+      $ = (G, V, A, M, Q) =>
         m.jsxs('button', {
           type: 'button',
           className: Xe.ingot,
           disabled: Q <= 0,
-          onClick: () => k({ kind: 'forge', instanceId: G, ingot: E, name: V, ingotLabel: M }),
-          children: [M, '+', Pi.INGOT_INC[E], '（', Q, '）'],
+          onClick: () => k({ kind: 'forge', instanceId: G, ingot: A, name: V, ingotLabel: M }),
+          children: [M, '+', Pi.INGOT_INC[A], '（', Q, '）'],
         });
     return m.jsxs('div', {
       className: Xe.layout,
@@ -25082,7 +25089,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
               ? m.jsx('p', { className: Xe.empty, children: '所有している装備がありません。' })
               : q.map((G) => {
                   const V = Pe[G.masterId],
-                    E = G.forgeLevel >= Pi.MAX_LEVEL;
+                    A = G.forgeLevel >= Pi.MAX_LEVEL;
                   return m.jsxs(
                     'div',
                     {
@@ -25101,7 +25108,7 @@ const X6 = (l) => new Promise((n) => setTimeout(n, l)),
                         c === 'forge'
                           ? m.jsx('div', {
                               className: Xe.actions,
-                              children: E
+                              children: A
                                 ? m.jsx('span', { className: Xe.maxed, children: '最大強化' })
                                 : m.jsxs(m.Fragment, {
                                     children: [
@@ -25547,7 +25554,7 @@ const ib = () => {
       [b, y] = B.useState(c[0]),
       [q, L] = B.useState(f[0]),
       [$, G] = B.useState(!1),
-      [V, E] = B.useState(null),
+      [V, A] = B.useState(null),
       [M, Q] = B.useState('all'),
       [C, de] = B.useState('all'),
       [P, x] = B.useState('created'),
@@ -25555,10 +25562,10 @@ const ib = () => {
       [te, ie] = B.useState(null),
       W = (n == null ? void 0 : n.guild.members) ?? tb,
       he = B.useMemo(() => {
-        let A = W;
-        (M !== 'all' && (A = A.filter((se) => se.raceId === M)),
-          C !== 'all' && (A = A.filter((se) => se.classId === C)));
-        const K = [...A];
+        let E = W;
+        (M !== 'all' && (E = E.filter((se) => se.raceId === M)),
+          C !== 'all' && (E = E.filter((se) => se.classId === C)));
+        const K = [...E];
         return (
           P === 'levelDesc'
             ? K.sort((se, me) => me.level - se.level)
@@ -25568,26 +25575,26 @@ const ib = () => {
       }, [W, M, C, P]),
       xe = B.useCallback(async () => {
         var se, me;
-        const A = v.trim() || '名もなき冒険者',
-          K = Yf({ raceId: b, classId: q, name: A });
+        const E = v.trim() || '名もなき冒険者',
+          K = Yf({ raceId: b, classId: q, name: E });
         (d('create'),
           G(!0),
           await u((ke) => O3(ke, K)),
-          E(
-            `${A}（${(se = $e[b]) == null ? void 0 : se.name} / ${(me = Re[q]) == null ? void 0 : me.name}）を作成しました`
+          A(
+            `${E}（${(se = $e[b]) == null ? void 0 : se.name} / ${(me = Re[q]) == null ? void 0 : me.name}）を作成しました`
           ),
           p(''),
           G(!1));
       }, [v, b, q, u, d]);
     if (!n) return m.jsx(Ni, { to: { name: 'title' } });
     const H = W.length >= H0,
-      O = c.filter((A) => W.some((K) => K.raceId === A)),
-      ee = f.filter((A) => W.some((K) => K.classId === A)),
-      ue = te ? W.find((A) => A.id === te) : null,
-      ye = (A, K) => (A === 'front' ? n.guild.party.front : n.guild.party.back)[K] ?? null,
-      ce = (A) => {
+      O = c.filter((E) => W.some((K) => K.raceId === E)),
+      ee = f.filter((E) => W.some((K) => K.classId === E)),
+      ue = te ? W.find((E) => E.id === te) : null,
+      ye = (E, K) => (E === 'front' ? n.guild.party.front : n.guild.party.back)[K] ?? null,
+      ce = (E) => {
         var K, se;
-        return `${(K = $e[A.raceId]) == null ? void 0 : K.name} / ${(se = Re[A.classId]) == null ? void 0 : se.name} / Lv${A.level}`;
+        return `${(K = $e[E.raceId]) == null ? void 0 : K.name} / ${(se = Re[E.classId]) == null ? void 0 : se.name} / Lv${E.level}`;
       };
     return m.jsxs('div', {
       className: re.layout,
@@ -25644,7 +25651,7 @@ const ib = () => {
                           value: v,
                           maxLength: 16,
                           placeholder: '名もなき冒険者',
-                          onChange: (A) => p(A.target.value),
+                          onChange: (E) => p(E.target.value),
                         }),
                       ],
                     }),
@@ -25654,9 +25661,9 @@ const ib = () => {
                         m.jsx('span', { children: '種族' }),
                         m.jsx('select', {
                           value: b,
-                          onChange: (A) => y(A.target.value),
-                          children: c.map((A) =>
-                            m.jsx('option', { value: A, children: $e[A].name }, A)
+                          onChange: (E) => y(E.target.value),
+                          children: c.map((E) =>
+                            m.jsx('option', { value: E, children: $e[E].name }, E)
                           ),
                         }),
                       ],
@@ -25668,9 +25675,9 @@ const ib = () => {
                         m.jsx('span', { children: '職業' }),
                         m.jsx('select', {
                           value: q,
-                          onChange: (A) => L(A.target.value),
-                          children: f.map((A) =>
-                            m.jsx('option', { value: A, children: Re[A].name }, A)
+                          onChange: (E) => L(E.target.value),
+                          children: f.map((E) =>
+                            m.jsx('option', { value: E, children: Re[E].name }, E)
                           ),
                         }),
                       ],
@@ -25706,27 +25713,27 @@ const ib = () => {
                         m.jsxs('select', {
                           className: re.filter,
                           value: M,
-                          onChange: (A) => Q(A.target.value),
+                          onChange: (E) => Q(E.target.value),
                           children: [
                             m.jsx('option', { value: 'all', children: '種族: すべて' }),
-                            O.map((A) => m.jsx('option', { value: A, children: $e[A].name }, A)),
+                            O.map((E) => m.jsx('option', { value: E, children: $e[E].name }, E)),
                           ],
                         }),
                         m.jsxs('select', {
                           className: re.filter,
                           value: C,
-                          onChange: (A) => de(A.target.value),
+                          onChange: (E) => de(E.target.value),
                           children: [
                             m.jsx('option', { value: 'all', children: '職業: すべて' }),
-                            ee.map((A) => m.jsx('option', { value: A, children: Re[A].name }, A)),
+                            ee.map((E) => m.jsx('option', { value: E, children: Re[E].name }, E)),
                           ],
                         }),
                         m.jsx('select', {
                           className: re.filter,
                           value: P,
-                          onChange: (A) => x(A.target.value),
-                          children: Object.keys(tf).map((A) =>
-                            m.jsx('option', { value: A, children: tf[A] }, A)
+                          onChange: (E) => x(E.target.value),
+                          children: Object.keys(tf).map((E) =>
+                            m.jsx('option', { value: E, children: tf[E] }, E)
                           ),
                         }),
                       ],
@@ -25740,8 +25747,8 @@ const ib = () => {
                           })
                         : m.jsx('ul', {
                             className: re.members,
-                            children: he.map((A) => {
-                              const K = lf(n, A.id);
+                            children: he.map((E) => {
+                              const K = lf(n, E.id);
                               return m.jsx(
                                 'li',
                                 {
@@ -25749,12 +25756,12 @@ const ib = () => {
                                   children: m.jsxs('button', {
                                     type: 'button',
                                     className: re.memberMain,
-                                    onClick: () => l({ name: 'guildChar', id: A.id }),
+                                    onClick: () => l({ name: 'guildChar', id: E.id }),
                                     children: [
                                       m.jsxs('span', {
                                         className: re.memberName,
                                         children: [
-                                          A.name,
+                                          E.name,
                                           m.jsx('span', {
                                             className: `${re.pos} ${re[`pos_${K}`] ?? ''}`,
                                             children: K,
@@ -25763,12 +25770,12 @@ const ib = () => {
                                       }),
                                       m.jsxs('span', {
                                         className: re.memberSub,
-                                        children: [ce(A), ' ›'],
+                                        children: [ce(E), ' ›'],
                                       }),
                                     ],
                                   }),
                                 },
-                                A.id
+                                E.id
                               );
                             }),
                           }),
@@ -25800,7 +25807,7 @@ const ib = () => {
                   className: re.slotGroup,
                   children: [
                     m.jsx('div', { className: re.slotGroupLabel, children: '前衛' }),
-                    Array.from({ length: Fd }).map((A, K) => {
+                    Array.from({ length: Fd }).map((E, K) => {
                       const se = ye('front', K),
                         me = se ? W.find((ke) => ke.id === se) : null;
                       return m.jsx(
@@ -25835,7 +25842,7 @@ const ib = () => {
                       className: re.slotGroupLabel,
                       children: '後衛（近接ダメージ -30%）',
                     }),
-                    Array.from({ length: Wd }).map((A, K) => {
+                    Array.from({ length: Wd }).map((E, K) => {
                       const se = ye('back', K),
                         me = se ? W.find((ke) => ke.id === se) : null;
                       return m.jsx(
@@ -25876,7 +25883,7 @@ const ib = () => {
                   ? m.jsx('p', { className: re.empty, children: '追放できる団員がいません。' })
                   : m.jsx('ul', {
                       className: re.members,
-                      children: W.map((A) =>
+                      children: W.map((E) =>
                         m.jsxs(
                           'li',
                           {
@@ -25885,19 +25892,19 @@ const ib = () => {
                               m.jsxs('div', {
                                 className: re.memberMain,
                                 children: [
-                                  m.jsx('span', { className: re.memberName, children: A.name }),
-                                  m.jsx('span', { className: re.memberSub, children: ce(A) }),
+                                  m.jsx('span', { className: re.memberName, children: E.name }),
+                                  m.jsx('span', { className: re.memberSub, children: ce(E) }),
                                 ],
                               }),
                               m.jsx('button', {
                                 type: 'button',
                                 className: re.banishBtn,
-                                onClick: () => ie(A.id),
+                                onClick: () => ie(E.id),
                                 children: '追放',
                               }),
                             ],
                           },
-                          A.id
+                          E.id
                         )
                       ),
                     }),
@@ -25919,7 +25926,7 @@ const ib = () => {
               onClick: () => D(null),
               children: m.jsxs('div', {
                 className: re.panel,
-                onClick: (A) => A.stopPropagation(),
+                onClick: (E) => E.stopPropagation(),
                 children: [
                   m.jsxs('div', {
                     className: re.panelTitle,
@@ -25929,7 +25936,7 @@ const ib = () => {
                     ? m.jsx('button', {
                         type: 'button',
                         className: re.removeRow,
-                        onClick: () => void u((A) => ef(A, N.row, N.idx, null)).then(() => D(null)),
+                        onClick: () => void u((E) => ef(E, N.row, N.idx, null)).then(() => D(null)),
                         children: 'この枠を空ける（編成から外す）',
                       })
                     : null,
@@ -25945,9 +25952,9 @@ const ib = () => {
                             : null,
                           m.jsx('ul', {
                             className: re.pickerList,
-                            children: W.map((A) => {
-                              const K = lf(n, A.id),
-                                se = ye(N.row, N.idx) === A.id,
+                            children: W.map((E) => {
+                              const K = lf(n, E.id),
+                                se = ye(N.row, N.idx) === E.id,
                                 ke = K === '控え' && rs(n) >= Fl;
                               return m.jsx(
                                 'li',
@@ -25957,25 +25964,25 @@ const ib = () => {
                                     className: `${re.pickerItem} ${se ? re.pickerItemActive : ''}`,
                                     disabled: ke,
                                     onClick: () =>
-                                      void u((Se) => ef(Se, N.row, N.idx, A.id)).then(() =>
+                                      void u((Se) => ef(Se, N.row, N.idx, E.id)).then(() =>
                                         D(null)
                                       ),
                                     children: [
                                       m.jsxs('span', {
                                         className: re.memberName,
                                         children: [
-                                          A.name,
+                                          E.name,
                                           m.jsx('span', {
                                             className: `${re.pos} ${re[`pos_${K}`] ?? ''}`,
                                             children: K,
                                           }),
                                         ],
                                       }),
-                                      m.jsx('span', { className: re.memberSub, children: ce(A) }),
+                                      m.jsx('span', { className: re.memberSub, children: ce(E) }),
                                     ],
                                   }),
                                 },
-                                A.id
+                                E.id
                               );
                             }),
                           }),
@@ -25997,7 +26004,7 @@ const ib = () => {
               onClick: () => ie(null),
               children: m.jsxs('div', {
                 className: re.confirmBox,
-                onClick: (A) => A.stopPropagation(),
+                onClick: (E) => E.stopPropagation(),
                 children: [
                   m.jsxs('div', {
                     className: re.confirmText,
@@ -26027,8 +26034,8 @@ const ib = () => {
                         className: re.confirmOk,
                         onClick: () => {
                           d('cancel');
-                          const A = ue.id;
-                          (u((K) => C3(K, A)), ie(null));
+                          const E = ue.id;
+                          (u((K) => C3(K, E)), ie(null));
                         },
                         children: 'はい',
                       }),
@@ -26247,15 +26254,15 @@ const af = Object.keys($e),
       [L, $] = B.useState(Ud[0]),
       [G, V] = B.useState(!1);
     if (!u) return m.jsx(Ni, { to: { name: 'title' } });
-    const E = u.guild.members.find((g) => g.id === l);
-    if (!E) return m.jsx(Ni, { to: { name: 'guild' } });
-    const M = Fi(E),
-      Q = os(E),
+    const A = u.guild.members.find((g) => g.id === l);
+    if (!A) return m.jsx(Ni, { to: { name: 'guild' } });
+    const M = Fi(A),
+      Q = os(A),
       C = u.towerState.record.deepestReached,
       de = (g) =>
         d((j) => ({
           ...j,
-          guild: { ...j.guild, members: j.guild.members.map((A) => (A.id === l ? g(A) : A)) },
+          guild: { ...j.guild, members: j.guild.members.map((E) => (E.id === l ? g(E) : E)) },
         }));
     return m.jsxs('div', {
       className: ve.layout,
@@ -26263,15 +26270,15 @@ const af = Object.keys($e),
         m.jsxs('header', {
           className: ve.head,
           children: [
-            m.jsx('h1', { className: ve.title, children: E.name }),
+            m.jsx('h1', { className: ve.title, children: A.name }),
             m.jsxs('span', {
               className: ve.sub,
               children: [
-                (x = $e[E.raceId]) == null ? void 0 : x.name,
+                (x = $e[A.raceId]) == null ? void 0 : x.name,
                 ' / ',
-                (N = Re[E.classId]) == null ? void 0 : N.name,
+                (N = Re[A.classId]) == null ? void 0 : N.name,
                 ' / Lv',
-                E.level,
+                A.level,
               ],
             }),
           ],
@@ -26297,8 +26304,8 @@ const af = Object.keys($e),
             }),
           ],
         }),
-        ((D = $e[E.raceId]) != null && D.elementResist) ||
-        ((te = $e[E.raceId]) != null && te.ailmentResist)
+        ((D = $e[A.raceId]) != null && D.elementResist) ||
+        ((te = $e[A.raceId]) != null && te.ailmentResist)
           ? m.jsxs('section', {
               className: ve.card,
               children: [
@@ -26311,7 +26318,7 @@ const af = Object.keys($e),
                       children: [
                         m.jsx('span', { className: ve.resistLabel, children: '属性' }),
                         m.jsx(en, {
-                          elementResist: (ie = $e[E.raceId]) == null ? void 0 : ie.elementResist,
+                          elementResist: (ie = $e[A.raceId]) == null ? void 0 : ie.elementResist,
                           ailmentResist: void 0,
                         }),
                       ],
@@ -26322,7 +26329,7 @@ const af = Object.keys($e),
                         m.jsx('span', { className: ve.resistLabel, children: '状態異常' }),
                         m.jsx(en, {
                           elementResist: void 0,
-                          ailmentResist: (W = $e[E.raceId]) == null ? void 0 : W.ailmentResist,
+                          ailmentResist: (W = $e[A.raceId]) == null ? void 0 : W.ailmentResist,
                         }),
                       ],
                     }),
@@ -26342,11 +26349,11 @@ const af = Object.keys($e),
           children: [
             m.jsx('h2', { className: ve.h2, children: '装備' }),
             Yb.map((g) => {
-              const j = E.equipment[g],
-                A = u.guild.equipment.filter((K) => {
+              const j = A.equipment[g],
+                E = u.guild.equipment.filter((K) => {
                   var se;
                   return (
-                    ((se = Pe[K.masterId]) == null ? void 0 : se.slot) === g && mm(E, K.masterId)
+                    ((se = Pe[K.masterId]) == null ? void 0 : se.slot) === g && mm(A, K.masterId)
                   );
                 });
               return m.jsxs(
@@ -26372,10 +26379,10 @@ const af = Object.keys($e),
                           : null,
                       ],
                     }),
-                    A.length > 0
+                    E.length > 0
                       ? m.jsx('div', {
                           className: ve.equipPick,
-                          children: A.map((K) =>
+                          children: E.map((K) =>
                             m.jsxs(
                               'button',
                               {
@@ -26412,7 +26419,7 @@ const af = Object.keys($e),
                   onClick: () => o('class'),
                   children: [
                     '職業（',
-                    ((he = Re[E.classId]) == null ? void 0 : he.name) ?? '',
+                    ((he = Re[A.classId]) == null ? void 0 : he.name) ?? '',
                     '）',
                   ],
                 }),
@@ -26422,18 +26429,18 @@ const af = Object.keys($e),
                   onClick: () => o('race'),
                   children: [
                     '種族（',
-                    ((xe = $e[E.raceId]) == null ? void 0 : xe.name) ?? '',
+                    ((xe = $e[A.raceId]) == null ? void 0 : xe.name) ?? '',
                     '）',
                   ],
                 }),
-                E.titleId
+                A.titleId
                   ? m.jsxs('button', {
                       type: 'button',
                       className: `${ve.skillTab} ${f === 'title' ? ve.skillTabOn : ''}`,
                       onClick: () => o('title'),
                       children: [
                         '称号（',
-                        ((H = Ji[E.titleId]) == null ? void 0 : H.name) ?? '',
+                        ((H = Ji[A.titleId]) == null ? void 0 : H.name) ?? '',
                         '）',
                       ],
                     })
@@ -26443,13 +26450,13 @@ const af = Object.keys($e),
             m.jsx(ev, {
               nodes:
                 f === 'class'
-                  ? (((O = Re[E.classId]) == null ? void 0 : O.skillTree.skills) ?? [])
+                  ? (((O = Re[A.classId]) == null ? void 0 : O.skillTree.skills) ?? [])
                   : f === 'race'
-                    ? (((ee = $e[E.raceId]) == null ? void 0 : ee.raceSkillTree.skills) ?? [])
-                    : E.titleId
-                      ? (((ue = Ji[E.titleId]) == null ? void 0 : ue.skillTree.skills) ?? [])
+                    ? (((ee = $e[A.raceId]) == null ? void 0 : ee.raceSkillTree.skills) ?? [])
+                    : A.titleId
+                      ? (((ue = Ji[A.titleId]) == null ? void 0 : ue.skillTree.skills) ?? [])
                       : [],
-              char: E,
+              char: A,
               onLearn: (g) => {
                 (c('create'), de((j) => Bf(j, g)));
               },
@@ -26472,7 +26479,7 @@ const af = Object.keys($e),
                 m.jsx('button', {
                   type: 'button',
                   className: ve.actBtn,
-                  disabled: k === E.classId,
+                  disabled: k === A.classId,
                   onClick: () => {
                     (c('decide'), d((g) => Hb(g, l, k)));
                   },
@@ -26490,10 +26497,10 @@ const af = Object.keys($e),
               ],
             }),
             m.jsx('h2', { className: ve.h2, children: '称号' }),
-            E.titleId
+            A.titleId
               ? m.jsxs('p', {
                   className: ve.titleHave,
-                  children: ['習得済み: ', (ye = Ji[E.titleId]) == null ? void 0 : ye.name],
+                  children: ['習得済み: ', (ye = Ji[A.titleId]) == null ? void 0 : ye.name],
                 })
               : C < us.TITLE_DEPTH
                 ? m.jsxs('p', {
@@ -26502,7 +26509,7 @@ const af = Object.keys($e),
                   })
                 : m.jsx('div', {
                     className: ve.titleOpts,
-                    children: (((ce = Re[E.classId]) == null ? void 0 : ce.titleOptions) ?? []).map(
+                    children: (((ce = Re[A.classId]) == null ? void 0 : ce.titleOptions) ?? []).map(
                       (g) => {
                         var j;
                         return m.jsxs(
@@ -26510,8 +26517,8 @@ const af = Object.keys($e),
                           {
                             type: 'button',
                             className: ve.titleBtn,
-                            disabled: !fv(E, g, C),
-                            onClick: () => void de((A) => $b(A, g, C)),
+                            disabled: !fv(A, g, C),
+                            onClick: () => void de((E) => $b(E, g, C)),
                             children: [(j = Ji[g]) == null ? void 0 : j.name, '（SP+5）'],
                           },
                           g
@@ -26520,7 +26527,7 @@ const af = Object.keys($e),
                     ),
                   }),
             m.jsx('h2', { className: ve.h2, children: '転生' }),
-            xm(E)
+            xm(A)
               ? G
                 ? m.jsxs('div', {
                     className: ve.rbForm,
@@ -26530,15 +26537,15 @@ const af = Object.keys($e),
                         children:
                           '※ 作り直して強い新人になります（開始Lv 1（やり直し）・種族に応じた永続ボーナス付き）。',
                       }),
-                      E.rebirthBonus &&
+                      A.rebirthBonus &&
                         m.jsxs('p', {
                           className: ve.warn,
                           children: [
                             '現在の累積ボーナス（転生',
-                            E.rebirthBonus.count,
+                            A.rebirthBonus.count,
                             '回）:',
                             ' ',
-                            Object.entries(E.rebirthBonus.stats)
+                            Object.entries(A.rebirthBonus.stats)
                               .filter(([, g]) => g && g > 0)
                               .sort(([, g], [, j]) => (j ?? 0) - (g ?? 0))
                               .map(([g, j]) => `${g.toUpperCase()}+${j}`)
@@ -26546,7 +26553,7 @@ const af = Object.keys($e),
                           ],
                         }),
                       (() => {
-                        var A;
+                        var E;
                         const g = _v(y),
                           j = Object.entries(g)
                             .filter(([, K]) => K && K > 0)
@@ -26556,7 +26563,7 @@ const af = Object.keys($e),
                         return m.jsxs('p', {
                           className: ve.warn,
                           children: [
-                            (A = $e[y]) == null ? void 0 : A.name,
+                            (E = $e[y]) == null ? void 0 : E.name,
                             'で転生 → 今回付与: ',
                             j,
                           ],
@@ -26566,7 +26573,7 @@ const af = Object.keys($e),
                         className: ve.input,
                         type: 'text',
                         maxLength: 16,
-                        placeholder: E.name,
+                        placeholder: A.name,
                         value: p,
                         onChange: (g) => b(g.target.value),
                       }),
@@ -26600,7 +26607,7 @@ const af = Object.keys($e),
                             onClick: () => {
                               (c('create'),
                                 d((g) =>
-                                  Gb(g, l, { raceId: y, classId: L, name: p.trim() || E.name })
+                                  Gb(g, l, { raceId: y, classId: L, name: p.trim() || A.name })
                                 ),
                                 V(!1));
                             },
@@ -26628,7 +26635,7 @@ const af = Object.keys($e),
                     'Lv',
                     us.REBIRTH_MIN_LEVEL,
                     ' 以上で転生できます（現在 Lv',
-                    E.level,
+                    A.level,
                     '）。',
                   ],
                 }),
@@ -26894,7 +26901,7 @@ const nf = {
       [$, G] = B.useState(null);
     if (!n) return m.jsx(Ni, { to: { name: 'title' } });
     const V = n.guild.gold,
-      E = (H, O = 1) => {
+      A = (H, O = 1) => {
         var ue, ye;
         const ee =
           ((ue = Je[H]) == null ? void 0 : ue.name) ??
@@ -26936,7 +26943,7 @@ const nf = {
             kind: 'item',
             itemId: H.itemId,
             grade: H.grade ?? 1,
-            name: E(H.itemId, H.grade ?? 1),
+            name: A(H.itemId, H.grade ?? 1),
             price: em(H.itemId, H.grade ?? 1),
             category: df(H.itemId),
             qty: H.qty,
@@ -27004,8 +27011,8 @@ const nf = {
             mnd: 'MND',
             luc: 'LUC',
           };
-          for (const [j, A] of Object.entries(ee.statMods))
-            A && ce.push(`${g[j] ?? j}${A >= 0 ? '+' : ''}${A}`);
+          for (const [j, E] of Object.entries(ee.statMods))
+            E && ce.push(`${g[j] ?? j}${E >= 0 ? '+' : ''}${E}`);
         }
         return m.jsx('div', {
           className: _e.confirmOverlay,
@@ -27845,7 +27852,7 @@ const V9 = 2500,
       [b, y] = B.useState(''),
       [q, L] = B.useState(!1),
       [$, G] = B.useState(!1),
-      { banner: V, checkForUpdate: E, isChecking: M, applyUpdate: Q } = X9();
+      { banner: V, checkForUpdate: A, isChecking: M, applyUpdate: Q } = X9();
     B.useEffect(() => {
       (async () => (f(await ng()), k(!1)))();
     }, []);
@@ -27981,13 +27988,13 @@ const V9 = 2500,
         m.jsxs('footer', {
           className: Ge.foot,
           children: [
-            m.jsxs('span', { className: Ge.version, children: ['v', '0.1.60'] }),
+            m.jsxs('span', { className: Ge.version, children: ['v', '0.1.61'] }),
             m.jsx('button', {
               type: 'button',
               className: Ge.updateBtn,
               disabled: M,
               onClick: () => {
-                (d('cursor'), E());
+                (d('cursor'), A());
               },
               children: M ? '確認中…' : '更新を確認',
             }),
@@ -28290,12 +28297,12 @@ function hx(l, n, u, d, c, f) {
     $ = k.r,
     G = c + y,
     V = G + q,
-    E = c + f,
-    M = E + $;
+    A = c + f,
+    M = A + $;
   if (
     (b.gain.linearRampToValueAtTime(p, G),
     b.gain.linearRampToValueAtTime(p * L, V),
-    b.gain.setValueAtTime(p * L, E),
+    b.gain.setValueAtTime(p * L, A),
     b.gain.linearRampToValueAtTime(0, M),
     b.connect(n),
     o === 'noise')
@@ -28414,16 +28421,16 @@ class yx {
           if ($ < p || $ >= b) continue;
           const G = v + $,
             V = q.dur * o,
-            E = this.ctx.createGain();
-          (E.gain.setValueAtTime(y.gain, G),
-            E.connect(this.masterGain),
-            hx(this.ctx, E, y, q, G, V));
+            A = this.ctx.createGain();
+          (A.gain.setValueAtTime(y.gain, G),
+            A.connect(this.masterGain),
+            hx(this.ctx, A, y, q, G, V));
           const Q = (G + V + y.adsr.r + 0.05 - this.ctx.currentTime) * 1e3;
           Q > 0
             ? setTimeout(() => {
-                E.disconnect();
+                A.disconnect();
               }, Q)
-            : E.disconnect();
+            : A.disconnect();
         }
       b >= k ? ((this.scheduledUpTo = v + k), this.loopIndex++) : (this.scheduledUpTo = u);
     }
@@ -28678,7 +28685,7 @@ const tS = ({ children: l }) => {
       $ = B.useRef(!1),
       G = B.useRef(null),
       V = B.useRef(n.volume),
-      E = B.useRef(n.muted),
+      A = B.useRef(n.muted),
       { screen: M } = oi(),
       Q = B.useCallback((D) => {
         if ((D.state === 'suspended' && D.resume(), !$.current))
@@ -28697,7 +28704,7 @@ const tS = ({ children: l }) => {
             const te = new D();
             q.current = te;
             const ie = te.createGain();
-            ((ie.gain.value = E.current ? 0 : V.current),
+            ((ie.gain.value = A.current ? 0 : V.current),
               ie.connect(te.destination),
               (y.current = ie));
             const W = new yx(te, ie);
@@ -28739,7 +28746,7 @@ const tS = ({ children: l }) => {
       B.useEffect(() => {
         var D;
         ((V.current = u),
-          (E.current = c),
+          (A.current = c),
           (D = b.current) == null || D.setGain(u, c),
           Sx({ volume: u, muted: c }));
       }, [u, c]),
@@ -28848,26 +28855,26 @@ const rS = 30,
         if (V) {
           p.current = !0;
           try {
-            const E = new V();
-            o.current = E;
-            const M = E.createGain();
+            const A = new V();
+            o.current = A;
+            const M = A.createGain();
             ((M.gain.value = n.muted ? 0 : n.volume),
-              M.connect(E.destination),
+              M.connect(A.destination),
               (k.current = M),
               Promise.all(
                 iS.map(async (Q) => {
                   try {
                     const C = aS(Q),
                       P = await (await fetch(C)).arrayBuffer(),
-                      x = await E.decodeAudioData(P);
+                      x = await A.decodeAudioData(P);
                     v.current[Q] = x;
                   } catch (C) {
                     console.warn(`[SoundProvider] SE "${Q}" の読み込みに失敗しました:`, C);
                   }
                 })
               ));
-          } catch (E) {
-            console.warn('[SoundProvider] AudioContext の初期化に失敗しました:', E);
+          } catch (A) {
+            console.warn('[SoundProvider] AudioContext の初期化に失敗しました:', A);
           }
         }
       }, []);
@@ -28890,9 +28897,9 @@ const rS = 30,
         (k.current && (k.current.gain.value = c ? 0 : u), sS({ volume: u, muted: c }));
       }, [u, c]));
     const q = B.useCallback((V) => {
-        const E = o.current,
+        const A = o.current,
           M = k.current;
-        if (!E || !M) return;
+        if (!A || !M) return;
         const Q = v.current[V];
         if (!Q) return;
         const C = performance.now(),
@@ -28900,10 +28907,10 @@ const rS = 30,
         if (!(C - de < rS)) {
           b.current[V] = C;
           try {
-            E.state === 'suspended' && E.resume();
-            const P = E.createGain();
+            A.state === 'suspended' && A.resume();
+            const P = A.createGain();
             ((P.gain.value = lS[V] ?? 1), P.connect(M));
-            const x = E.createBufferSource();
+            const x = A.createBufferSource();
             ((x.buffer = Q),
               x.connect(P),
               x.start(),
@@ -28979,9 +28986,9 @@ function oS() {
     hi('enemies', Object.keys(p), l),
     hi('items', Object.keys(b), l),
     hi('equipment', Object.keys(y), l));
-  const q = (E, M) => {
+  const q = (A, M) => {
     for (const [Q, C] of Object.entries(M))
-      Q !== C.id && l.push(`[${E}] キー "${Q}" と id "${C.id}" が不一致`);
+      Q !== C.id && l.push(`[${A}] キー "${Q}" と id "${C.id}" が不一致`);
   };
   (q('races', n),
     q('classes', u),
@@ -28993,25 +29000,25 @@ function oS() {
   const L = new Set(Object.keys(c)),
     $ = new Set(Object.keys(u)),
     G = new Set(Object.keys(d));
-  for (const E of Object.values(n)) {
-    ($.has(E.defaultClassId) ||
-      l.push(`[races] "${E.id}" の defaultClassId "${E.defaultClassId}" が未定義`),
-      R0(`races/${E.id}`, E.raceSkillTree, L, l));
-    for (const M of E.raceSkillTree.skills) {
+  for (const A of Object.values(n)) {
+    ($.has(A.defaultClassId) ||
+      l.push(`[races] "${A.id}" の defaultClassId "${A.defaultClassId}" が未定義`),
+      R0(`races/${A.id}`, A.raceSkillTree, L, l));
+    for (const M of A.raceSkillTree.skills) {
       const Q = f[M.skillId];
       Q &&
-        Q.raceId !== E.id &&
-        l.push(`[races/${E.id}] ユニオンスキル "${M.skillId}" の raceId "${Q.raceId}" が不一致`);
+        Q.raceId !== A.id &&
+        l.push(`[races/${A.id}] ユニオンスキル "${M.skillId}" の raceId "${Q.raceId}" が不一致`);
     }
   }
-  for (const E of Object.values(f)) {
-    const M = (V = n[E.raceId]) == null ? void 0 : V.raceSkillTree;
-    (!M || !M.skills.some((Q) => Q.skillId === E.id)) &&
-      l.push(`[unionSkills] "${E.id}" が種族 "${E.raceId}" のスキルツリーに無い`);
+  for (const A of Object.values(f)) {
+    const M = (V = n[A.raceId]) == null ? void 0 : V.raceSkillTree;
+    (!M || !M.skills.some((Q) => Q.skillId === A.id)) &&
+      l.push(`[unionSkills] "${A.id}" が種族 "${A.raceId}" のスキルツリーに無い`);
   }
   hi('unionSkills', Object.keys(f), l);
-  for (const [E, M] of Object.entries(f))
-    (E !== M.id && l.push(`[unionSkills] キー "${E}" と id "${M.id}" が不一致`),
+  for (const [A, M] of Object.entries(f))
+    (A !== M.id && l.push(`[unionSkills] キー "${A}" と id "${M.id}" が不一致`),
       M.id in c || l.push(`[unionSkills] "${M.id}" が skills に未定義`),
       M.requiredParticipants < 1 &&
         l.push(`[unionSkills] "${M.id}" の requiredParticipants が 1 未満`),
@@ -29022,22 +29029,22 @@ function oS() {
           `[unionSkills] "${M.id}" が BATTLE_SKILLS にも存在（通常スキルとして撃ててしまう）`
         ));
   hi('passiveSkills', Object.keys(G0), l);
-  for (const [E, M] of Object.entries(G0))
-    (E !== M.id && l.push(`[passiveSkills] キー "${E}" と id "${M.id}" が不一致`),
+  for (const [A, M] of Object.entries(G0))
+    (A !== M.id && l.push(`[passiveSkills] キー "${A}" と id "${M.id}" が不一致`),
       L.has(M.id) || l.push(`[passiveSkills] "${M.id}" が skills に未定義`),
       M.id in yt &&
         l.push(`[passiveSkills] "${M.id}" が BATTLE_SKILLS にも存在（戦闘で撃ててしまう）`),
       M.id in f && l.push(`[passiveSkills] "${M.id}" が UNION_SKILLS にも存在`));
   hi('summons', Object.keys(o), l);
-  for (const [E, M] of Object.entries(o))
-    E !== M.id && l.push(`[summons] キー "${E}" と id "${M.id}" が不一致`);
-  for (const E of Object.values(yt))
-    for (const M of E.effects)
+  for (const [A, M] of Object.entries(o))
+    A !== M.id && l.push(`[summons] キー "${A}" と id "${M.id}" が不一致`);
+  for (const A of Object.values(yt))
+    for (const M of A.effects)
       M.kind === 'summon' &&
         !(M.summonKind in o) &&
-        l.push(`[battleSkills] "${E.id}" の召喚 "${M.summonKind}" が未定義`);
-  for (const [E, M] of Object.entries(k)) {
-    (E !== M.type && l.push(`[gatherTypes] キー "${E}" と type "${M.type}" が不一致`),
+        l.push(`[battleSkills] "${A.id}" の召喚 "${M.summonKind}" が未定義`);
+  for (const [A, M] of Object.entries(k)) {
+    (A !== M.type && l.push(`[gatherTypes] キー "${A}" と type "${M.type}" が不一致`),
       L.has(M.requiredSkillId) ||
         l.push(`[gatherTypes] "${M.type}" の requiredSkillId "${M.requiredSkillId}" が未定義`));
     for (const Q of M.drops) {
@@ -29056,8 +29063,8 @@ function oS() {
     }
   }
   hi('recipes', Object.keys(v), l);
-  for (const [E, M] of Object.entries(v)) {
-    E !== M.id && l.push(`[recipes] キー "${E}" と id "${M.id}" が不一致`);
+  for (const [A, M] of Object.entries(v)) {
+    A !== M.id && l.push(`[recipes] キー "${A}" と id "${M.id}" が不一致`);
     for (const Q of M.ingredients)
       Q.itemId in b
         ? b[Q.itemId].category !== 'food' &&
@@ -29068,42 +29075,42 @@ function oS() {
         l.push(`[recipes] "${M.id}" の結果 "${M.result.itemId}" が food カテゴリでない`)
       : l.push(`[recipes] "${M.id}" の結果 "${M.result.itemId}" が未定義`);
   }
-  for (const E of Object.values(u)) {
-    R0(`classes/${E.id}`, E.skillTree, L, l);
-    for (const M of E.titleOptions) {
+  for (const A of Object.values(u)) {
+    R0(`classes/${A.id}`, A.skillTree, L, l);
+    for (const M of A.titleOptions) {
       if (!G.has(M)) {
-        l.push(`[classes] "${E.id}" の称号 "${M}" が未定義`);
+        l.push(`[classes] "${A.id}" の称号 "${M}" が未定義`);
         continue;
       }
-      d[M].parentClassId !== E.id &&
-        l.push(`[classes] 称号 "${M}" の parentClassId が "${E.id}" と不一致`);
+      d[M].parentClassId !== A.id &&
+        l.push(`[classes] 称号 "${M}" の parentClassId が "${A.id}" と不一致`);
     }
   }
-  for (const E of Object.values(d))
-    ($.has(E.parentClassId) ||
-      l.push(`[titles] "${E.id}" の parentClassId "${E.parentClassId}" が未定義`),
-      R0(`titles/${E.id}`, E.skillTree, L, l));
-  for (const E of Object.values(y))
-    (E.slot === 'weapon' &&
-      !E.weaponType &&
-      l.push(`[equipment] "${E.id}" は weapon だが weaponType が未設定`),
-      E.slot === 'armor' &&
-        !E.armorType &&
-        l.push(`[equipment] "${E.id}" は armor だが armorType が未設定`),
-      (E.buyPrice < 0 || E.tier < 0) && l.push(`[equipment] "${E.id}" の buyPrice/tier が負`));
-  for (const E of Object.values(b))
-    (E.buyPrice < 0 && l.push(`[items] "${E.id}" の buyPrice が負`),
-      E.category === 'consumable' &&
-        !E.useContext &&
-        !E.effects &&
-        l.push(`[items] 消費アイテム "${E.id}" に useContext も effects も無い（使用不能）`));
-  for (const E of Object.values(p))
-    for (const M of E.drops ?? [])
-      (M.itemId in b || l.push(`[enemies] "${E.id}" のドロップ "${M.itemId}" が未定義アイテム`),
+  for (const A of Object.values(d))
+    ($.has(A.parentClassId) ||
+      l.push(`[titles] "${A.id}" の parentClassId "${A.parentClassId}" が未定義`),
+      R0(`titles/${A.id}`, A.skillTree, L, l));
+  for (const A of Object.values(y))
+    (A.slot === 'weapon' &&
+      !A.weaponType &&
+      l.push(`[equipment] "${A.id}" は weapon だが weaponType が未設定`),
+      A.slot === 'armor' &&
+        !A.armorType &&
+        l.push(`[equipment] "${A.id}" は armor だが armorType が未設定`),
+      (A.buyPrice < 0 || A.tier < 0) && l.push(`[equipment] "${A.id}" の buyPrice/tier が負`));
+  for (const A of Object.values(b))
+    (A.buyPrice < 0 && l.push(`[items] "${A.id}" の buyPrice が負`),
+      A.category === 'consumable' &&
+        !A.useContext &&
+        !A.effects &&
+        l.push(`[items] 消費アイテム "${A.id}" に useContext も effects も無い（使用不能）`));
+  for (const A of Object.values(p))
+    for (const M of A.drops ?? [])
+      (M.itemId in b || l.push(`[enemies] "${A.id}" のドロップ "${M.itemId}" が未定義アイテム`),
         (M.rate < 0 || M.rate > 1) &&
-          l.push(`[enemies] "${E.id}" のドロップ "${M.itemId}" の rate が 0..1 外`));
-  for (const [E, M] of Object.entries(vv)) {
-    E in b || l.push(`[SELL_UNLOCKS] キー素材 "${E}" が未定義`);
+          l.push(`[enemies] "${A.id}" のドロップ "${M.itemId}" の rate が 0..1 外`));
+  for (const [A, M] of Object.entries(vv)) {
+    A in b || l.push(`[SELL_UNLOCKS] キー素材 "${A}" が未定義`);
     for (const Q of M) Q in y || l.push(`[SELL_UNLOCKS] 解放先装備 "${Q}" が未定義`);
   }
   return { ok: l.length === 0, errors: l };

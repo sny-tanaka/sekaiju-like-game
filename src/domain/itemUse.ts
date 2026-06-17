@@ -52,7 +52,9 @@ export function applyFieldItem(save: SaveData, itemId: string, charId?: string):
       hp = Math.min(stats.hp, hp + eff.amount(1));
       applied = true;
     } else if (eff.kind === 'restoreTp') {
-      tp = Math.min(stats.tp, tp + eff.amount(1));
+      // ratio 指定があれば最大TP（=stats.tp）の割合で回復。なければ固定値。
+      const add = eff.ratio ? Math.round(stats.tp * eff.ratio) : eff.amount(1);
+      tp = Math.min(stats.tp, tp + add);
       applied = true;
     }
   }

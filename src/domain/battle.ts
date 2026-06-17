@@ -679,16 +679,16 @@ function applySkillEffect(
       break;
     }
     case 'restoreTp': {
-      const flat = effect.amount(level);
-      // 対象全員（使用者を含む）の TP を回復する。
+      // 対象全員（使用者を含む）の TP を回復する。ratio 指定時は各自の最大TPの割合で回復。
       // 全体回復(allyAll)は使用者の消費TP(tpCost)を回復量の約2倍に設定してあるため、
       // 使用者本人は実質 TP が減る（純増しない）。自己回復(self)は回復が消費を上回ってよい。
       for (const t of targets) {
         if (t.isDown) continue;
-        t.tp = clamp(t.tp + flat, 0, t.maxTp);
+        const add = effect.ratio ? Math.round(t.maxTp * effect.ratio) : effect.amount(level);
+        t.tp = clamp(t.tp + add, 0, t.maxTp);
       }
       state.log.push({
-        text: `${actor.name} は ${target === 'self' ? 'TP' : '味方のTP'} を ${flat} 回復した`,
+        text: `${actor.name} は ${target === 'self' ? 'TP' : '味方のTP'} を回復した`,
       });
       break;
     }
