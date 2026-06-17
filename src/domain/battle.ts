@@ -494,7 +494,8 @@ function applySkillEffect(
   element: Element,
   level: number,
   targets: Combatant[],
-  rng: Rng
+  rng: Rng,
+  target: TargetType
 ): void {
   switch (effect.kind) {
     case 'damage': {
@@ -676,6 +677,20 @@ function applySkillEffect(
       state.log.push({ text: `${actor.name} は継続回復を付与した` });
       break;
     }
+    case 'restoreTp': {
+      const flat = effect.amount(level);
+      // 対象全員（使用者を含む）の TP を回復する。
+      // 全体回復(allyAll)は使用者の消費TP(tpCost)を回復量の約2倍に設定してあるため、
+      // 使用者本人は実質 TP が減る（純増しない）。自己回復(self)は回復が消費を上回ってよい。
+      for (const t of targets) {
+        if (t.isDown) continue;
+        t.tp = clamp(t.tp + flat, 0, t.maxTp);
+      }
+      state.log.push({
+        text: `${actor.name} は ${target === 'self' ? 'TP' : '味方のTP'} を ${flat} 回復した`,
+      });
+      break;
+    }
     default:
       break;
   }
@@ -772,7 +787,7 @@ function resolveUnion(
   const level = activator.skillLevels?.[cmd.unionSkillId] ?? 1;
   const targets = resolveTargets(state, activator, def.target, cmd.targetId);
   for (const effect of def.effects) {
-    applySkillEffect(state, activator, effect, def.element, level, targets, rng);
+    applySkillEffect(state, activator, effect, def.element, level, targets, rng, def.target);
   }
 }
 
@@ -976,7 +991,16 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         const targets = resolveTargets(next, actor, selectedAction.target, decoyTargetId ?? '');
         next.log.push({ text: `${actor.name} の${selectedAction.name}！` });
         for (const effect of selectedAction.effects) {
-          applySkillEffect(next, actor, effect, selectedAction.element, 1, targets, rng);
+          applySkillEffect(
+            next,
+            actor,
+            effect,
+            selectedAction.element,
+            1,
+            targets,
+            rng,
+            selectedAction.target
+          );
         }
         // actionState 更新
         if (!actor.actionState) actor.actionState = {};
@@ -1019,7 +1043,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         const targets = skillTargets(next, actor, def, cmd.targetId);
         next.log.push({ text: `${actor.name} の${def.name}！` });
         for (const effect of def.effects) {
-          applySkillEffect(next, actor, effect, def.element, level, targets, rng);
+          applySkillEffect(next, actor, effect, def.element, level, targets, rng, def.target);
         }
       } else if (cmd.kind === 'item') {
         const item = ITEMS[cmd.itemId];

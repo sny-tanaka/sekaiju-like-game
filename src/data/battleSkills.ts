@@ -845,10 +845,10 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_mage_t_mana_surge',
     name: 'マナサージ',
     tree: 'title',
-    tpCost: () => 0,
+    tpCost: (lv) => 3 + lv,
     element: 'almighty',
     target: 'self',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 4 * lv }],
+    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 2 * lv }],
   },
   // ---- 狩人 ----
   skill_ranger_piercing_arrow: {
@@ -950,10 +950,10 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_medic_tp_tonic',
     name: 'TPトニック',
     tree: 'master',
-    tpCost: (lv) => 5 + lv,
+    tpCost: (lv) => 16 + 4 * lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 4 * lv }],
+    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 2 * lv }],
   },
   skill_medic_blind_powder: {
     id: 'skill_medic_blind_powder',
@@ -977,10 +977,10 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_medic_t_stimulant',
     name: '気付け薬',
     tree: 'title',
-    tpCost: (lv) => 5 + lv,
+    tpCost: (lv) => 16 + 4 * lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 4 * lv }],
+    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 2 * lv }],
   },
   // ---- 剣舞士 ----
   skill_dancer_blade_waltz: {
@@ -1136,10 +1136,10 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_zen_t_meditation',
     name: '瞑想',
     tree: 'title',
-    tpCost: () => 0,
+    tpCost: (lv) => 3 + lv,
     element: 'almighty',
     target: 'self',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 4 * lv }],
+    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 2 * lv }],
   },
   // ---- 呪術士 ----
   skill_hexer_paralyze_hex: {
@@ -1287,10 +1287,10 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_summoner_tp_offering',
     name: '供物の儀',
     tree: 'master',
-    tpCost: () => 0,
+    tpCost: (lv) => 16 + 4 * lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 4 * lv }],
+    effects: [{ kind: 'restoreTp', amount: (lv) => 8 + 2 * lv }],
   },
   skill_summoner_grave_chill: {
     id: 'skill_summoner_grave_chill',
@@ -1530,10 +1530,10 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_mage_mana_charge',
     name: 'マナチャージ',
     tree: 'master',
-    tpCost: (lv) => 4 + lv,
+    tpCost: (lv) => 3 + lv,
     element: 'almighty',
     target: 'self',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 6 + 3 * lv }],
+    effects: [{ kind: 'restoreTp', amount: (lv) => 6 + 2 * lv }],
   },
   skill_mage_absolute_zero: {
     id: 'skill_mage_absolute_zero',
@@ -1810,10 +1810,10 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_dancer_mana_song',
     name: '律動の歌',
     tree: 'master',
-    tpCost: (lv) => 5 + lv,
+    tpCost: (lv) => 12 + 4 * lv,
     element: 'almighty',
     target: 'allyAll',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 6 + 3 * lv }],
+    effects: [{ kind: 'restoreTp', amount: (lv) => 6 + 2 * lv }],
   },
   // ---- 拳聖 ----
   skill_monk_double_palm: {
@@ -1867,10 +1867,10 @@ export const BATTLE_SKILLS: Record<SkillId, BattleSkillDef> = {
     id: 'skill_monk_breathing',
     name: '吐納',
     tree: 'master',
-    tpCost: (lv) => 4 + lv,
+    tpCost: (lv) => 3 + lv,
     element: 'almighty',
     target: 'self',
-    effects: [{ kind: 'restoreTp', amount: (lv) => 6 + 3 * lv }],
+    effects: [{ kind: 'restoreTp', amount: (lv) => 6 + 2 * lv }],
   },
   skill_monk_seven_star: {
     id: 'skill_monk_seven_star',
