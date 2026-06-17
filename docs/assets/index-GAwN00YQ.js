@@ -19950,17 +19950,21 @@ const rm = (i) => {
     var u;
     return ((u = i.resist) == null ? void 0 : u[n]) ?? 1;
   };
-function Nv(i, n, u) {
-  ((i.hp = mi(i.hp - n, 0, i.maxHp)),
+function Nv(i, n) {
+  const u = [];
+  return (
+    (i.hp = mi(i.hp - n, 0, i.maxHp)),
     n > 0 &&
       i.ailments.some((r) => r.type === 'sleep') &&
       ((i.ailments = i.ailments.filter((r) => r.type !== 'sleep')),
-      u.push({ text: `${i.name} は目を覚ました` })),
+      u.push(`${i.name} は目を覚ました`)),
     i.hp === 0 &&
       !i.isDown &&
       ((i.isDown = !0),
       (i.unionGauge = Math.floor(i.unionGauge / 2)),
-      u.push({ text: `${i.name} は倒れた！` })));
+      u.push(`${i.name} は倒れた！`)),
+    u
+  );
 }
 function z0(i, n) {
   i.isDown || (i.unionGauge = mi(i.unionGauge + n, 0, 100));
@@ -20010,19 +20014,18 @@ function Vd(i, n, u, r, c, v = {}) {
     c
   );
   if (!_.hit) return (i.log.push({ text: `${n.name} の攻撃は外れた` }), { hit: !1, dealt: 0 });
-  const h = Hh(u, _.damage, i.log);
-  return (
-    Nv(u, h, i.log),
-    v.actorUnion && z0(n, v.actorUnion),
+  const h = Hh(u, _.damage, i.log),
+    g = Nv(u, h);
+  (v.actorUnion && z0(n, v.actorUnion),
     z0(u, 5),
     h > 0 &&
       i.log.push({
         text: v.clean
           ? `${u.name} に ${h} ダメージ${_.critical ? '（会心）' : ''}`
           : `${n.name} の攻撃！ ${u.name} に ${h} ダメージ${_.critical ? '（会心）' : ''}`,
-      }),
-    { hit: !0, dealt: h }
-  );
+      }));
+  for (const f of g) i.log.push({ text: f });
+  return { hit: !0, dealt: h };
 }
 function Ev(i, n, u, r, c, v) {
   if (!u.isDown && !n.isDown && u.side !== n.side)
@@ -20473,8 +20476,10 @@ function Kh(i, n, u) {
     if (x.isDown) continue;
     const j = x.ailments.find((z) => z.type === 'poison');
     if (j) {
-      const z = j.magnitude ?? Math.max(1, Math.floor(x.maxHp * qe.POISON_HP_RATIO));
-      (Nv(x, z, r.log), r.log.push({ text: `${x.name} は毒で ${z} のダメージ` }));
+      const z = j.magnitude ?? Math.max(1, Math.floor(x.maxHp * qe.POISON_HP_RATIO)),
+        te = Nv(x, z);
+      r.log.push({ text: `${x.name} は毒で ${z} のダメージ` });
+      for (const ie of te) r.log.push({ text: ie });
     }
   }
   for (const x of [...r.allies, ...r.enemies, ...r.summons])
@@ -27942,7 +27947,7 @@ const z9 = 2500,
         m.jsxs('footer', {
           className: Ge.foot,
           children: [
-            m.jsxs('span', { className: Ge.version, children: ['v', '0.1.52'] }),
+            m.jsxs('span', { className: Ge.version, children: ['v', '0.1.53'] }),
             m.jsx('button', {
               type: 'button',
               className: Ge.updateBtn,
