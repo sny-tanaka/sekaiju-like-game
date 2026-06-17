@@ -40,13 +40,30 @@
 }
 
 .enemyName {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 14px;
   font-weight: 700;
+}
+
+.enemyNameText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enemyMarks {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 // §16: 選択中の敵の耐性コンパクト表示
 .enemyResist {
   margin-top: 4px;
+  min-height: 44px;
   text-align: left;
 }
 
@@ -139,6 +156,19 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
+}
+
+.cardNameText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardMarks {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .uni {
@@ -509,6 +539,12 @@
   justify-content: space-between;
   font-size: 13px;
   font-weight: 700;
+}
+
+.expNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .expLv {
