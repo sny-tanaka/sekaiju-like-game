@@ -442,7 +442,30 @@
 }
 
 .target {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-size: 12px;
+  color: var.$ink-faint;
+}
+
+.targetMark {
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 11px;
+  color: var.$ink-faint;
+  letter-spacing: 0.06em;
+}
+
+.targetName {
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var.$ink;
+}
+
+.targetHint {
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var.$ink-faint;
 }
 

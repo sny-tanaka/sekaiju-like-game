@@ -1073,10 +1073,12 @@ export const Page = () => {
       <div className={styles.party}>
         <div className={styles.rowTag}>前衛</div>
         <div className={styles.cardRow}>{front.map(renderCard)}</div>
-        <div className={styles.rowTag}>後衛（近接ダメージ -30%）</div>
-        <div className={styles.cardRow}>
-          {back.length > 0 ? back.map(renderCard) : <div className={styles.empty}>（なし）</div>}
-        </div>
+        {back.length > 0 && (
+          <>
+            <div className={styles.rowTag}>後衛（近接ダメージ -30%）</div>
+            <div className={styles.cardRow}>{back.map(renderCard)}</div>
+          </>
+        )}
       </div>
 
       {/* コマンド入力 / 実行 / 結果（再生中は再生コントロールのみ） */}
@@ -1173,7 +1175,13 @@ export const Page = () => {
                 {BATTLE_SKILLS[allyTargetMenu!]?.name ?? 'スキル'}: 味方をタップで対象を選択
               </div>
             ) : (
-              <div className={styles.target}>対象: {targetName}（敵をタップで変更）</div>
+              <div className={styles.target}>
+                <span className={styles.targetMark}>❦ 対象</span>
+                <span>
+                  <span className={styles.targetName}>{targetName}</span>
+                  <span className={styles.targetHint}>（敵をタップで変更）</span>
+                </span>
+              </div>
             ))}
 
           {/* ---- 全体行動選択UI（uiMode.kind === 'global'） ---- */}

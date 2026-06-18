@@ -347,7 +347,6 @@ export const Page = () => {
           ))}
         </div>
         <label className={styles.sortRow}>
-          <span className={styles.sortLabel}>並び替え</span>
           <select
             className={styles.sort}
             value={sort}

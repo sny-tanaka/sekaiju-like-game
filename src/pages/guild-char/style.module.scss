@@ -277,6 +277,14 @@
   line-height: 1.5;
 }
 
+.warnCaption {
+  margin: 2px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var.$ink-faint;
+  opacity: 0.7;
+}
+
 .titleHave {
   margin: 0 0 12px;
   font-size: 14px;

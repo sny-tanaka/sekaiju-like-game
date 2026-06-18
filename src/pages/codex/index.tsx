@@ -85,7 +85,7 @@ export const Page = () => {
             </div>
           </dl>
 
-          <h2 className={styles.h2}>ボス撃破履歴</h2>
+          <p className={styles.h2Caption}>ボス撃破履歴</p>
           {rec.bossDefeatLog.length === 0 ? (
             <p className={styles.empty}>まだボスを倒していません。</p>
           ) : (

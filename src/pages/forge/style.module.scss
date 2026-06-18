@@ -61,7 +61,8 @@
 
 .hint {
   margin: 0 0 12px;
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var.$ink-faint;
 }
 
@@ -308,9 +309,15 @@
   color: var.$ink;
 }
 
-// 「強化する/分解する」$verdant 地
+// 「強化する」$verdant 地
 .confirmOk {
   background-color: var.$verdant;
+  color: var.$parchment;
+}
+
+// 「分解する」$vermilion 地（取り消せない破壊アクション）
+.confirmOkDanger {
+  background-color: var.$vermilion;
   color: var.$parchment;
 }
 

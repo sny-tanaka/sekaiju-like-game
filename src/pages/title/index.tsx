@@ -146,6 +146,7 @@ export const Page = () => {
           </div>
         ) : (
           <div className={styles.menu}>
+            <p className={styles.menuQuote}>— 樹は今日も、まだ誰も書いていない頁を孕む。—</p>
             {meta !== null && (
               <SaveCard
                 meta={meta}
@@ -159,6 +160,7 @@ export const Page = () => {
             >
               最初から
             </button>
+            <hr className={styles.menuDivider} />
           </div>
         )}
       </main>

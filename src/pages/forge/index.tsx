@@ -267,7 +267,7 @@ export const Page = () => {
               </button>
               <button
                 type="button"
-                className={styles.confirmOk}
+                className={pending.kind === 'forge' ? styles.confirmOk : styles.confirmOkDanger}
                 onClick={confirmPending}
               >
                 {pending.kind === 'forge'

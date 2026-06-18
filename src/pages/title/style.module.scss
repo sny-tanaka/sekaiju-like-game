@@ -52,12 +52,33 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
 }
 
 .menu {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 16px;
+  flex: 1;
+}
+
+.menuQuote {
+  font-size: 11px;
+  color: var.$ink-faint;
+  letter-spacing: 0.04em;
+  text-align: center;
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 4px;
+}
+
+.menuDivider {
+  height: 4px;
+  background-color: var.$illumination-gold;
+  border: none;
+  margin: 4px 0 0;
 }
 
 .loading {

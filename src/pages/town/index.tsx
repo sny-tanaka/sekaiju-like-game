@@ -64,12 +64,12 @@ export const Page = () => {
             <dt>所持金</dt>
             <dd>{guild.gold} G</dd>
           </div>
-          <div>
-            <dt>最高到達</dt>
-            <dd>
-              {towerState.record.deepestReached > 0 ? `${towerState.record.deepestReached}F` : '-'}
-            </dd>
-          </div>
+          {towerState.record.deepestReached > 0 && (
+            <div>
+              <dt>最高到達</dt>
+              <dd>{towerState.record.deepestReached}F</dd>
+            </div>
+          )}
           <div>
             <dt>団員</dt>
             <dd>{guild.members.length}人</dd>
