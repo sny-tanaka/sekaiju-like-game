@@ -9,7 +9,9 @@ const PORTRAITS = import.meta.glob('/src/assets/characters/race_*_class_*.png', 
 }) as Record<string, string>;
 
 function getPortraitUrl(raceId: RaceId, classId: ClassId): string | null {
-  const key = `/src/assets/characters/race_${raceId}_class_${classId}.png`;
+  // raceId/classId は 'race_human' / 'class_warrior' のように既にプレフィクスを含むため、
+  // そのまま結合する（プレフィクスを重ね付けしない）。
+  const key = `/src/assets/characters/${raceId}_${classId}.png`;
   return PORTRAITS[key] ?? null;
 }
 

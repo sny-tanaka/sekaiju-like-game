@@ -425,7 +425,7 @@ export const Page = () => {
                               <CharacterPortrait
                                 raceId={c.raceId}
                                 classId={c.classId}
-                                size={36}
+                                size={28}
                               />
                               <div className={styles.itemTargetInfo}>
                                 <span>{c.name}</span>
@@ -577,7 +577,7 @@ export const Page = () => {
                           <CharacterPortrait
                             raceId={c.raceId}
                             classId={c.classId}
-                            size={40}
+                            size={32}
                             className={styles.menuMemberPortrait}
                           />
                           <div className={styles.menuMemberInfo}>

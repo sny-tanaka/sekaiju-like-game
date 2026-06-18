@@ -202,7 +202,7 @@ export const Page = () => {
               <CharacterPortrait
                 raceId={raceId}
                 classId={classId}
-                size={80}
+                size={60}
               />
               <span className={styles.previewName}>
                 {RACES[raceId]?.name} / {CLASSES[classId]?.name}
@@ -296,7 +296,7 @@ export const Page = () => {
                         <CharacterPortrait
                           raceId={m.raceId}
                           classId={m.classId}
-                          size={44}
+                          size={36}
                           className={styles.memberPortrait}
                         />
                         <div className={styles.memberMainText}>
@@ -349,7 +349,7 @@ export const Page = () => {
                       <CharacterPortrait
                         raceId={m.raceId}
                         classId={m.classId}
-                        size={48}
+                        size={40}
                         className={styles.slotPortrait}
                       />
                       <div className={styles.slotText}>
@@ -385,7 +385,7 @@ export const Page = () => {
                       <CharacterPortrait
                         raceId={m.raceId}
                         classId={m.classId}
-                        size={48}
+                        size={40}
                         className={styles.slotPortrait}
                       />
                       <div className={styles.slotText}>
@@ -421,7 +421,7 @@ export const Page = () => {
                     <CharacterPortrait
                       raceId={m.raceId}
                       classId={m.classId}
-                      size={44}
+                      size={36}
                       className={styles.memberPortrait}
                     />
                     <div className={styles.memberMainText}>

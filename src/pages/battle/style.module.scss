@@ -150,20 +150,21 @@
   background-color: #f1f8e9;
 }
 
-// キャラ立ち絵レイアウト
+// キャラ立ち絵レイアウト（立ち絵は名前の上に縦並び。名前は省略させない）
 .cardHeader {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
   align-items: center;
+  gap: 2px;
 }
 
 .cardHeaderText {
-  flex: 1;
+  width: 100%;
   min-width: 0;
 }
 
 .cardPortrait {
-  width: 48px;
+  width: 36px;
   height: auto;
 }
 

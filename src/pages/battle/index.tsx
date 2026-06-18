@@ -853,7 +853,7 @@ export const Page = () => {
                 <CharacterPortrait
                   raceId={char.raceId}
                   classId={char.classId}
-                  size={48}
+                  size={36}
                   className={styles.cardPortrait}
                 />
               ) : null;
@@ -1440,7 +1440,7 @@ export const Page = () => {
                           <CharacterPortrait
                             raceId={ch.raceId}
                             classId={ch.classId}
-                            size={36}
+                            size={28}
                           />
                         )}
                         <div className={styles.strategyAllyName}>{a.name}</div>

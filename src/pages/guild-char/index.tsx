@@ -83,7 +83,7 @@ export const Page = ({ id }: { id: string }) => {
         <CharacterPortrait
           raceId={char.raceId}
           classId={char.classId}
-          size={80}
+          size={56}
           className={styles.headPortrait}
         />
         <div className={styles.headText}>
