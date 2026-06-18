@@ -219,10 +219,8 @@ export const Page = () => {
   const [levelQueue, setLevelQueue] = useState<LevelUpResult[]>([]);
   // 経験値バーのアニメーションが完了したか（issue #52: バーが伸び切ってからレベルアップ）。
   const [expDone, setExpDone] = useState(false);
-  // 戦闘ログの bottom-sheet 高さ（px）。ハンドルをドラッグして高さを変えられる。
-  // 既定はハンドルのみ見える 54px。スナップは [54, 240, window.innerHeight * 0.85]。
-  const [logHeight, setLogHeight] = useState(54);
-  const logDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+  // 戦闘ログ。インラインで最新 3 行を常時表示、タップで全履歴オーバーレイ。
+  const [logOpen, setLogOpen] = useState(false);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -1590,55 +1588,17 @@ export const Page = () => {
         </div>
       )}
 
-      {/* 戦闘ログ（下から引っ張り上げる bottom sheet）。
-          墨色ハンドルをドラッグして高さを変えられる。タップで 3 段スナップを巡回。
+      {/* 戦闘ログ（インライン 3 行プレビュー）。タップで全履歴オーバーレイ。
           再生中は revealed 行までを順に表示する。 */}
-      <div
+      <button
+        type="button"
         className={styles.log}
-        style={{ height: `${logHeight}px` }}
+        onClick={() => setLogOpen(true)}
+        aria-label="戦闘ログの全履歴を見る"
       >
-        <div
-          className={styles.logHandle}
-          role="slider"
-          aria-label="戦闘ログの高さ"
-          aria-valuenow={Math.round(logHeight)}
-          aria-valuemin={54}
-          aria-valuemax={Math.round(window.innerHeight * 0.92)}
-          tabIndex={0}
-          onPointerDown={(e) => {
-            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-            logDragRef.current = { startY: e.clientY, startHeight: logHeight };
-          }}
-          onPointerMove={(e) => {
-            const drag = logDragRef.current;
-            if (!drag) return;
-            const dy = drag.startY - e.clientY; // 上方向で正
-            const next = Math.max(54, Math.min(window.innerHeight * 0.92, drag.startHeight + dy));
-            setLogHeight(next);
-          }}
-          onPointerUp={(e) => {
-            const drag = logDragRef.current;
-            if (!drag) return;
-            logDragRef.current = null;
-            const moved = Math.abs(e.clientY - drag.startY);
-            // ドラッグでほぼ動いていなければタップ扱い: スナップ巡回
-            const snaps = [54, 240, Math.round(window.innerHeight * 0.85)];
-            if (moved < 6) {
-              const idx = snaps.findIndex((s) => Math.abs(s - logHeight) <= 8);
-              setLogHeight(snaps[(idx + 1) % snaps.length]);
-            } else {
-              const nearest = snaps.reduce((b, s) =>
-                Math.abs(s - logHeight) < Math.abs(b - logHeight) ? s : b
-              );
-              setLogHeight(nearest);
-            }
-          }}
-        >
-          <span
-            className={styles.logHandleBar}
-            aria-hidden
-          />
-          <span className={styles.logHandleLabel}>戦闘ログ</span>
+        <div className={styles.logHeader}>
+          <span>戦闘ログ</span>
+          <span className={styles.logHeaderHint}>タップで全履歴</span>
         </div>
         <div className={styles.logBody}>
           {(() => {
@@ -1648,17 +1608,63 @@ export const Page = () => {
                 <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
               );
             }
-            return visible.map((l, i) => (
+            // 最新 3 行のみインライン表示
+            return visible.slice(-3).map((l, i, arr) => (
               <div
-                key={i}
-                className={`${styles.logLine} ${anim && i === visible.length - 1 ? styles.logLineNew : ''}`}
+                key={visible.length - arr.length + i}
+                className={`${styles.logLine} ${anim && i === arr.length - 1 ? styles.logLineNew : ''}`}
               >
                 {l.text}
               </div>
             ));
           })()}
         </div>
-      </div>
+      </button>
+
+      {/* 戦闘ログの全履歴オーバーレイ */}
+      {logOpen ? (
+        <div
+          className={styles.logOverlayBackdrop}
+          onClick={() => setLogOpen(false)}
+        >
+          <div
+            className={styles.logOverlay}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.logOverlayHeader}>
+              <span>❦ 戦闘ログ</span>
+              <button
+                type="button"
+                className={styles.logOverlayClose}
+                onClick={() => setLogOpen(false)}
+                aria-label="戦闘ログを閉じる"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.logOverlayBody}>
+              {(() => {
+                const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
+                if (visible.length === 0) {
+                  return (
+                    <div className={styles.logLine}>
+                      てきが あらわれた！（{state.turn} ターン目）
+                    </div>
+                  );
+                }
+                return visible.map((l, i) => (
+                  <div
+                    key={i}
+                    className={styles.logLine}
+                  >
+                    {l.text}
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* レベルアップダイアログ（issue #18）。レベルアップしたキャラを順に表示する。 */}
       {levelQueue.length > 0
