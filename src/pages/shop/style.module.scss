@@ -6,7 +6,7 @@
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 16px env(safe-area-inset-bottom, 12px);
+  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
   color: var.$ink;
   overflow: hidden;
   background-color: var.$parchment;
