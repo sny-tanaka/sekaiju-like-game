@@ -28,6 +28,8 @@ import { rollEncounter } from '@/domain/encounterTable';
 import { itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
 import { computeSkillTpCost } from '@/domain/skillCost';
+import { pickAutoCommand, STRATEGY_LIST, STRATEGY_SHORT_LABEL } from '@/domain/strategy';
+import type { Strategy } from '@/domain/strategy';
 import type {
   BattleCommand,
   BattleState,
@@ -160,6 +162,14 @@ type UnionCmd = {
   targetId: string;
 };
 
+/**
+ * 戦闘UIのフェーズ（issue #61 おまかせ戦闘）。
+ * - global: 全体行動選択（たたかう / さくせん / にげる）
+ * - individual: 個別行動選択（めいれいキャラのみ）
+ * - strategy: 作戦変更
+ */
+type UiMode = { kind: 'global' } | { kind: 'individual' } | { kind: 'strategy' };
+
 /** 逐次再生の状態（issue #18）。base=ターン開始時HP、revealed=表示済みログ行数。 */
 type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: number };
 
@@ -167,11 +177,12 @@ type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: n
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
 export const Page = () => {
   const { navigate } = useNavigation();
-  const { save, applyAndPersist } = useGameState();
+  const { save, applyAndPersist, applySave } = useGameState();
   const play = useSfx();
   const { setBattleVariant } = useBgm();
   const rngRef = useRef<Rng | null>(null);
   const [state, setState] = useState<BattleState | null>(null);
+  const [uiMode, setUiMode] = useState<UiMode>({ kind: 'global' });
   const [commands, setCommands] = useState<Record<string, AllyCmd>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [skillMenu, setSkillMenu] = useState(false);
@@ -248,6 +259,7 @@ export const Page = () => {
       setUnionSetup(null);
       setActiveId(null);
       setFlashIds(new Set());
+      setUiMode({ kind: 'global' });
       setAnim(final.log.length > 0 ? { base, revealed: 0 } : null);
     },
     [state]
@@ -452,24 +464,49 @@ export const Page = () => {
   }, [aliveEnemies, targetId]);
 
   // 入力対象キャラの補正（無効になった場合のみ未入力の先頭へ。全員入力済みなら null）
+  // 個別UI中はめいれいキャラのみが対象。
   useEffect(() => {
     if (state?.outcome !== 'ongoing') return;
+    if (uiMode.kind !== 'individual') return;
     if (activeId && aliveAllies.some((a) => a.id === activeId)) return;
-    const next = aliveAllies.find((a) => !commands[a.id]) ?? null;
+    // めいれいキャラのうち未入力の先頭へ
+    const meireiAllies = aliveAllies.filter((a) => {
+      const ch = save?.guild.members.find((m) => m.id === a.id);
+      return (ch?.strategy ?? 'batchiri') === 'meirei';
+    });
+    const next = meireiAllies.find((a) => !commands[a.id]) ?? null;
     setActiveId(next ? next.id : null);
-  }, [state, aliveAllies, activeId, commands]);
+  }, [state, aliveAllies, activeId, commands, uiMode, save]);
+
+  // 全員入力済み判定: 個別UI中はめいれいキャラのみ。
+  const meireiAllies = useMemo(() => {
+    if (!save) return aliveAllies;
+    return aliveAllies.filter((a) => {
+      const ch = save.guild.members.find((m) => m.id === a.id);
+      return (ch?.strategy ?? 'batchiri') === 'meirei';
+    });
+  }, [aliveAllies, save]);
 
   const allAssigned =
-    aliveAllies.length > 0 &&
-    aliveAllies.every((a) => {
-      const cmd = commands[a.id];
-      if (!cmd) return false;
-      // allyOne スキルは対象 ID が確定していないと未入力扱い
-      if (cmd.kind === 'skill' && BATTLE_SKILLS[cmd.skillId]?.target === 'allyOne') {
-        return commandTargets[a.id] !== undefined;
-      }
-      return true;
-    });
+    uiMode.kind === 'individual'
+      ? meireiAllies.length > 0 &&
+        meireiAllies.every((a) => {
+          const cmd = commands[a.id];
+          if (!cmd) return false;
+          if (cmd.kind === 'skill' && BATTLE_SKILLS[cmd.skillId]?.target === 'allyOne') {
+            return commandTargets[a.id] !== undefined;
+          }
+          return true;
+        })
+      : aliveAllies.length > 0 &&
+        aliveAllies.every((a) => {
+          const cmd = commands[a.id];
+          if (!cmd) return false;
+          if (cmd.kind === 'skill' && BATTLE_SKILLS[cmd.skillId]?.target === 'allyOne') {
+            return commandTargets[a.id] !== undefined;
+          }
+          return true;
+        });
 
   const assign = useCallback(
     (charId: string, cmd: AllyCmd, allyTgtId?: string) => {
@@ -491,11 +528,12 @@ export const Page = () => {
       setSkillMenu(false);
       setItemMenu(false);
       setAllyTargetMenu(null);
-      // 次の未入力キャラへ
-      const next = aliveAllies.find((a) => a.id !== charId && !nextCommands[a.id]);
+      // 次の未入力キャラへ（個別UIではめいれいキャラのみ）
+      const candidates = uiMode.kind === 'individual' ? meireiAllies : aliveAllies;
+      const next = candidates.find((a) => a.id !== charId && !nextCommands[a.id]);
       setActiveId(next ? next.id : null);
     },
-    [commands, aliveAllies]
+    [commands, aliveAllies, meireiAllies, uiMode]
   );
 
   const finish = useCallback(
@@ -526,37 +564,52 @@ export const Page = () => {
     setUnionCmd(null);
     setUnionSetup(null);
     setActiveId(aliveAllies[0]?.id ?? null);
+    setUiMode({ kind: 'global' });
   }, [aliveAllies]);
+
+  /**
+   * commands / commandTargets から BattleCommand リストを組み立てる純関数。
+   * handleResolve と onClickFight の両方から使う。
+   */
+  const buildCommandList = useCallback(
+    (
+      cmds: Record<string, AllyCmd>,
+      cmdTargets: Record<string, string>,
+      allies: Combatant[],
+      tgtId: string | null
+    ): BattleCommand[] => {
+      const tgt = tgtId ?? aliveEnemies[0]?.id ?? '';
+      return allies.map((a): BattleCommand => {
+        const c = cmds[a.id] ?? { kind: 'attack' };
+        if (c.kind === 'guard') return { kind: 'guard', actorId: a.id };
+        if (c.kind === 'skill') {
+          const skillDef = BATTLE_SKILLS[c.skillId];
+          let skillTgt: string;
+          if (skillDef?.target === 'allyOne') {
+            skillTgt = cmdTargets[a.id] ?? a.id;
+          } else if (skillDef?.target === 'allyAll') {
+            skillTgt = a.id;
+          } else if (skillDef?.target === 'self') {
+            skillTgt = a.id;
+          } else {
+            skillTgt = tgt;
+          }
+          return { kind: 'skill', actorId: a.id, skillId: c.skillId, targetId: skillTgt };
+        }
+        if (c.kind === 'item')
+          return { kind: 'item', actorId: a.id, itemId: c.itemId, targetId: a.id };
+        return { kind: 'attack', actorId: a.id, targetId: tgt };
+      });
+    },
+    [aliveEnemies]
+  );
 
   const handleResolve = useCallback(() => {
     if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
     play('decide');
-    const tgt = targetId ?? aliveEnemies[0]?.id ?? '';
-    const list: BattleCommand[] = aliveAllies.map((a): BattleCommand => {
-      const c = commands[a.id] ?? { kind: 'attack' };
-      if (c.kind === 'guard') return { kind: 'guard', actorId: a.id };
-      if (c.kind === 'skill') {
-        const skillDef = BATTLE_SKILLS[c.skillId];
-        let skillTgt: string;
-        if (skillDef?.target === 'allyOne') {
-          // 味方単体: commandTargets に記録された対象、なければ発動者自身
-          skillTgt = commandTargets[a.id] ?? a.id;
-        } else if (skillDef?.target === 'allyAll') {
-          // 味方全体: 発動者自身でOK（エンジンが全体解決する）
-          skillTgt = a.id;
-        } else if (skillDef?.target === 'self') {
-          skillTgt = a.id;
-        } else {
-          // enemyOne / enemyRow / enemyAll: 敵ターゲット
-          skillTgt = tgt;
-        }
-        return { kind: 'skill', actorId: a.id, skillId: c.skillId, targetId: skillTgt };
-      }
-      if (c.kind === 'item')
-        return { kind: 'item', actorId: a.id, itemId: c.itemId, targetId: a.id };
-      return { kind: 'attack', actorId: a.id, targetId: tgt };
-    });
+    const list = buildCommandList(commands, commandTargets, aliveAllies, targetId);
     // ユニオンは通常行動とは別枠で先頭に積む（[03 §9]）。敵狙いは実行時の最新ターゲットで撃つ。
+    const tgt = targetId ?? aliveEnemies[0]?.id ?? '';
     if (unionCmd) {
       const def = UNION_SKILLS[unionCmd.unionSkillId];
       const enemyTargeted =
@@ -578,6 +631,7 @@ export const Page = () => {
     unionCmd,
     runTurn,
     play,
+    buildCommandList,
   ]);
 
   const handleFlee = useCallback(() => {
@@ -586,6 +640,65 @@ export const Page = () => {
     if (!a) return;
     runTurn([{ kind: 'flee', actorId: a.id }]);
   }, [state, aliveAllies, runTurn]);
+
+  /**
+   * 「たたかう」ボタン押下: おまかせ戦闘（issue #61）。
+   * - 非めいれいキャラに pickAutoCommand で自動コマンドを積む。
+   * - めいれいキャラが0人なら即実行。1人以上いれば個別UIへ。
+   */
+  const onClickFight = useCallback(() => {
+    if (!state || !save) return;
+    const autoFilled: Record<string, AllyCmd> = {};
+    const autoTargets: Record<string, string> = {};
+
+    for (const ally of aliveAllies) {
+      const char = save.guild.members.find((m) => m.id === ally.id);
+      const strategy: Strategy = char?.strategy ?? 'batchiri';
+      if (strategy === 'meirei') continue;
+      const auto = pickAutoCommand(strategy, ally, state, char?.learnedSkills ?? {});
+      if (auto.kind === 'skill') {
+        autoFilled[ally.id] = { kind: 'skill', skillId: auto.skillId };
+        if (auto.targetId) autoTargets[ally.id] = auto.targetId;
+      } else {
+        autoFilled[ally.id] = auto;
+      }
+    }
+
+    const meireiAllies = aliveAllies.filter((a) => {
+      const ch = save.guild.members.find((m) => m.id === a.id);
+      return (ch?.strategy ?? 'batchiri') === 'meirei';
+    });
+
+    if (meireiAllies.length === 0) {
+      // めいれいキャラなし → 自動コマンドリストを直接組んで即実行
+      const list = buildCommandList(autoFilled, autoTargets, aliveAllies, targetId);
+      play('decide');
+      runTurn(list);
+    } else {
+      // めいれいキャラあり → 個別UIへ
+      setCommands(autoFilled);
+      setCommandTargets(autoTargets);
+      setUiMode({ kind: 'individual' });
+      setActiveId(meireiAllies[0].id);
+    }
+  }, [state, save, aliveAllies, buildCommandList, targetId, runTurn, play]);
+
+  /** 作戦変更（issue #61）。applySave で即時反映。 */
+  const changeStrategy = useCallback(
+    (charId: string, newStrategy: Strategy) => {
+      play('cursor');
+      applySave((s) => ({
+        ...s,
+        guild: {
+          ...s.guild,
+          members: s.guild.members.map((m) =>
+            m.id === charId ? { ...m, strategy: newStrategy } : m
+          ),
+        },
+      }));
+    },
+    [applySave, play]
+  );
 
   if (!save || !save.diveState) {
     return <Redirect to={{ name: 'town' }} />;
@@ -638,6 +751,13 @@ export const Page = () => {
   const classNameOf = (ally: Combatant): string => {
     const char = save.guild.members.find((m) => m.id === ally.id);
     return char ? (CLASSES[char.classId]?.name ?? '') : '';
+  };
+
+  // 味方の作戦短縮ラベル（issue #61）。
+  const strategyShortLabelOf = (ally: Combatant): string => {
+    const char = save.guild.members.find((m) => m.id === ally.id);
+    const strategy: Strategy = char?.strategy ?? 'batchiri';
+    return STRATEGY_SHORT_LABEL[strategy];
   };
 
   // 逐次再生中はログ行に紐づく HP スナップショットを表示する（issue #18）。再生外は実値。
@@ -731,7 +851,10 @@ export const Page = () => {
             {ailmentMark(a)}
           </span>
         </div>
-        <div className={styles.cardJob}>{classNameOf(a)}</div>
+        <div className={styles.cardJob}>
+          {classNameOf(a)}
+          <span className={styles.cardStrategy}>[{strategyShortLabelOf(a)}]</span>
+        </div>
         <StatBar
           value={d.hp}
           max={a.maxHp}
@@ -917,300 +1040,409 @@ export const Page = () => {
         </div>
       ) : (
         <div className={styles.command}>
-          {isAllyTargeting ? (
-            <div className={`${styles.target} ${styles.targetAlly}`}>
-              {BATTLE_SKILLS[allyTargetMenu!]?.name ?? 'スキル'}: 味方をタップで対象を選択
-            </div>
-          ) : (
-            <div className={styles.target}>対象: {targetName}（敵をタップで変更）</div>
+          {/* 対象表示: global / individual フェーズで表示。作戦変更時は隠す */}
+          {uiMode.kind !== 'strategy' &&
+            (isAllyTargeting ? (
+              <div className={`${styles.target} ${styles.targetAlly}`}>
+                {BATTLE_SKILLS[allyTargetMenu!]?.name ?? 'スキル'}: 味方をタップで対象を選択
+              </div>
+            ) : (
+              <div className={styles.target}>対象: {targetName}（敵をタップで変更）</div>
+            ))}
+
+          {/* ---- 全体行動選択UI（uiMode.kind === 'global'） ---- */}
+          {uiMode.kind === 'global' && (
+            <>
+              {unionCmd
+                ? (() => {
+                    const def = UNION_SKILLS[unionCmd.unionSkillId];
+                    return (
+                      <div className={styles.unionBanner}>
+                        <div className={styles.unionBannerHead}>
+                          ⚡ ユニオン予約: {def?.name}
+                          <button
+                            type="button"
+                            className={styles.unionCancel}
+                            onClick={() => setUnionCmd(null)}
+                          >
+                            取消
+                          </button>
+                        </div>
+                        {def ? (
+                          <div className={styles.unionBannerDesc}>
+                            {skillSummary(
+                              def.element,
+                              def.target,
+                              def.effects,
+                              state.allies.find((a) => a.id === unionCmd.actorId)?.skillLevels?.[
+                                unionCmd.unionSkillId
+                              ] ?? 1
+                            )}
+                            <br />
+                            {def.description}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })()
+                : null}
+              <div className={styles.cmdHead}>全体行動</div>
+              <div className={styles.menu}>
+                <button
+                  type="button"
+                  className={styles.menuBtn}
+                  onClick={onClickFight}
+                >
+                  たたかう
+                </button>
+                <button
+                  type="button"
+                  className={styles.menuBtn}
+                  onClick={() => setUiMode({ kind: 'strategy' })}
+                >
+                  さくせん
+                </button>
+                <button
+                  type="button"
+                  className={styles.menuBtn}
+                  onClick={handleFlee}
+                >
+                  にげる
+                </button>
+              </div>
+            </>
           )}
-          {unionCmd
-            ? (() => {
-                const def = UNION_SKILLS[unionCmd.unionSkillId];
-                return (
-                  <div className={styles.unionBanner}>
-                    <div className={styles.unionBannerHead}>
-                      ⚡ ユニオン予約: {def?.name}
+
+          {/* ---- 個別行動選択UI（uiMode.kind === 'individual'） ---- */}
+          {uiMode.kind === 'individual' && (
+            <>
+              {unionCmd
+                ? (() => {
+                    const def = UNION_SKILLS[unionCmd.unionSkillId];
+                    return (
+                      <div className={styles.unionBanner}>
+                        <div className={styles.unionBannerHead}>
+                          ⚡ ユニオン予約: {def?.name}
+                          <button
+                            type="button"
+                            className={styles.unionCancel}
+                            onClick={() => setUnionCmd(null)}
+                          >
+                            取消
+                          </button>
+                        </div>
+                        {def ? (
+                          <div className={styles.unionBannerDesc}>
+                            {skillSummary(
+                              def.element,
+                              def.target,
+                              def.effects,
+                              state.allies.find((a) => a.id === unionCmd.actorId)?.skillLevels?.[
+                                unionCmd.unionSkillId
+                              ] ?? 1
+                            )}
+                            <br />
+                            {def.description}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })()
+                : null}
+              {active ? (
+                <>
+                  <div className={styles.cmdHead}>{active.name} のコマンド</div>
+                  {allyTargetMenu ? (
+                    // 味方単体スキルの対象選択フェーズ（カードをタップで選択）
+                    <div className={styles.skillList}>
+                      <div className={styles.allyTargetHint}>
+                        <strong>{BATTLE_SKILLS[allyTargetMenu]?.name}</strong> の対象を選択
+                        <br />
+                        <span className={styles.allyTargetSub}>
+                          上の味方カードをタップしてください
+                        </span>
+                      </div>
+                      {allyTargetCandidates.map((a) => (
+                        <button
+                          type="button"
+                          key={a.id}
+                          className={[
+                            styles.skillBtn,
+                            commandTargets[active.id] === a.id ? styles.allyTargetSelected : '',
+                          ].join(' ')}
+                          onClick={() => {
+                            assign(active.id, { kind: 'skill', skillId: allyTargetMenu }, a.id);
+                          }}
+                        >
+                          <span className={styles.skillTop}>
+                            <span className={styles.skillName}>{a.name}</span>
+                            <span className={styles.tp}>
+                              HP {Math.max(0, dispOf(a).hp)}/{a.maxHp}
+                            </span>
+                          </span>
+                        </button>
+                      ))}
                       <button
                         type="button"
-                        className={styles.unionCancel}
-                        onClick={() => setUnionCmd(null)}
+                        className={styles.menuBack}
+                        onClick={() => {
+                          setAllyTargetMenu(null);
+                          // 選択中コマンドも未決定に戻す
+                          setCommands((prev) => {
+                            const next = { ...prev };
+                            delete next[active.id];
+                            return next;
+                          });
+                        }}
                       >
-                        取消
+                        もどる
                       </button>
                     </div>
-                    {def ? (
-                      <div className={styles.unionBannerDesc}>
+                  ) : skillMenu ? (
+                    <div className={styles.skillList}>
+                      {usableSkills(active).map((sid) => (
+                        <button
+                          type="button"
+                          key={sid}
+                          className={styles.skillBtn}
+                          onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
+                        >
+                          <span className={styles.skillTop}>
+                            <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
+                            <span className={styles.tp}>
+                              TP{' '}
+                              {computeSkillTpCost(
+                                BATTLE_SKILLS[sid],
+                                active.skillLevels?.[sid] ?? 1
+                              )}
+                            </span>
+                          </span>
+                          <span className={styles.skillSummary}>
+                            {skillSummary(
+                              BATTLE_SKILLS[sid].element,
+                              BATTLE_SKILLS[sid].target,
+                              BATTLE_SKILLS[sid].effects,
+                              active.skillLevels?.[sid] ?? 1
+                            )}
+                          </span>
+                          <span className={styles.skillDesc}>{SKILLS[sid]?.description ?? ''}</span>
+                        </button>
+                      ))}
+                      {usableSkills(active).length === 0 ? (
+                        <div className={styles.empty}>使えるスキルがない</div>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={styles.menuBack}
+                        onClick={() => setSkillMenu(false)}
+                      >
+                        もどる
+                      </button>
+                    </div>
+                  ) : itemMenu ? (
+                    <div className={styles.skillList}>
+                      {battleItems().map(({ id, remaining }) => (
+                        <button
+                          type="button"
+                          key={id}
+                          className={styles.skillBtn}
+                          onClick={() => assign(active.id, { kind: 'item', itemId: id })}
+                        >
+                          <span className={styles.skillTop}>
+                            <span className={styles.skillName}>
+                              {ITEMS[id].name} ×{remaining}
+                            </span>
+                          </span>
+                          <span className={styles.skillDesc}>{ITEMS[id].description}</span>
+                        </button>
+                      ))}
+                      {battleItems().length === 0 ? (
+                        <div className={styles.empty}>使える道具がない</div>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={styles.menuBack}
+                        onClick={() => setItemMenu(false)}
+                      >
+                        もどる
+                      </button>
+                    </div>
+                  ) : unionSetup ? (
+                    <div className={styles.skillList}>
+                      <div className={styles.unionHint}>
+                        <strong>{unionSetup.def.name}</strong>
+                        <br />
                         {skillSummary(
-                          def.element,
-                          def.target,
-                          def.effects,
-                          state.allies.find((a) => a.id === unionCmd.actorId)?.skillLevels?.[
-                            unionCmd.unionSkillId
+                          unionSetup.def.element,
+                          unionSetup.def.target,
+                          unionSetup.def.effects,
+                          state.allies.find((a) => a.id === unionSetup.actorId)?.skillLevels?.[
+                            unionSetup.def.id
                           ] ?? 1
                         )}
                         <br />
-                        {def.description}
+                        {unionSetup.def.description}
+                        <br />
+                        協力者を選択（あと{unionSetup.def.requiredParticipants - 1}人。各自ゲージ
+                        {unionSetup.def.gaugeCostPerParticipant}消費）
                       </div>
-                    ) : null}
-                  </div>
-                );
-              })()
-            : null}
-          {active ? (
-            <>
-              <div className={styles.cmdHead}>{active.name} のコマンド</div>
-              {allyTargetMenu ? (
-                // 味方単体スキルの対象選択フェーズ（カードをタップで選択）
-                <div className={styles.skillList}>
-                  <div className={styles.allyTargetHint}>
-                    <strong>{BATTLE_SKILLS[allyTargetMenu]?.name}</strong> の対象を選択
-                    <br />
-                    <span className={styles.allyTargetSub}>上の味方カードをタップしてください</span>
-                  </div>
-                  {allyTargetCandidates.map((a) => (
-                    <button
-                      type="button"
-                      key={a.id}
-                      className={[
-                        styles.skillBtn,
-                        commandTargets[active.id] === a.id ? styles.allyTargetSelected : '',
-                      ].join(' ')}
-                      onClick={() => {
-                        assign(active.id, { kind: 'skill', skillId: allyTargetMenu }, a.id);
-                      }}
-                    >
-                      <span className={styles.skillTop}>
-                        <span className={styles.skillName}>{a.name}</span>
-                        <span className={styles.tp}>
-                          HP {Math.max(0, dispOf(a).hp)}/{a.maxHp}
-                        </span>
-                      </span>
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    className={styles.menuBack}
-                    onClick={() => {
-                      setAllyTargetMenu(null);
-                      // 選択中コマンドも未決定に戻す
-                      setCommands((prev) => {
-                        const next = { ...prev };
-                        delete next[active.id];
-                        return next;
-                      });
-                    }}
-                  >
-                    もどる
-                  </button>
-                </div>
-              ) : skillMenu ? (
-                <div className={styles.skillList}>
-                  {usableSkills(active).map((sid) => (
-                    <button
-                      type="button"
-                      key={sid}
-                      className={styles.skillBtn}
-                      onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
-                    >
-                      <span className={styles.skillTop}>
-                        <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
-                        <span className={styles.tp}>
-                          TP{' '}
-                          {computeSkillTpCost(BATTLE_SKILLS[sid], active.skillLevels?.[sid] ?? 1)}
-                        </span>
-                      </span>
-                      <span className={styles.skillSummary}>
-                        {skillSummary(
-                          BATTLE_SKILLS[sid].element,
-                          BATTLE_SKILLS[sid].target,
-                          BATTLE_SKILLS[sid].effects,
-                          active.skillLevels?.[sid] ?? 1
-                        )}
-                      </span>
-                      <span className={styles.skillDesc}>{SKILLS[sid]?.description ?? ''}</span>
-                    </button>
-                  ))}
-                  {usableSkills(active).length === 0 ? (
-                    <div className={styles.empty}>使えるスキルがない</div>
-                  ) : null}
-                  <button
-                    type="button"
-                    className={styles.menuBack}
-                    onClick={() => setSkillMenu(false)}
-                  >
-                    もどる
-                  </button>
-                </div>
-              ) : itemMenu ? (
-                <div className={styles.skillList}>
-                  {battleItems().map(({ id, remaining }) => (
-                    <button
-                      type="button"
-                      key={id}
-                      className={styles.skillBtn}
-                      onClick={() => assign(active.id, { kind: 'item', itemId: id })}
-                    >
-                      <span className={styles.skillTop}>
-                        <span className={styles.skillName}>
-                          {ITEMS[id].name} ×{remaining}
-                        </span>
-                      </span>
-                      <span className={styles.skillDesc}>{ITEMS[id].description}</span>
-                    </button>
-                  ))}
-                  {battleItems().length === 0 ? (
-                    <div className={styles.empty}>使える道具がない</div>
-                  ) : null}
-                  <button
-                    type="button"
-                    className={styles.menuBack}
-                    onClick={() => setItemMenu(false)}
-                  >
-                    もどる
-                  </button>
-                </div>
-              ) : unionSetup ? (
-                <div className={styles.skillList}>
-                  <div className={styles.unionHint}>
-                    <strong>{unionSetup.def.name}</strong>
-                    <br />
-                    {skillSummary(
-                      unionSetup.def.element,
-                      unionSetup.def.target,
-                      unionSetup.def.effects,
-                      state.allies.find((a) => a.id === unionSetup.actorId)?.skillLevels?.[
-                        unionSetup.def.id
-                      ] ?? 1
-                    )}
-                    <br />
-                    {unionSetup.def.description}
-                    <br />
-                    協力者を選択（あと{unionSetup.def.requiredParticipants - 1}人。各自ゲージ
-                    {unionSetup.def.gaugeCostPerParticipant}消費）
-                  </div>
-                  {aliveAllies
-                    .filter((a) => a.id !== unionSetup.actorId)
-                    .map((a) => (
+                      {aliveAllies
+                        .filter((a) => a.id !== unionSetup.actorId)
+                        .map((a) => (
+                          <button
+                            type="button"
+                            key={a.id}
+                            className={styles.skillBtn}
+                            onClick={() =>
+                              reserveUnion(unionSetup.actorId, unionSetup.def, [
+                                unionSetup.actorId,
+                                a.id,
+                              ])
+                            }
+                          >
+                            <span className={styles.skillTop}>
+                              <span className={styles.skillName}>{a.name}</span>
+                              <span className={styles.tp}>ゲージ {a.unionGauge}</span>
+                            </span>
+                          </button>
+                        ))}
+                      {aliveAllies.filter((a) => a.id !== unionSetup.actorId).length === 0 ? (
+                        <div className={styles.empty}>協力できる味方がいない</div>
+                      ) : null}
                       <button
                         type="button"
-                        key={a.id}
-                        className={styles.skillBtn}
-                        onClick={() =>
-                          reserveUnion(unionSetup.actorId, unionSetup.def, [
-                            unionSetup.actorId,
-                            a.id,
-                          ])
-                        }
+                        className={styles.menuBack}
+                        onClick={() => setUnionSetup(null)}
                       >
-                        <span className={styles.skillTop}>
-                          <span className={styles.skillName}>{a.name}</span>
-                          <span className={styles.tp}>ゲージ {a.unionGauge}</span>
-                        </span>
+                        もどる
                       </button>
-                    ))}
-                  {aliveAllies.filter((a) => a.id !== unionSetup.actorId).length === 0 ? (
-                    <div className={styles.empty}>協力できる味方がいない</div>
-                  ) : null}
-                  <button
-                    type="button"
-                    className={styles.menuBack}
-                    onClick={() => setUnionSetup(null)}
-                  >
-                    もどる
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {(() => {
-                    const def = unionSkillOf(active);
-                    if (!def || active.unionGauge < 100 || unionCmd) return null;
-                    return (
-                      <div className={styles.unionInfo}>
-                        ⚡ <strong>{def.name}</strong> 発動可（ゲージ100%）
-                        <br />
-                        {skillSummary(
-                          def.element,
-                          def.target,
-                          def.effects,
-                          active.skillLevels?.[def.id] ?? 1
-                        )}
-                      </div>
-                    );
-                  })()}
-                  <div className={styles.menu}>
-                    <button
-                      type="button"
-                      className={styles.menuBtn}
-                      onClick={() => assign(active.id, { kind: 'attack' })}
-                    >
-                      攻撃
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.menuBtn}
-                      onClick={() => assign(active.id, { kind: 'guard' })}
-                    >
-                      防御
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.menuBtn}
-                      disabled={usableSkills(active).length === 0}
-                      onClick={() => setSkillMenu(true)}
-                    >
-                      スキル
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.menuBtn}
-                      disabled={battleItems().length === 0}
-                      onClick={() => setItemMenu(true)}
-                    >
-                      どうぐ
-                    </button>
-                    {(() => {
-                      const def = unionSkillOf(active);
-                      if (!def || active.unionGauge < 100 || unionCmd) return null;
-                      return (
+                    </div>
+                  ) : (
+                    <>
+                      {(() => {
+                        const def = unionSkillOf(active);
+                        if (!def || active.unionGauge < 100 || unionCmd) return null;
+                        return (
+                          <div className={styles.unionInfo}>
+                            ⚡ <strong>{def.name}</strong> 発動可（ゲージ100%）
+                            <br />
+                            {skillSummary(
+                              def.element,
+                              def.target,
+                              def.effects,
+                              active.skillLevels?.[def.id] ?? 1
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <div className={styles.menu}>
                         <button
                           type="button"
-                          className={`${styles.menuBtn} ${styles.unionBtn}`}
-                          onClick={() => onUnionPressed(active, def)}
+                          className={styles.menuBtn}
+                          onClick={() => assign(active.id, { kind: 'attack' })}
                         >
-                          ⚡ユニオン
+                          攻撃
                         </button>
-                      );
-                    })()}
-                    <button
-                      type="button"
-                      className={styles.menuBtn}
-                      onClick={handleFlee}
-                    >
-                      逃走
-                    </button>
-                  </div>
+                        <button
+                          type="button"
+                          className={styles.menuBtn}
+                          onClick={() => assign(active.id, { kind: 'guard' })}
+                        >
+                          防御
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.menuBtn}
+                          disabled={usableSkills(active).length === 0}
+                          onClick={() => setSkillMenu(true)}
+                        >
+                          スキル
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.menuBtn}
+                          disabled={battleItems().length === 0}
+                          onClick={() => setItemMenu(true)}
+                        >
+                          どうぐ
+                        </button>
+                        {(() => {
+                          const def = unionSkillOf(active);
+                          if (!def || active.unionGauge < 100 || unionCmd) return null;
+                          return (
+                            <button
+                              type="button"
+                              className={`${styles.menuBtn} ${styles.unionBtn}`}
+                              onClick={() => onUnionPressed(active, def)}
+                            >
+                              ⚡ユニオン
+                            </button>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  )}
                 </>
+              ) : (
+                <div className={styles.execRow}>
+                  <button
+                    type="button"
+                    className={styles.redo}
+                    onClick={resetInput}
+                  >
+                    やり直す
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.primary}
+                    disabled={!allAssigned}
+                    onClick={handleResolve}
+                  >
+                    実行
+                  </button>
+                </div>
               )}
             </>
-          ) : (
-            <div className={styles.execRow}>
-              <button
-                type="button"
-                className={styles.redo}
-                onClick={resetInput}
-              >
-                やり直す
-              </button>
-              <button
-                type="button"
-                className={styles.primary}
-                disabled={!allAssigned}
-                onClick={handleResolve}
-              >
-                実行
-              </button>
-            </div>
+          )}
+
+          {/* ---- 作戦変更UI（uiMode.kind === 'strategy'） ---- */}
+          {uiMode.kind === 'strategy' && (
+            <>
+              <div className={styles.cmdHead}>作戦変更</div>
+              <div className={styles.strategyList}>
+                {aliveAllies.map((a) => {
+                  const ch = save.guild.members.find((m) => m.id === a.id);
+                  const cur: Strategy = ch?.strategy ?? 'batchiri';
+                  return (
+                    <div
+                      key={a.id}
+                      className={styles.strategyRow}
+                    >
+                      <div className={styles.strategyAllyName}>{a.name}</div>
+                      <div className={styles.strategyButtons}>
+                        {STRATEGY_LIST.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className={cur === s.id ? styles.strategyOn : styles.strategyOff}
+                            onClick={() => changeStrategy(a.id, s.id)}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  className={styles.menuBack}
+                  onClick={() => setUiMode({ kind: 'global' })}
+                >
+                  もどる
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}

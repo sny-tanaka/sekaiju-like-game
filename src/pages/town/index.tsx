@@ -75,6 +75,11 @@ export const Page = () => {
           まずは「ギルド管理」で冒険者を作成してください。団員がいないとダイブできません。
         </p>
       )}
+      {hasMembers && diveState && (
+        <p className={styles.hint}>
+          潜行中のため、ダイブ再開と「タイトルへ戻る」以外は利用できません。
+        </p>
+      )}
 
       <main className={styles.menu}>
         <MenuButton
@@ -106,22 +111,26 @@ export const Page = () => {
         />
         <MenuButton
           label="ギルド管理"
-          description="編成・キャラ作成"
+          description={diveState ? '潜行中は使えません' : '編成・キャラ作成'}
+          disabled={!!diveState}
           onClick={() => navigate({ name: 'guild' })}
         />
         <MenuButton
           label="ショップ"
-          description="装備・アイテム売買"
+          description={diveState ? '潜行中は使えません' : '装備・アイテム売買'}
+          disabled={!!diveState}
           onClick={() => navigate({ name: 'shop' })}
         />
         <MenuButton
           label="鍛冶屋"
-          description="装備の強化・リサイクル"
+          description={diveState ? '潜行中は使えません' : '装備の強化・リサイクル'}
+          disabled={!!diveState}
           onClick={() => navigate({ name: 'forge' })}
         />
         <MenuButton
           label="図鑑 / 記録"
-          description="到達記録・モンスター図鑑"
+          description={diveState ? '潜行中は使えません' : '到達記録・モンスター図鑑'}
+          disabled={!!diveState}
           onClick={() => navigate({ name: 'codex' })}
         />
       </main>

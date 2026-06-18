@@ -562,6 +562,16 @@ export interface EquipInstance {
 export type EquipmentSlots = Record<EquipSlotKey, EquipInstance | null>;
 
 /**
+ * 戦闘作戦（[issue #61]）。ドラクエ式の5種。
+ * - gungan: ガンガンいこうぜ（ダメージ最大化）
+ * - batchiri: バッチリがんばれ（バランス型）
+ * - inochi: いのちをだいじに（回復・防御優先）
+ * - tpKeep: TPつかうな（TP消費0のスキルのみ / 通常攻撃）
+ * - meirei: めいれいさせろ（プレイヤーが個別に指定）
+ */
+export type Strategy = 'gungan' | 'batchiri' | 'inochi' | 'tpKeep' | 'meirei';
+
+/**
  * キャラクターの永続データ。
  * ※ baseStats（素ステータス）/ DerivedCombat は保存せず computeBaseStats で導出する
  *   （[01 §2.2]: 保存するのは level/exp/learnedSkills/equipment/rebirthBonus 等の「入力」だけ）。
@@ -578,6 +588,7 @@ export interface Character {
   learnedSkills: Record<SkillId, number>; // skillId -> 習得 Lv
   equipment: EquipmentSlots;
   rebirthBonus?: RebirthBonus;
+  strategy: Strategy; // 戦闘作戦（issue #61）。デフォルト 'batchiri'
 }
 
 export interface PartyFormation {
