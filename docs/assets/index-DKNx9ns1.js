@@ -29208,7 +29208,7 @@ const zw = 2500,
         c.jsxs('footer', {
           className: Ue.foot,
           children: [
-            c.jsxs('span', { className: Ue.version, children: ['v', '0.1.80'] }),
+            c.jsxs('span', { className: Ue.version, children: ['v', '0.2.0'] }),
             c.jsx('button', {
               type: 'button',
               className: Ue.updateBtn,
