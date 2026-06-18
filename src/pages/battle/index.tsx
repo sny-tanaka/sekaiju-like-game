@@ -868,7 +868,7 @@ export const Page = () => {
             </div>
             <div className={styles.cardJob}>
               {classNameOf(a)}
-              <span className={styles.cardStrategy}>[{strategyShortLabelOf(a)}]</span>
+              <span className={styles.cardStrategy}>{strategyShortLabelOf(a)}</span>
             </div>
           </div>
         </div>

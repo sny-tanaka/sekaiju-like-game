@@ -132,8 +132,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 8px;
+  gap: 2px;
+  padding: 6px;
   border: 0.75px solid var.$rule;
   border-radius: 0;
   background-color: var.$parchment-card;
@@ -168,22 +168,24 @@
   background-color: var.$parchment;
 }
 
-// キャラ立ち絵レイアウト（立ち絵は名前の上に縦並び。名前は省略させない）
+// キャラ立ち絵レイアウト（立ち絵を左、名前・職業を右に横並び。台帳の一覧らしい密度に。）
 .cardHeader {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
 }
 
 .cardHeaderText {
-  width: 100%;
+  flex: 1;
   min-width: 0;
 }
 
+// 立ち絵は 87×87 の正方形 PNG (足元アンカー済) を 30×30 で表示。
 .cardPortrait {
-  width: 36px;
-  height: auto;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
 }
 
 .cardName {
@@ -217,6 +219,10 @@
   font-size: 10px;
   font-weight: 700;
   color: var.$ink-faint;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.2;
 }
 
 // ユニオンゲージ（issue #18）
@@ -790,11 +796,13 @@
 
 // ---- 作戦（issue #61） ----
 
-// キャラカード内の作戦短縮ラベル
+// キャラカード内の作戦短縮ラベル（職業名の下に金箔色の添え書き）
 .cardStrategy {
-  font-size: 11px;
-  color: var.$ink-faint;
-  margin-left: 4px;
+  margin-left: 0;
+  font-size: 9px;
+  font-weight: 700;
+  color: var.$illumination-gold;
+  letter-spacing: -0.02em;
 }
 
 // 作戦変更UI
