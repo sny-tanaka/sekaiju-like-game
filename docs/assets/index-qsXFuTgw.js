@@ -28400,7 +28400,7 @@ const gx = 2500,
         m.jsxs('footer', {
           className: Ve.foot,
           children: [
-            m.jsxs('span', { className: Ve.version, children: ['v', '0.1.62'] }),
+            m.jsxs('span', { className: Ve.version, children: ['v', '0.1.63'] }),
             m.jsx('button', {
               type: 'button',
               className: Ve.updateBtn,
