@@ -12,7 +12,19 @@
 }
 
 .head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   margin-bottom: 12px;
+}
+
+.headPortrait {
+  flex-shrink: 0;
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
 }
 
 .title {

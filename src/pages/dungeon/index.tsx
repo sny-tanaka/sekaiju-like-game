@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
@@ -421,10 +422,17 @@ export const Page = () => {
                                 })
                               }
                             >
-                              {c.name}
-                              <span className={styles.itemHp}>
-                                HP {p.hp}/{max.hp}・TP {p.tp}/{max.tp}
-                              </span>
+                              <CharacterPortrait
+                                raceId={c.raceId}
+                                classId={c.classId}
+                                size={36}
+                              />
+                              <div className={styles.itemTargetInfo}>
+                                <span>{c.name}</span>
+                                <span className={styles.itemHp}>
+                                  HP {p.hp}/{max.hp}・TP {p.tp}/{max.tp}
+                                </span>
+                              </div>
                             </button>
                           );
                         })}
@@ -566,16 +574,24 @@ export const Page = () => {
                             setSkillTab('class');
                           }}
                         >
-                          <span className={styles.menuMemberName}>
-                            {c.name}
-                            <span className={styles.menuMemberJob}>
-                              {CLASSES[c.classId]?.name} Lv{c.level}
+                          <CharacterPortrait
+                            raceId={c.raceId}
+                            classId={c.classId}
+                            size={40}
+                            className={styles.menuMemberPortrait}
+                          />
+                          <div className={styles.menuMemberInfo}>
+                            <span className={styles.menuMemberName}>
+                              {c.name}
+                              <span className={styles.menuMemberJob}>
+                                {CLASSES[c.classId]?.name} Lv{c.level}
+                              </span>
                             </span>
-                          </span>
-                          <span className={styles.menuMemberStat}>
-                            HP {p.hp}/{st.hp}・TP {p.tp}/{st.tp}
-                            {sp > 0 ? <span className={styles.menuSp}>SP {sp}</span> : null}
-                          </span>
+                            <span className={styles.menuMemberStat}>
+                              HP {p.hp}/{st.hp}・TP {p.tp}/{st.tp}
+                              {sp > 0 ? <span className={styles.menuSp}>SP {sp}</span> : null}
+                            </span>
+                          </div>
                         </button>
                       );
                     })}

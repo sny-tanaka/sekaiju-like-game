@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { ClassInfoCard } from '@/components/creation/ClassInfoCard/ClassInfoCard';
 import { RaceInfoCard } from '@/components/creation/RaceInfoCard/RaceInfoCard';
 import {
@@ -196,6 +197,17 @@ export const Page = () => {
               </select>
             </label>
             <ClassInfoCard classId={classId} />
+            <div className={styles.preview}>
+              <span className={styles.previewLabel}>プレビュー</span>
+              <CharacterPortrait
+                raceId={raceId}
+                classId={classId}
+                size={80}
+              />
+              <span className={styles.previewName}>
+                {RACES[raceId]?.name} / {CLASSES[classId]?.name}
+              </span>
+            </div>
             <button
               type="button"
               className={styles.primary}
@@ -281,13 +293,21 @@ export const Page = () => {
                         className={styles.memberMain}
                         onClick={() => navigate({ name: 'guildChar', id: m.id })}
                       >
-                        <span className={styles.memberName}>
-                          {m.name}
-                          <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>
-                            {pos}
+                        <CharacterPortrait
+                          raceId={m.raceId}
+                          classId={m.classId}
+                          size={44}
+                          className={styles.memberPortrait}
+                        />
+                        <div className={styles.memberMainText}>
+                          <span className={styles.memberName}>
+                            {m.name}
+                            <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>
+                              {pos}
+                            </span>
                           </span>
-                        </span>
-                        <span className={styles.memberSub}>{memberLine(m)} ›</span>
+                          <span className={styles.memberSub}>{memberLine(m)} ›</span>
+                        </div>
                       </button>
                     </li>
                   );
@@ -326,8 +346,16 @@ export const Page = () => {
                 >
                   {m ? (
                     <>
-                      <span className={styles.slotName}>{m.name}</span>
-                      <span className={styles.slotSub}>{memberLine(m)}</span>
+                      <CharacterPortrait
+                        raceId={m.raceId}
+                        classId={m.classId}
+                        size={48}
+                        className={styles.slotPortrait}
+                      />
+                      <div className={styles.slotText}>
+                        <span className={styles.slotName}>{m.name}</span>
+                        <span className={styles.slotSub}>{memberLine(m)}</span>
+                      </div>
                     </>
                   ) : (
                     <span className={styles.slotPlaceholder}>＋ 前衛{idx + 1}（空き）</span>
@@ -354,8 +382,16 @@ export const Page = () => {
                 >
                   {m ? (
                     <>
-                      <span className={styles.slotName}>{m.name}</span>
-                      <span className={styles.slotSub}>{memberLine(m)}</span>
+                      <CharacterPortrait
+                        raceId={m.raceId}
+                        classId={m.classId}
+                        size={48}
+                        className={styles.slotPortrait}
+                      />
+                      <div className={styles.slotText}>
+                        <span className={styles.slotName}>{m.name}</span>
+                        <span className={styles.slotSub}>{memberLine(m)}</span>
+                      </div>
                     </>
                   ) : (
                     <span className={styles.slotPlaceholder}>＋ 後衛{idx + 1}（空き）</span>
@@ -382,8 +418,16 @@ export const Page = () => {
                   className={styles.member}
                 >
                   <div className={styles.memberMain}>
-                    <span className={styles.memberName}>{m.name}</span>
-                    <span className={styles.memberSub}>{memberLine(m)}</span>
+                    <CharacterPortrait
+                      raceId={m.raceId}
+                      classId={m.classId}
+                      size={44}
+                      className={styles.memberPortrait}
+                    />
+                    <div className={styles.memberMainText}>
+                      <span className={styles.memberName}>{m.name}</span>
+                      <span className={styles.memberSub}>{memberLine(m)}</span>
+                    </div>
                   </div>
                   <button
                     type="button"

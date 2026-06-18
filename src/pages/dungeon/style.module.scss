@@ -145,8 +145,9 @@
 
 .menuMember {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
   width: 100%;
   padding: 8px 10px;
   margin-bottom: 8px;
@@ -155,6 +156,17 @@
   background-color: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+.menuMemberPortrait {
+  flex-shrink: 0;
+}
+
+.menuMemberInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .menuMemberName {
@@ -421,7 +433,8 @@
 
 .itemTarget {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 8px;
   align-items: center;
   min-height: 44px;
   padding: 4px 12px;
@@ -431,6 +444,13 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.itemTargetInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .itemHp {

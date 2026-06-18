@@ -150,6 +150,23 @@
   background-color: #f1f8e9;
 }
 
+// キャラ立ち絵レイアウト
+.cardHeader {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.cardHeaderText {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardPortrait {
+  width: 48px;
+  height: auto;
+}
+
 .cardName {
   font-size: 13px;
   font-weight: 700;
@@ -751,6 +768,12 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.strategyAllyHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .strategyAllyName {

@@ -5,6 +5,7 @@ import styles from './style.module.scss';
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
+import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
@@ -844,16 +845,32 @@ export const Page = () => {
           }
         }}
       >
-        <div className={styles.cardName}>
-          <span className={styles.cardNameText}>{a.name}</span>
-          <span className={styles.cardMarks}>
-            {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
-            {ailmentMark(a)}
-          </span>
-        </div>
-        <div className={styles.cardJob}>
-          {classNameOf(a)}
-          <span className={styles.cardStrategy}>[{strategyShortLabelOf(a)}]</span>
+        <div className={styles.cardHeader}>
+          {!a.isSummon &&
+            (() => {
+              const char = save?.guild.members.find((m) => m.id === a.id);
+              return char ? (
+                <CharacterPortrait
+                  raceId={char.raceId}
+                  classId={char.classId}
+                  size={48}
+                  className={styles.cardPortrait}
+                />
+              ) : null;
+            })()}
+          <div className={styles.cardHeaderText}>
+            <div className={styles.cardName}>
+              <span className={styles.cardNameText}>{a.name}</span>
+              <span className={styles.cardMarks}>
+                {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
+                {ailmentMark(a)}
+              </span>
+            </div>
+            <div className={styles.cardJob}>
+              {classNameOf(a)}
+              <span className={styles.cardStrategy}>[{strategyShortLabelOf(a)}]</span>
+            </div>
+          </div>
         </div>
         <StatBar
           value={d.hp}
@@ -1418,7 +1435,16 @@ export const Page = () => {
                       key={a.id}
                       className={styles.strategyRow}
                     >
-                      <div className={styles.strategyAllyName}>{a.name}</div>
+                      <div className={styles.strategyAllyHead}>
+                        {ch && (
+                          <CharacterPortrait
+                            raceId={ch.raceId}
+                            classId={ch.classId}
+                            size={36}
+                          />
+                        )}
+                        <div className={styles.strategyAllyName}>{a.name}</div>
+                      </div>
                       <div className={styles.strategyButtons}>
                         {STRATEGY_LIST.map((s) => (
                           <button
