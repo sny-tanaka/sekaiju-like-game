@@ -389,10 +389,17 @@
 }
 
 // ---- コマンド入力 ----
+// 残りの縦領域を使い、内容が溢れたら内部スクロール (作戦変更で全員分の行 + もどるボタンが
+// bottom sheet ハンドル分の確保エリアに被って隠れるのを防ぐ)。
 .command {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 // スキル選択（説明文つき・縦リスト）
