@@ -3635,7 +3635,7 @@ Error generating stack: ` +
       }
       return null;
     }
-    function pe(M, I, H, ee) {
+    function he(M, I, H, ee) {
       for (
         var xe = null, ze = null, ke = I, Ae = (I = 0), Me = null;
         ke !== null && Ae < H.length;
@@ -3783,7 +3783,7 @@ Error generating stack: ` +
           case E:
             return ((H = la(H)), Pe(M, I, H, ee));
         }
-        if (ye(H)) return pe(M, I, H, ee);
+        if (ye(H)) return he(M, I, H, ee);
         if (ue(H)) {
           if (((xe = ue(H)), typeof xe != 'function')) throw Error(r(150));
           return ((H = xe.call(H)), je(M, I, H, ee));
@@ -3924,24 +3924,24 @@ Error generating stack: ` +
               (Z = Z.next =
                 { lane: 0, tag: g.tag, payload: g.payload, callback: null, next: null }));
           e: {
-            var pe = e,
+            var he = e,
               je = g;
             Y = t;
             var Pe = i;
             switch (je.tag) {
               case 1:
-                if (((pe = je.payload), typeof pe == 'function')) {
-                  te = pe.call(Pe, te, Y);
+                if (((he = je.payload), typeof he == 'function')) {
+                  te = he.call(Pe, te, Y);
                   break e;
                 }
-                te = pe;
+                te = he;
                 break e;
               case 3:
-                pe.flags = (pe.flags & -65537) | 128;
+                he.flags = (he.flags & -65537) | 128;
               case 0:
                 if (
-                  ((pe = je.payload),
-                  (Y = typeof pe == 'function' ? pe.call(Pe, te, Y) : pe),
+                  ((he = je.payload),
+                  (Y = typeof he == 'function' ? he.call(Pe, te, Y) : he),
                   Y == null)
                 )
                   break e;
@@ -6983,8 +6983,8 @@ Error generating stack: ` +
                   (u = u.memoizedState),
                   (a = i.stateNode));
                 try {
-                  var pe = ra(i.type, s);
-                  ((e = a.getSnapshotBeforeUpdate(pe, u)),
+                  var he = ra(i.type, s);
+                  ((e = a.getSnapshotBeforeUpdate(he, u)),
                     (a.__reactInternalSnapshotBeforeUpdate = e));
                 } catch (je) {
                   Qe(i, i.return, je);
@@ -7414,8 +7414,8 @@ Error generating stack: ` +
           s = e.stateNode;
           try {
             Na(s, '');
-          } catch (pe) {
-            Qe(e, e.return, pe);
+          } catch (he) {
+            Qe(e, e.return, he);
           }
         }
         (a & 4 &&
@@ -7429,8 +7429,8 @@ Error generating stack: ` +
           ((a = e.memoizedProps), (i = e.stateNode));
           try {
             i.nodeValue = a;
-          } catch (pe) {
-            Qe(e, e.return, pe);
+          } catch (he) {
+            Qe(e, e.return, he);
           }
         }
         break;
@@ -7446,8 +7446,8 @@ Error generating stack: ` +
         )
           try {
             nn(t.containerInfo);
-          } catch (pe) {
-            Qe(e, e.return, pe);
+          } catch (he) {
+            Qe(e, e.return, he);
           }
         Qu && ((Qu = !1), o_(e));
         break;
@@ -7499,8 +7499,8 @@ Error generating stack: ` +
                       Y = te != null && te.hasOwnProperty('display') ? te.display : null;
                     g.style.display = Y == null || typeof Y == 'boolean' ? '' : ('' + Y).trim();
                   }
-                } catch (pe) {
-                  Qe(T, T.return, pe);
+                } catch (he) {
+                  Qe(T, T.return, he);
                 }
               }
             } else if (t.tag === 6) {
@@ -7508,8 +7508,8 @@ Error generating stack: ` +
                 T = t;
                 try {
                   T.stateNode.nodeValue = s ? '' : T.memoizedProps;
-                } catch (pe) {
-                  Qe(T, T.return, pe);
+                } catch (he) {
+                  Qe(T, T.return, he);
                 }
               }
             } else if (t.tag === 18) {
@@ -7518,8 +7518,8 @@ Error generating stack: ` +
                 try {
                   var V = T.stateNode;
                   s ? t5(V, !0) : t5(T.stateNode, !1);
-                } catch (pe) {
-                  Qe(T, T.return, pe);
+                } catch (he) {
+                  Qe(T, T.return, he);
                 }
               }
             } else if (
@@ -8114,10 +8114,10 @@ Error generating stack: ` +
         unsuspend: $i,
       }),
         f_(t, u, te));
-      var pe = (u & 62914560) === u ? wr - St() : (u & 4194048) === u ? g_ - St() : 0;
-      if (((pe = Dp(te, pe)), pe !== null)) {
+      var he = (u & 62914560) === u ? wr - St() : (u & 4194048) === u ? g_ - St() : 0;
+      if (((he = Dp(te, he)), he !== null)) {
         ((ll = u),
-          (e.cancelPendingCommit = pe(B_.bind(null, e, t, u, i, a, s, f, g, T, Z, te, null, Y, V))),
+          (e.cancelPendingCommit = he(B_.bind(null, e, t, u, i, a, s, f, g, T, Z, te, null, Y, V))),
           Bl(e, u, f, !U));
         return;
       }
@@ -8532,9 +8532,9 @@ Error generating stack: ` +
                   Y = (te && te.defaultView) || window;
                 if (Y.getSelection) {
                   var V = Y.getSelection(),
-                    pe = g.textContent.length,
-                    je = Math.min(T.start, pe),
-                    Pe = T.end === void 0 ? je : Math.min(T.end, pe);
+                    he = g.textContent.length,
+                    je = Math.min(T.start, he),
+                    Pe = T.end === void 0 ? je : Math.min(T.end, he);
                   !V.extend && je > Pe && ((f = Pe), (Pe = je), (je = f));
                   var M = f0(g, je),
                     I = f0(g, Pe);
@@ -9107,7 +9107,7 @@ Error generating stack: ` +
         var Y = S0.get(e);
         if (Y !== void 0) {
           var V = Ys,
-            pe = e;
+            he = e;
           switch (e) {
             case 'keypress':
               if ($s(i) === 0) break e;
@@ -9116,10 +9116,10 @@ Error generating stack: ` +
               V = n1;
               break;
             case 'focusin':
-              ((pe = 'focus'), (V = qd));
+              ((he = 'focus'), (V = qd));
               break;
             case 'focusout':
-              ((pe = 'blur'), (V = qd));
+              ((he = 'blur'), (V = qd));
               break;
             case 'beforeblur':
             case 'afterblur':
@@ -9205,7 +9205,7 @@ Error generating stack: ` +
               break;
             I = I.return;
           }
-          0 < je.length && ((Y = new V(Y, pe, null, i, Z)), te.push({ event: Y, listeners: je }));
+          0 < je.length && ((Y = new V(Y, he, null, i, Z)), te.push({ event: Y, listeners: je }));
         }
       }
       if ((t & 7) === 0) {
@@ -9213,7 +9213,7 @@ Error generating stack: ` +
           if (
             ((Y = e === 'mouseover' || e === 'pointerover'),
             (V = e === 'mouseout' || e === 'pointerout'),
-            Y && i !== Ed && (pe = i.relatedTarget || i.fromElement) && (Be(pe) || pe[Ri]))
+            Y && i !== Ed && (he = i.relatedTarget || i.fromElement) && (Be(he) || he[Ri]))
           )
             break e;
           if (
@@ -9225,14 +9225,14 @@ Error generating stack: ` +
                   ? Y.defaultView || Y.parentWindow
                   : window),
             V
-              ? ((pe = i.relatedTarget || i.toElement),
+              ? ((he = i.relatedTarget || i.toElement),
                 (V = U),
-                (pe = pe ? Be(pe) : null),
-                pe !== null &&
-                  ((Pe = o(pe)), (je = pe.tag), pe !== Pe || (je !== 5 && je !== 27 && je !== 6)) &&
-                  (pe = null))
-              : ((V = null), (pe = U)),
-            V !== pe)
+                (he = he ? Be(he) : null),
+                he !== null &&
+                  ((Pe = o(he)), (je = he.tag), he !== Pe || (je !== 5 && je !== 27 && je !== 6)) &&
+                  (he = null))
+              : ((V = null), (he = U)),
+            V !== he)
           ) {
             if (
               ((je = Fm),
@@ -9242,21 +9242,21 @@ Error generating stack: ` +
               (e === 'pointerout' || e === 'pointerover') &&
                 ((je = e0), (ee = 'onPointerLeave'), (M = 'onPointerEnter'), (I = 'pointer')),
               (Pe = V == null ? Y : ot(V)),
-              (H = pe == null ? Y : ot(pe)),
+              (H = he == null ? Y : ot(he)),
               (Y = new je(ee, I + 'leave', V, i, Z)),
               (Y.target = Pe),
               (Y.relatedTarget = H),
               (ee = null),
               Be(Z) === U &&
-                ((je = new je(M, I + 'enter', pe, i, Z)),
+                ((je = new je(M, I + 'enter', he, i, Z)),
                 (je.target = H),
                 (je.relatedTarget = Pe),
                 (ee = je)),
               (Pe = ee),
-              V && pe)
+              V && he)
             )
               t: {
-                for (je = _p, M = V, I = pe, H = 0, ee = M; ee; ee = je(ee)) H++;
+                for (je = _p, M = V, I = he, H = 0, ee = M; ee; ee = je(ee)) H++;
                 ee = 0;
                 for (var xe = I; xe; xe = je(xe)) ee++;
                 for (; 0 < H - ee; ) ((M = je(M)), H--);
@@ -9272,7 +9272,7 @@ Error generating stack: ` +
               }
             else je = null;
             (V !== null && K_(te, Y, V, je, !1),
-              pe !== null && Pe !== null && K_(te, Pe, pe, je, !0));
+              he !== null && Pe !== null && K_(te, Pe, he, je, !0));
           }
         }
         e: {
@@ -9999,14 +9999,14 @@ Error generating stack: ` +
         Ym(e, Y, V);
         return;
       case 'option':
-        for (var pe in i)
-          if (((Y = i[pe]), i.hasOwnProperty(pe) && Y != null && !a.hasOwnProperty(pe)))
-            switch (pe) {
+        for (var he in i)
+          if (((Y = i[he]), i.hasOwnProperty(he) && Y != null && !a.hasOwnProperty(he)))
+            switch (he) {
               case 'selected':
                 e.selected = !1;
                 break;
               default:
-                Je(e, t, pe, null, a, Y);
+                Je(e, t, he, null, a, Y);
             }
         for (T in a)
           if (((Y = a[T]), (V = i[T]), a.hasOwnProperty(T) && Y !== V && (Y != null || V != null)))
@@ -12425,11 +12425,11 @@ const Jg = ['slash', 'pierce', 'bash', 'fire', 'ice', 'volt'],
   },
   Fg = '_row_y8iam_1',
   Wg = '_label_y8iam_8',
-  e3 = '_track_y8iam_16',
-  t3 = '_fill_y8iam_24',
-  i3 = '_value_y8iam_30',
-  l3 = '_valueWriting_y8iam_42',
-  rn = { row: Fg, label: Wg, track: e3, fill: t3, value: i3, valueWriting: l3 },
+  ek = '_track_y8iam_16',
+  tk = '_fill_y8iam_24',
+  ik = '_value_y8iam_30',
+  lk = '_valueWriting_y8iam_42',
+  rn = { row: Fg, label: Wg, track: ek, fill: tk, value: ik, valueWriting: lk },
   ps = ({
     value: l,
     max: n,
@@ -15180,8 +15180,8 @@ const Jg = ['slash', 'pierce', 'bash', 'fire', 'ice', 'volt'],
       titleOptions: ['title_necromancer', 'title_puppeteer'],
     },
   },
-  a3 = 10,
-  n3 = {
+  ak = 10,
+  nk = {
     id: 'ea_double_strike',
     name: '二連撃',
     element: 'bash',
@@ -15199,7 +15199,7 @@ const Jg = ['slash', 'pierce', 'bash', 'fire', 'ice', 'volt'],
     weight: 3,
     cond: { cooldown: 4 },
   },
-  s3 = {
+  sk = {
     id: 'ea_weak_poison',
     name: '毒牙',
     element: 'pierce',
@@ -15231,7 +15231,7 @@ const Jg = ['slash', 'pierce', 'bash', 'fire', 'ice', 'volt'],
     weight: 5,
     cond: { cooldown: 3 },
   },
-  r3 = {
+  rk = {
     id: 'ea_sweep',
     name: '薙ぎ払い',
     element: 'bash',
@@ -15240,7 +15240,7 @@ const Jg = ['slash', 'pierce', 'bash', 'fire', 'ice', 'volt'],
     weight: 4,
     cond: { cooldown: 4 },
   },
-  d3 = {
+  dk = {
     id: 'ea_war_roar',
     name: '戦吼',
     element: 'almighty',
@@ -15249,7 +15249,7 @@ const Jg = ['slash', 'pierce', 'bash', 'fire', 'ice', 'volt'],
     weight: 3,
     cond: { cooldown: 5 },
   },
-  u3 = {
+  uk = {
     id: 'ea_bind_bite',
     name: '噛み砕き',
     element: 'bash',
@@ -15329,14 +15329,14 @@ function Ls(l, n, d) {
     cond: { hpBelow: 0.6, cooldown: 5 },
   };
 }
-const c3 = {
-    zako_bruiser: [n3, H5],
-    zako_venom: [s3, U5],
+const ck = {
+    zako_bruiser: [nk, H5],
+    zako_venom: [sk, U5],
     zako_caster: [U5, H5],
-    foe_heavy: [$5, d3, u3],
-    foe_striker: [$5, r3],
+    foe_heavy: [$5, dk, uk],
+    foe_striker: [$5, rk],
   },
-  m3 = [
+  mk = [
     As('eb_gk_sig', '大地割り', 'bash'),
     Es('eb_gk_aoe', '岩砕き', 'bash'),
     Bs('eb_gk_sbuff'),
@@ -15344,7 +15344,7 @@ const c3 = {
     Is('eb_gk_enrage', '激昂', 'bash'),
     Ls('eb_gk_status', '石礫の嵐', 'paralysis'),
   ],
-  o3 = [
+  ok = [
     As('eb_ml_sig', '山嶺の一撃', 'bash'),
     Es('eb_ml_aoe', '猿軍の押し潰し', 'bash'),
     Bs('eb_ml_sbuff'),
@@ -15352,7 +15352,7 @@ const c3 = {
     Is('eb_ml_enrage', '激昂', 'bash'),
     Ls('eb_ml_status', '雄叫び', 'paralysis'),
   ],
-  _3 = [
+  _k = [
     As('eb_fm_sig', '絶対零度', 'bash'),
     Es('eb_fm_aoe', '氷雪乱舞', 'ice'),
     Bs('eb_fm_sbuff'),
@@ -15360,7 +15360,7 @@ const c3 = {
     Is('eb_fm_enrage', '激昂・極氷', 'ice'),
     Ls('eb_fm_status', '凍結の息吹', 'paralysis'),
   ],
-  f3 = [
+  fk = [
     As('eb_ts_sig', '雷霆斬', 'slash'),
     Es('eb_ts_aoe', '嵐の剣舞', 'volt'),
     Bs('eb_ts_sbuff'),
@@ -15368,7 +15368,7 @@ const c3 = {
     Is('eb_ts_enrage', '激昂・雷霆', 'volt'),
     Ls('eb_ts_status', '電撃の刃', 'paralysis'),
   ],
-  v3 = [
+  vk = [
     As('eb_bs_sig', '瘴気爆発', 'bash'),
     Es('eb_bs_aoe', '腐敗の波動', 'bash'),
     Bs('eb_bs_sbuff'),
@@ -15428,7 +15428,7 @@ const c3 = {
       drops: [{ itemId: 'item_golem_core', rate: 1 }],
       isBoss: !0,
       kind: 'boss',
-      actions: m3,
+      actions: mk,
     },
     enemy_t0_forest_rabbit: {
       id: 'enemy_t0_forest_rabbit',
@@ -15703,7 +15703,7 @@ const c3 = {
       drops: [{ itemId: 'item_mat_t1_lord_pelt', rate: 1 }],
       kind: 'boss',
       isBoss: !0,
-      actions: o3,
+      actions: ok,
       ailmentResist: { sleep: 0 },
     },
     enemy_t2_frostfang_wolf: {
@@ -15882,7 +15882,7 @@ const c3 = {
       drops: [{ itemId: 'item_mat_t2_monarch_diadem', rate: 1 }],
       kind: 'boss',
       isBoss: !0,
-      actions: _3,
+      actions: _k,
       ailmentResist: { poison: 0, sleep: 0, paralysis: 0.5 },
     },
     enemy_t3_storm_wolf: {
@@ -16061,7 +16061,7 @@ const c3 = {
       drops: [{ itemId: 'item_mat_t3_sovereign_horn', rate: 1 }],
       kind: 'boss',
       isBoss: !0,
-      actions: f3,
+      actions: fk,
       ailmentResist: { paralysis: 0, sleep: 0 },
     },
     enemy_t4_rotwalker: {
@@ -16268,7 +16268,7 @@ const c3 = {
       ],
       kind: 'boss',
       isBoss: !0,
-      actions: v3,
+      actions: vk,
       ailmentResist: { poison: 0, sleep: 0 },
     },
   },
@@ -16624,10 +16624,10 @@ const c3 = {
       buyPrice: 0,
     },
   };
-function p3(l) {
+function pk(l) {
   return l.category === 'food' ? 0 : l.category === 'material' ? 8 : Math.floor(l.buyPrice / 2);
 }
-function h3(l) {
+function hk(l) {
   var n;
   return ((n = lt[l]) == null ? void 0 : n.category) === 'food';
 }
@@ -16832,7 +16832,7 @@ const Ke = {
       effects: [{ kind: 'damage', statBase: 'str', power: (l) => 2.3 + 0.4 * l }],
     },
   },
-  g3 = [
+  gk = [
     'poison',
     'paralysis',
     'sleep',
@@ -16844,14 +16844,14 @@ const Ke = {
     'armBind',
     'legBind',
   ],
-  k3 = { zako: 0.7, foe: 0.5, boss: 0.35 };
-function y3(l) {
-  const n = k3[l],
+  kk = { zako: 0.7, foe: 0.5, boss: 0.35 };
+function yk(l) {
+  const n = kk[l],
     d = {};
-  for (const r of g3) d[r] = n;
+  for (const r of gk) d[r] = n;
   return d;
 }
-const b3 = {
+const bk = {
   construct: { poison: 0, sleep: 0, paralysis: 0.5 },
   spirit: { armBind: 0, headBind: 0, legBind: 0, poison: 0, sleep: 1.3 },
   undead: { poison: 0, sleep: 0 },
@@ -16861,7 +16861,7 @@ const b3 = {
   bird: { legBind: 0 },
   beast: {},
 };
-function x3(l) {
+function xk(l) {
   const n = l.name,
     d = l.id;
   return n.includes('ゴーレム') ||
@@ -16936,8 +16936,8 @@ function hm(l) {
   if (!n) return {};
   const d = n.kind ?? 'zako',
     r = d === 'boss' ? 'boss' : d === 'foe' ? 'foe' : 'zako',
-    m = x3(n);
-  return { ...y3(r), ...b3[m], ...(n.ailmentResist ?? {}) };
+    m = xk(n);
+  return { ...yk(r), ...bk[m], ...(n.ailmentResist ?? {}) };
 }
 const at = {
     equip_short_sword: {
@@ -17490,15 +17490,15 @@ const at = {
       persistsOutOfDungeon: !1,
     },
   },
-  S3 = ['hp', 'tp', 'str', 'vit', 'agi', 'int', 'mnd', 'luc'],
-  w3 = ['slash', 'pierce', 'bash'],
+  Sk = ['hp', 'tp', 'str', 'vit', 'agi', 'int', 'mnd', 'luc'],
+  wk = ['slash', 'pierce', 'bash'],
   ad = (l, n, d) => Math.max(n, Math.min(d, l));
 function Nf(l, n) {
   const d = {};
-  for (const r of S3) d[r] = Math.round(l[r] * n);
+  for (const r of Sk) d[r] = Math.round(l[r] * n);
   return d;
 }
-function j3(l, n) {
+function jk(l, n) {
   return Nf(l.baseStats, pm(n, l.refDepth));
 }
 function dn(l, n) {
@@ -17530,9 +17530,9 @@ function nd(l, n, d, r) {
     crit: l.luc,
   };
 }
-const T3 = (l) => l.ailments.some((n) => n.type === 'blind'),
-  N3 = (l) => l.ailments.some((n) => n.type === 'legBind');
-function A3(l, n, d, r) {
+const Tk = (l) => l.ailments.some((n) => n.type === 'blind'),
+  Nk = (l) => l.ailments.some((n) => n.type === 'legBind');
+function Ak(l, n, d, r) {
   var S;
   const m = d.statBase === 'str',
     o = nd(l.stats, l.equip, l.buffs, l.passive),
@@ -17541,14 +17541,14 @@ function A3(l, n, d, r) {
     p = m ? _.pdef : _.mdef;
   let v = !0;
   if (m) {
-    const E = T3(l) ? qe.BLIND_ACC_PENALTY : 0,
-      O = N3(n) ? 0 : _.eva,
+    const E = Tk(l) ? qe.BLIND_ACC_PENALTY : 0,
+      O = Nk(n) ? 0 : _.eva,
       ie = ad(qe.BASE_HIT + (o.acc - O) * qe.HIT_AGI_K - E, qe.HIT_MIN, 1);
     v = r.next() < ie;
   }
   if (!v) return { damage: 0, hit: !1, critical: !1 };
   const y = (h * d.power * qe.DAMAGE_DEF_K) / (qe.DAMAGE_DEF_K + Math.max(0, p)),
-    j = m && w3.includes(d.element),
+    j = m && wk.includes(d.element),
     C = j && l.row === 'back' ? qe.BACK_ROW_MELEE_MULT : 1,
     q = j && n.row === 'back' ? qe.BACK_ROW_MELEE_MULT : 1,
     Q = C * q,
@@ -17576,29 +17576,29 @@ function Bf(l) {
 function Cf(l) {
   return Math.floor(Ef(l) / (Af() + 1)) + 1;
 }
-function E3(l) {
+function Ek(l) {
   const n = Bf(l);
   return Object.values(xt)
     .filter((d) => d.tierBand === n && !d.isBoss && d.kind !== 'foe')
     .map((d) => d.id);
 }
-function B3(l, n) {
-  const d = E3(l);
+function Bk(l, n) {
+  const d = Ek(l);
   if (d.length === 0) return [];
   const r = n.range(1, 3);
   return Array.from({ length: r }, () => n.pick(d));
 }
-function C3(l) {
+function Ck(l) {
   return Math.round(Ii.STAT_PER_LEVEL * Math.pow(Ii.TIER_STEP, l));
 }
 function td(l) {
   const n = at[l];
   return n ? Math.max(2, Math.floor(n.buyPrice / 120)) : 2;
 }
-function I3(l, n) {
+function Ik(l, n) {
   const d = at[l];
   if (!d || n <= 0) return {};
-  const r = C3(d.tier ?? 0),
+  const r = Ck(d.tier ?? 0),
     m = n * r;
   return d.slot === 'weapon' ? { atk: m, mat: m } : d.slot === 'armor' ? { def: m, mdf: m } : {};
 }
@@ -17620,7 +17620,7 @@ function gm(l, n) {
   );
 }
 const If = ['weapon', 'armor', 'accessory'];
-function L3(l, n, d) {
+function Lk(l, n, d) {
   const r = l.guild.equipment.map((o) => (o.id === n ? d(o) : o)),
     m = l.guild.members.map((o) => {
       let _ = !1;
@@ -17633,7 +17633,7 @@ function L3(l, n, d) {
     });
   return { ...l, guild: { ...l.guild, equipment: r, members: m } };
 }
-function M3(l, n, d) {
+function Mk(l, n, d) {
   let r = l.guild.equipment.find((_) => _.id === n);
   if (!r)
     for (const _ of l.guild.members)
@@ -17652,7 +17652,7 @@ function M3(l, n, d) {
       ingots: { ...l.forgeInventory.ingots, [d]: l.forgeInventory.ingots[d] - 1 },
     },
   };
-  return ((o = L3(o, n, (_) => ({ ..._, forgeLevel: m }))), { ok: !0, save: o });
+  return ((o = Lk(o, n, (_) => ({ ..._, forgeLevel: m }))), { ok: !0, save: o });
 }
 function Lf(l, n) {
   const d = l.guild.equipment.find((_) => _.id === n);
@@ -17675,7 +17675,7 @@ function Lf(l, n) {
     },
   };
 }
-function O3(l, n) {
+function Ok(l, n) {
   let d = l;
   for (const r of n) {
     const m = Lf(d, r);
@@ -17759,12 +17759,12 @@ function Rf(l, n, d) {
     guild: { ...l.guild, members: l.guild.members.map((r) => (r.id === n ? d(r) : r)) },
   };
 }
-function q3() {
+function qk() {
   return `eq_${Date.now().toString(36)}_${Math.floor(Math.random() * 16777215).toString(36)}`;
 }
-function D3(l, n, d = 0, r = 1) {
+function Dk(l, n, d = 0, r = 1) {
   if (!at[n]) return l;
-  const m = { id: q3(), masterId: n, forgeLevel: d };
+  const m = { id: qk(), masterId: n, forgeLevel: d };
   return (
     r > 1 && (m.grade = r),
     { ...l, guild: { ...l.guild, equipment: [...l.guild.equipment, m] } }
@@ -17782,7 +17782,7 @@ function xm(l, n) {
         : !0
     : !1;
 }
-function z3(l, n, d) {
+function zk(l, n, d) {
   const r = l.guild.equipment.find((v) => v.id === d),
     m = l.guild.members.find((v) => v.id === n);
   if (!r || !m || !xm(m, r.masterId)) return l;
@@ -18316,14 +18316,14 @@ const tm = {
       mods: (l) => ({ matk: 1 + 0.03 * l, maxTp: 1 + 0.03 * l }),
     },
   },
-  R3 = ['patk', 'matk', 'pdef', 'mdef', 'acc', 'eva', 'maxHp', 'maxTp'];
-function H3(l) {
+  Rk = ['patk', 'matk', 'pdef', 'mdef', 'acc', 'eva', 'maxHp', 'maxTp'];
+function Hk(l) {
   var d;
   const n = l.equipment.weapon;
   if (n) return (d = at[n.masterId]) == null ? void 0 : d.weaponType;
 }
-function U3(l) {
-  const n = H3(l),
+function Uk(l) {
+  const n = Hk(l),
     d = {};
   let r = 0;
   for (const [m, o] of Object.entries(l.learnedSkills)) {
@@ -18331,12 +18331,12 @@ function U3(l) {
     const _ = tm[m];
     if (!_ || (_.weaponType && _.weaponType !== n)) continue;
     const h = _.mods(o);
-    for (const p of R3) h[p] !== void 0 && (d[p] = (d[p] ?? 1) * h[p]);
+    for (const p of Rk) h[p] !== void 0 && (d[p] = (d[p] ?? 1) * h[p]);
     h.crit !== void 0 && (r += h.crit);
   }
   return (r !== 0 && (d.crit = r), d);
 }
-function $3(l) {
+function $k(l) {
   switch (l) {
     case 'enemyRow':
       return 1.5;
@@ -18350,8 +18350,8 @@ function $3(l) {
       return 1;
   }
 }
-function G3(l, n, d) {
-  const r = $3(d);
+function Gk(l, n, d) {
+  const r = $k(d);
   switch (l.kind) {
     case 'damage': {
       const m = l.power(n),
@@ -18393,7 +18393,7 @@ function G3(l, n, d) {
 }
 function ws(l, n) {
   let d = 0;
-  for (const r of l.effects) d += G3(r, n, l.target);
+  for (const r of l.effects) d += Gk(r, n, l.target);
   return Math.max(1, Math.round(d));
 }
 const jt = (l) => ({ hp: 0, tp: 0, str: 0, vit: 0, agi: 0, int: 0, mnd: 0, luc: 0, ...l }),
@@ -18717,7 +18717,7 @@ function wm(l) {
   ];
   return (l.titleId && dl[l.titleId] && n.push(...dl[l.titleId].skillTree.skills), n);
 }
-function Y3(l, n) {
+function Yk(l, n) {
   const d = new Map(l.map((o) => [o.skillId, o])),
     r = new Map(),
     m = (o, _ = 0) => {
@@ -18733,7 +18733,7 @@ function Y3(l, n) {
   return m(n);
 }
 function gn(l, n) {
-  return Hf(Y3(wm(l), n));
+  return Hf(Yk(wm(l), n));
 }
 function _n(l, n) {
   return l.learnedSkills[n] ?? 0;
@@ -18757,7 +18757,7 @@ function Gf(l, n) {
       }
     : l;
 }
-function V3(l) {
+function Vk(l) {
   var m, o;
   const n = wm(l),
     d =
@@ -18772,10 +18772,10 @@ function V3(l) {
   }
   return r;
 }
-function K3(l) {
-  return Math.max(0, l.skillPoints.total - V3(l));
+function Kk(l) {
+  return Math.max(0, l.skillPoints.total - Vk(l));
 }
-const X3 = ['hp', 'tp', 'str', 'vit', 'agi', 'int', 'mnd', 'luc'];
+const Xk = ['hp', 'tp', 'str', 'vit', 'agi', 'int', 'mnd', 'luc'];
 function ul(l) {
   var p, v;
   const n = Ke[l.raceId];
@@ -18783,17 +18783,17 @@ function ul(l) {
   const r = Math.max(1, Math.min(l.level, qe.LEVEL_CAP)) - 1,
     m = l.titleId ? ((p = dl[l.titleId]) == null ? void 0 : p.growthModifier) : void 0,
     o = (v = l.rebirthBonus) == null ? void 0 : v.stats,
-    _ = Math.floor(K3(l) / qe.SURPLUS_SP_PER_STAT),
+    _ = Math.floor(Kk(l) / qe.SURPLUS_SP_PER_STAT),
     h = {};
-  for (const b of X3) {
+  for (const b of Xk) {
     const y = n.statGrowth[b] + ((m == null ? void 0 : m[b]) ?? 0);
     h[b] = n.baseStatsAtLv1[b] + y * r + ((o == null ? void 0 : o[b]) ?? 0) + _;
   }
   return h;
 }
-const Q3 = 3,
+const Qk = 3,
   Ft = (l, n, d) => Math.max(n, Math.min(d, l)),
-  Z3 = {
+  Zk = {
     poison: '毒',
     paralysis: '麻痺',
     sleep: '睡眠',
@@ -18805,12 +18805,12 @@ const Q3 = 3,
     armBind: '腕封じ',
     legBind: '脚封じ',
   };
-function J3(l) {
+function Jk(l) {
   const n = { atk: 0, mat: 0, def: 0, mdf: 0 };
   for (const d of Object.values(l.equipment)) {
     if (!d || !at[d.masterId]) continue;
     const m = gm(d.masterId, d.grade),
-      o = I3(d.masterId, d.forgeLevel);
+      o = Ik(d.masterId, d.forgeLevel);
     ((n.atk += (m.atk ?? 0) + (o.atk ?? 0)),
       (n.mat += (m.mat ?? 0) + (o.mat ?? 0)),
       (n.def += (m.def ?? 0) + (o.def ?? 0)),
@@ -18818,13 +18818,13 @@ function J3(l) {
   }
   return n;
 }
-function P3(l, n) {
+function Pk(l, n) {
   var b;
   const d = l.guild.members.find((y) => y.id === n);
   if (!d) return null;
   const r = (b = l.diveState) == null ? void 0 : b.party.find((y) => y.charId === n),
     m = ul(d),
-    o = U3(d),
+    o = Uk(d),
     _ = Math.round(m.hp * (o.maxHp ?? 1)),
     h = Math.round(m.tp * (o.maxTp ?? 1)),
     p = l.guild.party.front.includes(n),
@@ -18835,7 +18835,7 @@ function P3(l, n) {
     side: 'ally',
     row: p ? 'front' : 'back',
     stats: m,
-    equip: J3(d),
+    equip: Jk(d),
     hp: r ? Math.min(r.hp, _) : _,
     maxHp: _,
     tp: r ? Math.min(r.tp, h) : h,
@@ -18851,9 +18851,9 @@ function P3(l, n) {
     skillLevels: d.learnedSkills,
   };
 }
-function F3(l, n, d) {
+function Fk(l, n, d) {
   const r = xt[l],
-    m = j3(r, d),
+    m = jk(r, d),
     o = Cf(d);
   return {
     id: `enemy_${n}`,
@@ -18904,9 +18904,9 @@ function Y5(l, n, d = 'none') {
   const r = ((p = l.diveState) == null ? void 0 : p.depth) ?? 1,
     o = [...l.guild.party.front, ...l.guild.party.back]
       .filter((b) => b !== null)
-      .map((b) => P3(l, b))
+      .map((b) => Pk(l, b))
       .filter((b) => b !== null),
-    _ = n.map((b, y) => F3(b, y, r)),
+    _ = n.map((b, y) => Fk(b, y, r)),
     h = (((v = l.diveState) == null ? void 0 : v.persistentSummons) ?? [])
       .map((b, y) => Yf(b.summonKind, r, b.ownerId, `summon_persist_${y}`, b.hp))
       .filter((b) => !b.isDown);
@@ -18938,7 +18938,7 @@ const jm = (l) => {
       !!l.isSummon && !!l.summonKind && ((n = hn[l.summonKind]) == null ? void 0 : n.buffImmune)
     );
   },
-  W3 = (l, n) => {
+  Wk = (l, n) => {
     var d;
     return ((d = l.resist) == null ? void 0 : d[n]) ?? 1;
   };
@@ -18966,7 +18966,7 @@ function lm(l, n) {
     ((l.buffs = l.buffs.filter((d) => !(d.stat === n.stat && d.stackGroup === n.stackGroup))),
     l.buffs.push(n));
 }
-function ek(l, n) {
+function e3(l, n) {
   if (jm(l)) return;
   const d = l.ailments.find((r) => r.type === n.type);
   if (d) {
@@ -18978,10 +18978,10 @@ function ek(l, n) {
 function hs(l, n) {
   jm(l) || (l.states = [...(l.states ?? []).filter((d) => d.kind !== n.kind), n]);
 }
-function tk(l, n) {
+function t3(l, n) {
   return n.side === 'ally' ? [...Tt(l, 'ally'), ...vd(l)] : Tt(l, 'enemy');
 }
-function ik(l, n, d) {
+function i3(l, n, d) {
   const r = (l.states ?? []).find((o) => o.kind === 'barrier' && o.absorb > 0);
   if (!r || r.kind !== 'barrier') return n;
   const m = Math.min(r.absorb, n);
@@ -18994,19 +18994,19 @@ function ik(l, n, d) {
 }
 function sd(l, n, d, r, m, o = {}) {
   if (d.isDown) return { hit: !1, dealt: 0 };
-  const _ = A3(
+  const _ = Ak(
     n,
     d,
     {
       statBase: r.statBase,
       power: r.power,
       element: r.element,
-      elementMultiplier: W3(d, r.element),
+      elementMultiplier: Wk(d, r.element),
     },
     m
   );
   if (!_.hit) return (l.log.push({ text: `${n.name} の攻撃は外れた` }), { hit: !1, dealt: 0 });
-  const h = ik(d, _.damage, l.log),
+  const h = i3(d, _.damage, l.log),
     p = Vf(d, h);
   (o.actorUnion && im(n, o.actorUnion),
     im(d, 5),
@@ -19032,7 +19032,7 @@ function Kf(l, n, d, r, m, o) {
         break;
     }
   if (m > 0 && d.side !== n.side) {
-    for (const _ of tk(l, n))
+    for (const _ of t3(l, n))
       if (!(_.id === n.id || _.isDown || d.isDown))
         for (const h of _.states ?? [])
           h.kind === 'chase' &&
@@ -19043,7 +19043,7 @@ function Kf(l, n, d, r, m, o) {
               })));
   }
 }
-function lk(l, n, d, r) {
+function l3(l, n, d, r) {
   var _;
   const m = r !== void 0 ? (((_ = d.ailmentResist) == null ? void 0 : _[r]) ?? 1) : 1;
   if (m === 0) return 0;
@@ -19071,7 +19071,7 @@ function Tm(l, n, d, r) {
     }
   }
 }
-function ak(l, n, d, r) {
+function a3(l, n, d, r) {
   return Tm(l, n, d.target, r);
 }
 function am(l, n, d, r, m, o, _, h) {
@@ -19125,16 +19125,16 @@ function am(l, n, d, r, m, o, _, h) {
     case 'ailment': {
       for (const p of o) {
         if (p.isDown) continue;
-        const v = lk(d.chance(m), n, p, d.ailment);
+        const v = l3(d.chance(m), n, p, d.ailment);
         _.next() < v &&
-          (ek(p, { type: d.ailment, remainingTurns: d.turns, magnitude: d.magnitude }),
-          l.log.push({ text: `${p.name} は${Z3[d.ailment]}になった` }));
+          (e3(p, { type: d.ailment, remainingTurns: d.turns, magnitude: d.magnitude }),
+          l.log.push({ text: `${p.name} は${Zk[d.ailment]}になった` }));
       }
       break;
     }
     case 'summon': {
       if (n.side !== 'ally') break;
-      if (vd(l).length >= Q3) {
+      if (vd(l).length >= Qk) {
         l.log.push({ text: 'これ以上は召喚できない' });
         break;
       }
@@ -19233,7 +19233,7 @@ function zc(l, n, d, r) {
   o.hit && Kf(l, n, d, m, o.dealt, r);
 }
 const V5 = (l) => (l.length === 0 ? 0 : l.reduce((n, d) => n + d.stats.agi, 0) / l.length);
-function nk(l, n) {
+function n3(l, n) {
   const d = l.map(
       (o) => 1 + (o.states ?? []).reduce((_, h) => _ + (h.kind === 'decoy' ? h.weight : 0), 0)
     ),
@@ -19242,16 +19242,16 @@ function nk(l, n) {
   for (let o = 0; o < l.length; o++) if (((m -= d[o]), m < 0)) return l[o];
   return l[l.length - 1];
 }
-const sk = (l) => l.ailments.some((n) => n.type === 'paralysis'),
-  rk = (l) => l.ailments.some((n) => n.type === 'sleep'),
+const s3 = (l) => l.ailments.some((n) => n.type === 'paralysis'),
+  r3 = (l) => l.ailments.some((n) => n.type === 'sleep'),
   Nm = (l, n) => l.ailments.some((d) => d.type === n),
   Rc = (l) => Nm(l, 'armBind'),
   K5 = (l) => Nm(l, 'headBind'),
-  dk = (l) => Nm(l, 'legBind');
+  d3 = (l) => Nm(l, 'legBind');
 function X5(l) {
   return l.effects.some((n) => n.kind === 'damage' && n.statBase === 'str');
 }
-function uk(l, n, d) {
+function u3(l, n, d) {
   var b;
   const r = oa[n.unionSkillId];
   if (!r) return;
@@ -19275,7 +19275,7 @@ function uk(l, n, d) {
     v = Tm(l, m, r.target, n.targetId);
   for (const y of r.effects) am(l, m, y, r.element, p, v, d, r.target);
 }
-function ck(l, n, d) {
+function c3(l, n, d) {
   var q, Q, K, A, L, F, D, se, G;
   if (l.outcome !== 'ongoing') return l;
   const r = structuredClone({ ...l, log: [] }),
@@ -19297,11 +19297,11 @@ function ck(l, n, d) {
     p && r.log.push({ text: '不意打ち！ 敵に先手を取られた' }),
     !p)
   )
-    for (const S of n) S.kind === 'union' && uk(r, S, d);
+    for (const S of n) S.kind === 'union' && u3(r, S, d);
   const v = n.find((S) => S.kind === 'flee');
   if (!p && v && r.outcome === 'ongoing') {
     const S = sl(r, v.actorId);
-    if (S && dk(S)) r.log.push({ text: `${S.name} は脚を封じられて逃げられない` });
+    if (S && d3(S)) r.log.push({ text: `${S.name} は脚を封じられて逃げられない` });
     else {
       let E = Ft(0.4 + (V5(Tt(r, 'ally')) - V5(Tt(r, 'enemy'))) * 0.02, 0.05, 0.9);
       if (
@@ -19335,16 +19335,16 @@ function ck(l, n, d) {
   if (!h)
     for (const S of Tt(r, 'enemy')) {
       const E = [...vd(r), ...Tt(r, 'ally')];
-      E.length > 0 && b.set(S.id, nk(E, d).id);
+      E.length > 0 && b.set(S.id, n3(E, d).id);
       const O = S.enemyId ? xt[S.enemyId] : void 0,
-        ie = (O == null ? void 0 : O.actions) ?? (O != null && O.kit ? (c3[O.kit] ?? []) : []),
+        ie = (O == null ? void 0 : O.actions) ?? (O != null && O.kit ? (ck[O.kit] ?? []) : []),
         le = r.turn,
         ue = S,
         _e = (oe) => oe.effects.some((k) => k.kind === 'damage' && k.statBase === 'str'),
         we = Rc(S),
         ye = K5(S),
         $ = [];
-      we || $.push({ action: null, weight: a3 });
+      we || $.push({ action: null, weight: ak });
       for (const oe of ie) {
         const k = oe.cond;
         if (k) {
@@ -19390,11 +19390,11 @@ function ck(l, n, d) {
   for (const S of C)
     if (!S.isDown) {
       if (r.outcome !== 'ongoing') break;
-      if (rk(S)) {
+      if (r3(S)) {
         r.log.push({ text: `${S.name} は眠っている` });
         continue;
       }
-      if (sk(S) && d.next() < qe.PARALYSIS_SKIP) {
+      if (s3(S) && d.next() < qe.PARALYSIS_SKIP) {
         r.log.push({ text: `${S.name} は麻痺で動けない` });
         continue;
       }
@@ -19457,7 +19457,7 @@ function ck(l, n, d) {
             continue;
           }
           ((S.tp -= le), im(S, 10));
-          const ue = ak(r, S, O, E.targetId);
+          const ue = a3(r, S, O, E.targetId);
           r.log.push({ text: `${S.name} の${O.name}！` });
           for (const _e of O.effects) am(r, S, _e, O.element, ie, ue, d, O.target);
         } else if (E.kind === 'item') {
@@ -19542,7 +19542,7 @@ function Am(l, n) {
   }
   return { exp: d, gold: r };
 }
-function mk(l, n) {
+function m3(l, n) {
   if (n.outcome !== 'win' || !l.diveState) return [];
   const d = l.towerState.record.deepestReached,
     { exp: r } = Am(n, d),
@@ -19666,19 +19666,19 @@ function Q5(l, n) {
   if (d) for (const C of n.drops) y = km(y, C.itemId, 1, j);
   return y;
 }
-const ok = 8,
+const o3 = 8,
   nm = 16,
   xs = 5;
 function Em(l) {
-  return l.range(ok, nm);
+  return l.range(o3, nm);
 }
-function _k(l, n) {
+function _3(l, n) {
   const d = l - 1;
   return d <= 0
     ? { stepsUntilEncounter: Em(n), triggered: !0 }
     : { stepsUntilEncounter: d, triggered: !1 };
 }
-function fk(l) {
+function f3(l) {
   const n = Math.max(0, nm - l),
     d = Math.round((n / nm) * xs);
   return Math.min(xs, Math.max(0, d));
@@ -19691,7 +19691,7 @@ function Qf(l) {
 function Zf(l) {
   return pn[(pn.indexOf(l) + 3) % 4];
 }
-function vk(l) {
+function v3(l) {
   return pn[(pn.indexOf(l) + 2) % 4];
 }
 const Jf = (l, n, d) => l >= 0 && n >= 0 && l < d.width && n < d.height;
@@ -19701,13 +19701,13 @@ function fa(l, n, d, r) {
     o = d + vi[r].dy;
   return Jf(m, o, l) ? l.cells[o][m].passable : !1;
 }
-function pk(l, n, d) {
+function p3(l, n, d) {
   return fa(l, n.x, n.y, d) ? { x: n.x + vi[d].dx, y: n.y + vi[d].dy } : null;
 }
 function Bm(l, n, d) {
   return ['N', 'E', 'S', 'W'].filter((r) => !l.cells[d][n].walls[r]);
 }
-function hk(l, n, d) {
+function h3(l, n, d) {
   if (n.x === d.x && n.y === d.y) return [];
   if (!Jf(d.x, d.y, l) || !l.cells[d.y][d.x].passable) return null;
   const r = (_, h) => `${_},${h}`,
@@ -19740,7 +19740,7 @@ function hk(l, n, d) {
 }
 const Z5 = ['N', 'E', 'S', 'W'],
   Hc = (l, n) => Math.abs(l.x - n.x) + Math.abs(l.y - n.y);
-function gk(l, n, d, r, m) {
+function g3(l, n, d, r, m) {
   const o = n.map((b) => ({ ...b, cell: { ...b.cell } })),
     _ = new Map(l.foeSpawns.map((b) => [b.id, b])),
     h = new Set(o.filter((b) => !b.defeated).map((b) => `${b.cell.x},${b.cell.y}`));
@@ -19847,8 +19847,8 @@ const va = {
       drops: [{ itemId: 'item_food_meat', weight: 3 }],
     },
   },
-  kk = Object.keys(va);
-function yk(l) {
+  k3 = Object.keys(va);
+function y3(l) {
   const n = Object.values(xt)
     .filter((d) => d.tierBand === l && d.kind === 'foe')
     .map((d) => d.id);
@@ -19858,13 +19858,13 @@ function yk(l) {
         .filter((d) => d.tierBand === l && !d.isBoss && d.kind !== 'foe')
         .map((d) => d.id);
 }
-function bk(l) {
+function b3(l) {
   const n = Object.values(xt).filter((r) => r.isBoss);
   if (n.length === 0) return null;
   const d = n.filter((r) => r.tierBand === l);
   return d.length > 0 ? d[0].id : n.sort((r, m) => m.tierBand - r.tierBand)[0].id;
 }
-function xk(l, n, d, r, m) {
+function x3(l, n, d, r, m) {
   for (const o of ['N', 'E', 'S', 'W']) {
     if (l[d][n].walls[o]) continue;
     const _ = n + Si[o].dx,
@@ -19874,19 +19874,19 @@ function xk(l, n, d, r, m) {
   return null;
 }
 const Si = { N: { dx: 0, dy: -1 }, E: { dx: 1, dy: 0 }, S: { dx: 0, dy: 1 }, W: { dx: -1, dy: 0 } },
-  Sk = { N: 'S', E: 'W', S: 'N', W: 'E' };
-function wk(l) {
+  S3 = { N: 'S', E: 'W', S: 'N', W: 'E' };
+function w3(l) {
   return Math.min(25, 15 + Math.floor(l / 5));
 }
-function jk() {
+function j3() {
   return { walls: { N: !0, E: !0, S: !0, W: !0 }, floorType: 'normal', passable: !0 };
 }
 const rd = (l, n, d, r) => l >= 0 && n >= 0 && l < d && n < r;
 function J5(l, n, d, r) {
   const { dx: m, dy: o } = Si[r];
-  ((l[d][n].walls[r] = !1), (l[d + o][n + m].walls[Sk[r]] = !1));
+  ((l[d][n].walls[r] = !1), (l[d + o][n + m].walls[S3[r]] = !1));
 }
-function Tk(l, n, d) {
+function T3(l, n, d) {
   const r = l.length,
     m = l[0].length,
     o = Array.from({ length: r }, () => Array(m).fill(-1)),
@@ -19903,11 +19903,11 @@ function Tk(l, n, d) {
   }
   return o;
 }
-function Nk(l, n) {
-  const d = wk(l),
+function N3(l, n) {
+  const d = w3(l),
     r = d,
     m = d,
-    o = Array.from({ length: m }, () => Array.from({ length: r }, () => jk())),
+    o = Array.from({ length: m }, () => Array.from({ length: r }, () => j3())),
     _ = Array.from({ length: m }, () => Array(r).fill(!1)),
     h = n.int(r),
     p = n.int(m),
@@ -19941,7 +19941,7 @@ function Nk(l, n) {
   }
   const y = n.int(r),
     j = n.int(m),
-    C = Tk(o, y, j);
+    C = T3(o, y, j);
   let q = y,
     Q = j,
     K = -1;
@@ -19951,9 +19951,9 @@ function Nk(l, n) {
   const A = Bf(l),
     L = [];
   if (bs(l)) {
-    const G = bk(A);
+    const G = b3(A);
     if (G) {
-      const S = xk(o, q, Q, r, m) ?? { x: q, y: Q };
+      const S = x3(o, q, Q, r, m) ?? { x: q, y: Q };
       L.push({
         id: 'boss',
         enemyId: G,
@@ -19966,7 +19966,7 @@ function Nk(l, n) {
       });
     }
   } else {
-    const G = yk(A),
+    const G = y3(A),
       S = 1 + Math.floor(l / 8);
     for (let E = 0; E < S && G.length > 0; E++) {
       let O = n.int(r),
@@ -20002,7 +20002,7 @@ function Nk(l, n) {
   for (let G = 0; G < se; G++) {
     const S = D();
     if (!S) break;
-    const E = n.pick(kk),
+    const E = n.pick(k3),
       O = `gather_${G}`;
     ((o[S.y][S.x].event = { kind: 'gather', gatherId: O }), F.push({ id: O, cell: S, type: E }));
   }
@@ -20028,8 +20028,8 @@ function Pf(l, n) {
       if (((d = l.cells[r][m].event) == null ? void 0 : d.kind) === n) return { x: m, y: r };
   return null;
 }
-const Ak = 4294967296;
-function Ek(l, n) {
+const A3 = 4294967296;
+function E3(l, n) {
   let d = 3735928559 ^ l,
     r = 1103547991 ^ l;
   for (let m = 0; m < n.length; m++) {
@@ -20057,7 +20057,7 @@ class Cm {
     return (
       (n = Math.imul(n ^ (n >>> 15), n | 1)),
       (n ^= n + Math.imul(n ^ (n >>> 7), n | 61)),
-      ((n ^ (n >>> 14)) >>> 0) / Ak
+      ((n ^ (n >>> 14)) >>> 0) / A3
     );
   }
   int(n) {
@@ -20073,24 +20073,24 @@ class Cm {
     return n[this.int(n.length)];
   }
   fork(n) {
-    const d = Ek(this.baseSeed, n);
+    const d = E3(this.baseSeed, n);
     return new Cm(d, d);
   }
 }
 function Hl(l) {
   return new Cm(l, l);
 }
-function Bk() {
+function B3() {
   return Math.floor(Math.random() * 4294967296) >>> 0;
 }
 const dd = (l, n) => `${l},${n}`;
-function Ck(l, n) {
+function C3(l, n) {
   return Hl(l).fork(`floor:${n}`);
 }
 function Ff(l, n) {
   const d = l.towerState.floors[n];
   if (d) return { save: l, floor: d };
-  const r = Nk(n, Ck(l.masterSeed, n)),
+  const r = N3(n, C3(l.masterSeed, n)),
     m = r.foeSpawns.map((h) => ({
       spawnId: h.id,
       cell: { ...h.startCell },
@@ -20113,7 +20113,7 @@ function Ff(l, n) {
     floor: o,
   };
 }
-function Ik(l) {
+function I3(l) {
   const n = [...l.guild.party.front, ...l.guild.party.back].filter((r) => r !== null),
     d = [];
   for (const r of n) {
@@ -20154,7 +20154,7 @@ function Wf(l, n, d) {
         depth: n,
         pos: { x: _.x, y: _.y },
         dir: h,
-        party: ((p = m.diveState) == null ? void 0 : p.party) ?? Ik(m),
+        party: ((p = m.diveState) == null ? void 0 : p.party) ?? I3(m),
         persistentSummons: ((v = m.diveState) == null ? void 0 : v.persistentSummons) ?? [],
         encounter: { stepsUntilEncounter: Em(d) },
         pendingFoeBattle: null,
@@ -20193,7 +20193,7 @@ function F5(l, n, d) {
   if (!r) return { save: l, moved: !1, triggered: !1 };
   const m = l.towerState.floors[r.depth],
     o = m.generated,
-    _ = pk(o, r.pos, n);
+    _ = p3(o, r.pos, n);
   if (!_) return { save: ev(l, n), moved: !1, triggered: !1 };
   const h = m.foeRuntime.find((y) => !y.defeated && y.cell.x === _.x && y.cell.y === _.y);
   if (h) {
@@ -20209,7 +20209,7 @@ function F5(l, n, d) {
     let C = { ...l, diveState: { ...r, pos: _, dir: n, pendingFoeBattle: j } };
     return ((C = ud(C, r.depth, _.x, _.y)), { save: C, moved: !0, triggered: j !== null });
   }
-  const p = _k(r.encounter.stepsUntilEncounter, d);
+  const p = _3(r.encounter.stepsUntilEncounter, d);
   let v = {
     ...l,
     diveState: {
@@ -20221,7 +20221,7 @@ function F5(l, n, d) {
     },
   };
   v = ud(v, r.depth, _.x, _.y);
-  const b = gk(o, m.foeRuntime, _, n, d);
+  const b = g3(o, m.foeRuntime, _, n, d);
   return (
     (v = tv(v, r.depth, b.foes)),
     b.contact
@@ -20240,7 +20240,7 @@ function F5(l, n, d) {
       : { save: v, moved: !0, triggered: p.triggered }
   );
 }
-function Lk(l, n) {
+function L3(l, n) {
   const d = l.diveState;
   if (!d) return l;
   const r = d.pendingFoeBattle;
@@ -20249,11 +20249,11 @@ function Lk(l, n) {
     const _ = m.towerState.floors[d.depth].foeRuntime.map((h) =>
       h.spawnId === r.spawnId ? { ...h, defeated: !0 } : h
     );
-    ((m = tv(m, d.depth, _)), r.isBoss && (m = Mk(m, d.depth)));
+    ((m = tv(m, d.depth, _)), r.isBoss && (m = M3(m, d.depth)));
   }
   return m;
 }
-function Mk(l, n, d = Date.now()) {
+function M3(l, n, d = Date.now()) {
   const r = l.towerState,
     m = { ...r.bossGates, [n]: { depth: n, defeated: !0 } },
     o = r.warp.unlockedCheckpoints.includes(n)
@@ -20283,13 +20283,13 @@ function W5(l) {
     ? d.kind
     : null;
 }
-function Ok(l) {
+function O3(l) {
   if (!l.diveState || !iv(l, l.diveState.depth)) return l;
   const n = l.diveState.depth + 1,
     d = Hl(l.masterSeed).fork(`enc:${n}:${l.towerState.record.totalDives}`);
   return Wf(l, n, d);
 }
-function qk(l) {
+function q3(l) {
   if (!l.diveState) return l;
   const n = l.diveState.depth;
   if (n <= 1) return Ts(l);
@@ -20318,14 +20318,14 @@ function qk(l) {
 function Ts(l) {
   return { ...l, diveState: null };
 }
-const Dk = [
+const D3 = [
     { id: 'gungan', label: 'ガンガンいこうぜ' },
     { id: 'batchiri', label: 'バッチリがんばれ' },
     { id: 'inochi', label: 'いのちをだいじに' },
     { id: 'tpKeep', label: 'TPつかうな' },
     { id: 'meirei', label: 'めいれいさせろ' },
   ],
-  zk = {
+  z3 = {
     gungan: 'ガンガン',
     batchiri: 'バッチリ',
     inochi: 'いのち',
@@ -20349,7 +20349,7 @@ function lv(l) {
 function av(l) {
   return l.allies.filter((n) => n.isDown);
 }
-function Rk(l) {
+function R3(l) {
   return l.effects.some((n) => n.kind === 'damage');
 }
 function nv(l) {
@@ -20358,14 +20358,14 @@ function nv(l) {
 function sv(l) {
   return l.effects.some((n) => n.kind === 'revive');
 }
-function Hk(l) {
+function H3(l) {
   return l.effects.some((n) => n.kind === 'cleanse');
 }
 function rv(l, n) {
   var d;
   return ((d = l.resist) == null ? void 0 : d[n]) ?? 1;
 }
-function Uk(l, n, d, r) {
+function U3(l, n, d, r) {
   let m = 0;
   for (const o of l.effects) {
     if (o.kind !== 'damage') continue;
@@ -20384,29 +20384,29 @@ function Mm(l, n, d, r, m) {
   let o = null;
   for (const _ of l) {
     const h = et[_];
-    if (!h || !Rk(h)) continue;
+    if (!h || !R3(h)) continue;
     const p = r[_] ?? 1;
-    let v = Uk(h, n, d, p);
+    let v = U3(h, n, d, p);
     ((h.target === 'enemyAll' || h.target === 'enemyRow') && (v *= Math.min(m, 3)),
       (o === null || v >= o.score) && (o = { skillId: _, score: v }));
   }
   return o;
 }
-function $k(l, n, d, r) {
+function $3(l, n, d, r) {
   switch (l) {
     case 'gungan':
-      return Gk(n, d, r);
+      return G3(n, d, r);
     case 'batchiri':
-      return Yk(n, d, r);
+      return Y3(n, d, r);
     case 'inochi':
-      return Vk(n, d, r);
+      return V3(n, d, r);
     case 'tpKeep':
-      return Kk(n, d, r);
+      return K3(n, d, r);
     case 'meirei':
       return { kind: 'attack' };
   }
 }
-function Gk(l, n, d) {
+function G3(l, n, d) {
   const r = Lm(n),
     m = r[0];
   if (!m) return { kind: 'attack' };
@@ -20417,7 +20417,7 @@ function Gk(l, n, d) {
     ? { kind: 'skill', skillId: h.skillId, targetId: m.id }
     : { kind: 'attack' };
 }
-function Yk(l, n, d) {
+function Y3(l, n, d) {
   const r = Im(l, d),
     m = Lm(n),
     o = m[0],
@@ -20444,7 +20444,7 @@ function Yk(l, n, d) {
   if (v) {
     const j = r.find((C) => {
       const q = et[C];
-      return q && Hk(q);
+      return q && H3(q);
     });
     if (j) return { kind: 'skill', skillId: j, targetId: v.id };
   }
@@ -20458,7 +20458,7 @@ function Yk(l, n, d) {
   }
   return { kind: 'attack' };
 }
-function Vk(l, n, d) {
+function V3(l, n, d) {
   const r = Im(l, d),
     m = lv(n),
     o = av(n);
@@ -20479,7 +20479,7 @@ function Vk(l, n, d) {
   }
   return { kind: 'guard' };
 }
-function Kk(l, n, d) {
+function K3(l, n, d) {
   const r = Lm(n),
     m = r[0],
     o = Object.keys(d).filter((_) => {
@@ -20517,21 +20517,21 @@ const kn = {
     unlockedByDefault: !1,
   },
 };
-function Xk() {
+function X3() {
   return Object.values(kn)
     .filter((l) => l.unlockedByDefault)
     .map((l) => l.id);
 }
 const id = 4,
-  Qk = { autoMap: 'on', bgmVolume: 0.6, seVolume: 0.6 };
+  Q3 = { autoMap: 'on', bgmVolume: 0.6, seVolume: 0.6 };
 function ef() {
   return { monsters: {}, items: {} };
 }
-function Zk() {
+function Z3() {
   return { deepestReached: 0, highestBossDefeated: 0, totalDives: 0, bossDefeatLog: [] };
 }
-const Jk = () => ({ weapon: null, armor: null, accessory: null });
-function Pk() {
+const J3 = () => ({ weapon: null, armor: null, accessory: null });
+function P3() {
   return `char_${Date.now().toString(36)}_${Math.floor(Math.random() * 16777215).toString(36)}`;
 }
 function uv(l) {
@@ -20542,7 +20542,7 @@ function uv(l) {
   const o = (h = Ve[d].skillTree.skills[0]) == null ? void 0 : h.skillId,
     _ = o ? { [o]: 1 } : {};
   return {
-    id: m ?? Pk(),
+    id: m ?? P3(),
     name: r,
     raceId: n,
     classId: d,
@@ -20551,14 +20551,14 @@ function uv(l) {
     exp: 0,
     skillPoints: { total: 0, spent: 0 },
     learnedSkills: _,
-    equipment: Jk(),
+    equipment: J3(),
     strategy: 'batchiri',
   };
 }
-function Fk() {
+function F3() {
   return { front: Array(md).fill(null), back: Array(od).fill(null) };
 }
-function Wk(l, n) {
+function W3(l, n) {
   if ([...l.front, ...l.back].filter((o) => o !== null).length >= ma) return l;
   const r = l.front.indexOf(null);
   if (r !== -1) {
@@ -20577,7 +20577,7 @@ function e8(l, n) {
     ? l
     : {
         ...l,
-        guild: { ...l.guild, members: [...l.guild.members, n], party: Wk(l.guild.party, n.id) },
+        guild: { ...l.guild, members: [...l.guild.members, n], party: W3(l.guild.party, n.id) },
       };
 }
 function t8(l, n) {
@@ -20601,26 +20601,26 @@ function i8(l) {
   return {
     schemaVersion: id,
     savedAt: 0,
-    masterSeed: Bk(),
-    settings: { ...Qk },
+    masterSeed: B3(),
+    settings: { ...Q3 },
     guild: {
       name: l,
       gold: kh,
       members: [],
-      party: Fk(),
+      party: F3(),
       storage: [],
       equipment: [],
       foodStorage: [],
       bestiary: ef(),
     },
-    towerState: { floors: {}, bossGates: {}, warp: { unlockedCheckpoints: [] }, record: Zk() },
+    towerState: { floors: {}, bossGates: {}, warp: { unlockedCheckpoints: [] }, record: Z3() },
     diveState: null,
     bestiary: ef(),
     playerMaps: {},
     exploredCells: {},
     forgeInventory: { fragments: {}, ingots: { copper: 0, silver: 0, gold: 0 } },
     shopStock: { unlockedTier: 0, unlockedItemIds: [] },
-    unlockedRecipeIds: Xk(),
+    unlockedRecipeIds: X3(),
     flags: {},
   };
 }
@@ -21148,7 +21148,7 @@ const q8 = ({ __storyMockLogPreview: l, __storyMockOpenSkillMenu: n }) => {
         X = (r.masterSeed ^ (x * 2654435761) ^ (r.towerState.record.totalDives * 40503)) >>> 0;
       p.current = Hl(X);
       const P = r.diveState.pendingFoeBattle;
-      b(P ? Y5(r, [P.enemyId], P.firstStrike) : Y5(r, B3(x, p.current)));
+      b(P ? Y5(r, [P.enemyId], P.firstStrike) : Y5(r, Bk(x, p.current)));
     }, [r, v]),
       N.useEffect(() => {
         if (!v) return;
@@ -21183,7 +21183,7 @@ const q8 = ({ __storyMockLogPreview: l, __storyMockOpenSkillMenu: n }) => {
         (x) => {
           if (!v || !p.current || v.outcome !== 'ongoing') return;
           const X = uf(v),
-            P = ck(v, x, p.current);
+            P = c3(v, x, p.current);
           (b(P),
             q({}),
             E({}),
@@ -21251,7 +21251,7 @@ const q8 = ({ __storyMockLogPreview: l, __storyMockOpenSkillMenu: n }) => {
         );
         return () => clearTimeout(x);
       }, [v, w]));
-    const yn = N.useMemo(() => (v && v.outcome === 'win' && r ? mk(r, v) : []), [v, r]);
+    const yn = N.useMemo(() => (v && v.outcome === 'win' && r ? m3(r, v) : []), [v, r]);
     (N.useEffect(() => {
       if ((v == null ? void 0 : v.outcome) !== 'win' || w) return;
       const x = yn.filter((P) => P.toLevel > P.fromLevel),
@@ -21443,7 +21443,7 @@ const q8 = ({ __storyMockLogPreview: l, __storyMockOpenSkillMenu: n }) => {
           const X = x.outcome === 'win';
           x.outcome === 'lose'
             ? (await m((P) => Ts(Q5(P, x))), d({ name: 'town' }))
-            : (await m((P) => Lk(Q5(P, x), X)), d({ name: 'dungeon' }));
+            : (await m((P) => L3(Q5(P, x), X)), d({ name: 'dungeon' }));
         },
         [m, d]
       ),
@@ -21515,7 +21515,7 @@ const q8 = ({ __storyMockLogPreview: l, __storyMockOpenSkillMenu: n }) => {
           const Se = r.guild.members.find(($e) => $e.id === J.id),
             Ue = (Se == null ? void 0 : Se.strategy) ?? 'batchiri';
           if (Ue === 'meirei') continue;
-          const Be = $k(Ue, J, v, (Se == null ? void 0 : Se.learnedSkills) ?? {});
+          const Be = $3(Ue, J, v, (Se == null ? void 0 : Se.learnedSkills) ?? {});
           Be.kind === 'skill'
             ? ((x[J.id] = { kind: 'skill', skillId: Be.skillId }),
               Be.targetId && (X[J.id] = Be.targetId))
@@ -21603,7 +21603,7 @@ const q8 = ({ __storyMockLogPreview: l, __storyMockOpenSkillMenu: n }) => {
       Sa = (x) => {
         const X = r.guild.members.find((J) => J.id === x.id),
           P = (X == null ? void 0 : X.strategy) ?? 'batchiri';
-        return zk[P];
+        return z3[P];
       },
       _l = w
         ? w.revealed > 0
@@ -22517,7 +22517,7 @@ const q8 = ({ __storyMockLogPreview: l, __storyMockOpenSkillMenu: n }) => {
                                     }),
                                     c.jsx('div', {
                                       className: R.strategyButtons,
-                                      children: Dk.map((J) =>
+                                      children: D3.map((J) =>
                                         c.jsx(
                                           'button',
                                           {
@@ -25242,7 +25242,7 @@ function pb(l, n, d) {
   if (!r) return { save: l, ok: !1, message: 'そのアイテムは無い' };
   if (!((Q = r.useContext) != null && Q.includes('field')))
     return { save: l, ok: !1, message: 'ここでは使えない' };
-  const m = h3(n);
+  const m = hk(n);
   if ((m ? bm(l, n) : _d(l, n)) <= 0) return { save: l, ok: !1, message: '所持していない' };
   const _ = (K) => (m ? zf(K, n, 1) : ym(K, n, 1));
   if (n === 'item_return_thread')
@@ -25366,12 +25366,12 @@ const hb = (l) => new Promise((n) => setTimeout(n, l)),
             L('強大な力に阻まれている。階層ボスを倒さねば先へ進めない。');
             return;
           }
-          (m('dive'), await r((B) => Ok(B)));
+          (m('dive'), await r((B) => O3(B)));
         } else
           k === 'stairsDown' &&
             (n.diveState.depth <= 1
               ? (m('warp'), await r((B) => Ts(B)), l({ name: 'town' }))
-              : (m('dive'), await r((B) => qk(B))));
+              : (m('dive'), await r((B) => q3(B))));
       }, [n, r, l, m]),
       $ = N.useCallback(async () => {
         (m('warp'), await r((k) => Ts(k)), l({ name: 'town' }));
@@ -25418,7 +25418,7 @@ const hb = (l) => new Promise((n) => setTimeout(n, l)),
         (k, B) => {
           if (!se || !G || _.current) return;
           o.current || (o.current = Hl((n.masterSeed ^ 2654435769) >>> 0));
-          const W = hk(G, se.pos, { x: k, y: B });
+          const W = h3(G, se.pos, { x: k, y: B });
           W && W.length > 0 && re(W);
         },
         [se, G, n, re]
@@ -25446,7 +25446,7 @@ const hb = (l) => new Promise((n) => setTimeout(n, l)),
                 }),
               ],
             }),
-            c.jsx(Iy, { level: fk(se.encounter.stepsUntilEncounter) }),
+            c.jsx(Iy, { level: f3(se.encounter.stepsUntilEncounter) }),
             c.jsx('button', {
               type: 'button',
               className: me.menuBtn,
@@ -25489,7 +25489,7 @@ const hb = (l) => new Promise((n) => setTimeout(n, l)),
             c.jsx('button', {
               type: 'button',
               className: me.fpvBack,
-              onClick: () => we(vk(se.dir)),
+              onClick: () => we(v3(se.dir)),
               'aria-label': '振り向く',
               children: '↻',
             }),
@@ -26071,11 +26071,11 @@ const hb = (l) => new Promise((n) => setTimeout(n, l)),
       D = () => {
         if (_) {
           if ((r(_.kind === 'forge' ? 'forge' : 'recycle'), _.kind === 'forge')) {
-            d((S) => M3(S, _.instanceId, _.ingot).save);
+            d((S) => Mk(S, _.instanceId, _.ingot).save);
             const G = Ii.INGOT_INC[_.ingot];
             y(`+${G}`);
           } else
-            _.kind === 'recycle' ? d((G) => Lf(G, _.id).save) : (d((G) => O3(G, _.ids).save), L());
+            _.kind === 'recycle' ? d((G) => Lf(G, _.id).save) : (d((G) => Ok(G, _.ids).save), L());
           h(null);
         }
       },
@@ -27241,111 +27241,113 @@ const G9 = () => {
       ],
     });
   },
-  Y9 = '_layout_15131_1',
-  V9 = '_head_15131_13',
-  K9 = '_headPortrait_15131_22',
-  X9 = '_headText_15131_26',
-  Q9 = '_title_15131_31',
-  Z9 = '_sub_15131_38',
-  J9 = '_card_15131_43',
-  P9 = '_h2_15131_52',
-  F9 = '_sp_15131_62',
-  W9 = '_stats_15131_69',
-  ex = '_equipSlot_15131_96',
-  tx = '_equipHead_15131_104',
-  ix = '_slotLabel_15131_110',
-  lx = '_equipName_15131_117',
-  ax = '_smallBtn_15131_123',
-  nx = '_equipPick_15131_142',
-  sx = '_pickBtn_15131_150',
-  rx = '_jobRow_15131_225',
-  dx = '_select_15131_232',
-  ux = '_input_15131_233',
-  cx = '_actBtn_15131_244',
-  mx = '_warn_15131_263',
-  ox = '_warnCaption_15131_270',
-  _x = '_titleHave_15131_278',
-  fx = '_titleOpts_15131_285',
-  vx = '_titleBtn_15131_292',
-  px = '_rbForm_15131_305',
-  hx = '_danger_15131_311',
-  gx = '_foot_15131_323',
-  kx = '_back_15131_329',
-  yx = '_resistBlock_15131_340',
-  bx = '_resistRow_15131_346',
-  xx = '_resistLabel_15131_352',
-  Sx = '_skillTabs_15131_359',
-  wx = '_skillTab_15131_359',
-  jx = '_skillTabOn_15131_380',
-  he = {
+  Y9 = '_layout_cih8d_1',
+  V9 = '_head_cih8d_13',
+  K9 = '_body_cih8d_23',
+  X9 = '_headPortrait_cih8d_31',
+  Q9 = '_headText_cih8d_35',
+  Z9 = '_title_cih8d_40',
+  J9 = '_sub_cih8d_47',
+  P9 = '_card_cih8d_52',
+  F9 = '_h2_cih8d_61',
+  W9 = '_sp_cih8d_71',
+  ex = '_stats_cih8d_78',
+  tx = '_equipSlot_cih8d_105',
+  ix = '_equipHead_cih8d_113',
+  lx = '_slotLabel_cih8d_119',
+  ax = '_equipName_cih8d_126',
+  nx = '_smallBtn_cih8d_132',
+  sx = '_equipPick_cih8d_151',
+  rx = '_pickBtn_cih8d_159',
+  dx = '_jobRow_cih8d_234',
+  ux = '_select_cih8d_241',
+  cx = '_input_cih8d_242',
+  mx = '_actBtn_cih8d_253',
+  ox = '_warn_cih8d_272',
+  _x = '_warnCaption_cih8d_279',
+  fx = '_titleHave_cih8d_287',
+  vx = '_titleOpts_cih8d_294',
+  px = '_titleBtn_cih8d_301',
+  hx = '_rbForm_cih8d_314',
+  gx = '_danger_cih8d_320',
+  kx = '_foot_cih8d_332',
+  yx = '_back_cih8d_339',
+  bx = '_resistBlock_cih8d_350',
+  xx = '_resistRow_cih8d_356',
+  Sx = '_resistLabel_cih8d_362',
+  wx = '_skillTabs_cih8d_369',
+  jx = '_skillTab_cih8d_369',
+  Tx = '_skillTabOn_cih8d_390',
+  pe = {
     layout: Y9,
     head: V9,
-    headPortrait: K9,
-    headText: X9,
-    title: Q9,
-    sub: Z9,
-    card: J9,
-    h2: P9,
-    sp: F9,
-    stats: W9,
-    equipSlot: ex,
-    equipHead: tx,
-    slotLabel: ix,
-    equipName: lx,
-    smallBtn: ax,
-    equipPick: nx,
-    pickBtn: sx,
-    jobRow: rx,
-    select: dx,
-    input: ux,
-    actBtn: cx,
-    warn: mx,
-    warnCaption: ox,
-    titleHave: _x,
-    titleOpts: fx,
-    titleBtn: vx,
-    rbForm: px,
-    danger: hx,
-    foot: gx,
-    back: kx,
-    resistBlock: yx,
-    resistRow: bx,
-    resistLabel: xx,
-    skillTabs: Sx,
-    skillTab: wx,
-    skillTabOn: jx,
+    body: K9,
+    headPortrait: X9,
+    headText: Q9,
+    title: Z9,
+    sub: J9,
+    card: P9,
+    h2: F9,
+    sp: W9,
+    stats: ex,
+    equipSlot: tx,
+    equipHead: ix,
+    slotLabel: lx,
+    equipName: ax,
+    smallBtn: nx,
+    equipPick: sx,
+    pickBtn: rx,
+    jobRow: dx,
+    select: ux,
+    input: cx,
+    actBtn: mx,
+    warn: ox,
+    warnCaption: _x,
+    titleHave: fx,
+    titleOpts: vx,
+    titleBtn: px,
+    rbForm: hx,
+    danger: gx,
+    foot: kx,
+    back: yx,
+    resistBlock: bx,
+    resistRow: xx,
+    resistLabel: Sx,
+    skillTabs: wx,
+    skillTab: jx,
+    skillTabOn: Tx,
   },
   Ev = ['weapon', 'armor', 'accessory'];
 function Bv(l, n, d) {
   return { ...l, guild: { ...l.guild, members: l.guild.members.map((r) => (r.id === n ? d : r)) } };
 }
-function Tx(l) {
+function Nx(l) {
   var n, d;
   return (d = (n = Ve[l]) == null ? void 0 : n.skillTree.skills[0]) == null ? void 0 : d.skillId;
 }
-function Nx(l) {
+function Ax(l) {
   var n;
   return new Set(
     (((n = Ke[l]) == null ? void 0 : n.raceSkillTree.skills) ?? []).map((d) => d.skillId)
   );
 }
-const Ax = (l, n) => {
+const Ex = (l, n) => {
   const d = { ...l };
   let r = 0;
   for (const [m, o] of Object.entries(n)) r += gn(d, m) * o;
   return r;
 };
-function Ex(l, n) {
+function Bx(l, n) {
   if (!Ve[n]) return l;
-  const d = Nx(l.raceId);
+  const d = Ax(l.raceId);
   let r = {};
   for (const [v, b] of Object.entries(l.learnedSkills)) d.has(v) && (r[v] = b);
-  const m = Tx(n);
+  const m = Nx(n);
   m && !r[m] && (r[m] = 1);
   const o = Math.max(1, l.level - Tf),
     _ = ld(o),
     h = { ...l, classId: n, titleId: null, learnedSkills: r };
-  let p = Ax(h, r) - (m && r[m] ? gn(h, m) : 0);
+  let p = Ex(h, r) - (m && r[m] ? gn(h, m) : 0);
   return (
     p > _ && ((r = m ? { [m]: 1 } : {}), (p = 0)),
     {
@@ -27359,10 +27361,10 @@ function Ex(l, n) {
     }
   );
 }
-function Bx(l, n, d) {
+function Cx(l, n, d) {
   const r = l.guild.members.find((_) => _.id === n);
   if (!r) return l;
-  let m = Bv(l, n, Ex(r, d));
+  let m = Bv(l, n, Bx(r, d));
   const o = m.guild.members.find((_) => _.id === n);
   for (const _ of Ev) {
     const h = o.equipment[_];
@@ -27390,7 +27392,7 @@ function Cv(l) {
 function Dm(l) {
   return l.level >= ys.REBIRTH_MIN_LEVEL;
 }
-function Cx(l, n) {
+function Ix(l, n) {
   if (!Dm(l)) return l;
   const d = Cv(n.raceId),
     r = l.rebirthBonus,
@@ -27408,13 +27410,13 @@ function Cx(l, n) {
     skillPoints: { total: p, spent: h.skillPoints.spent },
   };
 }
-function Ix(l, n, d) {
+function Lx(l, n, d) {
   const r = l.guild.members.find((_) => _.id === n);
   if (!r || !Dm(r)) return l;
   let m = l;
   for (const _ of Ev) r.equipment[_] && (m = Sm(m, n, _));
   const o = m.guild.members.find((_) => _.id === n);
-  return Bv(m, n, Cx(o, d));
+  return Bv(m, n, Ix(o, d));
 }
 function Iv(l, n, d) {
   var m;
@@ -27422,16 +27424,16 @@ function Iv(l, n, d) {
     ? !1
     : (((m = Ve[l.classId]) == null ? void 0 : m.titleOptions) ?? []).includes(n);
 }
-function Lx(l, n, d) {
+function Mx(l, n, d) {
   return Iv(l, n, d)
     ? { ...l, titleId: n, skillPoints: { ...l.skillPoints, total: l.skillPoints.total + yh } }
     : l;
 }
 const pf = Object.keys(Ke),
   Fr = Object.keys(Ve),
-  Mx = ['weapon', 'armor', 'accessory'],
-  Ox = { weapon: '武器', armor: '防具', accessory: '装飾' },
-  qx = [
+  Ox = ['weapon', 'armor', 'accessory'],
+  qx = { weapon: '武器', armor: '防具', accessory: '装飾' },
+  Dx = [
     { key: 'hp', label: 'HP' },
     { key: 'tp', label: 'TP' },
     { key: 'str', label: 'STR' },
@@ -27441,7 +27443,7 @@ const pf = Object.keys(Ke),
     { key: 'mnd', label: 'MND' },
     { key: 'luc', label: 'LUC' },
   ],
-  Dx = ({ id: l }) => {
+  zx = ({ id: l }) => {
     var S, E, O, ie, le, ue, _e, we, ye, $, w, re, ce, oe;
     const { navigate: n } = Wt(),
       { save: d, applyAndPersist: r } = cl(),
@@ -27464,23 +27466,23 @@ const pf = Object.keys(Ke),
           guild: { ...B.guild, members: B.guild.members.map((W) => (W.id === l ? k(W) : W)) },
         }));
     return c.jsxs('div', {
-      className: he.layout,
+      className: pe.layout,
       children: [
         c.jsxs('header', {
-          className: he.head,
+          className: pe.head,
           children: [
             c.jsx(Ci, {
               raceId: A.raceId,
               classId: A.classId,
               size: 56,
-              className: he.headPortrait,
+              className: pe.headPortrait,
             }),
             c.jsxs('div', {
-              className: he.headText,
+              className: pe.headText,
               children: [
-                c.jsx('h1', { className: he.title, children: A.name }),
+                c.jsx('h1', { className: pe.title, children: A.name }),
                 c.jsxs('span', {
-                  className: he.sub,
+                  className: pe.sub,
                   children: [
                     (S = Ke[A.raceId]) == null ? void 0 : S.name,
                     ' / ',
@@ -27493,372 +27495,388 @@ const pf = Object.keys(Ke),
             }),
           ],
         }),
-        c.jsxs('section', {
-          className: he.card,
+        c.jsxs('main', {
+          className: pe.body,
           children: [
-            c.jsx('h2', { className: he.h2, children: 'ステータス' }),
-            c.jsx('dl', {
-              className: he.stats,
-              children: qx.map((k) =>
-                c.jsxs(
-                  'div',
-                  {
-                    children: [
-                      c.jsx('dt', { children: k.label }),
-                      c.jsx('dd', { children: L[k.key] }),
-                    ],
-                  },
-                  k.key
-                )
-              ),
-            }),
-          ],
-        }),
-        ((O = Ke[A.raceId]) != null && O.elementResist) ||
-        ((ie = Ke[A.raceId]) != null && ie.ailmentResist)
-          ? c.jsxs('section', {
-              className: he.card,
+            c.jsxs('section', {
+              className: pe.card,
               children: [
-                c.jsx('h2', { className: he.h2, children: '種族耐性' }),
-                c.jsxs('div', {
-                  className: he.resistBlock,
+                c.jsx('h2', { className: pe.h2, children: 'ステータス' }),
+                c.jsx('dl', {
+                  className: pe.stats,
+                  children: Dx.map((k) =>
+                    c.jsxs(
+                      'div',
+                      {
+                        children: [
+                          c.jsx('dt', { children: k.label }),
+                          c.jsx('dd', { children: L[k.key] }),
+                        ],
+                      },
+                      k.key
+                    )
+                  ),
+                }),
+              ],
+            }),
+            ((O = Ke[A.raceId]) != null && O.elementResist) ||
+            ((ie = Ke[A.raceId]) != null && ie.ailmentResist)
+              ? c.jsxs('section', {
+                  className: pe.card,
                   children: [
+                    c.jsx('h2', { className: pe.h2, children: '種族耐性' }),
                     c.jsxs('div', {
-                      className: he.resistRow,
+                      className: pe.resistBlock,
                       children: [
-                        c.jsx('span', { className: he.resistLabel, children: '属性' }),
-                        c.jsx(fn, {
-                          elementResist: (le = Ke[A.raceId]) == null ? void 0 : le.elementResist,
-                          ailmentResist: void 0,
+                        c.jsxs('div', {
+                          className: pe.resistRow,
+                          children: [
+                            c.jsx('span', { className: pe.resistLabel, children: '属性' }),
+                            c.jsx(fn, {
+                              elementResist:
+                                (le = Ke[A.raceId]) == null ? void 0 : le.elementResist,
+                              ailmentResist: void 0,
+                            }),
+                          ],
                         }),
-                      ],
-                    }),
-                    c.jsxs('div', {
-                      className: he.resistRow,
-                      children: [
-                        c.jsx('span', { className: he.resistLabel, children: '状態異常' }),
-                        c.jsx(fn, {
-                          elementResist: void 0,
-                          ailmentResist: (ue = Ke[A.raceId]) == null ? void 0 : ue.ailmentResist,
+                        c.jsxs('div', {
+                          className: pe.resistRow,
+                          children: [
+                            c.jsx('span', { className: pe.resistLabel, children: '状態異常' }),
+                            c.jsx(fn, {
+                              elementResist: void 0,
+                              ailmentResist:
+                                (ue = Ke[A.raceId]) == null ? void 0 : ue.ailmentResist,
+                            }),
+                          ],
                         }),
                       ],
                     }),
                   ],
-                }),
-              ],
-            })
-          : c.jsxs('section', {
-              className: he.card,
-              children: [
-                c.jsx('h2', { className: he.h2, children: '種族耐性' }),
-                c.jsx('p', {
-                  className: he.warnCaption,
-                  children: 'この種族は特別な耐性を持ちません。',
-                }),
-              ],
-            }),
-        c.jsxs('section', {
-          className: he.card,
-          children: [
-            c.jsx('h2', { className: he.h2, children: '装備' }),
-            Mx.map((k) => {
-              const B = A.equipment[k],
-                W = d.guild.equipment.filter((ne) => {
-                  var z;
-                  return (
-                    ((z = at[ne.masterId]) == null ? void 0 : z.slot) === k && xm(A, ne.masterId)
-                  );
-                });
-              return c.jsxs(
-                'div',
-                {
-                  className: he.equipSlot,
+                })
+              : c.jsxs('section', {
+                  className: pe.card,
                   children: [
-                    c.jsxs('div', {
-                      className: he.equipHead,
+                    c.jsx('h2', { className: pe.h2, children: '種族耐性' }),
+                    c.jsx('p', {
+                      className: pe.warnCaption,
+                      children: 'この種族は特別な耐性を持ちません。',
+                    }),
+                  ],
+                }),
+            c.jsxs('section', {
+              className: pe.card,
+              children: [
+                c.jsx('h2', { className: pe.h2, children: '装備' }),
+                Ox.map((k) => {
+                  const B = A.equipment[k],
+                    W = d.guild.equipment.filter((ne) => {
+                      var z;
+                      return (
+                        ((z = at[ne.masterId]) == null ? void 0 : z.slot) === k &&
+                        xm(A, ne.masterId)
+                      );
+                    });
+                  return c.jsxs(
+                    'div',
+                    {
+                      className: pe.equipSlot,
                       children: [
-                        c.jsx('span', { className: he.slotLabel, children: Ox[k] }),
-                        c.jsx('span', {
-                          className: he.equipName,
-                          children: B ? nl(B) : '（なし）',
+                        c.jsxs('div', {
+                          className: pe.equipHead,
+                          children: [
+                            c.jsx('span', { className: pe.slotLabel, children: qx[k] }),
+                            c.jsx('span', {
+                              className: pe.equipName,
+                              children: B ? nl(B) : '（なし）',
+                            }),
+                            B
+                              ? c.jsx('button', {
+                                  type: 'button',
+                                  className: pe.smallBtn,
+                                  onClick: () => void G(k),
+                                  children: '外す',
+                                })
+                              : null,
+                          ],
                         }),
-                        B
-                          ? c.jsx('button', {
-                              type: 'button',
-                              className: he.smallBtn,
-                              onClick: () => void G(k),
-                              children: '外す',
+                        W.length > 0
+                          ? c.jsx('div', {
+                              className: pe.equipPick,
+                              children: W.map((ne) =>
+                                c.jsxs(
+                                  'button',
+                                  {
+                                    type: 'button',
+                                    className: pe.pickBtn,
+                                    onClick: () => void r((z) => zk(z, l, ne.id)),
+                                    children: [nl(ne), ' 装備'],
+                                  },
+                                  ne.id
+                                )
+                              ),
                             })
                           : null,
                       ],
+                    },
+                    k
+                  );
+                }),
+              ],
+            }),
+            c.jsxs('section', {
+              className: pe.card,
+              children: [
+                c.jsxs('h2', {
+                  className: pe.h2,
+                  children: ['スキル ', c.jsxs('span', { className: pe.sp, children: ['SP ', F] })],
+                }),
+                c.jsxs('div', {
+                  className: pe.skillTabs,
+                  children: [
+                    c.jsxs('button', {
+                      type: 'button',
+                      className: `${pe.skillTab} ${o === 'class' ? pe.skillTabOn : ''}`,
+                      onClick: () => _('class'),
+                      children: [
+                        '職業（',
+                        ((_e = Ve[A.classId]) == null ? void 0 : _e.name) ?? '',
+                        '）',
+                      ],
                     }),
-                    W.length > 0
-                      ? c.jsx('div', {
-                          className: he.equipPick,
-                          children: W.map((ne) =>
-                            c.jsxs(
-                              'button',
-                              {
-                                type: 'button',
-                                className: he.pickBtn,
-                                onClick: () => void r((z) => z3(z, l, ne.id)),
-                                children: [nl(ne), ' 装備'],
-                              },
-                              ne.id
-                            )
-                          ),
+                    c.jsxs('button', {
+                      type: 'button',
+                      className: `${pe.skillTab} ${o === 'race' ? pe.skillTabOn : ''}`,
+                      onClick: () => _('race'),
+                      children: [
+                        '種族（',
+                        ((we = Ke[A.raceId]) == null ? void 0 : we.name) ?? '',
+                        '）',
+                      ],
+                    }),
+                    A.titleId
+                      ? c.jsxs('button', {
+                          type: 'button',
+                          className: `${pe.skillTab} ${o === 'title' ? pe.skillTabOn : ''}`,
+                          onClick: () => _('title'),
+                          children: [
+                            '称号（',
+                            ((ye = dl[A.titleId]) == null ? void 0 : ye.name) ?? '',
+                            '）',
+                          ],
                         })
                       : null,
                   ],
-                },
-                k
-              );
-            }),
-          ],
-        }),
-        c.jsxs('section', {
-          className: he.card,
-          children: [
-            c.jsxs('h2', {
-              className: he.h2,
-              children: ['スキル ', c.jsxs('span', { className: he.sp, children: ['SP ', F] })],
-            }),
-            c.jsxs('div', {
-              className: he.skillTabs,
-              children: [
-                c.jsxs('button', {
-                  type: 'button',
-                  className: `${he.skillTab} ${o === 'class' ? he.skillTabOn : ''}`,
-                  onClick: () => _('class'),
-                  children: [
-                    '職業（',
-                    ((_e = Ve[A.classId]) == null ? void 0 : _e.name) ?? '',
-                    '）',
-                  ],
                 }),
-                c.jsxs('button', {
-                  type: 'button',
-                  className: `${he.skillTab} ${o === 'race' ? he.skillTabOn : ''}`,
-                  onClick: () => _('race'),
-                  children: [
-                    '種族（',
-                    ((we = Ke[A.raceId]) == null ? void 0 : we.name) ?? '',
-                    '）',
-                  ],
-                }),
-                A.titleId
-                  ? c.jsxs('button', {
-                      type: 'button',
-                      className: `${he.skillTab} ${o === 'title' ? he.skillTabOn : ''}`,
-                      onClick: () => _('title'),
-                      children: [
-                        '称号（',
-                        ((ye = dl[A.titleId]) == null ? void 0 : ye.name) ?? '',
-                        '）',
-                      ],
-                    })
-                  : null,
-              ],
-            }),
-            c.jsx(gv, {
-              nodes:
-                o === 'class'
-                  ? ((($ = Ve[A.classId]) == null ? void 0 : $.skillTree.skills) ?? [])
-                  : o === 'race'
-                    ? (((w = Ke[A.raceId]) == null ? void 0 : w.raceSkillTree.skills) ?? [])
-                    : A.titleId
-                      ? (((re = dl[A.titleId]) == null ? void 0 : re.skillTree.skills) ?? [])
-                      : [],
-              char: A,
-              onLearn: (k) => {
-                (m('create'), se((B) => Gf(B, k)));
-              },
-            }),
-          ],
-        }),
-        c.jsxs('section', {
-          className: he.card,
-          children: [
-            c.jsx('h2', { className: he.h2, children: '転職' }),
-            c.jsxs('div', {
-              className: he.jobRow,
-              children: [
-                c.jsx('select', {
-                  className: he.select,
-                  value: h,
-                  onChange: (k) => p(k.target.value),
-                  children: Fr.map((k) => c.jsx('option', { value: k, children: Ve[k].name }, k)),
-                }),
-                c.jsx('button', {
-                  type: 'button',
-                  className: he.actBtn,
-                  disabled: h === A.classId,
-                  onClick: () => {
-                    (m('decide'), r((k) => Bx(k, l, h)));
+                c.jsx(gv, {
+                  nodes:
+                    o === 'class'
+                      ? ((($ = Ve[A.classId]) == null ? void 0 : $.skillTree.skills) ?? [])
+                      : o === 'race'
+                        ? (((w = Ke[A.raceId]) == null ? void 0 : w.raceSkillTree.skills) ?? [])
+                        : A.titleId
+                          ? (((re = dl[A.titleId]) == null ? void 0 : re.skillTree.skills) ?? [])
+                          : [],
+                  char: A,
+                  onLearn: (k) => {
+                    (m('create'), se((B) => Gf(B, k)));
                   },
-                  children: '転職する',
                 }),
               ],
             }),
-            c.jsxs('p', {
-              className: he.warn,
+            c.jsxs('section', {
+              className: pe.card,
               children: [
-                '※ レベルが ',
-                Tf,
-                ' ',
-                '下がり、職業/称号スキルは振り直しになります（種族スキルは保持）。',
-              ],
-            }),
-            c.jsx('h2', { className: he.h2, children: '称号' }),
-            A.titleId
-              ? c.jsxs('p', {
-                  className: he.titleHave,
-                  children: ['習得済み: ', (ce = dl[A.titleId]) == null ? void 0 : ce.name],
-                })
-              : D < ys.TITLE_DEPTH
-                ? c.jsxs('p', {
-                    className: he.warn,
-                    children: ['第 ', ys.TITLE_DEPTH, ' 階到達で習得できます（現在 ', D, 'F）。'],
-                  })
-                : c.jsx('div', {
-                    className: he.titleOpts,
-                    children: (((oe = Ve[A.classId]) == null ? void 0 : oe.titleOptions) ?? []).map(
-                      (k) => {
-                        var B;
-                        return c.jsxs(
-                          'button',
-                          {
-                            type: 'button',
-                            className: he.titleBtn,
-                            disabled: !Iv(A, k, D),
-                            onClick: () => void se((W) => Lx(W, k, D)),
-                            children: [(B = dl[k]) == null ? void 0 : B.name, '（SP+5）'],
-                          },
-                          k
-                        );
-                      }
-                    ),
-                  }),
-            c.jsx('h2', { className: he.h2, children: '転生' }),
-            Dm(A)
-              ? Q
-                ? c.jsxs('div', {
-                    className: he.rbForm,
-                    children: [
-                      c.jsx('p', {
-                        className: he.warn,
-                        children:
-                          '※ 作り直して強い新人になります（開始Lv 1（やり直し）・種族に応じた永続ボーナス付き）。',
-                      }),
-                      A.rebirthBonus &&
-                        c.jsxs('p', {
-                          className: he.warn,
-                          children: [
-                            '現在の累積ボーナス（転生',
-                            A.rebirthBonus.count,
-                            '回）:',
-                            ' ',
-                            Object.entries(A.rebirthBonus.stats)
-                              .filter(([, k]) => k && k > 0)
-                              .sort(([, k], [, B]) => (B ?? 0) - (k ?? 0))
-                              .map(([k, B]) => `${k.toUpperCase()}+${B}`)
-                              .join(' / '),
-                          ],
-                        }),
-                      (() => {
-                        var W;
-                        const k = Cv(y),
-                          B = Object.entries(k)
-                            .filter(([, ne]) => ne && ne > 0)
-                            .sort(([, ne], [, z]) => (z ?? 0) - (ne ?? 0))
-                            .map(([ne, z]) => `${ne.toUpperCase()}+${z}`)
-                            .join(', ');
-                        return c.jsxs('p', {
-                          className: he.warn,
-                          children: [
-                            (W = Ke[y]) == null ? void 0 : W.name,
-                            'で転生 → 今回付与: ',
-                            B,
-                          ],
-                        });
-                      })(),
-                      c.jsx('input', {
-                        className: he.input,
-                        type: 'text',
-                        maxLength: 16,
-                        placeholder: A.name,
-                        value: v,
-                        onChange: (k) => b(k.target.value),
-                      }),
-                      c.jsxs('div', {
-                        className: he.jobRow,
-                        children: [
-                          c.jsx('select', {
-                            className: he.select,
-                            value: y,
-                            onChange: (k) => j(k.target.value),
-                            children: pf.map((k) =>
-                              c.jsx('option', { value: k, children: Ke[k].name }, k)
-                            ),
-                          }),
-                          c.jsx('select', {
-                            className: he.select,
-                            value: C,
-                            onChange: (k) => q(k.target.value),
-                            children: Fr.map((k) =>
-                              c.jsx('option', { value: k, children: Ve[k].name }, k)
-                            ),
-                          }),
-                        ],
-                      }),
-                      c.jsxs('div', {
-                        className: he.jobRow,
-                        children: [
-                          c.jsx('button', {
-                            type: 'button',
-                            className: he.danger,
-                            onClick: () => {
-                              (m('create'),
-                                r((k) =>
-                                  Ix(k, l, { raceId: y, classId: C, name: v.trim() || A.name })
-                                ),
-                                K(!1));
-                            },
-                            children: '転生を実行',
-                          }),
-                          c.jsx('button', {
-                            type: 'button',
-                            className: he.actBtn,
-                            onClick: () => K(!1),
-                            children: 'やめる',
-                          }),
-                        ],
-                      }),
-                    ],
-                  })
-                : c.jsx('button', {
-                    type: 'button',
-                    className: he.actBtn,
-                    onClick: () => K(!0),
-                    children: '転生する…',
-                  })
-              : c.jsxs('p', {
-                  className: he.warn,
+                c.jsx('h2', { className: pe.h2, children: '転職' }),
+                c.jsxs('div', {
+                  className: pe.jobRow,
                   children: [
-                    'Lv',
-                    ys.REBIRTH_MIN_LEVEL,
-                    ' 以上で転生できます（現在 Lv',
-                    A.level,
-                    '）。',
+                    c.jsx('select', {
+                      className: pe.select,
+                      value: h,
+                      onChange: (k) => p(k.target.value),
+                      children: Fr.map((k) =>
+                        c.jsx('option', { value: k, children: Ve[k].name }, k)
+                      ),
+                    }),
+                    c.jsx('button', {
+                      type: 'button',
+                      className: pe.actBtn,
+                      disabled: h === A.classId,
+                      onClick: () => {
+                        (m('decide'), r((k) => Cx(k, l, h)));
+                      },
+                      children: '転職する',
+                    }),
                   ],
                 }),
+                c.jsxs('p', {
+                  className: pe.warn,
+                  children: [
+                    '※ レベルが ',
+                    Tf,
+                    ' ',
+                    '下がり、職業/称号スキルは振り直しになります（種族スキルは保持）。',
+                  ],
+                }),
+                c.jsx('h2', { className: pe.h2, children: '称号' }),
+                A.titleId
+                  ? c.jsxs('p', {
+                      className: pe.titleHave,
+                      children: ['習得済み: ', (ce = dl[A.titleId]) == null ? void 0 : ce.name],
+                    })
+                  : D < ys.TITLE_DEPTH
+                    ? c.jsxs('p', {
+                        className: pe.warn,
+                        children: [
+                          '第 ',
+                          ys.TITLE_DEPTH,
+                          ' 階到達で習得できます（現在 ',
+                          D,
+                          'F）。',
+                        ],
+                      })
+                    : c.jsx('div', {
+                        className: pe.titleOpts,
+                        children: (
+                          ((oe = Ve[A.classId]) == null ? void 0 : oe.titleOptions) ?? []
+                        ).map((k) => {
+                          var B;
+                          return c.jsxs(
+                            'button',
+                            {
+                              type: 'button',
+                              className: pe.titleBtn,
+                              disabled: !Iv(A, k, D),
+                              onClick: () => void se((W) => Mx(W, k, D)),
+                              children: [(B = dl[k]) == null ? void 0 : B.name, '（SP+5）'],
+                            },
+                            k
+                          );
+                        }),
+                      }),
+                c.jsx('h2', { className: pe.h2, children: '転生' }),
+                Dm(A)
+                  ? Q
+                    ? c.jsxs('div', {
+                        className: pe.rbForm,
+                        children: [
+                          c.jsx('p', {
+                            className: pe.warn,
+                            children:
+                              '※ 作り直して強い新人になります（開始Lv 1（やり直し）・種族に応じた永続ボーナス付き）。',
+                          }),
+                          A.rebirthBonus &&
+                            c.jsxs('p', {
+                              className: pe.warn,
+                              children: [
+                                '現在の累積ボーナス（転生',
+                                A.rebirthBonus.count,
+                                '回）:',
+                                ' ',
+                                Object.entries(A.rebirthBonus.stats)
+                                  .filter(([, k]) => k && k > 0)
+                                  .sort(([, k], [, B]) => (B ?? 0) - (k ?? 0))
+                                  .map(([k, B]) => `${k.toUpperCase()}+${B}`)
+                                  .join(' / '),
+                              ],
+                            }),
+                          (() => {
+                            var W;
+                            const k = Cv(y),
+                              B = Object.entries(k)
+                                .filter(([, ne]) => ne && ne > 0)
+                                .sort(([, ne], [, z]) => (z ?? 0) - (ne ?? 0))
+                                .map(([ne, z]) => `${ne.toUpperCase()}+${z}`)
+                                .join(', ');
+                            return c.jsxs('p', {
+                              className: pe.warn,
+                              children: [
+                                (W = Ke[y]) == null ? void 0 : W.name,
+                                'で転生 → 今回付与: ',
+                                B,
+                              ],
+                            });
+                          })(),
+                          c.jsx('input', {
+                            className: pe.input,
+                            type: 'text',
+                            maxLength: 16,
+                            placeholder: A.name,
+                            value: v,
+                            onChange: (k) => b(k.target.value),
+                          }),
+                          c.jsxs('div', {
+                            className: pe.jobRow,
+                            children: [
+                              c.jsx('select', {
+                                className: pe.select,
+                                value: y,
+                                onChange: (k) => j(k.target.value),
+                                children: pf.map((k) =>
+                                  c.jsx('option', { value: k, children: Ke[k].name }, k)
+                                ),
+                              }),
+                              c.jsx('select', {
+                                className: pe.select,
+                                value: C,
+                                onChange: (k) => q(k.target.value),
+                                children: Fr.map((k) =>
+                                  c.jsx('option', { value: k, children: Ve[k].name }, k)
+                                ),
+                              }),
+                            ],
+                          }),
+                          c.jsxs('div', {
+                            className: pe.jobRow,
+                            children: [
+                              c.jsx('button', {
+                                type: 'button',
+                                className: pe.danger,
+                                onClick: () => {
+                                  (m('create'),
+                                    r((k) =>
+                                      Lx(k, l, { raceId: y, classId: C, name: v.trim() || A.name })
+                                    ),
+                                    K(!1));
+                                },
+                                children: '転生を実行',
+                              }),
+                              c.jsx('button', {
+                                type: 'button',
+                                className: pe.actBtn,
+                                onClick: () => K(!1),
+                                children: 'やめる',
+                              }),
+                            ],
+                          }),
+                        ],
+                      })
+                    : c.jsx('button', {
+                        type: 'button',
+                        className: pe.actBtn,
+                        onClick: () => K(!0),
+                        children: '転生する…',
+                      })
+                  : c.jsxs('p', {
+                      className: pe.warn,
+                      children: [
+                        'Lv',
+                        ys.REBIRTH_MIN_LEVEL,
+                        ' 以上で転生できます（現在 Lv',
+                        A.level,
+                        '）。',
+                      ],
+                    }),
+              ],
+            }),
           ],
         }),
         c.jsx('footer', {
-          className: he.foot,
+          className: pe.foot,
           children: c.jsx('button', {
             type: 'button',
-            className: he.back,
+            className: pe.back,
             onClick: () => n({ name: 'guild' }),
             children: 'もどる',
           }),
@@ -27869,12 +27887,12 @@ const pf = Object.keys(Ke),
       return r((B) => Sm(B, l, k));
     }
   },
-  zx = '_layout_1c843_1',
-  Rx = '_chapterMark_1c843_17',
-  Hx = '_body_1c843_26',
-  Ux = '_back_1c843_32',
-  Wr = { layout: zx, chapterMark: Rx, body: Hx, back: Ux },
-  $x = () =>
+  Rx = '_layout_1c843_1',
+  Hx = '_chapterMark_1c843_17',
+  Ux = '_body_1c843_26',
+  $x = '_back_1c843_32',
+  Wr = { layout: Rx, chapterMark: Hx, body: Ux, back: $x },
+  Gx = () =>
     c.jsxs('div', {
       className: Wr.layout,
       children: [
@@ -27883,89 +27901,89 @@ const pf = Object.keys(Ke),
         c.jsx('button', { className: Wr.back, onClick: () => history.back(), children: '戻る' }),
       ],
     }),
-  Gx = '_layout_8k098_1',
-  Yx = '_head_8k098_13',
-  Vx = '_title_8k098_22',
-  Kx = '_gold_8k098_29',
-  Xx = '_tabs_8k098_36',
-  Qx = '_tab_8k098_36',
-  Zx = '_tabActive_8k098_54',
-  Jx = '_controls_8k098_60',
-  Px = '_filters_8k098_67',
-  Fx = '_chip_8k098_73',
-  Wx = '_chipActive_8k098_85',
-  eS = '_sortRow_8k098_91',
-  tS = '_sort_8k098_91',
-  iS = '_list_8k098_116',
-  lS = '_row_8k098_127',
-  aS = '_info_8k098_138',
-  nS = '_name_8k098_144',
-  sS = '_note_8k098_150',
-  rS = '_action_8k098_155',
-  dS = '_empty_8k098_172',
-  uS = '_foot_8k098_177',
-  cS = '_back_8k098_183',
-  mS = '_confirmOverlay_8k098_194',
-  oS = '_confirmBox_8k098_205',
-  _S = '_confirmText_8k098_218',
-  fS = '_confirmActions_8k098_225',
-  vS = '_confirmCancel_8k098_230',
-  pS = '_confirmOk_8k098_231',
-  hS = '_stepperRow_8k098_252',
-  gS = '_stepperBtn_8k098_259',
-  kS = '_stepperVal_8k098_278',
-  yS = '_stepperMax_8k098_287',
-  bS = '_totalRow_8k098_303',
-  xS = '_nameBtn_8k098_309',
-  SS = '_detailHeader_8k098_322',
-  wS = '_detailName_8k098_329',
-  jS = '_detailSlot_8k098_335',
-  TS = '_detailRow_8k098_344',
-  NS = '_detailLabel_8k098_352',
-  AS = '_buyConfirmedFx_8k098_360',
+  Yx = '_layout_8k098_1',
+  Vx = '_head_8k098_13',
+  Kx = '_title_8k098_22',
+  Xx = '_gold_8k098_29',
+  Qx = '_tabs_8k098_36',
+  Zx = '_tab_8k098_36',
+  Jx = '_tabActive_8k098_54',
+  Px = '_controls_8k098_60',
+  Fx = '_filters_8k098_67',
+  Wx = '_chip_8k098_73',
+  eS = '_chipActive_8k098_85',
+  tS = '_sortRow_8k098_91',
+  iS = '_sort_8k098_91',
+  lS = '_list_8k098_116',
+  aS = '_row_8k098_127',
+  nS = '_info_8k098_138',
+  sS = '_name_8k098_144',
+  rS = '_note_8k098_150',
+  dS = '_action_8k098_155',
+  uS = '_empty_8k098_172',
+  cS = '_foot_8k098_177',
+  mS = '_back_8k098_183',
+  oS = '_confirmOverlay_8k098_194',
+  _S = '_confirmBox_8k098_205',
+  fS = '_confirmText_8k098_218',
+  vS = '_confirmActions_8k098_225',
+  pS = '_confirmCancel_8k098_230',
+  hS = '_confirmOk_8k098_231',
+  gS = '_stepperRow_8k098_252',
+  kS = '_stepperBtn_8k098_259',
+  yS = '_stepperVal_8k098_278',
+  bS = '_stepperMax_8k098_287',
+  xS = '_totalRow_8k098_303',
+  SS = '_nameBtn_8k098_309',
+  wS = '_detailHeader_8k098_322',
+  jS = '_detailName_8k098_329',
+  TS = '_detailSlot_8k098_335',
+  NS = '_detailRow_8k098_344',
+  AS = '_detailLabel_8k098_352',
+  ES = '_buyConfirmedFx_8k098_360',
   ve = {
-    layout: Gx,
-    head: Yx,
-    title: Vx,
-    gold: Kx,
-    tabs: Xx,
-    tab: Qx,
-    tabActive: Zx,
-    controls: Jx,
-    filters: Px,
-    chip: Fx,
-    chipActive: Wx,
-    sortRow: eS,
-    sort: tS,
-    list: iS,
-    row: lS,
-    info: aS,
-    name: nS,
-    note: sS,
-    action: rS,
-    empty: dS,
-    foot: uS,
-    back: cS,
-    confirmOverlay: mS,
-    confirmBox: oS,
-    confirmText: _S,
-    confirmActions: fS,
-    confirmCancel: vS,
-    confirmOk: pS,
-    stepperRow: hS,
-    stepperBtn: gS,
-    stepperVal: kS,
-    stepperMax: yS,
-    totalRow: bS,
-    nameBtn: xS,
-    detailHeader: SS,
-    detailName: wS,
-    detailSlot: jS,
-    detailRow: TS,
-    detailLabel: NS,
-    buyConfirmedFx: AS,
+    layout: Yx,
+    head: Vx,
+    title: Kx,
+    gold: Xx,
+    tabs: Qx,
+    tab: Zx,
+    tabActive: Jx,
+    controls: Px,
+    filters: Fx,
+    chip: Wx,
+    chipActive: eS,
+    sortRow: tS,
+    sort: iS,
+    list: lS,
+    row: aS,
+    info: nS,
+    name: sS,
+    note: rS,
+    action: dS,
+    empty: uS,
+    foot: cS,
+    back: mS,
+    confirmOverlay: oS,
+    confirmBox: _S,
+    confirmText: fS,
+    confirmActions: vS,
+    confirmCancel: pS,
+    confirmOk: hS,
+    stepperRow: gS,
+    stepperBtn: kS,
+    stepperVal: yS,
+    stepperMax: bS,
+    totalRow: xS,
+    nameBtn: SS,
+    detailHeader: wS,
+    detailName: jS,
+    detailSlot: TS,
+    detailRow: NS,
+    detailLabel: AS,
+    buyConfirmedFx: ES,
   };
-function ES(l) {
+function BS(l) {
   return Math.max(0, Math.floor(l.towerState.record.deepestReached / 10));
 }
 const Lv = {
@@ -27982,7 +28000,7 @@ const Lv = {
     item_mat_t4_corroded_plate: ['equip_t5_light'],
     item_mat_t4_sovereign_crown: ['equip_t5_sword', 'equip_t5_heavy'],
   },
-  BS = (l, n = 1) => {
+  CS = (l, n = 1) => {
     const d = gm(l, n),
       r = [];
     return (
@@ -27997,8 +28015,8 @@ function zm(l, n) {
   var d;
   return ((d = l.shopStock.unlockedGrades) == null ? void 0 : d[n]) ?? 1;
 }
-function CS(l) {
-  const n = ES(l),
+function IS(l) {
+  const n = BS(l),
     d = new Set(l.shopStock.unlockedItemIds),
     r = Object.values(lt)
       .filter((o) => o.buyPrice > 0)
@@ -28013,21 +28031,21 @@ function CS(l) {
           name: _ > 1 ? `${o.name} Lv${_}` : o.name,
           price: Math.round(o.buyPrice * vn(_)),
           kind: 'equip',
-          note: BS(o.id, _),
+          note: CS(o.id, _),
         };
       }),
     ...r,
   ];
 }
-function IS(l) {
+function LS(l) {
   return Lv[l] ?? [];
 }
-function LS(l, n = 1) {
+function MS(l, n = 1) {
   return lt[l] ? lt[l].buyPrice : at[l] ? Math.round(at[l].buyPrice * vn(n)) : null;
 }
 function om(l, n = 1) {
   return lt[l]
-    ? Math.round(p3(lt[l]) * vn(n))
+    ? Math.round(pk(lt[l]) * vn(n))
     : at[l]
       ? Math.floor((at[l].buyPrice * vn(n)) / 2)
       : 0;
@@ -28037,16 +28055,16 @@ function Mv(l) {
   const n = (((d = at[l.masterId]) == null ? void 0 : d.buyPrice) ?? 0) * vn(l.grade);
   return Math.floor(n / 2) + l.forgeLevel * 10;
 }
-function MS(l, n) {
+function OS(l, n) {
   const d = l.guild.equipment.find((o) => o.id === n);
   if (!d) return l;
   const r = Mv(d),
     m = l.guild.equipment.filter((o) => o.id !== n);
   return { ...l, guild: { ...l.guild, equipment: m, gold: l.guild.gold + r } };
 }
-function OS(l, n, d) {
+function qS(l, n, d) {
   const r = at[n] ? zm(l, n) : 1,
-    m = LS(n, r);
+    m = MS(n, r);
   if (m === null || m <= 0 || d <= 0) return l;
   const o = Math.floor(l.guild.gold / m);
   let _ = Math.min(d, o);
@@ -28061,11 +28079,11 @@ function OS(l, n, d) {
   if (_ <= 0) return l;
   const h = m * _;
   let p = l;
-  if (at[n]) for (let v = 0; v < _; v++) p = D3(p, n, 0, r);
+  if (at[n]) for (let v = 0; v < _; v++) p = Dk(p, n, 0, r);
   else p = km(p, n, _);
   return { ...p, guild: { ...p.guild, gold: p.guild.gold - h } };
 }
-function qS(l, n, d = 1, r = 1) {
+function DS(l, n, d = 1, r = 1) {
   if (
     l.guild.storage
       .filter((b) => b.itemId === n && (b.grade ?? 1) === r)
@@ -28074,7 +28092,7 @@ function qS(l, n, d = 1, r = 1) {
     return l;
   const o = om(n, r) * d,
     _ = ym(l, n, d, r),
-    h = IS(n),
+    h = LS(n),
     p = [
       ..._.shopStock.unlockedItemIds,
       ...h.filter((b) => !_.shopStock.unlockedItemIds.includes(b)),
@@ -28087,7 +28105,7 @@ function qS(l, n, d = 1, r = 1) {
     shopStock: { ..._.shopStock, unlockedItemIds: p, unlockedGrades: v },
   };
 }
-function DS(l) {
+function zS(l) {
   const n = at[l];
   return n
     ? n.slot === 'accessory'
@@ -28108,14 +28126,14 @@ const hf = {
     item: 'アイテム',
     material: '素材',
   },
-  zS = ['weapon', 'armor', 'accessory', 'item', 'material'],
+  RS = ['weapon', 'armor', 'accessory', 'item', 'material'],
   gf = { priceDesc: '金額が高い順', priceAsc: '金額が安い順', qtyDesc: '所持数が多い順' },
   kf = (l) => {
     var d;
     const n = (d = lt[l]) == null ? void 0 : d.category;
     return n === 'material' || n === 'drop' ? 'material' : 'item';
   },
-  RS = () => {
+  HS = () => {
     const { navigate: l } = Wt(),
       { save: n, applyAndPersist: d } = cl(),
       r = Mi(),
@@ -28134,7 +28152,7 @@ const hf = {
           ((oe = lt[w]) == null ? void 0 : oe.name) ?? ((k = at[w]) == null ? void 0 : k.name) ?? w;
         return re > 1 ? `${ce} Lv${re}` : ce;
       },
-      D = CS(n).map((w) => {
+      D = IS(n).map((w) => {
         var re;
         return {
           key: w.id,
@@ -28177,7 +28195,7 @@ const hf = {
           })),
       ],
       G = m === 'buy' ? D : se,
-      S = zS.filter((w) => G.some((re) => re.category === w)),
+      S = RS.filter((w) => G.some((re) => re.category === w)),
       E = b !== 'all' && !S.includes(b) ? 'all' : b;
     function O(w) {
       return [...(E === 'all' ? w : w.filter((ce) => ce.category === E))].sort((ce, oe) =>
@@ -28198,10 +28216,10 @@ const hf = {
         _ &&
           (r('coin'),
           _.kind === 'buy'
-            ? (d((w) => OS(w, _.id, p)), A(!0))
+            ? (d((w) => qS(w, _.id, p)), A(!0))
             : _.kind === 'sellItem'
-              ? d((w) => qS(w, _.itemId, p, _.grade))
-              : d((w) => MS(w, _.id)),
+              ? d((w) => DS(w, _.itemId, p, _.grade))
+              : d((w) => OS(w, _.id)),
           h(null));
       },
       _e = O(D),
@@ -28219,7 +28237,7 @@ const hf = {
         const re = q.grade ?? zm(n, q.masterId),
           ce = gm(q.masterId, re),
           oe = y9[w.slot],
-          k = DS(q.masterId),
+          k = zS(q.masterId),
           B = [];
         if (
           (ce.atk && B.push(`ATK+${ce.atk}`),
@@ -28612,64 +28630,64 @@ const hf = {
       ],
     });
   },
-  HS = '_layout_1lo06_2',
-  US = '_head_1lo06_15',
-  $S = '_chapterMark_1lo06_22',
-  GS = '_title_1lo06_31',
-  YS = '_subtitle_1lo06_41',
-  VS = '_body_1lo06_48',
-  KS = '_menu_1lo06_58',
-  XS = '_menuQuote_1lo06_66',
-  QS = '_menuDivider_1lo06_76',
-  ZS = '_loading_1lo06_83',
-  JS = '_warn_1lo06_88',
-  PS = '_danger_1lo06_95',
-  FS = '_dialog_1lo06_109',
-  WS = '_dialogTitle_1lo06_120',
-  ew = '_field_1lo06_127',
-  tw = '_note_1lo06_144',
-  iw = '_dialogActions_1lo06_150',
-  lw = '_primary_1lo06_154',
-  aw = '_sub_1lo06_41',
-  nw = '_foot_1lo06_184',
-  sw = '_version_1lo06_195',
-  rw = '_updateBtn_1lo06_201',
-  dw = '_gearBtn_1lo06_217',
-  uw = '_soundOverlay_1lo06_238',
-  cw = '_soundPanel_1lo06_248',
+  US = '_layout_1lo06_2',
+  $S = '_head_1lo06_15',
+  GS = '_chapterMark_1lo06_22',
+  YS = '_title_1lo06_31',
+  VS = '_subtitle_1lo06_41',
+  KS = '_body_1lo06_48',
+  XS = '_menu_1lo06_58',
+  QS = '_menuQuote_1lo06_66',
+  ZS = '_menuDivider_1lo06_76',
+  JS = '_loading_1lo06_83',
+  PS = '_warn_1lo06_88',
+  FS = '_danger_1lo06_95',
+  WS = '_dialog_1lo06_109',
+  ew = '_dialogTitle_1lo06_120',
+  tw = '_field_1lo06_127',
+  iw = '_note_1lo06_144',
+  lw = '_dialogActions_1lo06_150',
+  aw = '_primary_1lo06_154',
+  nw = '_sub_1lo06_41',
+  sw = '_foot_1lo06_184',
+  rw = '_version_1lo06_195',
+  dw = '_updateBtn_1lo06_201',
+  uw = '_gearBtn_1lo06_217',
+  cw = '_soundOverlay_1lo06_238',
+  mw = '_soundPanel_1lo06_248',
   He = {
-    layout: HS,
-    head: US,
-    chapterMark: $S,
-    title: GS,
-    subtitle: YS,
-    body: VS,
-    menu: KS,
-    menuQuote: XS,
-    menuDivider: QS,
-    loading: ZS,
-    warn: JS,
-    danger: PS,
-    dialog: FS,
-    dialogTitle: WS,
-    field: ew,
-    note: tw,
-    dialogActions: iw,
-    primary: lw,
-    sub: aw,
-    foot: nw,
-    version: sw,
-    updateBtn: rw,
-    gearBtn: dw,
-    soundOverlay: uw,
-    soundPanel: cw,
+    layout: US,
+    head: $S,
+    chapterMark: GS,
+    title: YS,
+    subtitle: VS,
+    body: KS,
+    menu: XS,
+    menuQuote: QS,
+    menuDivider: ZS,
+    loading: JS,
+    warn: PS,
+    danger: FS,
+    dialog: WS,
+    dialogTitle: ew,
+    field: tw,
+    note: iw,
+    dialogActions: lw,
+    primary: aw,
+    sub: nw,
+    foot: sw,
+    version: rw,
+    updateBtn: dw,
+    gearBtn: uw,
+    soundOverlay: cw,
+    soundPanel: mw,
   },
-  mw = '_banner_17jhg_1',
-  ow = '_banner_info_17jhg_23',
-  _w = '_message_17jhg_37',
-  fw = '_button_17jhg_41',
-  cn = { banner: mw, banner_info: ow, message: _w, button: fw },
-  vw = ({ banner: l, onApply: n }) =>
+  ow = '_banner_17jhg_1',
+  _w = '_banner_info_17jhg_23',
+  fw = '_message_17jhg_37',
+  vw = '_button_17jhg_41',
+  cn = { banner: ow, banner_info: _w, message: fw, button: vw },
+  pw = ({ banner: l, onApply: n }) =>
     l === null
       ? null
       : l.kind === 'has-update'
@@ -28696,28 +28714,28 @@ const hf = {
               children: '現在のバージョンは最新です',
             }),
           }),
-  pw = '_card_1ioyi_1',
-  hw = '_corrupted_1ioyi_14',
-  gw = '_corruptedText_1ioyi_19',
-  kw = '_corruptedNote_1ioyi_25',
-  yw = '_guildName_1ioyi_31',
-  bw = '_meta_1ioyi_38',
+  hw = '_card_1ioyi_1',
+  gw = '_corrupted_1ioyi_14',
+  kw = '_corruptedText_1ioyi_19',
+  yw = '_corruptedNote_1ioyi_25',
+  bw = '_guildName_1ioyi_31',
+  xw = '_meta_1ioyi_38',
   zl = {
-    card: pw,
-    corrupted: hw,
-    corruptedText: gw,
-    corruptedNote: kw,
-    guildName: yw,
-    meta: bw,
+    card: hw,
+    corrupted: gw,
+    corruptedText: kw,
+    corruptedNote: yw,
+    guildName: bw,
+    meta: xw,
     continue: '_continue_1ioyi_61',
   },
-  xw = (l) => {
+  Sw = (l) => {
     if (!l) return '-';
     const n = new Date(l),
       d = (r) => String(r).padStart(2, '0');
     return `${n.getFullYear()}/${d(n.getMonth() + 1)}/${d(n.getDate())} ${d(n.getHours())}:${d(n.getMinutes())}`;
   },
-  Sw = ({ meta: l, onContinue: n }) =>
+  ww = ({ meta: l, onContinue: n }) =>
     l.corrupted
       ? c.jsxs('div', {
           className: `${zl.card} ${zl.corrupted}`,
@@ -28753,7 +28771,7 @@ const hf = {
                 c.jsxs('div', {
                   children: [
                     c.jsx('dt', { children: '最終セーブ' }),
-                    c.jsx('dd', { children: xw(l.savedAt) }),
+                    c.jsx('dd', { children: Sw(l.savedAt) }),
                   ],
                 }),
               ],
@@ -28766,36 +28784,36 @@ const hf = {
             }),
           ],
         }),
-  ww = '_container_wbj6o_1',
-  jw = '_title_wbj6o_12',
-  Tw = '_sectionTitle_wbj6o_19',
-  Nw = '_row_wbj6o_30',
-  Aw = '_label_wbj6o_38',
-  Ew = '_muteButton_wbj6o_45',
-  Bw = '_muted_wbj6o_65',
-  Cw = '_sliderWrapper_wbj6o_71',
-  Iw = '_slider_wbj6o_71',
-  Lw = '_volumeValue_wbj6o_90',
+  jw = '_container_wbj6o_1',
+  Tw = '_title_wbj6o_12',
+  Nw = '_sectionTitle_wbj6o_19',
+  Aw = '_row_wbj6o_30',
+  Ew = '_label_wbj6o_38',
+  Bw = '_muteButton_wbj6o_45',
+  Cw = '_muted_wbj6o_65',
+  Iw = '_sliderWrapper_wbj6o_71',
+  Lw = '_slider_wbj6o_71',
+  Mw = '_volumeValue_wbj6o_90',
   mt = {
-    container: ww,
-    title: jw,
-    sectionTitle: Tw,
-    row: Nw,
-    label: Aw,
-    muteButton: Ew,
-    muted: Bw,
-    sliderWrapper: Cw,
-    slider: Iw,
-    volumeValue: Lw,
+    container: jw,
+    title: Tw,
+    sectionTitle: Nw,
+    row: Aw,
+    label: Ew,
+    muteButton: Bw,
+    muted: Cw,
+    sliderWrapper: Iw,
+    slider: Lw,
+    volumeValue: Mw,
   },
-  Mw = 0.6,
-  Ow = 0.5,
-  qw = () => {
+  Ow = 0.6,
+  qw = 0.5,
+  Dw = () => {
     const l = N.useContext(vm),
       n = N.useContext(fm),
-      d = (l == null ? void 0 : l.volume) ?? Mw,
+      d = (l == null ? void 0 : l.volume) ?? Ow,
       r = (l == null ? void 0 : l.muted) ?? !1,
-      m = (n == null ? void 0 : n.volume) ?? Ow,
+      m = (n == null ? void 0 : n.volume) ?? qw,
       o = (n == null ? void 0 : n.muted) ?? !1,
       _ = () => {
         l == null || l.toggleMuted();
@@ -28894,12 +28912,12 @@ const hf = {
       ],
     });
   },
-  Dw = 'modulepreload',
-  zw = function (l) {
+  zw = 'modulepreload',
+  Rw = function (l) {
     return '/sekaiju-like-game/' + l;
   },
   yf = {},
-  Rw = function (n, d, r) {
+  Hw = function (n, d, r) {
     let m = Promise.resolve();
     if (d && d.length > 0) {
       let _ = function (v) {
@@ -28917,14 +28935,14 @@ const hf = {
         p = (h == null ? void 0 : h.nonce) || (h == null ? void 0 : h.getAttribute('nonce'));
       m = _(
         d.map((v) => {
-          if (((v = zw(v)), v in yf)) return;
+          if (((v = Rw(v)), v in yf)) return;
           yf[v] = !0;
           const b = v.endsWith('.css'),
             y = b ? '[rel="stylesheet"]' : '';
           if (document.querySelector(`link[href="${v}"]${y}`)) return;
           const j = document.createElement('link');
           if (
-            ((j.rel = b ? 'stylesheet' : Dw),
+            ((j.rel = b ? 'stylesheet' : zw),
             b || (j.as = 'script'),
             (j.crossOrigin = ''),
             (j.href = v),
@@ -28948,7 +28966,7 @@ const hf = {
       return n().catch(o);
     });
   };
-function Hw(l = {}) {
+function Uw(l = {}) {
   const {
     immediate: n = !1,
     onNeedRefresh: d,
@@ -28964,7 +28982,7 @@ function Hw(l = {}) {
   async function y() {
     if ('serviceWorker' in navigator) {
       if (
-        ((h = await Rw(async () => {
+        ((h = await Hw(async () => {
           const { Workbox: j } = await import('./workbox-window.prod.es5-BIl4cyR9.js');
           return { Workbox: j };
         }, [])
@@ -29011,7 +29029,7 @@ function Hw(l = {}) {
   }
   return ((p = y()), b);
 }
-function Uw(l = {}) {
+function $w(l = {}) {
   const {
       immediate: n = !0,
       onNeedRefresh: d,
@@ -29023,7 +29041,7 @@ function Uw(l = {}) {
     [h, p] = N.useState(!1),
     [v, b] = N.useState(!1),
     [y] = N.useState(() =>
-      Hw({
+      Uw({
         immediate: n,
         onOfflineReady() {
           (b(!0), r == null || r());
@@ -29038,14 +29056,14 @@ function Uw(l = {}) {
     );
   return { needRefresh: [h, p], offlineReady: [v, b], updateServiceWorker: y };
 }
-const $w = 2500,
-  Gw = 1500,
-  Yw = () => {
+const Gw = 2500,
+  Yw = 1500,
+  Vw = () => {
     const l = N.useRef(null),
       {
         needRefresh: [n],
         updateServiceWorker: d,
-      } = Uw({
+      } = $w({
         onRegisteredSW: (j, C) => {
           l.current = C ?? null;
         },
@@ -29064,7 +29082,7 @@ const $w = 2500,
             const j = l.current;
             (j && (await j.update()),
               await new Promise((C) => {
-                window.setTimeout(C, Gw);
+                window.setTimeout(C, Yw);
               }));
           } catch {}
           (m(!1),
@@ -29073,7 +29091,7 @@ const $w = 2500,
               h.current !== null && window.clearTimeout(h.current),
               (h.current = window.setTimeout(() => {
                 (_(!1), (h.current = null));
-              }, $w))));
+              }, Gw))));
         }
       }, [r]),
       b = N.useCallback(() => {
@@ -29086,7 +29104,7 @@ const $w = 2500,
       applyUpdate: b,
     };
   },
-  Vw = () => {
+  Kw = () => {
     const { navigate: l } = Wt(),
       { startNewGame: n, continueGame: d } = cl(),
       r = Mi(),
@@ -29096,7 +29114,7 @@ const $w = 2500,
       [b, y] = N.useState(''),
       [j, C] = N.useState(!1),
       [q, Q] = N.useState(!1),
-      { banner: K, checkForUpdate: A, isChecking: L, applyUpdate: F } = Yw();
+      { banner: K, checkForUpdate: A, isChecking: L, applyUpdate: F } = Vw();
     N.useEffect(() => {
       (async () => (o(await j8()), h(!1)))();
     }, []);
@@ -29224,7 +29242,7 @@ const $w = 2500,
                         className: He.menuQuote,
                         children: '— 樹は今日も、まだ誰も書いていない頁を孕む。—',
                       }),
-                      m !== null && c.jsx(Sw, { meta: m, onContinue: () => void se() }),
+                      m !== null && c.jsx(ww, { meta: m, onContinue: () => void se() }),
                       c.jsx('button', {
                         type: 'button',
                         className: D ? He.sub : He.primary,
@@ -29238,7 +29256,7 @@ const $w = 2500,
         c.jsxs('footer', {
           className: He.foot,
           children: [
-            c.jsxs('span', { className: He.version, children: ['v', '0.2.9'] }),
+            c.jsxs('span', { className: He.version, children: ['v', '0.2.10'] }),
             c.jsx('button', {
               type: 'button',
               className: He.updateBtn,
@@ -29250,7 +29268,7 @@ const $w = 2500,
             }),
           ],
         }),
-        c.jsx(vw, { banner: K, onApply: F }),
+        c.jsx(pw, { banner: K, onApply: F }),
         q
           ? c.jsx('div', {
               className: He.soundOverlay,
@@ -29261,7 +29279,7 @@ const $w = 2500,
                 className: He.soundPanel,
                 onClick: (E) => E.stopPropagation(),
                 children: [
-                  c.jsx(qw, {}),
+                  c.jsx(Dw, {}),
                   c.jsx('button', {
                     type: 'button',
                     className: He.sub,
@@ -29277,43 +29295,43 @@ const $w = 2500,
       ],
     });
   },
-  Kw = '_layout_mrsf5_1',
-  Xw = '_head_mrsf5_13',
-  Qw = '_chapterMark_mrsf5_19',
-  Zw = '_guildName_mrsf5_28',
-  Jw = '_stats_mrsf5_34',
-  Pw = '_hint_mrsf5_56',
-  Fw = '_menu_mrsf5_67',
-  Ww = '_foot_mrsf5_75',
-  ej = '_exit_mrsf5_81',
-  tj = '_warpOverlay_mrsf5_92',
-  ij = '_warpPanel_mrsf5_103',
-  lj = '_warpTitle_mrsf5_116',
-  aj = '_warpBtn_mrsf5_122',
-  nj = '_warpClose_mrsf5_133',
-  sj = '_sealOverlay_mrsf5_143',
+  Xw = '_layout_y7ln0_1',
+  Qw = '_head_y7ln0_13',
+  Zw = '_chapterMark_y7ln0_20',
+  Jw = '_guildName_y7ln0_29',
+  Pw = '_stats_y7ln0_35',
+  Fw = '_hint_y7ln0_57',
+  Ww = '_menu_y7ln0_68',
+  ej = '_foot_y7ln0_79',
+  tj = '_exit_y7ln0_86',
+  ij = '_warpOverlay_y7ln0_97',
+  lj = '_warpPanel_y7ln0_108',
+  aj = '_warpTitle_y7ln0_121',
+  nj = '_warpBtn_y7ln0_127',
+  sj = '_warpClose_y7ln0_138',
+  rj = '_sealOverlay_y7ln0_148',
   Ot = {
-    layout: Kw,
-    head: Xw,
-    chapterMark: Qw,
-    guildName: Zw,
-    stats: Jw,
-    hint: Pw,
-    menu: Fw,
-    foot: Ww,
-    exit: ej,
-    warpOverlay: tj,
-    warpPanel: ij,
-    warpTitle: lj,
-    warpBtn: aj,
-    warpClose: nj,
-    sealOverlay: sj,
+    layout: Xw,
+    head: Qw,
+    chapterMark: Zw,
+    guildName: Jw,
+    stats: Pw,
+    hint: Fw,
+    menu: Ww,
+    foot: ej,
+    exit: tj,
+    warpOverlay: ij,
+    warpPanel: lj,
+    warpTitle: aj,
+    warpBtn: nj,
+    warpClose: sj,
+    sealOverlay: rj,
   },
-  rj = '_button_ykcco_1',
-  dj = '_primary_ykcco_37',
-  uj = '_label_ykcco_46',
-  cj = '_description_ykcco_51',
-  ed = { button: rj, primary: dj, label: uj, description: cj },
+  dj = '_button_ykcco_1',
+  uj = '_primary_ykcco_37',
+  cj = '_label_ykcco_46',
+  mj = '_description_ykcco_51',
+  ed = { button: dj, primary: uj, label: cj, description: mj },
   mn = ({
     label: l,
     description: n,
@@ -29337,7 +29355,7 @@ const $w = 2500,
       ],
     });
   },
-  mj = () => {
+  oj = () => {
     const { navigate: l } = Wt(),
       { save: n, exitToTitle: d, applyAndPersist: r } = cl(),
       m = Mi(),
@@ -29514,20 +29532,20 @@ const $w = 2500,
       ],
     });
   };
-function oj() {
+function _j() {
   const { screen: l } = Wt(),
     n = (() => {
       switch (l.name) {
         case 'title':
-          return c.jsx(Vw, {});
+          return c.jsx(Kw, {});
         case 'town':
-          return c.jsx(mj, {});
+          return c.jsx(oj, {});
         case 'guild':
           return c.jsx(G9, {});
         case 'guildChar':
-          return c.jsx(Dx, { id: l.id });
+          return c.jsx(zx, { id: l.id });
         case 'shop':
-          return c.jsx(RS, {});
+          return c.jsx(HS, {});
         case 'forge':
           return c.jsx(Wb, {});
         case 'codex':
@@ -29537,15 +29555,15 @@ function oj() {
         case 'battle':
           return c.jsx(q8, {});
         default:
-          return c.jsx($x, {});
+          return c.jsx(Gx, {});
       }
     })();
   return c.jsx(d2, { children: n });
 }
-function _j(l) {
+function fj(l) {
   return 440 * Math.pow(2, (l - 69) / 12);
 }
-function fj(l, n) {
+function vj(l, n) {
   const r = new Float32Array(64),
     m = new Float32Array(64);
   for (let o = 1; o < 64; o++) m[o] = (2 / (o * Math.PI)) * Math.sin(o * Math.PI * n);
@@ -29556,10 +29574,10 @@ function Qc(l, n) {
   let d = bf.get(l);
   d || ((d = new Map()), bf.set(l, d));
   let r = d.get(n);
-  return (r || ((r = fj(l, n)), d.set(n, r)), r);
+  return (r || ((r = vj(l, n)), d.set(n, r)), r);
 }
 const xf = new WeakMap();
-function vj(l) {
+function pj(l) {
   const n = xf.get(l);
   if (n) return n;
   const d = l.sampleRate * 2,
@@ -29568,7 +29586,7 @@ function vj(l) {
   for (let o = 0; o < d; o++) m[o] = Math.random() * 2 - 1;
   return (xf.set(l, r), r);
 }
-function pj(l, n, d, r, m, o) {
+function hj(l, n, d, r, m, o) {
   const { wave: _, adsr: h, detune: p } = d,
     v = r.vel ?? 1,
     b = l.createGain();
@@ -29589,7 +29607,7 @@ function pj(l, n, d, r, m, o) {
     b.connect(n),
     _ === 'noise')
   ) {
-    const F = vj(l),
+    const F = pj(l),
       D = l.createBufferSource();
     ((D.buffer = F),
       (D.loop = !0),
@@ -29610,7 +29628,7 @@ function pj(l, n, d, r, m, o) {
           : _ === 'triangle'
             ? (F.type = 'triangle')
             : _ === 'saw' && (F.type = 'sawtooth'),
-      F.frequency.setValueAtTime(_j(r.midi), m),
+      F.frequency.setValueAtTime(fj(r.midi), m),
       p !== void 0 && F.detune.setValueAtTime(p, m),
       F.connect(b),
       F.start(m),
@@ -29620,10 +29638,10 @@ function pj(l, n, d, r, m, o) {
       }));
   }
 }
-const hj = 25,
-  gj = 0.1,
+const gj = 25,
+  kj = 0.1,
   Zc = 0.4;
-class kj {
+class yj {
   constructor(n, d) {
     oi(this, 'ctx');
     oi(this, 'masterGain');
@@ -29667,7 +29685,7 @@ class kj {
       this.masterGain.gain.linearRampToValueAtTime(this.targetGain, r + Zc),
       (this.intervalId = setInterval(() => {
         this._scheduleTick();
-      }, hj)),
+      }, gj)),
       this._scheduleTick());
   }
   _stopScheduler() {
@@ -29685,7 +29703,7 @@ class kj {
   }
   _scheduleTick() {
     if (!this.playing || !this.track) return;
-    const d = this.ctx.currentTime + gj,
+    const d = this.ctx.currentTime + kj,
       { bpm: r, loopBeats: m, channels: o } = this.track,
       _ = 60 / r,
       h = m * _;
@@ -29706,7 +29724,7 @@ class kj {
             A = this.ctx.createGain();
           (A.gain.setValueAtTime(y.gain, Q),
             A.connect(this.masterGain),
-            pj(this.ctx, A, y, j, Q, K));
+            hj(this.ctx, A, y, j, Q, K));
           const F = (Q + K + y.adsr.r + 0.05 - this.ctx.currentTime) * 1e3;
           F > 0
             ? setTimeout(() => {
@@ -29718,12 +29736,12 @@ class kj {
     }
   }
 }
-function yj() {
+function bj() {
   if (!(typeof window > 'u')) return window.AudioContext ?? window.webkitAudioContext ?? void 0;
 }
 const Ov = 'sekaiju-bgm-settings',
   Jc = { volume: 0.5, muted: !1 };
-function bj() {
+function xj() {
   try {
     const l = localStorage.getItem(Ov);
     if (!l) return { ...Jc };
@@ -29740,29 +29758,29 @@ function bj() {
     return { ...Jc };
   }
 }
-function xj(l) {
+function Sj(l) {
   try {
     localStorage.setItem(Ov, JSON.stringify(l));
   } catch {}
 }
-const Sj = 'battle',
-  wj = 148,
-  jj = 128,
-  Tj = JSON.parse(
+const wj = 'battle',
+  jj = 148,
+  Tj = 128,
+  Nj = JSON.parse(
     '[{"name":"lead","wave":"square25","gain":0.45,"adsr":{"a":0.008,"d":0.06,"s":0.72,"r":0.08},"notes":[{"t":0,"dur":0.5,"midi":69,"vel":0.9},{"t":0.5,"dur":0.5,"midi":72,"vel":0.82},{"t":1,"dur":0.5,"midi":74,"vel":0.85},{"t":1.5,"dur":0.5,"midi":76,"vel":0.88},{"t":2,"dur":1,"midi":77,"vel":0.9},{"t":3,"dur":0.5,"midi":76,"vel":0.82},{"t":3.5,"dur":0.5,"midi":74,"vel":0.78},{"t":4,"dur":0.5,"midi":72,"vel":0.88},{"t":4.5,"dur":0.5,"midi":74,"vel":0.82},{"t":5,"dur":0.5,"midi":72,"vel":0.85},{"t":5.5,"dur":0.5,"midi":69,"vel":0.8},{"t":6,"dur":1.5,"midi":71,"vel":0.88},{"t":8,"dur":0.5,"midi":69,"vel":0.88},{"t":8.5,"dur":0.5,"midi":71,"vel":0.82},{"t":9,"dur":0.5,"midi":72,"vel":0.85},{"t":9.5,"dur":0.5,"midi":74,"vel":0.88},{"t":10,"dur":1,"midi":76,"vel":0.9},{"t":11,"dur":0.5,"midi":74,"vel":0.82},{"t":11.5,"dur":0.5,"midi":72,"vel":0.78},{"t":12,"dur":0.5,"midi":74,"vel":0.88},{"t":12.5,"dur":0.5,"midi":72,"vel":0.82},{"t":13,"dur":0.5,"midi":71,"vel":0.8},{"t":13.5,"dur":0.5,"midi":69,"vel":0.78},{"t":14,"dur":1.5,"midi":67,"vel":0.88},{"t":16,"dur":0.5,"midi":71,"vel":0.9},{"t":16.5,"dur":0.5,"midi":72,"vel":0.85},{"t":17,"dur":0.5,"midi":74,"vel":0.88},{"t":17.5,"dur":0.5,"midi":76,"vel":0.9},{"t":18,"dur":1,"midi":77,"vel":0.92},{"t":19,"dur":0.5,"midi":76,"vel":0.82},{"t":19.5,"dur":0.5,"midi":74,"vel":0.78},{"t":20,"dur":0.5,"midi":72,"vel":0.88},{"t":20.5,"dur":0.5,"midi":71,"vel":0.82},{"t":21,"dur":0.5,"midi":69,"vel":0.85},{"t":21.5,"dur":0.5,"midi":67,"vel":0.8},{"t":22,"dur":1.5,"midi":69,"vel":0.88},{"t":24,"dur":0.5,"midi":71,"vel":0.88},{"t":24.5,"dur":0.5,"midi":72,"vel":0.82},{"t":25,"dur":0.5,"midi":74,"vel":0.85},{"t":25.5,"dur":0.5,"midi":76,"vel":0.88},{"t":26,"dur":1,"midi":77,"vel":0.9},{"t":27,"dur":0.5,"midi":76,"vel":0.82},{"t":27.5,"dur":0.5,"midi":74,"vel":0.78},{"t":28,"dur":0.5,"midi":76,"vel":0.9},{"t":28.5,"dur":0.5,"midi":74,"vel":0.85},{"t":29,"dur":0.5,"midi":72,"vel":0.82},{"t":29.5,"dur":0.5,"midi":71,"vel":0.8},{"t":30,"dur":2,"midi":69,"vel":0.9},{"t":32,"dur":0.5,"midi":69,"vel":0.9},{"t":32.5,"dur":0.5,"midi":72,"vel":0.85},{"t":33,"dur":0.5,"midi":74,"vel":0.88},{"t":33.5,"dur":0.5,"midi":76,"vel":0.9},{"t":34,"dur":1,"midi":77,"vel":0.92},{"t":35,"dur":0.5,"midi":76,"vel":0.85},{"t":35.5,"dur":0.5,"midi":74,"vel":0.8},{"t":36,"dur":0.5,"midi":72,"vel":0.88},{"t":36.5,"dur":0.5,"midi":71,"vel":0.82},{"t":37,"dur":0.5,"midi":69,"vel":0.85},{"t":37.5,"dur":0.5,"midi":67,"vel":0.8},{"t":38,"dur":1.5,"midi":65,"vel":0.88},{"t":40,"dur":0.5,"midi":67,"vel":0.9},{"t":40.5,"dur":0.5,"midi":69,"vel":0.85},{"t":41,"dur":0.5,"midi":71,"vel":0.88},{"t":41.5,"dur":0.5,"midi":72,"vel":0.9},{"t":42,"dur":1,"midi":74,"vel":0.92},{"t":43,"dur":0.5,"midi":72,"vel":0.85},{"t":43.5,"dur":0.5,"midi":71,"vel":0.8},{"t":44,"dur":0.5,"midi":72,"vel":0.88},{"t":44.5,"dur":0.5,"midi":71,"vel":0.82},{"t":45,"dur":0.5,"midi":69,"vel":0.85},{"t":45.5,"dur":0.5,"midi":67,"vel":0.8},{"t":46,"dur":1.5,"midi":69,"vel":0.88},{"t":48,"dur":0.5,"midi":72,"vel":0.9},{"t":48.5,"dur":0.5,"midi":74,"vel":0.85},{"t":49,"dur":0.5,"midi":76,"vel":0.88},{"t":49.5,"dur":0.5,"midi":77,"vel":0.9},{"t":50,"dur":1,"midi":79,"vel":0.92},{"t":51,"dur":0.5,"midi":77,"vel":0.85},{"t":51.5,"dur":0.5,"midi":76,"vel":0.8},{"t":52,"dur":0.5,"midi":74,"vel":0.88},{"t":52.5,"dur":0.5,"midi":72,"vel":0.82},{"t":53,"dur":0.5,"midi":71,"vel":0.85},{"t":53.5,"dur":0.5,"midi":69,"vel":0.8},{"t":54,"dur":1.5,"midi":68,"vel":0.88},{"t":56,"dur":0.5,"midi":69,"vel":0.9},{"t":56.5,"dur":0.5,"midi":71,"vel":0.85},{"t":57,"dur":0.5,"midi":72,"vel":0.88},{"t":57.5,"dur":0.5,"midi":74,"vel":0.9},{"t":58,"dur":1,"midi":76,"vel":0.92},{"t":59,"dur":0.5,"midi":74,"vel":0.85},{"t":59.5,"dur":0.5,"midi":72,"vel":0.8},{"t":60,"dur":0.5,"midi":76,"vel":0.9},{"t":60.5,"dur":0.5,"midi":74,"vel":0.85},{"t":61,"dur":0.5,"midi":72,"vel":0.82},{"t":61.5,"dur":0.5,"midi":71,"vel":0.8},{"t":62,"dur":2,"midi":69,"vel":0.9},{"t":64,"dur":0.5,"midi":74,"vel":0.92},{"t":64.5,"dur":0.5,"midi":76,"vel":0.88},{"t":65,"dur":0.5,"midi":77,"vel":0.9},{"t":65.5,"dur":0.5,"midi":79,"vel":0.92},{"t":66,"dur":1,"midi":81,"vel":0.95},{"t":67,"dur":0.5,"midi":79,"vel":0.88},{"t":67.5,"dur":0.5,"midi":77,"vel":0.82},{"t":68,"dur":0.5,"midi":76,"vel":0.9},{"t":68.5,"dur":0.5,"midi":74,"vel":0.85},{"t":69,"dur":0.5,"midi":72,"vel":0.82},{"t":69.5,"dur":0.5,"midi":69,"vel":0.8},{"t":70,"dur":1.5,"midi":71,"vel":0.88},{"t":72,"dur":0.5,"midi":76,"vel":0.92},{"t":72.5,"dur":0.5,"midi":77,"vel":0.88},{"t":73,"dur":0.5,"midi":79,"vel":0.9},{"t":73.5,"dur":0.5,"midi":81,"vel":0.92},{"t":74,"dur":1,"midi":76,"vel":0.95},{"t":75,"dur":0.5,"midi":74,"vel":0.88},{"t":75.5,"dur":0.5,"midi":72,"vel":0.82},{"t":76,"dur":0.5,"midi":74,"vel":0.9},{"t":76.5,"dur":0.5,"midi":72,"vel":0.85},{"t":77,"dur":0.5,"midi":71,"vel":0.82},{"t":77.5,"dur":0.5,"midi":69,"vel":0.8},{"t":78,"dur":2,"midi":68,"vel":0.9},{"t":80,"dur":0.5,"midi":69,"vel":0.92},{"t":80.5,"dur":0.5,"midi":71,"vel":0.88},{"t":81,"dur":0.5,"midi":72,"vel":0.9},{"t":81.5,"dur":0.5,"midi":74,"vel":0.92},{"t":82,"dur":1,"midi":76,"vel":0.95},{"t":83,"dur":0.5,"midi":74,"vel":0.88},{"t":83.5,"dur":0.5,"midi":72,"vel":0.82},{"t":84,"dur":0.5,"midi":74,"vel":0.9},{"t":84.5,"dur":0.5,"midi":72,"vel":0.85},{"t":85,"dur":0.5,"midi":71,"vel":0.82},{"t":85.5,"dur":0.5,"midi":69,"vel":0.8},{"t":86,"dur":1.5,"midi":71,"vel":0.88},{"t":88,"dur":0.5,"midi":72,"vel":0.88},{"t":88.5,"dur":0.5,"midi":74,"vel":0.82},{"t":89,"dur":0.5,"midi":76,"vel":0.85},{"t":89.5,"dur":0.5,"midi":77,"vel":0.88},{"t":90,"dur":1,"midi":79,"vel":0.9},{"t":91,"dur":0.5,"midi":77,"vel":0.82},{"t":91.5,"dur":0.5,"midi":76,"vel":0.78},{"t":92,"dur":0.5,"midi":74,"vel":0.88},{"t":92.5,"dur":0.5,"midi":72,"vel":0.82},{"t":93,"dur":0.5,"midi":71,"vel":0.8},{"t":93.5,"dur":0.5,"midi":69,"vel":0.78},{"t":94,"dur":2,"midi":68,"vel":0.88},{"t":96,"dur":0.5,"midi":69,"vel":0.9},{"t":96.5,"dur":0.5,"midi":72,"vel":0.85},{"t":97,"dur":0.5,"midi":74,"vel":0.88},{"t":97.5,"dur":0.5,"midi":76,"vel":0.9},{"t":98,"dur":1,"midi":77,"vel":0.92},{"t":99,"dur":0.5,"midi":76,"vel":0.85},{"t":99.5,"dur":0.5,"midi":74,"vel":0.8},{"t":100,"dur":0.5,"midi":72,"vel":0.88},{"t":100.5,"dur":0.5,"midi":71,"vel":0.82},{"t":101,"dur":0.5,"midi":69,"vel":0.85},{"t":101.5,"dur":0.5,"midi":67,"vel":0.8},{"t":102,"dur":1.5,"midi":69,"vel":0.88},{"t":104,"dur":0.5,"midi":71,"vel":0.9},{"t":104.5,"dur":0.5,"midi":72,"vel":0.85},{"t":105,"dur":0.5,"midi":74,"vel":0.88},{"t":105.5,"dur":0.5,"midi":76,"vel":0.9},{"t":106,"dur":1,"midi":77,"vel":0.92},{"t":107,"dur":0.5,"midi":76,"vel":0.85},{"t":107.5,"dur":0.5,"midi":74,"vel":0.8},{"t":108,"dur":0.5,"midi":76,"vel":0.9},{"t":108.5,"dur":0.5,"midi":74,"vel":0.85},{"t":109,"dur":0.5,"midi":72,"vel":0.82},{"t":109.5,"dur":0.5,"midi":71,"vel":0.8},{"t":110,"dur":1.5,"midi":68,"vel":0.9},{"t":112,"dur":0.5,"midi":69,"vel":0.9},{"t":112.5,"dur":0.5,"midi":71,"vel":0.85},{"t":113,"dur":0.5,"midi":72,"vel":0.88},{"t":113.5,"dur":0.5,"midi":74,"vel":0.9},{"t":114,"dur":1,"midi":76,"vel":0.92},{"t":115,"dur":0.5,"midi":74,"vel":0.85},{"t":115.5,"dur":0.5,"midi":72,"vel":0.8},{"t":116,"dur":0.5,"midi":74,"vel":0.9},{"t":116.5,"dur":0.5,"midi":72,"vel":0.85},{"t":117,"dur":0.5,"midi":71,"vel":0.82},{"t":117.5,"dur":0.5,"midi":69,"vel":0.8},{"t":118,"dur":1.5,"midi":71,"vel":0.88},{"t":120,"dur":0.5,"midi":72,"vel":0.9},{"t":120.5,"dur":0.5,"midi":74,"vel":0.85},{"t":121,"dur":0.5,"midi":76,"vel":0.88},{"t":121.5,"dur":0.5,"midi":77,"vel":0.9},{"t":122,"dur":1,"midi":76,"vel":0.92},{"t":123,"dur":0.5,"midi":74,"vel":0.85},{"t":123.5,"dur":0.5,"midi":72,"vel":0.8},{"t":124,"dur":0.5,"midi":74,"vel":0.9},{"t":124.5,"dur":0.5,"midi":72,"vel":0.85},{"t":125,"dur":0.5,"midi":71,"vel":0.82},{"t":125.5,"dur":0.5,"midi":69,"vel":0.8},{"t":126,"dur":2,"midi":69,"vel":0.92}]},{"name":"harmony","wave":"square12","gain":0.22,"adsr":{"a":0.01,"d":0.08,"s":0.65,"r":0.1},"notes":[{"t":0,"dur":4,"midi":64,"vel":0.72},{"t":4,"dur":4,"midi":60,"vel":0.68},{"t":8,"dur":4,"midi":62,"vel":0.7},{"t":12,"dur":4,"midi":59,"vel":0.68},{"t":16,"dur":4,"midi":64,"vel":0.72},{"t":20,"dur":4,"midi":62,"vel":0.7},{"t":24,"dur":4,"midi":60,"vel":0.7},{"t":28,"dur":4,"midi":64,"vel":0.75},{"t":32,"dur":2,"midi":64,"vel":0.72},{"t":34,"dur":2,"midi":65,"vel":0.7},{"t":36,"dur":2,"midi":62,"vel":0.7},{"t":38,"dur":2,"midi":60,"vel":0.68},{"t":40,"dur":2,"midi":62,"vel":0.7},{"t":42,"dur":2,"midi":64,"vel":0.72},{"t":44,"dur":2,"midi":64,"vel":0.72},{"t":46,"dur":2,"midi":64,"vel":0.72},{"t":48,"dur":2,"midi":64,"vel":0.72},{"t":50,"dur":2,"midi":65,"vel":0.7},{"t":52,"dur":2,"midi":62,"vel":0.7},{"t":54,"dur":2,"midi":60,"vel":0.68},{"t":56,"dur":2,"midi":64,"vel":0.72},{"t":58,"dur":2,"midi":64,"vel":0.72},{"t":60,"dur":4,"midi":64,"vel":0.75},{"t":64,"dur":2,"midi":69,"vel":0.78},{"t":66,"dur":2,"midi":69,"vel":0.75},{"t":68,"dur":2,"midi":64,"vel":0.72},{"t":70,"dur":2,"midi":64,"vel":0.7},{"t":72,"dur":2,"midi":67,"vel":0.75},{"t":74,"dur":2,"midi":69,"vel":0.78},{"t":76,"dur":2,"midi":64,"vel":0.72},{"t":78,"dur":2,"midi":60,"vel":0.68},{"t":80,"dur":2,"midi":64,"vel":0.72},{"t":82,"dur":2,"midi":65,"vel":0.7},{"t":84,"dur":2,"midi":62,"vel":0.7},{"t":86,"dur":2,"midi":64,"vel":0.72},{"t":88,"dur":2,"midi":64,"vel":0.72},{"t":90,"dur":2,"midi":67,"vel":0.75},{"t":92,"dur":2,"midi":64,"vel":0.72},{"t":94,"dur":2,"midi":60,"vel":0.68},{"t":96,"dur":4,"midi":64,"vel":0.72},{"t":100,"dur":4,"midi":62,"vel":0.7},{"t":104,"dur":4,"midi":60,"vel":0.7},{"t":108,"dur":4,"midi":59,"vel":0.72},{"t":112,"dur":4,"midi":64,"vel":0.72},{"t":116,"dur":4,"midi":62,"vel":0.7},{"t":120,"dur":4,"midi":64,"vel":0.75},{"t":124,"dur":4,"midi":64,"vel":0.78}]},{"name":"bass","wave":"triangle","gain":0.4,"adsr":{"a":0.008,"d":0.07,"s":0.6,"r":0.08},"notes":[{"t":0,"dur":0.45,"midi":45,"vel":0.88},{"t":0.5,"dur":0.45,"midi":45,"vel":0.72},{"t":1,"dur":0.45,"midi":45,"vel":0.85},{"t":1.5,"dur":0.45,"midi":45,"vel":0.7},{"t":2,"dur":0.45,"midi":45,"vel":0.88},{"t":2.5,"dur":0.45,"midi":45,"vel":0.7},{"t":3,"dur":0.45,"midi":48,"vel":0.82},{"t":3.5,"dur":0.45,"midi":47,"vel":0.72},{"t":4,"dur":0.45,"midi":41,"vel":0.88},{"t":4.5,"dur":0.45,"midi":41,"vel":0.72},{"t":5,"dur":0.45,"midi":41,"vel":0.85},{"t":5.5,"dur":0.45,"midi":41,"vel":0.7},{"t":6,"dur":0.45,"midi":41,"vel":0.88},{"t":6.5,"dur":0.45,"midi":41,"vel":0.7},{"t":7,"dur":0.45,"midi":43,"vel":0.82},{"t":7.5,"dur":0.45,"midi":44,"vel":0.72},{"t":8,"dur":0.45,"midi":43,"vel":0.88},{"t":8.5,"dur":0.45,"midi":43,"vel":0.72},{"t":9,"dur":0.45,"midi":43,"vel":0.85},{"t":9.5,"dur":0.45,"midi":43,"vel":0.7},{"t":10,"dur":0.45,"midi":43,"vel":0.88},{"t":10.5,"dur":0.45,"midi":43,"vel":0.7},{"t":11,"dur":0.45,"midi":45,"vel":0.82},{"t":11.5,"dur":0.45,"midi":44,"vel":0.72},{"t":12,"dur":0.45,"midi":40,"vel":0.88},{"t":12.5,"dur":0.45,"midi":40,"vel":0.72},{"t":13,"dur":0.45,"midi":40,"vel":0.85},{"t":13.5,"dur":0.45,"midi":40,"vel":0.7},{"t":14,"dur":0.45,"midi":40,"vel":0.88},{"t":14.5,"dur":0.45,"midi":40,"vel":0.7},{"t":15,"dur":0.45,"midi":43,"vel":0.82},{"t":15.5,"dur":0.45,"midi":44,"vel":0.72},{"t":16,"dur":0.45,"midi":45,"vel":0.88},{"t":16.5,"dur":0.45,"midi":45,"vel":0.72},{"t":17,"dur":0.45,"midi":45,"vel":0.85},{"t":17.5,"dur":0.45,"midi":45,"vel":0.7},{"t":18,"dur":0.45,"midi":45,"vel":0.88},{"t":18.5,"dur":0.45,"midi":45,"vel":0.7},{"t":19,"dur":0.45,"midi":48,"vel":0.82},{"t":19.5,"dur":0.45,"midi":47,"vel":0.72},{"t":20,"dur":0.45,"midi":43,"vel":0.88},{"t":20.5,"dur":0.45,"midi":43,"vel":0.72},{"t":21,"dur":0.45,"midi":43,"vel":0.85},{"t":21.5,"dur":0.45,"midi":43,"vel":0.7},{"t":22,"dur":0.45,"midi":43,"vel":0.88},{"t":22.5,"dur":0.45,"midi":43,"vel":0.7},{"t":23,"dur":0.45,"midi":45,"vel":0.82},{"t":23.5,"dur":0.45,"midi":44,"vel":0.72},{"t":24,"dur":0.45,"midi":41,"vel":0.88},{"t":24.5,"dur":0.45,"midi":41,"vel":0.72},{"t":25,"dur":0.45,"midi":41,"vel":0.85},{"t":25.5,"dur":0.45,"midi":41,"vel":0.7},{"t":26,"dur":0.45,"midi":41,"vel":0.88},{"t":26.5,"dur":0.45,"midi":41,"vel":0.7},{"t":27,"dur":0.45,"midi":43,"vel":0.82},{"t":27.5,"dur":0.45,"midi":44,"vel":0.72},{"t":28,"dur":0.45,"midi":40,"vel":0.9},{"t":28.5,"dur":0.45,"midi":40,"vel":0.75},{"t":29,"dur":0.45,"midi":40,"vel":0.88},{"t":29.5,"dur":0.45,"midi":40,"vel":0.72},{"t":30,"dur":0.45,"midi":40,"vel":0.9},{"t":30.5,"dur":0.45,"midi":40,"vel":0.72},{"t":31,"dur":0.45,"midi":44,"vel":0.88},{"t":31.5,"dur":0.45,"midi":45,"vel":0.78},{"t":32,"dur":0.45,"midi":45,"vel":0.9},{"t":32.5,"dur":0.45,"midi":45,"vel":0.75},{"t":33,"dur":0.45,"midi":45,"vel":0.88},{"t":33.5,"dur":0.45,"midi":45,"vel":0.72},{"t":34,"dur":0.45,"midi":45,"vel":0.9},{"t":34.5,"dur":0.45,"midi":45,"vel":0.72},{"t":35,"dur":0.45,"midi":48,"vel":0.85},{"t":35.5,"dur":0.45,"midi":47,"vel":0.75},{"t":36,"dur":0.45,"midi":41,"vel":0.9},{"t":36.5,"dur":0.45,"midi":41,"vel":0.75},{"t":37,"dur":0.45,"midi":41,"vel":0.88},{"t":37.5,"dur":0.45,"midi":41,"vel":0.72},{"t":38,"dur":0.45,"midi":41,"vel":0.9},{"t":38.5,"dur":0.45,"midi":41,"vel":0.72},{"t":39,"dur":0.45,"midi":43,"vel":0.85},{"t":39.5,"dur":0.45,"midi":44,"vel":0.75},{"t":40,"dur":0.45,"midi":43,"vel":0.9},{"t":40.5,"dur":0.45,"midi":43,"vel":0.75},{"t":41,"dur":0.45,"midi":43,"vel":0.88},{"t":41.5,"dur":0.45,"midi":43,"vel":0.72},{"t":42,"dur":0.45,"midi":43,"vel":0.9},{"t":42.5,"dur":0.45,"midi":43,"vel":0.72},{"t":43,"dur":0.45,"midi":45,"vel":0.85},{"t":43.5,"dur":0.45,"midi":44,"vel":0.75},{"t":44,"dur":0.45,"midi":45,"vel":0.9},{"t":44.5,"dur":0.45,"midi":45,"vel":0.75},{"t":45,"dur":0.45,"midi":45,"vel":0.88},{"t":45.5,"dur":0.45,"midi":45,"vel":0.72},{"t":46,"dur":0.45,"midi":45,"vel":0.9},{"t":46.5,"dur":0.45,"midi":45,"vel":0.72},{"t":47,"dur":0.45,"midi":48,"vel":0.85},{"t":47.5,"dur":0.45,"midi":47,"vel":0.75},{"t":48,"dur":0.45,"midi":45,"vel":0.9},{"t":48.5,"dur":0.45,"midi":45,"vel":0.75},{"t":49,"dur":0.45,"midi":45,"vel":0.88},{"t":49.5,"dur":0.45,"midi":45,"vel":0.72},{"t":50,"dur":0.45,"midi":45,"vel":0.9},{"t":50.5,"dur":0.45,"midi":45,"vel":0.72},{"t":51,"dur":0.45,"midi":48,"vel":0.85},{"t":51.5,"dur":0.45,"midi":47,"vel":0.75},{"t":52,"dur":0.45,"midi":43,"vel":0.9},{"t":52.5,"dur":0.45,"midi":43,"vel":0.75},{"t":53,"dur":0.45,"midi":43,"vel":0.88},{"t":53.5,"dur":0.45,"midi":43,"vel":0.72},{"t":54,"dur":0.45,"midi":43,"vel":0.9},{"t":54.5,"dur":0.45,"midi":43,"vel":0.72},{"t":55,"dur":0.45,"midi":45,"vel":0.85},{"t":55.5,"dur":0.45,"midi":44,"vel":0.75},{"t":56,"dur":0.45,"midi":45,"vel":0.9},{"t":56.5,"dur":0.45,"midi":45,"vel":0.75},{"t":57,"dur":0.45,"midi":45,"vel":0.88},{"t":57.5,"dur":0.45,"midi":45,"vel":0.72},{"t":58,"dur":0.45,"midi":45,"vel":0.9},{"t":58.5,"dur":0.45,"midi":45,"vel":0.72},{"t":59,"dur":0.45,"midi":48,"vel":0.85},{"t":59.5,"dur":0.45,"midi":47,"vel":0.75},{"t":60,"dur":0.45,"midi":40,"vel":0.92},{"t":60.5,"dur":0.45,"midi":40,"vel":0.78},{"t":61,"dur":0.45,"midi":40,"vel":0.9},{"t":61.5,"dur":0.45,"midi":40,"vel":0.75},{"t":62,"dur":0.45,"midi":40,"vel":0.92},{"t":62.5,"dur":0.45,"midi":40,"vel":0.75},{"t":63,"dur":0.45,"midi":44,"vel":0.9},{"t":63.5,"dur":0.45,"midi":45,"vel":0.8},{"t":64,"dur":0.45,"midi":38,"vel":0.92},{"t":64.5,"dur":0.45,"midi":38,"vel":0.78},{"t":65,"dur":0.45,"midi":38,"vel":0.9},{"t":65.5,"dur":0.45,"midi":38,"vel":0.75},{"t":66,"dur":0.45,"midi":38,"vel":0.92},{"t":66.5,"dur":0.45,"midi":38,"vel":0.75},{"t":67,"dur":0.45,"midi":41,"vel":0.88},{"t":67.5,"dur":0.45,"midi":40,"vel":0.78},{"t":68,"dur":0.45,"midi":45,"vel":0.92},{"t":68.5,"dur":0.45,"midi":45,"vel":0.78},{"t":69,"dur":0.45,"midi":45,"vel":0.9},{"t":69.5,"dur":0.45,"midi":45,"vel":0.75},{"t":70,"dur":0.45,"midi":45,"vel":0.92},{"t":70.5,"dur":0.45,"midi":45,"vel":0.75},{"t":71,"dur":0.45,"midi":48,"vel":0.88},{"t":71.5,"dur":0.45,"midi":47,"vel":0.78},{"t":72,"dur":0.45,"midi":38,"vel":0.92},{"t":72.5,"dur":0.45,"midi":38,"vel":0.78},{"t":73,"dur":0.45,"midi":38,"vel":0.9},{"t":73.5,"dur":0.45,"midi":38,"vel":0.75},{"t":74,"dur":0.45,"midi":38,"vel":0.92},{"t":74.5,"dur":0.45,"midi":38,"vel":0.75},{"t":75,"dur":0.45,"midi":41,"vel":0.88},{"t":75.5,"dur":0.45,"midi":40,"vel":0.78},{"t":76,"dur":0.45,"midi":40,"vel":0.92},{"t":76.5,"dur":0.45,"midi":40,"vel":0.78},{"t":77,"dur":0.45,"midi":40,"vel":0.9},{"t":77.5,"dur":0.45,"midi":40,"vel":0.75},{"t":78,"dur":0.45,"midi":40,"vel":0.92},{"t":78.5,"dur":0.45,"midi":40,"vel":0.75},{"t":79,"dur":0.45,"midi":44,"vel":0.88},{"t":79.5,"dur":0.45,"midi":45,"vel":0.78},{"t":80,"dur":0.45,"midi":45,"vel":0.92},{"t":80.5,"dur":0.45,"midi":45,"vel":0.78},{"t":81,"dur":0.45,"midi":45,"vel":0.9},{"t":81.5,"dur":0.45,"midi":45,"vel":0.75},{"t":82,"dur":0.45,"midi":45,"vel":0.92},{"t":82.5,"dur":0.45,"midi":45,"vel":0.75},{"t":83,"dur":0.45,"midi":48,"vel":0.88},{"t":83.5,"dur":0.45,"midi":47,"vel":0.78},{"t":84,"dur":0.45,"midi":41,"vel":0.92},{"t":84.5,"dur":0.45,"midi":41,"vel":0.78},{"t":85,"dur":0.45,"midi":41,"vel":0.9},{"t":85.5,"dur":0.45,"midi":41,"vel":0.75},{"t":86,"dur":0.45,"midi":41,"vel":0.92},{"t":86.5,"dur":0.45,"midi":41,"vel":0.75},{"t":87,"dur":0.45,"midi":43,"vel":0.88},{"t":87.5,"dur":0.45,"midi":44,"vel":0.78},{"t":88,"dur":0.45,"midi":43,"vel":0.9},{"t":88.5,"dur":0.45,"midi":43,"vel":0.75},{"t":89,"dur":0.45,"midi":43,"vel":0.88},{"t":89.5,"dur":0.45,"midi":43,"vel":0.72},{"t":90,"dur":0.45,"midi":43,"vel":0.9},{"t":90.5,"dur":0.45,"midi":43,"vel":0.72},{"t":91,"dur":0.45,"midi":45,"vel":0.85},{"t":91.5,"dur":0.45,"midi":44,"vel":0.75},{"t":92,"dur":0.45,"midi":45,"vel":0.9},{"t":92.5,"dur":0.45,"midi":45,"vel":0.75},{"t":93,"dur":0.45,"midi":45,"vel":0.88},{"t":93.5,"dur":0.45,"midi":45,"vel":0.72},{"t":94,"dur":0.45,"midi":45,"vel":0.9},{"t":94.5,"dur":0.45,"midi":45,"vel":0.72},{"t":95,"dur":0.45,"midi":48,"vel":0.85},{"t":95.5,"dur":0.45,"midi":47,"vel":0.75},{"t":96,"dur":0.45,"midi":45,"vel":0.88},{"t":96.5,"dur":0.45,"midi":45,"vel":0.72},{"t":97,"dur":0.45,"midi":45,"vel":0.85},{"t":97.5,"dur":0.45,"midi":45,"vel":0.7},{"t":98,"dur":0.45,"midi":45,"vel":0.88},{"t":98.5,"dur":0.45,"midi":45,"vel":0.7},{"t":99,"dur":0.45,"midi":48,"vel":0.82},{"t":99.5,"dur":0.45,"midi":47,"vel":0.72},{"t":100,"dur":0.45,"midi":43,"vel":0.88},{"t":100.5,"dur":0.45,"midi":43,"vel":0.72},{"t":101,"dur":0.45,"midi":43,"vel":0.85},{"t":101.5,"dur":0.45,"midi":43,"vel":0.7},{"t":102,"dur":0.45,"midi":43,"vel":0.88},{"t":102.5,"dur":0.45,"midi":43,"vel":0.7},{"t":103,"dur":0.45,"midi":45,"vel":0.82},{"t":103.5,"dur":0.45,"midi":44,"vel":0.72},{"t":104,"dur":0.45,"midi":41,"vel":0.88},{"t":104.5,"dur":0.45,"midi":41,"vel":0.72},{"t":105,"dur":0.45,"midi":41,"vel":0.85},{"t":105.5,"dur":0.45,"midi":41,"vel":0.7},{"t":106,"dur":0.45,"midi":41,"vel":0.88},{"t":106.5,"dur":0.45,"midi":41,"vel":0.7},{"t":107,"dur":0.45,"midi":43,"vel":0.82},{"t":107.5,"dur":0.45,"midi":44,"vel":0.72},{"t":108,"dur":0.45,"midi":40,"vel":0.9},{"t":108.5,"dur":0.45,"midi":40,"vel":0.75},{"t":109,"dur":0.45,"midi":40,"vel":0.88},{"t":109.5,"dur":0.45,"midi":40,"vel":0.72},{"t":110,"dur":0.45,"midi":40,"vel":0.9},{"t":110.5,"dur":0.45,"midi":40,"vel":0.72},{"t":111,"dur":0.45,"midi":43,"vel":0.85},{"t":111.5,"dur":0.45,"midi":44,"vel":0.75},{"t":112,"dur":0.45,"midi":45,"vel":0.9},{"t":112.5,"dur":0.45,"midi":45,"vel":0.75},{"t":113,"dur":0.45,"midi":45,"vel":0.88},{"t":113.5,"dur":0.45,"midi":45,"vel":0.72},{"t":114,"dur":0.45,"midi":45,"vel":0.9},{"t":114.5,"dur":0.45,"midi":45,"vel":0.72},{"t":115,"dur":0.45,"midi":48,"vel":0.85},{"t":115.5,"dur":0.45,"midi":47,"vel":0.75},{"t":116,"dur":0.45,"midi":43,"vel":0.9},{"t":116.5,"dur":0.45,"midi":43,"vel":0.75},{"t":117,"dur":0.45,"midi":43,"vel":0.88},{"t":117.5,"dur":0.45,"midi":43,"vel":0.72},{"t":118,"dur":0.45,"midi":43,"vel":0.9},{"t":118.5,"dur":0.45,"midi":43,"vel":0.72},{"t":119,"dur":0.45,"midi":45,"vel":0.85},{"t":119.5,"dur":0.45,"midi":44,"vel":0.75},{"t":120,"dur":0.45,"midi":41,"vel":0.9},{"t":120.5,"dur":0.45,"midi":41,"vel":0.75},{"t":121,"dur":0.45,"midi":41,"vel":0.88},{"t":121.5,"dur":0.45,"midi":41,"vel":0.72},{"t":122,"dur":0.45,"midi":41,"vel":0.9},{"t":122.5,"dur":0.45,"midi":41,"vel":0.72},{"t":123,"dur":0.45,"midi":43,"vel":0.85},{"t":123.5,"dur":0.45,"midi":44,"vel":0.75},{"t":124,"dur":0.45,"midi":40,"vel":0.92},{"t":124.5,"dur":0.45,"midi":40,"vel":0.78},{"t":125,"dur":0.45,"midi":40,"vel":0.9},{"t":125.5,"dur":0.45,"midi":40,"vel":0.75},{"t":126,"dur":0.45,"midi":40,"vel":0.92},{"t":126.5,"dur":0.45,"midi":40,"vel":0.75},{"t":127,"dur":0.45,"midi":44,"vel":0.9},{"t":127.5,"dur":0.45,"midi":45,"vel":0.8}]},{"name":"perc","wave":"noise","gain":0.3,"adsr":{"a":0.004,"d":0.05,"s":0,"r":0.06},"notes":[{"t":0,"dur":0.12,"midi":36,"vel":0.9},{"t":0.5,"dur":0.06,"midi":42,"vel":0.55},{"t":1,"dur":0.08,"midi":38,"vel":0.8},{"t":1.5,"dur":0.06,"midi":42,"vel":0.5},{"t":2,"dur":0.12,"midi":36,"vel":0.88},{"t":2.5,"dur":0.06,"midi":42,"vel":0.52},{"t":3,"dur":0.08,"midi":38,"vel":0.78},{"t":3.5,"dur":0.06,"midi":42,"vel":0.5},{"t":4,"dur":0.12,"midi":36,"vel":0.9},{"t":4.5,"dur":0.06,"midi":42,"vel":0.55},{"t":5,"dur":0.08,"midi":38,"vel":0.8},{"t":5.5,"dur":0.06,"midi":42,"vel":0.5},{"t":6,"dur":0.12,"midi":36,"vel":0.88},{"t":6.5,"dur":0.06,"midi":42,"vel":0.52},{"t":7,"dur":0.08,"midi":38,"vel":0.78},{"t":7.5,"dur":0.06,"midi":42,"vel":0.5},{"t":8,"dur":0.12,"midi":36,"vel":0.9},{"t":8.5,"dur":0.06,"midi":42,"vel":0.55},{"t":9,"dur":0.08,"midi":38,"vel":0.8},{"t":9.5,"dur":0.06,"midi":42,"vel":0.5},{"t":10,"dur":0.12,"midi":36,"vel":0.88},{"t":10.5,"dur":0.06,"midi":42,"vel":0.52},{"t":11,"dur":0.08,"midi":38,"vel":0.78},{"t":11.5,"dur":0.06,"midi":42,"vel":0.5},{"t":12,"dur":0.12,"midi":36,"vel":0.9},{"t":12.5,"dur":0.06,"midi":42,"vel":0.55},{"t":13,"dur":0.08,"midi":38,"vel":0.8},{"t":13.5,"dur":0.06,"midi":42,"vel":0.5},{"t":14,"dur":0.12,"midi":36,"vel":0.88},{"t":14.5,"dur":0.06,"midi":42,"vel":0.52},{"t":15,"dur":0.08,"midi":38,"vel":0.78},{"t":15.5,"dur":0.06,"midi":42,"vel":0.5},{"t":16,"dur":0.12,"midi":36,"vel":0.9},{"t":16.5,"dur":0.06,"midi":42,"vel":0.55},{"t":17,"dur":0.08,"midi":38,"vel":0.8},{"t":17.5,"dur":0.06,"midi":42,"vel":0.5},{"t":18,"dur":0.12,"midi":36,"vel":0.88},{"t":18.5,"dur":0.06,"midi":42,"vel":0.52},{"t":19,"dur":0.08,"midi":38,"vel":0.78},{"t":19.5,"dur":0.06,"midi":42,"vel":0.5},{"t":20,"dur":0.12,"midi":36,"vel":0.9},{"t":20.5,"dur":0.06,"midi":42,"vel":0.55},{"t":21,"dur":0.08,"midi":38,"vel":0.8},{"t":21.5,"dur":0.06,"midi":42,"vel":0.5},{"t":22,"dur":0.12,"midi":36,"vel":0.88},{"t":22.5,"dur":0.06,"midi":42,"vel":0.52},{"t":23,"dur":0.08,"midi":38,"vel":0.78},{"t":23.5,"dur":0.06,"midi":42,"vel":0.5},{"t":24,"dur":0.12,"midi":36,"vel":0.9},{"t":24.5,"dur":0.06,"midi":42,"vel":0.55},{"t":25,"dur":0.08,"midi":38,"vel":0.8},{"t":25.5,"dur":0.06,"midi":42,"vel":0.5},{"t":26,"dur":0.12,"midi":36,"vel":0.88},{"t":26.5,"dur":0.06,"midi":42,"vel":0.52},{"t":27,"dur":0.08,"midi":38,"vel":0.78},{"t":27.5,"dur":0.06,"midi":42,"vel":0.5},{"t":28,"dur":0.12,"midi":36,"vel":0.92},{"t":28.5,"dur":0.06,"midi":42,"vel":0.58},{"t":29,"dur":0.08,"midi":38,"vel":0.85},{"t":29.5,"dur":0.06,"midi":42,"vel":0.55},{"t":30,"dur":0.12,"midi":36,"vel":0.9},{"t":30.5,"dur":0.06,"midi":42,"vel":0.55},{"t":31,"dur":0.08,"midi":38,"vel":0.82},{"t":31.5,"dur":0.06,"midi":42,"vel":0.52},{"t":32,"dur":0.12,"midi":36,"vel":0.92},{"t":32.5,"dur":0.06,"midi":42,"vel":0.58},{"t":33,"dur":0.08,"midi":38,"vel":0.85},{"t":33.5,"dur":0.06,"midi":42,"vel":0.55},{"t":34,"dur":0.12,"midi":36,"vel":0.9},{"t":34.5,"dur":0.06,"midi":42,"vel":0.55},{"t":35,"dur":0.08,"midi":38,"vel":0.82},{"t":35.5,"dur":0.06,"midi":42,"vel":0.52},{"t":36,"dur":0.12,"midi":36,"vel":0.92},{"t":36.5,"dur":0.06,"midi":42,"vel":0.58},{"t":37,"dur":0.08,"midi":38,"vel":0.85},{"t":37.5,"dur":0.06,"midi":42,"vel":0.55},{"t":38,"dur":0.12,"midi":36,"vel":0.9},{"t":38.5,"dur":0.06,"midi":42,"vel":0.55},{"t":39,"dur":0.08,"midi":38,"vel":0.82},{"t":39.5,"dur":0.06,"midi":42,"vel":0.52},{"t":40,"dur":0.12,"midi":36,"vel":0.92},{"t":40.5,"dur":0.06,"midi":42,"vel":0.58},{"t":41,"dur":0.08,"midi":38,"vel":0.85},{"t":41.5,"dur":0.06,"midi":42,"vel":0.55},{"t":42,"dur":0.12,"midi":36,"vel":0.9},{"t":42.5,"dur":0.06,"midi":42,"vel":0.55},{"t":43,"dur":0.08,"midi":38,"vel":0.82},{"t":43.5,"dur":0.06,"midi":42,"vel":0.52},{"t":44,"dur":0.12,"midi":36,"vel":0.92},{"t":44.5,"dur":0.06,"midi":42,"vel":0.58},{"t":45,"dur":0.08,"midi":38,"vel":0.85},{"t":45.5,"dur":0.06,"midi":42,"vel":0.55},{"t":46,"dur":0.12,"midi":36,"vel":0.9},{"t":46.5,"dur":0.06,"midi":42,"vel":0.55},{"t":47,"dur":0.08,"midi":38,"vel":0.82},{"t":47.5,"dur":0.06,"midi":42,"vel":0.52},{"t":48,"dur":0.12,"midi":36,"vel":0.92},{"t":48.5,"dur":0.06,"midi":42,"vel":0.58},{"t":49,"dur":0.08,"midi":38,"vel":0.85},{"t":49.5,"dur":0.06,"midi":42,"vel":0.55},{"t":50,"dur":0.12,"midi":36,"vel":0.9},{"t":50.5,"dur":0.06,"midi":42,"vel":0.55},{"t":51,"dur":0.08,"midi":38,"vel":0.82},{"t":51.5,"dur":0.06,"midi":42,"vel":0.52},{"t":52,"dur":0.12,"midi":36,"vel":0.92},{"t":52.5,"dur":0.06,"midi":42,"vel":0.58},{"t":53,"dur":0.08,"midi":38,"vel":0.85},{"t":53.5,"dur":0.06,"midi":42,"vel":0.55},{"t":54,"dur":0.12,"midi":36,"vel":0.9},{"t":54.5,"dur":0.06,"midi":42,"vel":0.55},{"t":55,"dur":0.08,"midi":38,"vel":0.82},{"t":55.5,"dur":0.06,"midi":42,"vel":0.52},{"t":56,"dur":0.12,"midi":36,"vel":0.92},{"t":56.5,"dur":0.06,"midi":42,"vel":0.58},{"t":57,"dur":0.08,"midi":38,"vel":0.85},{"t":57.5,"dur":0.06,"midi":42,"vel":0.55},{"t":58,"dur":0.12,"midi":36,"vel":0.9},{"t":58.5,"dur":0.06,"midi":42,"vel":0.55},{"t":59,"dur":0.08,"midi":38,"vel":0.82},{"t":59.5,"dur":0.06,"midi":42,"vel":0.52},{"t":60,"dur":0.12,"midi":36,"vel":0.95},{"t":60.5,"dur":0.06,"midi":42,"vel":0.6},{"t":61,"dur":0.08,"midi":38,"vel":0.88},{"t":61.5,"dur":0.06,"midi":42,"vel":0.58},{"t":62,"dur":0.12,"midi":36,"vel":0.95},{"t":62.5,"dur":0.06,"midi":42,"vel":0.58},{"t":63,"dur":0.08,"midi":38,"vel":0.85},{"t":63.5,"dur":0.06,"midi":42,"vel":0.55},{"t":64,"dur":0.12,"midi":36,"vel":0.95},{"t":64.5,"dur":0.06,"midi":42,"vel":0.6},{"t":65,"dur":0.08,"midi":38,"vel":0.9},{"t":65.5,"dur":0.06,"midi":42,"vel":0.58},{"t":66,"dur":0.12,"midi":36,"vel":0.95},{"t":66.5,"dur":0.06,"midi":42,"vel":0.58},{"t":67,"dur":0.08,"midi":38,"vel":0.88},{"t":67.5,"dur":0.06,"midi":42,"vel":0.55},{"t":68,"dur":0.12,"midi":36,"vel":0.95},{"t":68.5,"dur":0.06,"midi":42,"vel":0.6},{"t":69,"dur":0.08,"midi":38,"vel":0.9},{"t":69.5,"dur":0.06,"midi":42,"vel":0.58},{"t":70,"dur":0.12,"midi":36,"vel":0.95},{"t":70.5,"dur":0.06,"midi":42,"vel":0.58},{"t":71,"dur":0.08,"midi":38,"vel":0.88},{"t":71.5,"dur":0.06,"midi":42,"vel":0.55},{"t":72,"dur":0.12,"midi":36,"vel":0.95},{"t":72.5,"dur":0.06,"midi":42,"vel":0.6},{"t":73,"dur":0.08,"midi":38,"vel":0.9},{"t":73.5,"dur":0.06,"midi":42,"vel":0.58},{"t":74,"dur":0.12,"midi":36,"vel":0.95},{"t":74.5,"dur":0.06,"midi":42,"vel":0.58},{"t":75,"dur":0.08,"midi":38,"vel":0.88},{"t":75.5,"dur":0.06,"midi":42,"vel":0.55},{"t":76,"dur":0.12,"midi":36,"vel":0.95},{"t":76.5,"dur":0.06,"midi":42,"vel":0.6},{"t":77,"dur":0.08,"midi":38,"vel":0.9},{"t":77.5,"dur":0.06,"midi":42,"vel":0.58},{"t":78,"dur":0.12,"midi":36,"vel":0.95},{"t":78.5,"dur":0.06,"midi":42,"vel":0.58},{"t":79,"dur":0.08,"midi":38,"vel":0.88},{"t":79.5,"dur":0.06,"midi":42,"vel":0.55},{"t":80,"dur":0.12,"midi":36,"vel":0.92},{"t":80.5,"dur":0.06,"midi":42,"vel":0.58},{"t":81,"dur":0.08,"midi":38,"vel":0.85},{"t":81.5,"dur":0.06,"midi":42,"vel":0.55},{"t":82,"dur":0.12,"midi":36,"vel":0.9},{"t":82.5,"dur":0.06,"midi":42,"vel":0.55},{"t":83,"dur":0.08,"midi":38,"vel":0.82},{"t":83.5,"dur":0.06,"midi":42,"vel":0.52},{"t":84,"dur":0.12,"midi":36,"vel":0.92},{"t":84.5,"dur":0.06,"midi":42,"vel":0.58},{"t":85,"dur":0.08,"midi":38,"vel":0.85},{"t":85.5,"dur":0.06,"midi":42,"vel":0.55},{"t":86,"dur":0.12,"midi":36,"vel":0.9},{"t":86.5,"dur":0.06,"midi":42,"vel":0.55},{"t":87,"dur":0.08,"midi":38,"vel":0.82},{"t":87.5,"dur":0.06,"midi":42,"vel":0.52},{"t":88,"dur":0.12,"midi":36,"vel":0.92},{"t":88.5,"dur":0.06,"midi":42,"vel":0.58},{"t":89,"dur":0.08,"midi":38,"vel":0.85},{"t":89.5,"dur":0.06,"midi":42,"vel":0.55},{"t":90,"dur":0.12,"midi":36,"vel":0.9},{"t":90.5,"dur":0.06,"midi":42,"vel":0.55},{"t":91,"dur":0.08,"midi":38,"vel":0.82},{"t":91.5,"dur":0.06,"midi":42,"vel":0.52},{"t":92,"dur":0.12,"midi":36,"vel":0.92},{"t":92.5,"dur":0.06,"midi":42,"vel":0.58},{"t":93,"dur":0.08,"midi":38,"vel":0.85},{"t":93.5,"dur":0.06,"midi":42,"vel":0.55},{"t":94,"dur":0.12,"midi":36,"vel":0.9},{"t":94.5,"dur":0.06,"midi":42,"vel":0.55},{"t":95,"dur":0.08,"midi":38,"vel":0.82},{"t":95.5,"dur":0.06,"midi":42,"vel":0.52},{"t":96,"dur":0.12,"midi":36,"vel":0.9},{"t":96.5,"dur":0.06,"midi":42,"vel":0.55},{"t":97,"dur":0.08,"midi":38,"vel":0.82},{"t":97.5,"dur":0.06,"midi":42,"vel":0.52},{"t":98,"dur":0.12,"midi":36,"vel":0.88},{"t":98.5,"dur":0.06,"midi":42,"vel":0.52},{"t":99,"dur":0.08,"midi":38,"vel":0.8},{"t":99.5,"dur":0.06,"midi":42,"vel":0.5},{"t":100,"dur":0.12,"midi":36,"vel":0.9},{"t":100.5,"dur":0.06,"midi":42,"vel":0.55},{"t":101,"dur":0.08,"midi":38,"vel":0.82},{"t":101.5,"dur":0.06,"midi":42,"vel":0.52},{"t":102,"dur":0.12,"midi":36,"vel":0.88},{"t":102.5,"dur":0.06,"midi":42,"vel":0.52},{"t":103,"dur":0.08,"midi":38,"vel":0.8},{"t":103.5,"dur":0.06,"midi":42,"vel":0.5},{"t":104,"dur":0.12,"midi":36,"vel":0.9},{"t":104.5,"dur":0.06,"midi":42,"vel":0.55},{"t":105,"dur":0.08,"midi":38,"vel":0.82},{"t":105.5,"dur":0.06,"midi":42,"vel":0.52},{"t":106,"dur":0.12,"midi":36,"vel":0.88},{"t":106.5,"dur":0.06,"midi":42,"vel":0.52},{"t":107,"dur":0.08,"midi":38,"vel":0.8},{"t":107.5,"dur":0.06,"midi":42,"vel":0.5},{"t":108,"dur":0.12,"midi":36,"vel":0.92},{"t":108.5,"dur":0.06,"midi":42,"vel":0.58},{"t":109,"dur":0.08,"midi":38,"vel":0.85},{"t":109.5,"dur":0.06,"midi":42,"vel":0.55},{"t":110,"dur":0.12,"midi":36,"vel":0.9},{"t":110.5,"dur":0.06,"midi":42,"vel":0.55},{"t":111,"dur":0.08,"midi":38,"vel":0.82},{"t":111.5,"dur":0.06,"midi":42,"vel":0.52},{"t":112,"dur":0.12,"midi":36,"vel":0.92},{"t":112.5,"dur":0.06,"midi":42,"vel":0.58},{"t":113,"dur":0.08,"midi":38,"vel":0.85},{"t":113.5,"dur":0.06,"midi":42,"vel":0.55},{"t":114,"dur":0.12,"midi":36,"vel":0.9},{"t":114.5,"dur":0.06,"midi":42,"vel":0.55},{"t":115,"dur":0.08,"midi":38,"vel":0.82},{"t":115.5,"dur":0.06,"midi":42,"vel":0.52},{"t":116,"dur":0.12,"midi":36,"vel":0.92},{"t":116.5,"dur":0.06,"midi":42,"vel":0.58},{"t":117,"dur":0.08,"midi":38,"vel":0.85},{"t":117.5,"dur":0.06,"midi":42,"vel":0.55},{"t":118,"dur":0.12,"midi":36,"vel":0.9},{"t":118.5,"dur":0.06,"midi":42,"vel":0.55},{"t":119,"dur":0.08,"midi":38,"vel":0.82},{"t":119.5,"dur":0.06,"midi":42,"vel":0.52},{"t":120,"dur":0.12,"midi":36,"vel":0.92},{"t":120.5,"dur":0.06,"midi":42,"vel":0.58},{"t":121,"dur":0.08,"midi":38,"vel":0.85},{"t":121.5,"dur":0.06,"midi":42,"vel":0.55},{"t":122,"dur":0.12,"midi":36,"vel":0.9},{"t":122.5,"dur":0.06,"midi":42,"vel":0.55},{"t":123,"dur":0.08,"midi":38,"vel":0.82},{"t":123.5,"dur":0.06,"midi":42,"vel":0.52},{"t":124,"dur":0.12,"midi":36,"vel":0.95},{"t":124.5,"dur":0.06,"midi":42,"vel":0.6},{"t":125,"dur":0.08,"midi":38,"vel":0.9},{"t":125.5,"dur":0.06,"midi":42,"vel":0.58},{"t":126,"dur":0.12,"midi":36,"vel":0.95},{"t":126.5,"dur":0.06,"midi":42,"vel":0.58},{"t":127,"dur":0.08,"midi":38,"vel":0.9},{"t":127.5,"dur":0.06,"midi":42,"vel":0.55}]}]'
   ),
-  Nj = { id: Sj, bpm: wj, loopBeats: jj, channels: Tj },
-  Aj = 'boss',
-  Ej = 156,
-  Bj = 128,
-  Cj = JSON.parse(
+  Aj = { id: wj, bpm: jj, loopBeats: Tj, channels: Nj },
+  Ej = 'boss',
+  Bj = 156,
+  Cj = 128,
+  Ij = JSON.parse(
     '[{"name":"lead","wave":"square25","gain":0.45,"adsr":{"a":0.006,"d":0.05,"s":0.75,"r":0.07},"notes":[{"t":0,"dur":0.5,"midi":62,"vel":0.95},{"t":0.5,"dur":0.5,"midi":65,"vel":0.88},{"t":1,"dur":0.5,"midi":67,"vel":0.9},{"t":1.5,"dur":0.5,"midi":69,"vel":0.92},{"t":2,"dur":1.5,"midi":70,"vel":0.95},{"t":3.5,"dur":0.5,"midi":69,"vel":0.85},{"t":4,"dur":0.5,"midi":67,"vel":0.9},{"t":4.5,"dur":0.5,"midi":65,"vel":0.85},{"t":5,"dur":0.5,"midi":67,"vel":0.88},{"t":5.5,"dur":0.5,"midi":65,"vel":0.82},{"t":6,"dur":2,"midi":62,"vel":0.92},{"t":8,"dur":0.5,"midi":64,"vel":0.92},{"t":8.5,"dur":0.5,"midi":65,"vel":0.88},{"t":9,"dur":0.5,"midi":67,"vel":0.9},{"t":9.5,"dur":0.5,"midi":70,"vel":0.92},{"t":10,"dur":1,"midi":72,"vel":0.95},{"t":11,"dur":0.5,"midi":70,"vel":0.88},{"t":11.5,"dur":0.5,"midi":69,"vel":0.82},{"t":12,"dur":0.5,"midi":67,"vel":0.9},{"t":12.5,"dur":0.5,"midi":65,"vel":0.85},{"t":13,"dur":0.5,"midi":64,"vel":0.82},{"t":13.5,"dur":0.5,"midi":62,"vel":0.8},{"t":14,"dur":2,"midi":61,"vel":0.92},{"t":16,"dur":0.5,"midi":62,"vel":0.95},{"t":16.5,"dur":0.5,"midi":65,"vel":0.88},{"t":17,"dur":0.5,"midi":67,"vel":0.9},{"t":17.5,"dur":0.5,"midi":69,"vel":0.92},{"t":18,"dur":1.5,"midi":70,"vel":0.95},{"t":19.5,"dur":0.5,"midi":69,"vel":0.85},{"t":20,"dur":0.5,"midi":67,"vel":0.9},{"t":20.5,"dur":0.5,"midi":65,"vel":0.85},{"t":21,"dur":0.5,"midi":67,"vel":0.88},{"t":21.5,"dur":0.5,"midi":65,"vel":0.82},{"t":22,"dur":2,"midi":60,"vel":0.9},{"t":24,"dur":0.5,"midi":62,"vel":0.92},{"t":24.5,"dur":0.5,"midi":65,"vel":0.88},{"t":25,"dur":0.5,"midi":67,"vel":0.9},{"t":25.5,"dur":0.5,"midi":69,"vel":0.92},{"t":26,"dur":1,"midi":70,"vel":0.95},{"t":27,"dur":0.5,"midi":69,"vel":0.88},{"t":27.5,"dur":0.5,"midi":67,"vel":0.82},{"t":28,"dur":0.5,"midi":69,"vel":0.95},{"t":28.25,"dur":0.25,"midi":70,"vel":0.88},{"t":28.5,"dur":0.25,"midi":69,"vel":0.85},{"t":28.75,"dur":0.25,"midi":67,"vel":0.82},{"t":29,"dur":0.5,"midi":65,"vel":0.9},{"t":29.5,"dur":0.5,"midi":64,"vel":0.85},{"t":30,"dur":0.5,"midi":62,"vel":0.92},{"t":30.5,"dur":0.5,"midi":61,"vel":0.88},{"t":31,"dur":1,"midi":61,"vel":0.9},{"t":32,"dur":0.5,"midi":74,"vel":0.98},{"t":32.5,"dur":0.5,"midi":72,"vel":0.92},{"t":33,"dur":0.5,"midi":70,"vel":0.95},{"t":33.5,"dur":0.5,"midi":69,"vel":0.9},{"t":34,"dur":1,"midi":70,"vel":0.98},{"t":35,"dur":0.5,"midi":69,"vel":0.9},{"t":35.5,"dur":0.5,"midi":67,"vel":0.85},{"t":36,"dur":0.5,"midi":65,"vel":0.92},{"t":36.5,"dur":0.5,"midi":67,"vel":0.88},{"t":37,"dur":0.5,"midi":69,"vel":0.9},{"t":37.5,"dur":0.5,"midi":70,"vel":0.92},{"t":38,"dur":1.5,"midi":72,"vel":0.95},{"t":39.5,"dur":0.5,"midi":70,"vel":0.88},{"t":40,"dur":0.5,"midi":69,"vel":0.95},{"t":40.5,"dur":0.5,"midi":70,"vel":0.9},{"t":41,"dur":0.5,"midi":69,"vel":0.88},{"t":41.5,"dur":0.5,"midi":67,"vel":0.85},{"t":42,"dur":1,"midi":65,"vel":0.9},{"t":43,"dur":0.5,"midi":64,"vel":0.85},{"t":43.5,"dur":0.5,"midi":62,"vel":0.8},{"t":44,"dur":0.5,"midi":61,"vel":0.92},{"t":44.5,"dur":0.5,"midi":62,"vel":0.88},{"t":45,"dur":0.5,"midi":64,"vel":0.9},{"t":45.5,"dur":0.5,"midi":65,"vel":0.92},{"t":46,"dur":2,"midi":69,"vel":0.98},{"t":48,"dur":0.5,"midi":74,"vel":0.98},{"t":48.5,"dur":0.5,"midi":72,"vel":0.92},{"t":49,"dur":0.5,"midi":70,"vel":0.95},{"t":49.5,"dur":0.5,"midi":69,"vel":0.9},{"t":50,"dur":1,"midi":70,"vel":0.98},{"t":51,"dur":0.5,"midi":69,"vel":0.9},{"t":51.5,"dur":0.5,"midi":67,"vel":0.85},{"t":52,"dur":0.5,"midi":72,"vel":0.95},{"t":52.5,"dur":0.5,"midi":70,"vel":0.9},{"t":53,"dur":0.5,"midi":69,"vel":0.88},{"t":53.5,"dur":0.5,"midi":67,"vel":0.85},{"t":54,"dur":1.5,"midi":65,"vel":0.9},{"t":55.5,"dur":0.5,"midi":64,"vel":0.85},{"t":56,"dur":0.5,"midi":62,"vel":0.95},{"t":56.5,"dur":0.5,"midi":65,"vel":0.9},{"t":57,"dur":0.5,"midi":67,"vel":0.92},{"t":57.5,"dur":0.5,"midi":69,"vel":0.95},{"t":58,"dur":1,"midi":72,"vel":0.98},{"t":59,"dur":0.5,"midi":74,"vel":0.95},{"t":59.5,"dur":0.5,"midi":72,"vel":0.9},{"t":60,"dur":0.5,"midi":69,"vel":0.95},{"t":60.25,"dur":0.25,"midi":70,"vel":0.9},{"t":60.5,"dur":0.25,"midi":69,"vel":0.88},{"t":60.75,"dur":0.25,"midi":67,"vel":0.85},{"t":61,"dur":0.5,"midi":65,"vel":0.9},{"t":61.5,"dur":0.5,"midi":64,"vel":0.85},{"t":62,"dur":0.5,"midi":62,"vel":0.92},{"t":62.5,"dur":0.5,"midi":61,"vel":0.88},{"t":63,"dur":1,"midi":61,"vel":0.9},{"t":64,"dur":0.5,"midi":74,"vel":0.98},{"t":64.5,"dur":0.5,"midi":76,"vel":0.95},{"t":65,"dur":0.5,"midi":77,"vel":0.98},{"t":65.5,"dur":0.5,"midi":76,"vel":0.95},{"t":66,"dur":1.5,"midi":74,"vel":1},{"t":67.5,"dur":0.5,"midi":72,"vel":0.92},{"t":68,"dur":0.5,"midi":74,"vel":0.95},{"t":68.5,"dur":0.5,"midi":72,"vel":0.9},{"t":69,"dur":0.5,"midi":70,"vel":0.88},{"t":69.5,"dur":0.5,"midi":69,"vel":0.85},{"t":70,"dur":2,"midi":67,"vel":0.92},{"t":72,"dur":0.5,"midi":69,"vel":0.98},{"t":72.5,"dur":0.5,"midi":70,"vel":0.95},{"t":73,"dur":0.5,"midi":72,"vel":0.98},{"t":73.5,"dur":0.5,"midi":74,"vel":1},{"t":74,"dur":1,"midi":76,"vel":1},{"t":75,"dur":0.5,"midi":74,"vel":0.95},{"t":75.5,"dur":0.5,"midi":72,"vel":0.9},{"t":76,"dur":0.5,"midi":74,"vel":0.95},{"t":76.5,"dur":0.5,"midi":72,"vel":0.9},{"t":77,"dur":0.5,"midi":70,"vel":0.88},{"t":77.5,"dur":0.5,"midi":69,"vel":0.85},{"t":78,"dur":0.5,"midi":67,"vel":0.88},{"t":78.5,"dur":0.5,"midi":65,"vel":0.85},{"t":79,"dur":1,"midi":61,"vel":0.92},{"t":80,"dur":0.5,"midi":62,"vel":0.95},{"t":80.5,"dur":0.5,"midi":65,"vel":0.9},{"t":81,"dur":0.5,"midi":67,"vel":0.92},{"t":81.5,"dur":0.5,"midi":70,"vel":0.95},{"t":82,"dur":1,"midi":72,"vel":0.98},{"t":83,"dur":0.5,"midi":70,"vel":0.9},{"t":83.5,"dur":0.5,"midi":69,"vel":0.85},{"t":84,"dur":0.5,"midi":67,"vel":0.92},{"t":84.5,"dur":0.5,"midi":65,"vel":0.88},{"t":85,"dur":0.5,"midi":67,"vel":0.9},{"t":85.5,"dur":0.5,"midi":69,"vel":0.92},{"t":86,"dur":2,"midi":61,"vel":0.95},{"t":88,"dur":0.5,"midi":65,"vel":0.95},{"t":88.5,"dur":0.5,"midi":67,"vel":0.9},{"t":89,"dur":0.5,"midi":69,"vel":0.92},{"t":89.5,"dur":0.5,"midi":70,"vel":0.95},{"t":90,"dur":1.5,"midi":72,"vel":0.98},{"t":91.5,"dur":0.5,"midi":74,"vel":0.95},{"t":92,"dur":0.5,"midi":74,"vel":0.95},{"t":92.25,"dur":0.25,"midi":76,"vel":0.92},{"t":92.5,"dur":0.25,"midi":74,"vel":0.9},{"t":92.75,"dur":0.25,"midi":72,"vel":0.88},{"t":93,"dur":0.5,"midi":70,"vel":0.9},{"t":93.5,"dur":0.5,"midi":69,"vel":0.85},{"t":94,"dur":0.5,"midi":67,"vel":0.88},{"t":94.5,"dur":0.5,"midi":65,"vel":0.85},{"t":95,"dur":1,"midi":61,"vel":0.92},{"t":96,"dur":0.5,"midi":62,"vel":0.95},{"t":96.5,"dur":0.5,"midi":65,"vel":0.88},{"t":97,"dur":0.5,"midi":67,"vel":0.9},{"t":97.5,"dur":0.5,"midi":69,"vel":0.92},{"t":98,"dur":1.5,"midi":70,"vel":0.95},{"t":99.5,"dur":0.5,"midi":69,"vel":0.85},{"t":100,"dur":0.5,"midi":67,"vel":0.9},{"t":100.5,"dur":0.5,"midi":65,"vel":0.85},{"t":101,"dur":0.5,"midi":67,"vel":0.88},{"t":101.5,"dur":0.5,"midi":65,"vel":0.82},{"t":102,"dur":2,"midi":62,"vel":0.92},{"t":104,"dur":0.5,"midi":64,"vel":0.92},{"t":104.5,"dur":0.5,"midi":65,"vel":0.88},{"t":105,"dur":0.5,"midi":67,"vel":0.9},{"t":105.5,"dur":0.5,"midi":70,"vel":0.92},{"t":106,"dur":1,"midi":72,"vel":0.95},{"t":107,"dur":0.5,"midi":70,"vel":0.88},{"t":107.5,"dur":0.5,"midi":69,"vel":0.82},{"t":108,"dur":0.5,"midi":67,"vel":0.9},{"t":108.5,"dur":0.5,"midi":65,"vel":0.85},{"t":109,"dur":0.5,"midi":64,"vel":0.82},{"t":109.5,"dur":0.5,"midi":62,"vel":0.8},{"t":110,"dur":2,"midi":61,"vel":0.92},{"t":112,"dur":0.5,"midi":67,"vel":0.92},{"t":112.5,"dur":0.5,"midi":69,"vel":0.88},{"t":113,"dur":0.5,"midi":70,"vel":0.9},{"t":113.5,"dur":0.5,"midi":72,"vel":0.92},{"t":114,"dur":1,"midi":74,"vel":0.95},{"t":115,"dur":0.5,"midi":72,"vel":0.88},{"t":115.5,"dur":0.5,"midi":70,"vel":0.82},{"t":116,"dur":0.5,"midi":69,"vel":0.95},{"t":116.25,"dur":0.25,"midi":70,"vel":0.9},{"t":116.5,"dur":0.25,"midi":69,"vel":0.88},{"t":116.75,"dur":0.25,"midi":67,"vel":0.85},{"t":117,"dur":0.5,"midi":65,"vel":0.9},{"t":117.5,"dur":0.5,"midi":64,"vel":0.85},{"t":118,"dur":0.5,"midi":62,"vel":0.92},{"t":118.5,"dur":0.5,"midi":61,"vel":0.88},{"t":119,"dur":1,"midi":62,"vel":0.9},{"t":120,"dur":0.5,"midi":67,"vel":0.95},{"t":120.5,"dur":0.5,"midi":69,"vel":0.9},{"t":121,"dur":0.5,"midi":70,"vel":0.92},{"t":121.5,"dur":0.5,"midi":69,"vel":0.88},{"t":122,"dur":1,"midi":67,"vel":0.9},{"t":123,"dur":0.5,"midi":65,"vel":0.85},{"t":123.5,"dur":0.5,"midi":64,"vel":0.82},{"t":124,"dur":0.5,"midi":64,"vel":0.92},{"t":124.5,"dur":0.5,"midi":62,"vel":0.88},{"t":125,"dur":0.5,"midi":61,"vel":0.85},{"t":125.5,"dur":0.5,"midi":62,"vel":0.82},{"t":126,"dur":2,"midi":62,"vel":0.95}]},{"name":"harmony","wave":"square12","gain":0.22,"adsr":{"a":0.012,"d":0.08,"s":0.65,"r":0.1},"notes":[{"t":0,"dur":4,"midi":57,"vel":0.72},{"t":4,"dur":4,"midi":53,"vel":0.68},{"t":8,"dur":4,"midi":55,"vel":0.7},{"t":12,"dur":4,"midi":56,"vel":0.72},{"t":16,"dur":4,"midi":57,"vel":0.72},{"t":20,"dur":4,"midi":55,"vel":0.7},{"t":24,"dur":4,"midi":53,"vel":0.7},{"t":28,"dur":4,"midi":56,"vel":0.78},{"t":32,"dur":2,"midi":69,"vel":0.78},{"t":34,"dur":2,"midi":70,"vel":0.75},{"t":36,"dur":2,"midi":69,"vel":0.75},{"t":38,"dur":2,"midi":67,"vel":0.72},{"t":40,"dur":2,"midi":65,"vel":0.72},{"t":42,"dur":2,"midi":64,"vel":0.7},{"t":44,"dur":4,"midi":64,"vel":0.75},{"t":48,"dur":2,"midi":69,"vel":0.78},{"t":50,"dur":2,"midi":70,"vel":0.75},{"t":52,"dur":2,"midi":69,"vel":0.75},{"t":54,"dur":2,"midi":67,"vel":0.72},{"t":56,"dur":2,"midi":65,"vel":0.72},{"t":58,"dur":2,"midi":67,"vel":0.75},{"t":60,"dur":4,"midi":64,"vel":0.78},{"t":64,"dur":2,"midi":74,"vel":0.82},{"t":66,"dur":2,"midi":72,"vel":0.78},{"t":68,"dur":2,"midi":70,"vel":0.75},{"t":70,"dur":2,"midi":67,"vel":0.72},{"t":72,"dur":2,"midi":65,"vel":0.72},{"t":74,"dur":2,"midi":67,"vel":0.78},{"t":76,"dur":2,"midi":69,"vel":0.75},{"t":78,"dur":2,"midi":65,"vel":0.72},{"t":80,"dur":2,"midi":67,"vel":0.75},{"t":82,"dur":2,"midi":65,"vel":0.72},{"t":84,"dur":2,"midi":67,"vel":0.75},{"t":86,"dur":2,"midi":64,"vel":0.78},{"t":88,"dur":2,"midi":65,"vel":0.75},{"t":90,"dur":2,"midi":67,"vel":0.78},{"t":92,"dur":4,"midi":69,"vel":0.82},{"t":96,"dur":4,"midi":57,"vel":0.72},{"t":100,"dur":4,"midi":53,"vel":0.68},{"t":104,"dur":4,"midi":55,"vel":0.7},{"t":108,"dur":4,"midi":56,"vel":0.72},{"t":112,"dur":4,"midi":57,"vel":0.72},{"t":116,"dur":4,"midi":55,"vel":0.7},{"t":120,"dur":4,"midi":62,"vel":0.75},{"t":124,"dur":4,"midi":61,"vel":0.78}]},{"name":"bass","wave":"saw","gain":0.44,"adsr":{"a":0.005,"d":0.06,"s":0.65,"r":0.07},"notes":[{"t":0,"dur":0.45,"midi":38,"vel":0.95},{"t":0.5,"dur":0.45,"midi":38,"vel":0.72},{"t":1,"dur":0.45,"midi":38,"vel":0.9},{"t":1.5,"dur":0.45,"midi":38,"vel":0.7},{"t":2,"dur":0.45,"midi":38,"vel":0.95},{"t":2.5,"dur":0.45,"midi":38,"vel":0.7},{"t":3,"dur":0.45,"midi":41,"vel":0.85},{"t":3.5,"dur":0.45,"midi":40,"vel":0.75},{"t":4,"dur":0.45,"midi":34,"vel":0.95},{"t":4.5,"dur":0.45,"midi":34,"vel":0.72},{"t":5,"dur":0.45,"midi":34,"vel":0.9},{"t":5.5,"dur":0.45,"midi":34,"vel":0.7},{"t":6,"dur":0.45,"midi":34,"vel":0.95},{"t":6.5,"dur":0.45,"midi":34,"vel":0.7},{"t":7,"dur":0.45,"midi":36,"vel":0.85},{"t":7.5,"dur":0.45,"midi":38,"vel":0.75},{"t":8,"dur":0.45,"midi":36,"vel":0.95},{"t":8.5,"dur":0.45,"midi":36,"vel":0.72},{"t":9,"dur":0.45,"midi":36,"vel":0.9},{"t":9.5,"dur":0.45,"midi":36,"vel":0.7},{"t":10,"dur":0.45,"midi":36,"vel":0.95},{"t":10.5,"dur":0.45,"midi":36,"vel":0.7},{"t":11,"dur":0.45,"midi":38,"vel":0.85},{"t":11.5,"dur":0.45,"midi":40,"vel":0.75},{"t":12,"dur":0.45,"midi":33,"vel":0.95},{"t":12.5,"dur":0.45,"midi":33,"vel":0.72},{"t":13,"dur":0.45,"midi":33,"vel":0.9},{"t":13.5,"dur":0.45,"midi":33,"vel":0.7},{"t":14,"dur":0.45,"midi":33,"vel":0.95},{"t":14.5,"dur":0.45,"midi":33,"vel":0.7},{"t":15,"dur":0.45,"midi":36,"vel":0.85},{"t":15.5,"dur":0.45,"midi":38,"vel":0.75},{"t":16,"dur":0.45,"midi":38,"vel":0.95},{"t":16.5,"dur":0.45,"midi":38,"vel":0.72},{"t":17,"dur":0.45,"midi":38,"vel":0.9},{"t":17.5,"dur":0.45,"midi":38,"vel":0.7},{"t":18,"dur":0.45,"midi":38,"vel":0.95},{"t":18.5,"dur":0.45,"midi":38,"vel":0.7},{"t":19,"dur":0.45,"midi":41,"vel":0.85},{"t":19.5,"dur":0.45,"midi":40,"vel":0.75},{"t":20,"dur":0.45,"midi":36,"vel":0.95},{"t":20.5,"dur":0.45,"midi":36,"vel":0.72},{"t":21,"dur":0.45,"midi":36,"vel":0.9},{"t":21.5,"dur":0.45,"midi":36,"vel":0.7},{"t":22,"dur":0.45,"midi":36,"vel":0.95},{"t":22.5,"dur":0.45,"midi":36,"vel":0.7},{"t":23,"dur":0.45,"midi":38,"vel":0.85},{"t":23.5,"dur":0.45,"midi":40,"vel":0.75},{"t":24,"dur":0.45,"midi":34,"vel":0.95},{"t":24.5,"dur":0.45,"midi":34,"vel":0.72},{"t":25,"dur":0.45,"midi":34,"vel":0.9},{"t":25.5,"dur":0.45,"midi":34,"vel":0.7},{"t":26,"dur":0.45,"midi":34,"vel":0.95},{"t":26.5,"dur":0.45,"midi":34,"vel":0.7},{"t":27,"dur":0.45,"midi":36,"vel":0.85},{"t":27.5,"dur":0.45,"midi":38,"vel":0.75},{"t":28,"dur":0.45,"midi":33,"vel":0.98},{"t":28.5,"dur":0.45,"midi":33,"vel":0.78},{"t":29,"dur":0.45,"midi":33,"vel":0.95},{"t":29.5,"dur":0.45,"midi":33,"vel":0.75},{"t":30,"dur":0.45,"midi":33,"vel":0.98},{"t":30.5,"dur":0.45,"midi":33,"vel":0.75},{"t":31,"dur":0.45,"midi":36,"vel":0.92},{"t":31.5,"dur":0.45,"midi":38,"vel":0.82},{"t":32,"dur":0.45,"midi":38,"vel":0.98},{"t":32.5,"dur":0.45,"midi":38,"vel":0.78},{"t":33,"dur":0.45,"midi":38,"vel":0.95},{"t":33.5,"dur":0.45,"midi":38,"vel":0.75},{"t":34,"dur":0.45,"midi":38,"vel":0.98},{"t":34.5,"dur":0.45,"midi":38,"vel":0.75},{"t":35,"dur":0.45,"midi":41,"vel":0.9},{"t":35.5,"dur":0.45,"midi":43,"vel":0.8},{"t":36,"dur":0.45,"midi":34,"vel":0.98},{"t":36.5,"dur":0.45,"midi":34,"vel":0.78},{"t":37,"dur":0.45,"midi":34,"vel":0.95},{"t":37.5,"dur":0.45,"midi":34,"vel":0.75},{"t":38,"dur":0.45,"midi":34,"vel":0.98},{"t":38.5,"dur":0.45,"midi":34,"vel":0.75},{"t":39,"dur":0.45,"midi":36,"vel":0.9},{"t":39.5,"dur":0.45,"midi":38,"vel":0.8},{"t":40,"dur":0.45,"midi":36,"vel":0.98},{"t":40.5,"dur":0.45,"midi":36,"vel":0.78},{"t":41,"dur":0.45,"midi":36,"vel":0.95},{"t":41.5,"dur":0.45,"midi":36,"vel":0.75},{"t":42,"dur":0.45,"midi":36,"vel":0.98},{"t":42.5,"dur":0.45,"midi":36,"vel":0.75},{"t":43,"dur":0.45,"midi":38,"vel":0.9},{"t":43.5,"dur":0.45,"midi":40,"vel":0.8},{"t":44,"dur":0.45,"midi":33,"vel":0.98},{"t":44.25,"dur":0.2,"midi":33,"vel":0.9},{"t":44.5,"dur":0.45,"midi":33,"vel":0.95},{"t":44.75,"dur":0.2,"midi":33,"vel":0.88},{"t":45,"dur":0.45,"midi":33,"vel":0.98},{"t":45.5,"dur":0.45,"midi":33,"vel":0.78},{"t":46,"dur":0.45,"midi":33,"vel":0.98},{"t":46.5,"dur":0.45,"midi":33,"vel":0.78},{"t":47,"dur":0.45,"midi":36,"vel":0.92},{"t":47.5,"dur":0.45,"midi":38,"vel":0.82},{"t":48,"dur":0.45,"midi":38,"vel":0.98},{"t":48.5,"dur":0.45,"midi":38,"vel":0.78},{"t":49,"dur":0.45,"midi":38,"vel":0.95},{"t":49.5,"dur":0.45,"midi":38,"vel":0.75},{"t":50,"dur":0.45,"midi":38,"vel":0.98},{"t":50.5,"dur":0.45,"midi":38,"vel":0.75},{"t":51,"dur":0.45,"midi":41,"vel":0.9},{"t":51.5,"dur":0.45,"midi":43,"vel":0.8},{"t":52,"dur":0.45,"midi":36,"vel":0.98},{"t":52.5,"dur":0.45,"midi":36,"vel":0.78},{"t":53,"dur":0.45,"midi":36,"vel":0.95},{"t":53.5,"dur":0.45,"midi":36,"vel":0.75},{"t":54,"dur":0.45,"midi":36,"vel":0.98},{"t":54.5,"dur":0.45,"midi":36,"vel":0.75},{"t":55,"dur":0.45,"midi":38,"vel":0.9},{"t":55.5,"dur":0.45,"midi":40,"vel":0.8},{"t":56,"dur":0.45,"midi":38,"vel":0.98},{"t":56.5,"dur":0.45,"midi":38,"vel":0.78},{"t":57,"dur":0.45,"midi":38,"vel":0.95},{"t":57.5,"dur":0.45,"midi":38,"vel":0.75},{"t":58,"dur":0.45,"midi":38,"vel":0.98},{"t":58.5,"dur":0.45,"midi":38,"vel":0.75},{"t":59,"dur":0.45,"midi":41,"vel":0.9},{"t":59.5,"dur":0.45,"midi":43,"vel":0.8},{"t":60,"dur":0.45,"midi":33,"vel":1},{"t":60.25,"dur":0.2,"midi":33,"vel":0.92},{"t":60.5,"dur":0.45,"midi":33,"vel":0.98},{"t":60.75,"dur":0.2,"midi":33,"vel":0.9},{"t":61,"dur":0.45,"midi":33,"vel":1},{"t":61.5,"dur":0.45,"midi":33,"vel":0.82},{"t":62,"dur":0.45,"midi":33,"vel":1},{"t":62.5,"dur":0.45,"midi":33,"vel":0.82},{"t":63,"dur":0.45,"midi":36,"vel":0.95},{"t":63.5,"dur":0.45,"midi":38,"vel":0.85},{"t":64,"dur":0.45,"midi":43,"vel":1},{"t":64.5,"dur":0.45,"midi":43,"vel":0.82},{"t":65,"dur":0.45,"midi":43,"vel":0.98},{"t":65.5,"dur":0.45,"midi":43,"vel":0.8},{"t":66,"dur":0.45,"midi":43,"vel":1},{"t":66.5,"dur":0.45,"midi":43,"vel":0.8},{"t":67,"dur":0.45,"midi":46,"vel":0.95},{"t":67.5,"dur":0.45,"midi":48,"vel":0.85},{"t":68,"dur":0.45,"midi":45,"vel":1},{"t":68.5,"dur":0.45,"midi":45,"vel":0.82},{"t":69,"dur":0.45,"midi":45,"vel":0.98},{"t":69.5,"dur":0.45,"midi":45,"vel":0.8},{"t":70,"dur":0.45,"midi":45,"vel":1},{"t":70.5,"dur":0.45,"midi":45,"vel":0.8},{"t":71,"dur":0.45,"midi":48,"vel":0.95},{"t":71.5,"dur":0.45,"midi":50,"vel":0.85},{"t":72,"dur":0.45,"midi":43,"vel":1},{"t":72.25,"dur":0.2,"midi":43,"vel":0.92},{"t":72.5,"dur":0.45,"midi":43,"vel":0.98},{"t":72.75,"dur":0.2,"midi":43,"vel":0.9},{"t":73,"dur":0.45,"midi":43,"vel":1},{"t":73.5,"dur":0.45,"midi":43,"vel":0.82},{"t":74,"dur":0.45,"midi":43,"vel":1},{"t":74.5,"dur":0.45,"midi":43,"vel":0.82},{"t":75,"dur":0.45,"midi":46,"vel":0.95},{"t":75.5,"dur":0.45,"midi":48,"vel":0.85},{"t":76,"dur":0.45,"midi":33,"vel":1},{"t":76.25,"dur":0.2,"midi":33,"vel":0.92},{"t":76.5,"dur":0.45,"midi":33,"vel":0.98},{"t":76.75,"dur":0.2,"midi":33,"vel":0.9},{"t":77,"dur":0.45,"midi":33,"vel":1},{"t":77.5,"dur":0.45,"midi":33,"vel":0.82},{"t":78,"dur":0.45,"midi":33,"vel":1},{"t":78.5,"dur":0.45,"midi":33,"vel":0.82},{"t":79,"dur":0.45,"midi":36,"vel":0.95},{"t":79.5,"dur":0.45,"midi":38,"vel":0.85},{"t":80,"dur":0.45,"midi":38,"vel":0.98},{"t":80.5,"dur":0.45,"midi":38,"vel":0.78},{"t":81,"dur":0.45,"midi":38,"vel":0.95},{"t":81.5,"dur":0.45,"midi":38,"vel":0.75},{"t":82,"dur":0.45,"midi":38,"vel":0.98},{"t":82.5,"dur":0.45,"midi":38,"vel":0.75},{"t":83,"dur":0.45,"midi":41,"vel":0.9},{"t":83.5,"dur":0.45,"midi":43,"vel":0.8},{"t":84,"dur":0.45,"midi":34,"vel":0.98},{"t":84.5,"dur":0.45,"midi":34,"vel":0.78},{"t":85,"dur":0.45,"midi":34,"vel":0.95},{"t":85.5,"dur":0.45,"midi":34,"vel":0.75},{"t":86,"dur":0.45,"midi":34,"vel":0.98},{"t":86.5,"dur":0.45,"midi":34,"vel":0.75},{"t":87,"dur":0.45,"midi":36,"vel":0.9},{"t":87.5,"dur":0.45,"midi":38,"vel":0.8},{"t":88,"dur":0.45,"midi":43,"vel":0.98},{"t":88.5,"dur":0.45,"midi":43,"vel":0.78},{"t":89,"dur":0.45,"midi":43,"vel":0.95},{"t":89.5,"dur":0.45,"midi":43,"vel":0.75},{"t":90,"dur":0.45,"midi":43,"vel":0.98},{"t":90.5,"dur":0.45,"midi":43,"vel":0.75},{"t":91,"dur":0.45,"midi":46,"vel":0.9},{"t":91.5,"dur":0.45,"midi":48,"vel":0.8},{"t":92,"dur":0.45,"midi":33,"vel":1},{"t":92.25,"dur":0.2,"midi":33,"vel":0.92},{"t":92.5,"dur":0.45,"midi":33,"vel":0.98},{"t":92.75,"dur":0.2,"midi":33,"vel":0.9},{"t":93,"dur":0.45,"midi":33,"vel":1},{"t":93.5,"dur":0.45,"midi":33,"vel":0.82},{"t":94,"dur":0.45,"midi":33,"vel":1},{"t":94.5,"dur":0.45,"midi":33,"vel":0.82},{"t":95,"dur":0.45,"midi":36,"vel":0.95},{"t":95.5,"dur":0.45,"midi":38,"vel":0.85},{"t":96,"dur":0.45,"midi":38,"vel":0.95},{"t":96.5,"dur":0.45,"midi":38,"vel":0.72},{"t":97,"dur":0.45,"midi":38,"vel":0.9},{"t":97.5,"dur":0.45,"midi":38,"vel":0.7},{"t":98,"dur":0.45,"midi":38,"vel":0.95},{"t":98.5,"dur":0.45,"midi":38,"vel":0.7},{"t":99,"dur":0.45,"midi":41,"vel":0.85},{"t":99.5,"dur":0.45,"midi":40,"vel":0.75},{"t":100,"dur":0.45,"midi":34,"vel":0.95},{"t":100.5,"dur":0.45,"midi":34,"vel":0.72},{"t":101,"dur":0.45,"midi":34,"vel":0.9},{"t":101.5,"dur":0.45,"midi":34,"vel":0.7},{"t":102,"dur":0.45,"midi":34,"vel":0.95},{"t":102.5,"dur":0.45,"midi":34,"vel":0.7},{"t":103,"dur":0.45,"midi":36,"vel":0.85},{"t":103.5,"dur":0.45,"midi":38,"vel":0.75},{"t":104,"dur":0.45,"midi":36,"vel":0.95},{"t":104.5,"dur":0.45,"midi":36,"vel":0.72},{"t":105,"dur":0.45,"midi":36,"vel":0.9},{"t":105.5,"dur":0.45,"midi":36,"vel":0.7},{"t":106,"dur":0.45,"midi":36,"vel":0.95},{"t":106.5,"dur":0.45,"midi":36,"vel":0.7},{"t":107,"dur":0.45,"midi":38,"vel":0.85},{"t":107.5,"dur":0.45,"midi":40,"vel":0.75},{"t":108,"dur":0.45,"midi":33,"vel":0.95},{"t":108.5,"dur":0.45,"midi":33,"vel":0.72},{"t":109,"dur":0.45,"midi":33,"vel":0.9},{"t":109.5,"dur":0.45,"midi":33,"vel":0.7},{"t":110,"dur":0.45,"midi":33,"vel":0.95},{"t":110.5,"dur":0.45,"midi":33,"vel":0.7},{"t":111,"dur":0.45,"midi":36,"vel":0.85},{"t":111.5,"dur":0.45,"midi":38,"vel":0.75},{"t":112,"dur":0.45,"midi":43,"vel":0.95},{"t":112.5,"dur":0.45,"midi":43,"vel":0.72},{"t":113,"dur":0.45,"midi":43,"vel":0.9},{"t":113.5,"dur":0.45,"midi":43,"vel":0.7},{"t":114,"dur":0.45,"midi":43,"vel":0.95},{"t":114.5,"dur":0.45,"midi":43,"vel":0.7},{"t":115,"dur":0.45,"midi":46,"vel":0.85},{"t":115.5,"dur":0.45,"midi":48,"vel":0.75},{"t":116,"dur":0.45,"midi":36,"vel":0.95},{"t":116.5,"dur":0.45,"midi":36,"vel":0.72},{"t":117,"dur":0.45,"midi":36,"vel":0.9},{"t":117.5,"dur":0.45,"midi":36,"vel":0.7},{"t":118,"dur":0.45,"midi":36,"vel":0.95},{"t":118.5,"dur":0.45,"midi":36,"vel":0.7},{"t":119,"dur":0.45,"midi":38,"vel":0.85},{"t":119.5,"dur":0.45,"midi":40,"vel":0.75},{"t":120,"dur":0.45,"midi":34,"vel":0.95},{"t":120.5,"dur":0.45,"midi":34,"vel":0.72},{"t":121,"dur":0.45,"midi":34,"vel":0.9},{"t":121.5,"dur":0.45,"midi":34,"vel":0.7},{"t":122,"dur":0.45,"midi":34,"vel":0.95},{"t":122.5,"dur":0.45,"midi":34,"vel":0.7},{"t":123,"dur":0.45,"midi":36,"vel":0.85},{"t":123.5,"dur":0.45,"midi":38,"vel":0.75},{"t":124,"dur":0.45,"midi":33,"vel":0.98},{"t":124.5,"dur":0.45,"midi":33,"vel":0.78},{"t":125,"dur":0.45,"midi":33,"vel":0.95},{"t":125.5,"dur":0.45,"midi":33,"vel":0.75},{"t":126,"dur":0.45,"midi":33,"vel":0.98},{"t":126.5,"dur":0.45,"midi":33,"vel":0.75},{"t":127,"dur":0.45,"midi":36,"vel":0.9},{"t":127.5,"dur":0.45,"midi":38,"vel":0.8}]},{"name":"lowpad","wave":"triangle","gain":0.22,"adsr":{"a":0.08,"d":0.2,"s":0.7,"r":0.3},"notes":[{"t":0,"dur":4,"midi":26,"vel":0.75},{"t":4,"dur":4,"midi":22,"vel":0.7},{"t":8,"dur":4,"midi":24,"vel":0.72},{"t":12,"dur":4,"midi":21,"vel":0.75},{"t":16,"dur":4,"midi":26,"vel":0.75},{"t":20,"dur":4,"midi":24,"vel":0.72},{"t":24,"dur":4,"midi":22,"vel":0.7},{"t":28,"dur":4,"midi":21,"vel":0.78},{"t":32,"dur":4,"midi":26,"vel":0.78},{"t":36,"dur":4,"midi":22,"vel":0.75},{"t":40,"dur":4,"midi":24,"vel":0.75},{"t":44,"dur":4,"midi":21,"vel":0.78},{"t":48,"dur":4,"midi":26,"vel":0.78},{"t":52,"dur":4,"midi":24,"vel":0.75},{"t":56,"dur":4,"midi":26,"vel":0.78},{"t":60,"dur":4,"midi":21,"vel":0.82},{"t":64,"dur":4,"midi":31,"vel":0.82},{"t":68,"dur":4,"midi":33,"vel":0.82},{"t":72,"dur":4,"midi":31,"vel":0.85},{"t":76,"dur":4,"midi":21,"vel":0.82},{"t":80,"dur":4,"midi":26,"vel":0.8},{"t":84,"dur":4,"midi":22,"vel":0.78},{"t":88,"dur":4,"midi":31,"vel":0.82},{"t":92,"dur":4,"midi":21,"vel":0.85},{"t":96,"dur":4,"midi":26,"vel":0.75},{"t":100,"dur":4,"midi":22,"vel":0.72},{"t":104,"dur":4,"midi":24,"vel":0.72},{"t":108,"dur":4,"midi":21,"vel":0.75},{"t":112,"dur":4,"midi":31,"vel":0.75},{"t":116,"dur":4,"midi":24,"vel":0.72},{"t":120,"dur":4,"midi":22,"vel":0.72},{"t":124,"dur":4,"midi":21,"vel":0.78}]},{"name":"perc","wave":"noise","gain":0.34,"adsr":{"a":0.003,"d":0.04,"s":0,"r":0.05},"notes":[{"t":0,"dur":0.14,"midi":36,"vel":0.98},{"t":0.5,"dur":0.06,"midi":42,"vel":0.55},{"t":1,"dur":0.1,"midi":38,"vel":0.88},{"t":1.5,"dur":0.06,"midi":42,"vel":0.52},{"t":2,"dur":0.14,"midi":36,"vel":0.95},{"t":2.5,"dur":0.06,"midi":42,"vel":0.5},{"t":3,"dur":0.1,"midi":38,"vel":0.85},{"t":3.5,"dur":0.06,"midi":42,"vel":0.5},{"t":4,"dur":0.14,"midi":36,"vel":0.98},{"t":4.5,"dur":0.06,"midi":42,"vel":0.55},{"t":5,"dur":0.1,"midi":38,"vel":0.88},{"t":5.5,"dur":0.06,"midi":42,"vel":0.52},{"t":6,"dur":0.14,"midi":36,"vel":0.95},{"t":6.5,"dur":0.06,"midi":42,"vel":0.5},{"t":7,"dur":0.1,"midi":38,"vel":0.85},{"t":7.5,"dur":0.06,"midi":42,"vel":0.5},{"t":8,"dur":0.14,"midi":36,"vel":0.98},{"t":8.5,"dur":0.06,"midi":42,"vel":0.55},{"t":9,"dur":0.1,"midi":38,"vel":0.88},{"t":9.5,"dur":0.06,"midi":42,"vel":0.52},{"t":10,"dur":0.14,"midi":36,"vel":0.95},{"t":10.5,"dur":0.06,"midi":42,"vel":0.5},{"t":11,"dur":0.1,"midi":38,"vel":0.85},{"t":11.5,"dur":0.06,"midi":42,"vel":0.5},{"t":12,"dur":0.14,"midi":36,"vel":0.98},{"t":12.5,"dur":0.06,"midi":42,"vel":0.55},{"t":13,"dur":0.1,"midi":38,"vel":0.88},{"t":13.5,"dur":0.06,"midi":42,"vel":0.52},{"t":14,"dur":0.14,"midi":36,"vel":0.95},{"t":14.5,"dur":0.06,"midi":42,"vel":0.5},{"t":15,"dur":0.1,"midi":38,"vel":0.85},{"t":15.5,"dur":0.06,"midi":42,"vel":0.5},{"t":16,"dur":0.14,"midi":36,"vel":0.98},{"t":16.5,"dur":0.06,"midi":42,"vel":0.55},{"t":17,"dur":0.1,"midi":38,"vel":0.88},{"t":17.5,"dur":0.06,"midi":42,"vel":0.52},{"t":18,"dur":0.14,"midi":36,"vel":0.95},{"t":18.5,"dur":0.06,"midi":42,"vel":0.5},{"t":19,"dur":0.1,"midi":38,"vel":0.85},{"t":19.5,"dur":0.06,"midi":42,"vel":0.5},{"t":20,"dur":0.14,"midi":36,"vel":0.98},{"t":20.5,"dur":0.06,"midi":42,"vel":0.55},{"t":21,"dur":0.1,"midi":38,"vel":0.88},{"t":21.5,"dur":0.06,"midi":42,"vel":0.52},{"t":22,"dur":0.14,"midi":36,"vel":0.95},{"t":22.5,"dur":0.06,"midi":42,"vel":0.5},{"t":23,"dur":0.1,"midi":38,"vel":0.85},{"t":23.5,"dur":0.06,"midi":42,"vel":0.5},{"t":24,"dur":0.14,"midi":36,"vel":0.98},{"t":24.5,"dur":0.06,"midi":42,"vel":0.55},{"t":25,"dur":0.1,"midi":38,"vel":0.88},{"t":25.5,"dur":0.06,"midi":42,"vel":0.52},{"t":26,"dur":0.14,"midi":36,"vel":0.95},{"t":26.5,"dur":0.06,"midi":42,"vel":0.5},{"t":27,"dur":0.1,"midi":38,"vel":0.85},{"t":27.5,"dur":0.06,"midi":42,"vel":0.5},{"t":28,"dur":0.14,"midi":36,"vel":1},{"t":28.5,"dur":0.06,"midi":42,"vel":0.62},{"t":29,"dur":0.1,"midi":38,"vel":0.92},{"t":29.5,"dur":0.06,"midi":42,"vel":0.58},{"t":30,"dur":0.14,"midi":36,"vel":0.98},{"t":30.5,"dur":0.06,"midi":42,"vel":0.58},{"t":31,"dur":0.1,"midi":38,"vel":0.9},{"t":31.5,"dur":0.06,"midi":42,"vel":0.55},{"t":32,"dur":0.14,"midi":36,"vel":1},{"t":32.25,"dur":0.08,"midi":36,"vel":0.82},{"t":32.5,"dur":0.06,"midi":42,"vel":0.62},{"t":33,"dur":0.1,"midi":38,"vel":0.92},{"t":33.5,"dur":0.06,"midi":42,"vel":0.58},{"t":34,"dur":0.14,"midi":36,"vel":0.98},{"t":34.5,"dur":0.06,"midi":42,"vel":0.58},{"t":35,"dur":0.1,"midi":38,"vel":0.9},{"t":35.5,"dur":0.06,"midi":42,"vel":0.55},{"t":36,"dur":0.14,"midi":36,"vel":1},{"t":36.25,"dur":0.08,"midi":36,"vel":0.82},{"t":36.5,"dur":0.06,"midi":42,"vel":0.62},{"t":37,"dur":0.1,"midi":38,"vel":0.92},{"t":37.5,"dur":0.06,"midi":42,"vel":0.58},{"t":38,"dur":0.14,"midi":36,"vel":0.98},{"t":38.5,"dur":0.06,"midi":42,"vel":0.58},{"t":39,"dur":0.1,"midi":38,"vel":0.9},{"t":39.5,"dur":0.06,"midi":42,"vel":0.55},{"t":40,"dur":0.14,"midi":36,"vel":1},{"t":40.25,"dur":0.08,"midi":36,"vel":0.82},{"t":40.5,"dur":0.06,"midi":42,"vel":0.62},{"t":41,"dur":0.1,"midi":38,"vel":0.92},{"t":41.5,"dur":0.06,"midi":42,"vel":0.58},{"t":42,"dur":0.14,"midi":36,"vel":0.98},{"t":42.5,"dur":0.06,"midi":42,"vel":0.58},{"t":43,"dur":0.1,"midi":38,"vel":0.9},{"t":43.5,"dur":0.06,"midi":42,"vel":0.55},{"t":44,"dur":0.14,"midi":36,"vel":1},{"t":44.25,"dur":0.08,"midi":36,"vel":0.85},{"t":44.5,"dur":0.14,"midi":36,"vel":0.9},{"t":44.75,"dur":0.06,"midi":42,"vel":0.6},{"t":45,"dur":0.1,"midi":38,"vel":0.92},{"t":45.25,"dur":0.08,"midi":36,"vel":0.82},{"t":45.5,"dur":0.06,"midi":42,"vel":0.6},{"t":46,"dur":0.14,"midi":36,"vel":1},{"t":46.25,"dur":0.08,"midi":36,"vel":0.85},{"t":46.5,"dur":0.06,"midi":42,"vel":0.62},{"t":47,"dur":0.1,"midi":38,"vel":0.92},{"t":47.5,"dur":0.06,"midi":42,"vel":0.58},{"t":48,"dur":0.14,"midi":36,"vel":1},{"t":48.25,"dur":0.08,"midi":36,"vel":0.82},{"t":48.5,"dur":0.06,"midi":42,"vel":0.62},{"t":49,"dur":0.1,"midi":38,"vel":0.92},{"t":49.5,"dur":0.06,"midi":42,"vel":0.58},{"t":50,"dur":0.14,"midi":36,"vel":0.98},{"t":50.5,"dur":0.06,"midi":42,"vel":0.58},{"t":51,"dur":0.1,"midi":38,"vel":0.9},{"t":51.5,"dur":0.06,"midi":42,"vel":0.55},{"t":52,"dur":0.14,"midi":36,"vel":1},{"t":52.25,"dur":0.08,"midi":36,"vel":0.82},{"t":52.5,"dur":0.06,"midi":42,"vel":0.62},{"t":53,"dur":0.1,"midi":38,"vel":0.92},{"t":53.5,"dur":0.06,"midi":42,"vel":0.58},{"t":54,"dur":0.14,"midi":36,"vel":0.98},{"t":54.5,"dur":0.06,"midi":42,"vel":0.58},{"t":55,"dur":0.1,"midi":38,"vel":0.9},{"t":55.5,"dur":0.06,"midi":42,"vel":0.55},{"t":56,"dur":0.14,"midi":36,"vel":1},{"t":56.25,"dur":0.08,"midi":36,"vel":0.82},{"t":56.5,"dur":0.06,"midi":42,"vel":0.62},{"t":57,"dur":0.1,"midi":38,"vel":0.92},{"t":57.5,"dur":0.06,"midi":42,"vel":0.58},{"t":58,"dur":0.14,"midi":36,"vel":0.98},{"t":58.5,"dur":0.06,"midi":42,"vel":0.58},{"t":59,"dur":0.1,"midi":38,"vel":0.9},{"t":59.5,"dur":0.06,"midi":42,"vel":0.55},{"t":60,"dur":0.14,"midi":36,"vel":1},{"t":60.25,"dur":0.08,"midi":36,"vel":0.88},{"t":60.5,"dur":0.14,"midi":36,"vel":0.95},{"t":60.75,"dur":0.06,"midi":42,"vel":0.65},{"t":61,"dur":0.1,"midi":38,"vel":0.95},{"t":61.25,"dur":0.08,"midi":36,"vel":0.85},{"t":61.5,"dur":0.06,"midi":42,"vel":0.65},{"t":62,"dur":0.14,"midi":36,"vel":1},{"t":62.25,"dur":0.08,"midi":36,"vel":0.88},{"t":62.5,"dur":0.06,"midi":42,"vel":0.65},{"t":63,"dur":0.1,"midi":38,"vel":0.95},{"t":63.5,"dur":0.06,"midi":42,"vel":0.62},{"t":64,"dur":0.14,"midi":36,"vel":1},{"t":64.25,"dur":0.08,"midi":36,"vel":0.88},{"t":64.5,"dur":0.06,"midi":42,"vel":0.65},{"t":65,"dur":0.1,"midi":38,"vel":0.95},{"t":65.5,"dur":0.06,"midi":42,"vel":0.62},{"t":66,"dur":0.14,"midi":36,"vel":1},{"t":66.25,"dur":0.08,"midi":36,"vel":0.88},{"t":66.5,"dur":0.06,"midi":42,"vel":0.65},{"t":67,"dur":0.1,"midi":38,"vel":0.95},{"t":67.5,"dur":0.06,"midi":42,"vel":0.62},{"t":68,"dur":0.14,"midi":36,"vel":1},{"t":68.25,"dur":0.08,"midi":36,"vel":0.88},{"t":68.5,"dur":0.06,"midi":42,"vel":0.65},{"t":69,"dur":0.1,"midi":38,"vel":0.95},{"t":69.5,"dur":0.06,"midi":42,"vel":0.62},{"t":70,"dur":0.14,"midi":36,"vel":1},{"t":70.25,"dur":0.08,"midi":36,"vel":0.88},{"t":70.5,"dur":0.06,"midi":42,"vel":0.65},{"t":71,"dur":0.1,"midi":38,"vel":0.95},{"t":71.5,"dur":0.06,"midi":42,"vel":0.62},{"t":72,"dur":0.14,"midi":36,"vel":1},{"t":72.25,"dur":0.08,"midi":36,"vel":0.9},{"t":72.5,"dur":0.14,"midi":36,"vel":0.95},{"t":72.75,"dur":0.06,"midi":42,"vel":0.68},{"t":73,"dur":0.1,"midi":38,"vel":0.98},{"t":73.25,"dur":0.08,"midi":36,"vel":0.88},{"t":73.5,"dur":0.06,"midi":42,"vel":0.68},{"t":74,"dur":0.14,"midi":36,"vel":1},{"t":74.25,"dur":0.08,"midi":36,"vel":0.9},{"t":74.5,"dur":0.06,"midi":42,"vel":0.68},{"t":75,"dur":0.1,"midi":38,"vel":0.98},{"t":75.5,"dur":0.06,"midi":42,"vel":0.65},{"t":76,"dur":0.14,"midi":36,"vel":1},{"t":76.25,"dur":0.08,"midi":36,"vel":0.9},{"t":76.5,"dur":0.14,"midi":36,"vel":0.95},{"t":76.75,"dur":0.06,"midi":42,"vel":0.68},{"t":77,"dur":0.1,"midi":38,"vel":0.98},{"t":77.25,"dur":0.08,"midi":36,"vel":0.88},{"t":77.5,"dur":0.06,"midi":42,"vel":0.68},{"t":78,"dur":0.14,"midi":36,"vel":1},{"t":78.25,"dur":0.08,"midi":36,"vel":0.9},{"t":78.5,"dur":0.06,"midi":42,"vel":0.68},{"t":79,"dur":0.1,"midi":38,"vel":0.98},{"t":79.5,"dur":0.06,"midi":42,"vel":0.65},{"t":80,"dur":0.14,"midi":36,"vel":0.98},{"t":80.5,"dur":0.06,"midi":42,"vel":0.62},{"t":81,"dur":0.1,"midi":38,"vel":0.92},{"t":81.5,"dur":0.06,"midi":42,"vel":0.58},{"t":82,"dur":0.14,"midi":36,"vel":0.95},{"t":82.5,"dur":0.06,"midi":42,"vel":0.58},{"t":83,"dur":0.1,"midi":38,"vel":0.88},{"t":83.5,"dur":0.06,"midi":42,"vel":0.55},{"t":84,"dur":0.14,"midi":36,"vel":0.98},{"t":84.5,"dur":0.06,"midi":42,"vel":0.62},{"t":85,"dur":0.1,"midi":38,"vel":0.92},{"t":85.5,"dur":0.06,"midi":42,"vel":0.58},{"t":86,"dur":0.14,"midi":36,"vel":0.95},{"t":86.5,"dur":0.06,"midi":42,"vel":0.58},{"t":87,"dur":0.1,"midi":38,"vel":0.88},{"t":87.5,"dur":0.06,"midi":42,"vel":0.55},{"t":88,"dur":0.14,"midi":36,"vel":1},{"t":88.25,"dur":0.08,"midi":36,"vel":0.82},{"t":88.5,"dur":0.06,"midi":42,"vel":0.65},{"t":89,"dur":0.1,"midi":38,"vel":0.95},{"t":89.5,"dur":0.06,"midi":42,"vel":0.62},{"t":90,"dur":0.14,"midi":36,"vel":0.98},{"t":90.5,"dur":0.06,"midi":42,"vel":0.62},{"t":91,"dur":0.1,"midi":38,"vel":0.92},{"t":91.5,"dur":0.06,"midi":42,"vel":0.58},{"t":92,"dur":0.14,"midi":36,"vel":1},{"t":92.25,"dur":0.08,"midi":36,"vel":0.88},{"t":92.5,"dur":0.14,"midi":36,"vel":0.95},{"t":92.75,"dur":0.06,"midi":42,"vel":0.68},{"t":93,"dur":0.1,"midi":38,"vel":0.98},{"t":93.25,"dur":0.08,"midi":36,"vel":0.88},{"t":93.5,"dur":0.06,"midi":42,"vel":0.68},{"t":94,"dur":0.14,"midi":36,"vel":1},{"t":94.25,"dur":0.08,"midi":36,"vel":0.9},{"t":94.5,"dur":0.06,"midi":42,"vel":0.68},{"t":95,"dur":0.1,"midi":38,"vel":0.98},{"t":95.5,"dur":0.06,"midi":42,"vel":0.65},{"t":96,"dur":0.14,"midi":36,"vel":0.98},{"t":96.5,"dur":0.06,"midi":42,"vel":0.55},{"t":97,"dur":0.1,"midi":38,"vel":0.88},{"t":97.5,"dur":0.06,"midi":42,"vel":0.52},{"t":98,"dur":0.14,"midi":36,"vel":0.95},{"t":98.5,"dur":0.06,"midi":42,"vel":0.5},{"t":99,"dur":0.1,"midi":38,"vel":0.85},{"t":99.5,"dur":0.06,"midi":42,"vel":0.5},{"t":100,"dur":0.14,"midi":36,"vel":0.98},{"t":100.5,"dur":0.06,"midi":42,"vel":0.55},{"t":101,"dur":0.1,"midi":38,"vel":0.88},{"t":101.5,"dur":0.06,"midi":42,"vel":0.52},{"t":102,"dur":0.14,"midi":36,"vel":0.95},{"t":102.5,"dur":0.06,"midi":42,"vel":0.5},{"t":103,"dur":0.1,"midi":38,"vel":0.85},{"t":103.5,"dur":0.06,"midi":42,"vel":0.5},{"t":104,"dur":0.14,"midi":36,"vel":0.98},{"t":104.5,"dur":0.06,"midi":42,"vel":0.55},{"t":105,"dur":0.1,"midi":38,"vel":0.88},{"t":105.5,"dur":0.06,"midi":42,"vel":0.52},{"t":106,"dur":0.14,"midi":36,"vel":0.95},{"t":106.5,"dur":0.06,"midi":42,"vel":0.5},{"t":107,"dur":0.1,"midi":38,"vel":0.85},{"t":107.5,"dur":0.06,"midi":42,"vel":0.5},{"t":108,"dur":0.14,"midi":36,"vel":0.98},{"t":108.5,"dur":0.06,"midi":42,"vel":0.55},{"t":109,"dur":0.1,"midi":38,"vel":0.88},{"t":109.5,"dur":0.06,"midi":42,"vel":0.52},{"t":110,"dur":0.14,"midi":36,"vel":0.95},{"t":110.5,"dur":0.06,"midi":42,"vel":0.5},{"t":111,"dur":0.1,"midi":38,"vel":0.85},{"t":111.5,"dur":0.06,"midi":42,"vel":0.5},{"t":112,"dur":0.14,"midi":36,"vel":0.98},{"t":112.5,"dur":0.06,"midi":42,"vel":0.58},{"t":113,"dur":0.1,"midi":38,"vel":0.9},{"t":113.5,"dur":0.06,"midi":42,"vel":0.55},{"t":114,"dur":0.14,"midi":36,"vel":0.95},{"t":114.5,"dur":0.06,"midi":42,"vel":0.55},{"t":115,"dur":0.1,"midi":38,"vel":0.88},{"t":115.5,"dur":0.06,"midi":42,"vel":0.52},{"t":116,"dur":0.14,"midi":36,"vel":0.98},{"t":116.5,"dur":0.06,"midi":42,"vel":0.58},{"t":117,"dur":0.1,"midi":38,"vel":0.9},{"t":117.5,"dur":0.06,"midi":42,"vel":0.55},{"t":118,"dur":0.14,"midi":36,"vel":0.95},{"t":118.5,"dur":0.06,"midi":42,"vel":0.55},{"t":119,"dur":0.1,"midi":38,"vel":0.88},{"t":119.5,"dur":0.06,"midi":42,"vel":0.52},{"t":120,"dur":0.14,"midi":36,"vel":0.98},{"t":120.5,"dur":0.06,"midi":42,"vel":0.58},{"t":121,"dur":0.1,"midi":38,"vel":0.9},{"t":121.5,"dur":0.06,"midi":42,"vel":0.55},{"t":122,"dur":0.14,"midi":36,"vel":0.95},{"t":122.5,"dur":0.06,"midi":42,"vel":0.55},{"t":123,"dur":0.1,"midi":38,"vel":0.88},{"t":123.5,"dur":0.06,"midi":42,"vel":0.52},{"t":124,"dur":0.14,"midi":36,"vel":1},{"t":124.5,"dur":0.06,"midi":42,"vel":0.62},{"t":125,"dur":0.1,"midi":38,"vel":0.92},{"t":125.5,"dur":0.06,"midi":42,"vel":0.58},{"t":126,"dur":0.14,"midi":36,"vel":0.98},{"t":126.5,"dur":0.06,"midi":42,"vel":0.58},{"t":127,"dur":0.1,"midi":38,"vel":0.9},{"t":127.5,"dur":0.06,"midi":42,"vel":0.55}]}]'
   ),
-  Ij = { id: Aj, bpm: Ej, loopBeats: Bj, channels: Cj },
-  Lj = 'explore',
-  Mj = 96,
-  Oj = 128,
-  qj = [
+  Lj = { id: Ej, bpm: Bj, loopBeats: Cj, channels: Ij },
+  Mj = 'explore',
+  Oj = 96,
+  qj = 128,
+  Dj = [
     {
       name: 'drone',
       wave: 'triangle',
@@ -29917,30 +29935,30 @@ const Sj = 'battle',
       ],
     },
   ],
-  Dj = { id: Lj, bpm: Mj, loopBeats: Oj, channels: qj },
-  zj = 'foe',
-  Rj = 164,
-  Hj = 128,
-  Uj = JSON.parse(
+  zj = { id: Mj, bpm: Oj, loopBeats: qj, channels: Dj },
+  Rj = 'foe',
+  Hj = 164,
+  Uj = 128,
+  $j = JSON.parse(
     '[{"name":"lead","wave":"square25","gain":0.45,"adsr":{"a":0.006,"d":0.06,"s":0.7,"r":0.06},"notes":[{"t":0,"midi":69,"dur":0.5,"vel":0.9},{"t":0.5,"midi":70,"dur":0.5,"vel":0.9},{"t":1,"midi":69,"dur":0.5,"vel":0.9},{"t":2,"midi":64,"dur":0.5,"vel":0.9},{"t":2.5,"midi":65,"dur":0.5,"vel":0.9},{"t":3,"midi":64,"dur":0.5,"vel":0.9},{"t":4,"midi":69,"dur":0.75,"vel":0.9},{"t":5,"midi":72,"dur":0.5,"vel":0.9},{"t":5.5,"midi":70,"dur":0.5,"vel":0.9},{"t":6,"midi":69,"dur":0.5,"vel":0.9},{"t":6.5,"midi":64,"dur":0.5,"vel":0.9},{"t":7,"midi":65,"dur":0.5,"vel":0.9},{"t":7.5,"midi":64,"dur":0.5,"vel":0.9},{"t":8,"midi":69,"dur":0.5,"vel":0.9},{"t":8.5,"midi":70,"dur":0.5,"vel":0.9},{"t":9,"midi":69,"dur":0.5,"vel":0.9},{"t":10,"midi":64,"dur":0.5,"vel":0.9},{"t":10.5,"midi":65,"dur":0.5,"vel":0.9},{"t":11,"midi":64,"dur":0.5,"vel":0.9},{"t":12,"midi":69,"dur":0.75,"vel":0.9},{"t":13,"midi":72,"dur":0.5,"vel":0.9},{"t":13.5,"midi":70,"dur":0.5,"vel":0.9},{"t":14,"midi":69,"dur":0.5,"vel":0.9},{"t":14.5,"midi":64,"dur":0.5,"vel":0.9},{"t":15,"midi":65,"dur":0.5,"vel":0.9},{"t":15.5,"midi":64,"dur":0.5,"vel":0.9},{"t":16,"midi":69,"dur":0.5,"vel":0.9},{"t":16.5,"midi":70,"dur":0.5,"vel":0.9},{"t":17,"midi":69,"dur":0.5,"vel":0.9},{"t":18,"midi":64,"dur":0.5,"vel":0.9},{"t":18.5,"midi":65,"dur":0.5,"vel":0.9},{"t":19,"midi":64,"dur":0.5,"vel":0.9},{"t":20,"midi":69,"dur":0.75,"vel":0.9},{"t":21,"midi":72,"dur":0.5,"vel":0.9},{"t":21.5,"midi":70,"dur":0.5,"vel":0.9},{"t":22,"midi":69,"dur":0.5,"vel":0.9},{"t":22.5,"midi":64,"dur":0.5,"vel":0.9},{"t":23,"midi":65,"dur":0.5,"vel":0.9},{"t":23.5,"midi":64,"dur":0.5,"vel":0.9},{"t":24,"midi":69,"dur":0.5,"vel":0.9},{"t":24.5,"midi":70,"dur":0.5,"vel":0.9},{"t":25,"midi":69,"dur":0.5,"vel":0.9},{"t":26,"midi":64,"dur":0.5,"vel":0.9},{"t":26.5,"midi":65,"dur":0.5,"vel":0.9},{"t":27,"midi":64,"dur":0.5,"vel":0.9},{"t":28,"midi":69,"dur":0.75,"vel":0.9},{"t":29,"midi":72,"dur":0.5,"vel":0.9},{"t":29.5,"midi":70,"dur":0.5,"vel":0.9},{"t":30,"midi":69,"dur":0.5,"vel":0.9},{"t":30.5,"midi":64,"dur":0.5,"vel":0.9},{"t":31,"midi":65,"dur":0.5,"vel":0.9},{"t":31.5,"midi":64,"dur":0.5,"vel":0.9},{"t":32,"midi":81,"dur":0.5,"vel":0.9},{"t":32.5,"midi":82,"dur":0.5,"vel":0.9},{"t":33,"midi":81,"dur":0.5,"vel":0.9},{"t":34,"midi":76,"dur":0.5,"vel":0.9},{"t":34.5,"midi":77,"dur":0.5,"vel":0.9},{"t":35,"midi":76,"dur":0.5,"vel":0.9},{"t":36,"midi":81,"dur":0.75,"vel":0.9},{"t":37,"midi":84,"dur":0.5,"vel":0.9},{"t":37.5,"midi":82,"dur":0.5,"vel":0.9},{"t":38,"midi":81,"dur":0.5,"vel":0.9},{"t":38.5,"midi":76,"dur":0.5,"vel":0.9},{"t":39,"midi":77,"dur":0.5,"vel":0.9},{"t":39.5,"midi":76,"dur":0.5,"vel":0.9},{"t":35.5,"midi":87,"dur":0.5,"vel":0.7},{"t":39.5,"midi":87,"dur":0.5,"vel":0.6},{"t":40,"midi":81,"dur":0.5,"vel":0.9},{"t":40.5,"midi":82,"dur":0.5,"vel":0.9},{"t":41,"midi":81,"dur":0.5,"vel":0.9},{"t":42,"midi":76,"dur":0.5,"vel":0.9},{"t":42.5,"midi":77,"dur":0.5,"vel":0.9},{"t":43,"midi":76,"dur":0.5,"vel":0.9},{"t":44,"midi":81,"dur":0.75,"vel":0.9},{"t":45,"midi":84,"dur":0.5,"vel":0.9},{"t":45.5,"midi":82,"dur":0.5,"vel":0.9},{"t":46,"midi":81,"dur":0.5,"vel":0.9},{"t":46.5,"midi":76,"dur":0.5,"vel":0.9},{"t":47,"midi":77,"dur":0.5,"vel":0.9},{"t":47.5,"midi":76,"dur":0.5,"vel":0.9},{"t":43.5,"midi":87,"dur":0.5,"vel":0.7},{"t":47.5,"midi":87,"dur":0.5,"vel":0.6},{"t":48,"midi":81,"dur":0.5,"vel":0.9},{"t":48.5,"midi":82,"dur":0.5,"vel":0.9},{"t":49,"midi":81,"dur":0.5,"vel":0.9},{"t":50,"midi":76,"dur":0.5,"vel":0.9},{"t":50.5,"midi":77,"dur":0.5,"vel":0.9},{"t":51,"midi":76,"dur":0.5,"vel":0.9},{"t":52,"midi":81,"dur":0.75,"vel":0.9},{"t":53,"midi":84,"dur":0.5,"vel":0.9},{"t":53.5,"midi":82,"dur":0.5,"vel":0.9},{"t":54,"midi":81,"dur":0.5,"vel":0.9},{"t":54.5,"midi":76,"dur":0.5,"vel":0.9},{"t":55,"midi":77,"dur":0.5,"vel":0.9},{"t":55.5,"midi":76,"dur":0.5,"vel":0.9},{"t":51.5,"midi":87,"dur":0.5,"vel":0.7},{"t":55.5,"midi":87,"dur":0.5,"vel":0.6},{"t":56,"midi":81,"dur":0.5,"vel":0.9},{"t":56.5,"midi":82,"dur":0.5,"vel":0.9},{"t":57,"midi":81,"dur":0.5,"vel":0.9},{"t":58,"midi":76,"dur":0.5,"vel":0.9},{"t":58.5,"midi":77,"dur":0.5,"vel":0.9},{"t":59,"midi":76,"dur":0.5,"vel":0.9},{"t":60,"midi":81,"dur":0.75,"vel":0.9},{"t":61,"midi":84,"dur":0.5,"vel":0.9},{"t":61.5,"midi":82,"dur":0.5,"vel":0.9},{"t":62,"midi":81,"dur":0.5,"vel":0.9},{"t":62.5,"midi":76,"dur":0.5,"vel":0.9},{"t":63,"midi":77,"dur":0.5,"vel":0.9},{"t":63.5,"midi":76,"dur":0.5,"vel":0.9},{"t":59.5,"midi":87,"dur":0.5,"vel":0.7},{"t":63.5,"midi":87,"dur":0.5,"vel":0.6},{"t":64,"midi":69,"dur":0.5,"vel":0.9},{"t":64.5,"midi":70,"dur":0.5,"vel":0.9},{"t":65,"midi":69,"dur":0.5,"vel":0.9},{"t":66,"midi":64,"dur":0.5,"vel":0.9},{"t":66.5,"midi":65,"dur":0.5,"vel":0.9},{"t":67,"midi":64,"dur":0.5,"vel":0.9},{"t":68,"midi":69,"dur":0.75,"vel":0.9},{"t":69,"midi":72,"dur":0.5,"vel":0.9},{"t":69.5,"midi":70,"dur":0.5,"vel":0.9},{"t":70,"midi":69,"dur":0.5,"vel":0.9},{"t":70.5,"midi":64,"dur":0.5,"vel":0.9},{"t":71,"midi":65,"dur":0.5,"vel":0.9},{"t":71.5,"midi":64,"dur":0.5,"vel":0.9},{"t":72,"midi":69,"dur":0.5,"vel":0.9},{"t":72.5,"midi":70,"dur":0.5,"vel":0.9},{"t":73,"midi":69,"dur":0.5,"vel":0.9},{"t":74,"midi":64,"dur":0.5,"vel":0.9},{"t":74.5,"midi":65,"dur":0.5,"vel":0.9},{"t":75,"midi":64,"dur":0.5,"vel":0.9},{"t":76,"midi":69,"dur":0.75,"vel":0.9},{"t":77,"midi":72,"dur":0.5,"vel":0.9},{"t":77.5,"midi":70,"dur":0.5,"vel":0.9},{"t":78,"midi":69,"dur":0.5,"vel":0.9},{"t":78.5,"midi":64,"dur":0.5,"vel":0.9},{"t":79,"midi":65,"dur":0.5,"vel":0.9},{"t":79.5,"midi":64,"dur":0.5,"vel":0.9},{"t":80,"midi":69,"dur":0.5,"vel":0.9},{"t":80.5,"midi":70,"dur":0.5,"vel":0.9},{"t":81,"midi":69,"dur":0.5,"vel":0.9},{"t":82,"midi":64,"dur":0.5,"vel":0.9},{"t":82.5,"midi":65,"dur":0.5,"vel":0.9},{"t":83,"midi":64,"dur":0.5,"vel":0.9},{"t":84,"midi":69,"dur":0.75,"vel":0.9},{"t":85,"midi":72,"dur":0.5,"vel":0.9},{"t":85.5,"midi":70,"dur":0.5,"vel":0.9},{"t":86,"midi":69,"dur":0.5,"vel":0.9},{"t":86.5,"midi":64,"dur":0.5,"vel":0.9},{"t":87,"midi":65,"dur":0.5,"vel":0.9},{"t":87.5,"midi":64,"dur":0.5,"vel":0.9},{"t":88,"midi":69,"dur":0.5,"vel":0.9},{"t":88.5,"midi":70,"dur":0.5,"vel":0.9},{"t":89,"midi":69,"dur":0.5,"vel":0.9},{"t":90,"midi":64,"dur":0.5,"vel":0.9},{"t":90.5,"midi":65,"dur":0.5,"vel":0.9},{"t":91,"midi":64,"dur":0.5,"vel":0.9},{"t":92,"midi":69,"dur":0.75,"vel":0.9},{"t":93,"midi":72,"dur":0.5,"vel":0.9},{"t":93.5,"midi":70,"dur":0.5,"vel":0.9},{"t":94,"midi":69,"dur":0.5,"vel":0.9},{"t":94.5,"midi":64,"dur":0.5,"vel":0.9},{"t":95,"midi":65,"dur":0.5,"vel":0.9},{"t":95.5,"midi":64,"dur":0.5,"vel":0.9},{"t":96,"midi":81,"dur":0.5,"vel":0.9},{"t":96.5,"midi":82,"dur":0.5,"vel":0.9},{"t":97,"midi":81,"dur":0.5,"vel":0.9},{"t":98,"midi":76,"dur":0.5,"vel":0.9},{"t":98.5,"midi":77,"dur":0.5,"vel":0.9},{"t":99,"midi":76,"dur":0.5,"vel":0.9},{"t":100,"midi":81,"dur":0.75,"vel":0.9},{"t":101,"midi":84,"dur":0.5,"vel":0.9},{"t":101.5,"midi":82,"dur":0.5,"vel":0.9},{"t":102,"midi":81,"dur":0.5,"vel":0.9},{"t":102.5,"midi":76,"dur":0.5,"vel":0.9},{"t":103,"midi":77,"dur":0.5,"vel":0.9},{"t":103.5,"midi":76,"dur":0.5,"vel":0.9},{"t":99.5,"midi":87,"dur":0.5,"vel":0.7},{"t":103.5,"midi":87,"dur":0.5,"vel":0.6},{"t":104,"midi":81,"dur":0.5,"vel":0.9},{"t":104.5,"midi":82,"dur":0.5,"vel":0.9},{"t":105,"midi":81,"dur":0.5,"vel":0.9},{"t":106,"midi":76,"dur":0.5,"vel":0.9},{"t":106.5,"midi":77,"dur":0.5,"vel":0.9},{"t":107,"midi":76,"dur":0.5,"vel":0.9},{"t":108,"midi":81,"dur":0.75,"vel":0.9},{"t":109,"midi":84,"dur":0.5,"vel":0.9},{"t":109.5,"midi":82,"dur":0.5,"vel":0.9},{"t":110,"midi":81,"dur":0.5,"vel":0.9},{"t":110.5,"midi":76,"dur":0.5,"vel":0.9},{"t":111,"midi":77,"dur":0.5,"vel":0.9},{"t":111.5,"midi":76,"dur":0.5,"vel":0.9},{"t":107.5,"midi":87,"dur":0.5,"vel":0.7},{"t":111.5,"midi":87,"dur":0.5,"vel":0.6},{"t":112,"midi":81,"dur":0.5,"vel":0.9},{"t":112.5,"midi":82,"dur":0.5,"vel":0.9},{"t":113,"midi":81,"dur":0.5,"vel":0.9},{"t":114,"midi":76,"dur":0.5,"vel":0.9},{"t":114.5,"midi":77,"dur":0.5,"vel":0.9},{"t":115,"midi":76,"dur":0.5,"vel":0.9},{"t":116,"midi":81,"dur":0.75,"vel":0.9},{"t":117,"midi":84,"dur":0.5,"vel":0.9},{"t":117.5,"midi":82,"dur":0.5,"vel":0.9},{"t":118,"midi":81,"dur":0.5,"vel":0.9},{"t":118.5,"midi":76,"dur":0.5,"vel":0.9},{"t":119,"midi":77,"dur":0.5,"vel":0.9},{"t":119.5,"midi":76,"dur":0.5,"vel":0.9},{"t":115.5,"midi":87,"dur":0.5,"vel":0.7},{"t":119.5,"midi":87,"dur":0.5,"vel":0.6},{"t":120,"midi":81,"dur":0.5,"vel":0.9},{"t":120.5,"midi":82,"dur":0.5,"vel":0.9},{"t":121,"midi":81,"dur":0.5,"vel":0.9},{"t":122,"midi":76,"dur":0.5,"vel":0.9},{"t":122.5,"midi":77,"dur":0.5,"vel":0.9},{"t":123,"midi":76,"dur":0.5,"vel":0.9},{"t":124,"midi":81,"dur":0.75,"vel":0.9},{"t":125,"midi":84,"dur":0.5,"vel":0.9},{"t":125.5,"midi":82,"dur":0.5,"vel":0.9},{"t":126,"midi":81,"dur":0.5,"vel":0.9},{"t":126.5,"midi":76,"dur":0.5,"vel":0.9},{"t":127,"midi":77,"dur":0.5,"vel":0.9},{"t":127.5,"midi":76,"dur":0.5,"vel":0.9},{"t":123.5,"midi":87,"dur":0.5,"vel":0.7},{"t":127.5,"midi":87,"dur":0.5,"vel":0.6}]},{"name":"harmony","wave":"square12","gain":0.22,"adsr":{"a":0.005,"d":0.04,"s":0.5,"r":0.05},"notes":[{"t":1.5,"midi":69,"dur":0.25,"vel":0.5},{"t":1.5,"midi":76,"dur":0.25,"vel":0.45},{"t":3.5,"midi":69,"dur":0.25,"vel":0.5},{"t":3.5,"midi":76,"dur":0.25,"vel":0.45},{"t":5.5,"midi":69,"dur":0.25,"vel":0.5},{"t":5.5,"midi":76,"dur":0.25,"vel":0.45},{"t":7.5,"midi":69,"dur":0.25,"vel":0.5},{"t":7.5,"midi":76,"dur":0.25,"vel":0.45},{"t":9.5,"midi":69,"dur":0.25,"vel":0.5},{"t":9.5,"midi":76,"dur":0.25,"vel":0.45},{"t":11.5,"midi":69,"dur":0.25,"vel":0.5},{"t":11.5,"midi":76,"dur":0.25,"vel":0.45},{"t":13.5,"midi":69,"dur":0.25,"vel":0.5},{"t":13.5,"midi":76,"dur":0.25,"vel":0.45},{"t":15.5,"midi":69,"dur":0.25,"vel":0.5},{"t":15.5,"midi":76,"dur":0.25,"vel":0.45},{"t":12,"midi":70,"dur":0.5,"vel":0.45},{"t":17.5,"midi":69,"dur":0.25,"vel":0.5},{"t":17.5,"midi":76,"dur":0.25,"vel":0.45},{"t":19.5,"midi":69,"dur":0.25,"vel":0.5},{"t":19.5,"midi":76,"dur":0.25,"vel":0.45},{"t":21.5,"midi":69,"dur":0.25,"vel":0.5},{"t":21.5,"midi":76,"dur":0.25,"vel":0.45},{"t":23.5,"midi":69,"dur":0.25,"vel":0.5},{"t":23.5,"midi":76,"dur":0.25,"vel":0.45},{"t":25.5,"midi":69,"dur":0.25,"vel":0.5},{"t":25.5,"midi":76,"dur":0.25,"vel":0.45},{"t":27.5,"midi":69,"dur":0.25,"vel":0.5},{"t":27.5,"midi":76,"dur":0.25,"vel":0.45},{"t":29.5,"midi":69,"dur":0.25,"vel":0.5},{"t":29.5,"midi":76,"dur":0.25,"vel":0.45},{"t":31.5,"midi":69,"dur":0.25,"vel":0.5},{"t":31.5,"midi":76,"dur":0.25,"vel":0.45},{"t":28,"midi":70,"dur":0.5,"vel":0.45},{"t":33.5,"midi":69,"dur":0.25,"vel":0.5},{"t":33.5,"midi":76,"dur":0.25,"vel":0.45},{"t":35.5,"midi":69,"dur":0.25,"vel":0.5},{"t":35.5,"midi":76,"dur":0.25,"vel":0.45},{"t":37.5,"midi":69,"dur":0.25,"vel":0.5},{"t":37.5,"midi":76,"dur":0.25,"vel":0.45},{"t":39.5,"midi":69,"dur":0.25,"vel":0.5},{"t":39.5,"midi":76,"dur":0.25,"vel":0.45},{"t":41.5,"midi":69,"dur":0.25,"vel":0.5},{"t":41.5,"midi":76,"dur":0.25,"vel":0.45},{"t":43.5,"midi":69,"dur":0.25,"vel":0.5},{"t":43.5,"midi":76,"dur":0.25,"vel":0.45},{"t":45.5,"midi":69,"dur":0.25,"vel":0.5},{"t":45.5,"midi":76,"dur":0.25,"vel":0.45},{"t":47.5,"midi":69,"dur":0.25,"vel":0.5},{"t":47.5,"midi":76,"dur":0.25,"vel":0.45},{"t":44,"midi":70,"dur":0.5,"vel":0.45},{"t":49.5,"midi":69,"dur":0.25,"vel":0.5},{"t":49.5,"midi":76,"dur":0.25,"vel":0.45},{"t":51.5,"midi":69,"dur":0.25,"vel":0.5},{"t":51.5,"midi":76,"dur":0.25,"vel":0.45},{"t":53.5,"midi":69,"dur":0.25,"vel":0.5},{"t":53.5,"midi":76,"dur":0.25,"vel":0.45},{"t":55.5,"midi":69,"dur":0.25,"vel":0.5},{"t":55.5,"midi":76,"dur":0.25,"vel":0.45},{"t":57.5,"midi":69,"dur":0.25,"vel":0.5},{"t":57.5,"midi":76,"dur":0.25,"vel":0.45},{"t":59.5,"midi":69,"dur":0.25,"vel":0.5},{"t":59.5,"midi":76,"dur":0.25,"vel":0.45},{"t":61.5,"midi":69,"dur":0.25,"vel":0.5},{"t":61.5,"midi":76,"dur":0.25,"vel":0.45},{"t":63.5,"midi":69,"dur":0.25,"vel":0.5},{"t":63.5,"midi":76,"dur":0.25,"vel":0.45},{"t":60,"midi":70,"dur":0.5,"vel":0.45},{"t":65.5,"midi":69,"dur":0.25,"vel":0.5},{"t":65.5,"midi":76,"dur":0.25,"vel":0.45},{"t":67.5,"midi":69,"dur":0.25,"vel":0.5},{"t":67.5,"midi":76,"dur":0.25,"vel":0.45},{"t":69.5,"midi":69,"dur":0.25,"vel":0.5},{"t":69.5,"midi":76,"dur":0.25,"vel":0.45},{"t":71.5,"midi":69,"dur":0.25,"vel":0.5},{"t":71.5,"midi":76,"dur":0.25,"vel":0.45},{"t":73.5,"midi":69,"dur":0.25,"vel":0.5},{"t":73.5,"midi":76,"dur":0.25,"vel":0.45},{"t":75.5,"midi":69,"dur":0.25,"vel":0.5},{"t":75.5,"midi":76,"dur":0.25,"vel":0.45},{"t":77.5,"midi":69,"dur":0.25,"vel":0.5},{"t":77.5,"midi":76,"dur":0.25,"vel":0.45},{"t":79.5,"midi":69,"dur":0.25,"vel":0.5},{"t":79.5,"midi":76,"dur":0.25,"vel":0.45},{"t":76,"midi":70,"dur":0.5,"vel":0.45},{"t":81.5,"midi":69,"dur":0.25,"vel":0.5},{"t":81.5,"midi":76,"dur":0.25,"vel":0.45},{"t":83.5,"midi":69,"dur":0.25,"vel":0.5},{"t":83.5,"midi":76,"dur":0.25,"vel":0.45},{"t":85.5,"midi":69,"dur":0.25,"vel":0.5},{"t":85.5,"midi":76,"dur":0.25,"vel":0.45},{"t":87.5,"midi":69,"dur":0.25,"vel":0.5},{"t":87.5,"midi":76,"dur":0.25,"vel":0.45},{"t":89.5,"midi":69,"dur":0.25,"vel":0.5},{"t":89.5,"midi":76,"dur":0.25,"vel":0.45},{"t":91.5,"midi":69,"dur":0.25,"vel":0.5},{"t":91.5,"midi":76,"dur":0.25,"vel":0.45},{"t":93.5,"midi":69,"dur":0.25,"vel":0.5},{"t":93.5,"midi":76,"dur":0.25,"vel":0.45},{"t":95.5,"midi":69,"dur":0.25,"vel":0.5},{"t":95.5,"midi":76,"dur":0.25,"vel":0.45},{"t":92,"midi":70,"dur":0.5,"vel":0.45},{"t":97.5,"midi":69,"dur":0.25,"vel":0.5},{"t":97.5,"midi":76,"dur":0.25,"vel":0.45},{"t":99.5,"midi":69,"dur":0.25,"vel":0.5},{"t":99.5,"midi":76,"dur":0.25,"vel":0.45},{"t":101.5,"midi":69,"dur":0.25,"vel":0.5},{"t":101.5,"midi":76,"dur":0.25,"vel":0.45},{"t":103.5,"midi":69,"dur":0.25,"vel":0.5},{"t":103.5,"midi":76,"dur":0.25,"vel":0.45},{"t":105.5,"midi":69,"dur":0.25,"vel":0.5},{"t":105.5,"midi":76,"dur":0.25,"vel":0.45},{"t":107.5,"midi":69,"dur":0.25,"vel":0.5},{"t":107.5,"midi":76,"dur":0.25,"vel":0.45},{"t":109.5,"midi":69,"dur":0.25,"vel":0.5},{"t":109.5,"midi":76,"dur":0.25,"vel":0.45},{"t":111.5,"midi":69,"dur":0.25,"vel":0.5},{"t":111.5,"midi":76,"dur":0.25,"vel":0.45},{"t":108,"midi":70,"dur":0.5,"vel":0.45},{"t":113.5,"midi":69,"dur":0.25,"vel":0.5},{"t":113.5,"midi":76,"dur":0.25,"vel":0.45},{"t":115.5,"midi":69,"dur":0.25,"vel":0.5},{"t":115.5,"midi":76,"dur":0.25,"vel":0.45},{"t":117.5,"midi":69,"dur":0.25,"vel":0.5},{"t":117.5,"midi":76,"dur":0.25,"vel":0.45},{"t":119.5,"midi":69,"dur":0.25,"vel":0.5},{"t":119.5,"midi":76,"dur":0.25,"vel":0.45},{"t":121.5,"midi":69,"dur":0.25,"vel":0.5},{"t":121.5,"midi":76,"dur":0.25,"vel":0.45},{"t":123.5,"midi":69,"dur":0.25,"vel":0.5},{"t":123.5,"midi":76,"dur":0.25,"vel":0.45},{"t":125.5,"midi":69,"dur":0.25,"vel":0.5},{"t":125.5,"midi":76,"dur":0.25,"vel":0.45},{"t":127.5,"midi":69,"dur":0.25,"vel":0.5},{"t":127.5,"midi":76,"dur":0.25,"vel":0.45},{"t":124,"midi":70,"dur":0.5,"vel":0.45}]},{"name":"bass","wave":"saw","gain":0.44,"adsr":{"a":0.005,"d":0.05,"s":0.6,"r":0.05},"notes":[{"t":0,"midi":33,"dur":0.45,"vel":0.92},{"t":0.5,"midi":33,"dur":0.45,"vel":0.74},{"t":1,"midi":33,"dur":0.45,"vel":0.92},{"t":1.5,"midi":33,"dur":0.45,"vel":0.74},{"t":2,"midi":33,"dur":0.45,"vel":0.92},{"t":2.5,"midi":33,"dur":0.45,"vel":0.74},{"t":3,"midi":33,"dur":0.45,"vel":0.92},{"t":3.5,"midi":34,"dur":0.45,"vel":0.74},{"t":4,"midi":33,"dur":0.45,"vel":0.92},{"t":4.5,"midi":33,"dur":0.45,"vel":0.74},{"t":5,"midi":33,"dur":0.45,"vel":0.92},{"t":5.5,"midi":33,"dur":0.45,"vel":0.74},{"t":6,"midi":33,"dur":0.45,"vel":0.92},{"t":6.5,"midi":33,"dur":0.45,"vel":0.74},{"t":7,"midi":33,"dur":0.45,"vel":0.92},{"t":7.5,"midi":34,"dur":0.45,"vel":0.74},{"t":8,"midi":33,"dur":0.45,"vel":0.92},{"t":8.5,"midi":33,"dur":0.45,"vel":0.74},{"t":9,"midi":33,"dur":0.45,"vel":0.92},{"t":9.5,"midi":33,"dur":0.45,"vel":0.74},{"t":10,"midi":33,"dur":0.45,"vel":0.92},{"t":10.5,"midi":33,"dur":0.45,"vel":0.74},{"t":11,"midi":33,"dur":0.45,"vel":0.92},{"t":11.5,"midi":34,"dur":0.45,"vel":0.74},{"t":12,"midi":33,"dur":0.45,"vel":0.92},{"t":12.5,"midi":33,"dur":0.45,"vel":0.74},{"t":13,"midi":33,"dur":0.45,"vel":0.92},{"t":13.5,"midi":33,"dur":0.45,"vel":0.74},{"t":14,"midi":33,"dur":0.45,"vel":0.92},{"t":14.5,"midi":33,"dur":0.45,"vel":0.74},{"t":15,"midi":33,"dur":0.45,"vel":0.92},{"t":15.5,"midi":34,"dur":0.45,"vel":0.74},{"t":16,"midi":33,"dur":0.45,"vel":0.92},{"t":16.5,"midi":33,"dur":0.45,"vel":0.74},{"t":17,"midi":33,"dur":0.45,"vel":0.92},{"t":17.5,"midi":33,"dur":0.45,"vel":0.74},{"t":18,"midi":33,"dur":0.45,"vel":0.92},{"t":18.5,"midi":33,"dur":0.45,"vel":0.74},{"t":19,"midi":33,"dur":0.45,"vel":0.92},{"t":19.5,"midi":34,"dur":0.45,"vel":0.74},{"t":20,"midi":33,"dur":0.45,"vel":0.92},{"t":20.5,"midi":33,"dur":0.45,"vel":0.74},{"t":21,"midi":33,"dur":0.45,"vel":0.92},{"t":21.5,"midi":33,"dur":0.45,"vel":0.74},{"t":22,"midi":33,"dur":0.45,"vel":0.92},{"t":22.5,"midi":33,"dur":0.45,"vel":0.74},{"t":23,"midi":33,"dur":0.45,"vel":0.92},{"t":23.5,"midi":34,"dur":0.45,"vel":0.74},{"t":24,"midi":33,"dur":0.45,"vel":0.92},{"t":24.5,"midi":33,"dur":0.45,"vel":0.74},{"t":25,"midi":33,"dur":0.45,"vel":0.92},{"t":25.5,"midi":33,"dur":0.45,"vel":0.74},{"t":26,"midi":33,"dur":0.45,"vel":0.92},{"t":26.5,"midi":33,"dur":0.45,"vel":0.74},{"t":27,"midi":33,"dur":0.45,"vel":0.92},{"t":27.5,"midi":34,"dur":0.45,"vel":0.74},{"t":28,"midi":33,"dur":0.45,"vel":0.92},{"t":28.5,"midi":33,"dur":0.45,"vel":0.74},{"t":29,"midi":33,"dur":0.45,"vel":0.92},{"t":29.5,"midi":33,"dur":0.45,"vel":0.74},{"t":30,"midi":33,"dur":0.45,"vel":0.92},{"t":30.5,"midi":33,"dur":0.45,"vel":0.74},{"t":31,"midi":33,"dur":0.45,"vel":0.92},{"t":31.5,"midi":34,"dur":0.45,"vel":0.74},{"t":32,"midi":33,"dur":0.45,"vel":0.92},{"t":32.5,"midi":33,"dur":0.45,"vel":0.74},{"t":33,"midi":33,"dur":0.45,"vel":0.92},{"t":33.5,"midi":33,"dur":0.45,"vel":0.74},{"t":34,"midi":33,"dur":0.45,"vel":0.92},{"t":34.5,"midi":33,"dur":0.45,"vel":0.74},{"t":35,"midi":33,"dur":0.45,"vel":0.92},{"t":35.5,"midi":34,"dur":0.45,"vel":0.74},{"t":36,"midi":33,"dur":0.45,"vel":0.92},{"t":36.5,"midi":33,"dur":0.45,"vel":0.74},{"t":37,"midi":33,"dur":0.45,"vel":0.92},{"t":37.5,"midi":33,"dur":0.45,"vel":0.74},{"t":38,"midi":33,"dur":0.45,"vel":0.92},{"t":38.5,"midi":33,"dur":0.45,"vel":0.74},{"t":39,"midi":33,"dur":0.45,"vel":0.92},{"t":39.5,"midi":34,"dur":0.45,"vel":0.74},{"t":40,"midi":33,"dur":0.45,"vel":0.92},{"t":40.5,"midi":33,"dur":0.45,"vel":0.74},{"t":41,"midi":33,"dur":0.45,"vel":0.92},{"t":41.5,"midi":33,"dur":0.45,"vel":0.74},{"t":42,"midi":33,"dur":0.45,"vel":0.92},{"t":42.5,"midi":33,"dur":0.45,"vel":0.74},{"t":43,"midi":33,"dur":0.45,"vel":0.92},{"t":43.5,"midi":34,"dur":0.45,"vel":0.74},{"t":44,"midi":33,"dur":0.45,"vel":0.92},{"t":44.5,"midi":33,"dur":0.45,"vel":0.74},{"t":45,"midi":33,"dur":0.45,"vel":0.92},{"t":45.5,"midi":33,"dur":0.45,"vel":0.74},{"t":46,"midi":33,"dur":0.45,"vel":0.92},{"t":46.5,"midi":33,"dur":0.45,"vel":0.74},{"t":47,"midi":33,"dur":0.45,"vel":0.92},{"t":47.5,"midi":34,"dur":0.45,"vel":0.74},{"t":48,"midi":33,"dur":0.45,"vel":0.92},{"t":48.5,"midi":33,"dur":0.45,"vel":0.74},{"t":49,"midi":33,"dur":0.45,"vel":0.92},{"t":49.5,"midi":33,"dur":0.45,"vel":0.74},{"t":50,"midi":33,"dur":0.45,"vel":0.92},{"t":50.5,"midi":33,"dur":0.45,"vel":0.74},{"t":51,"midi":33,"dur":0.45,"vel":0.92},{"t":51.5,"midi":34,"dur":0.45,"vel":0.74},{"t":52,"midi":33,"dur":0.45,"vel":0.92},{"t":52.5,"midi":33,"dur":0.45,"vel":0.74},{"t":53,"midi":33,"dur":0.45,"vel":0.92},{"t":53.5,"midi":33,"dur":0.45,"vel":0.74},{"t":54,"midi":33,"dur":0.45,"vel":0.92},{"t":54.5,"midi":33,"dur":0.45,"vel":0.74},{"t":55,"midi":33,"dur":0.45,"vel":0.92},{"t":55.5,"midi":34,"dur":0.45,"vel":0.74},{"t":56,"midi":33,"dur":0.45,"vel":0.92},{"t":56.5,"midi":33,"dur":0.45,"vel":0.74},{"t":57,"midi":33,"dur":0.45,"vel":0.92},{"t":57.5,"midi":33,"dur":0.45,"vel":0.74},{"t":58,"midi":33,"dur":0.45,"vel":0.92},{"t":58.5,"midi":33,"dur":0.45,"vel":0.74},{"t":59,"midi":33,"dur":0.45,"vel":0.92},{"t":59.5,"midi":34,"dur":0.45,"vel":0.74},{"t":60,"midi":33,"dur":0.45,"vel":0.92},{"t":60.5,"midi":33,"dur":0.45,"vel":0.74},{"t":61,"midi":33,"dur":0.45,"vel":0.92},{"t":61.5,"midi":33,"dur":0.45,"vel":0.74},{"t":62,"midi":33,"dur":0.45,"vel":0.92},{"t":62.5,"midi":33,"dur":0.45,"vel":0.74},{"t":63,"midi":33,"dur":0.45,"vel":0.92},{"t":63.5,"midi":34,"dur":0.45,"vel":0.74},{"t":64,"midi":33,"dur":0.45,"vel":0.92},{"t":64.5,"midi":33,"dur":0.45,"vel":0.74},{"t":65,"midi":33,"dur":0.45,"vel":0.92},{"t":65.5,"midi":33,"dur":0.45,"vel":0.74},{"t":66,"midi":33,"dur":0.45,"vel":0.92},{"t":66.5,"midi":33,"dur":0.45,"vel":0.74},{"t":67,"midi":33,"dur":0.45,"vel":0.92},{"t":67.5,"midi":34,"dur":0.45,"vel":0.74},{"t":68,"midi":33,"dur":0.45,"vel":0.92},{"t":68.5,"midi":33,"dur":0.45,"vel":0.74},{"t":69,"midi":33,"dur":0.45,"vel":0.92},{"t":69.5,"midi":33,"dur":0.45,"vel":0.74},{"t":70,"midi":33,"dur":0.45,"vel":0.92},{"t":70.5,"midi":33,"dur":0.45,"vel":0.74},{"t":71,"midi":33,"dur":0.45,"vel":0.92},{"t":71.5,"midi":34,"dur":0.45,"vel":0.74},{"t":72,"midi":33,"dur":0.45,"vel":0.92},{"t":72.5,"midi":33,"dur":0.45,"vel":0.74},{"t":73,"midi":33,"dur":0.45,"vel":0.92},{"t":73.5,"midi":33,"dur":0.45,"vel":0.74},{"t":74,"midi":33,"dur":0.45,"vel":0.92},{"t":74.5,"midi":33,"dur":0.45,"vel":0.74},{"t":75,"midi":33,"dur":0.45,"vel":0.92},{"t":75.5,"midi":34,"dur":0.45,"vel":0.74},{"t":76,"midi":33,"dur":0.45,"vel":0.92},{"t":76.5,"midi":33,"dur":0.45,"vel":0.74},{"t":77,"midi":33,"dur":0.45,"vel":0.92},{"t":77.5,"midi":33,"dur":0.45,"vel":0.74},{"t":78,"midi":33,"dur":0.45,"vel":0.92},{"t":78.5,"midi":33,"dur":0.45,"vel":0.74},{"t":79,"midi":33,"dur":0.45,"vel":0.92},{"t":79.5,"midi":34,"dur":0.45,"vel":0.74},{"t":80,"midi":33,"dur":0.45,"vel":0.92},{"t":80.5,"midi":33,"dur":0.45,"vel":0.74},{"t":81,"midi":33,"dur":0.45,"vel":0.92},{"t":81.5,"midi":33,"dur":0.45,"vel":0.74},{"t":82,"midi":33,"dur":0.45,"vel":0.92},{"t":82.5,"midi":33,"dur":0.45,"vel":0.74},{"t":83,"midi":33,"dur":0.45,"vel":0.92},{"t":83.5,"midi":34,"dur":0.45,"vel":0.74},{"t":84,"midi":33,"dur":0.45,"vel":0.92},{"t":84.5,"midi":33,"dur":0.45,"vel":0.74},{"t":85,"midi":33,"dur":0.45,"vel":0.92},{"t":85.5,"midi":33,"dur":0.45,"vel":0.74},{"t":86,"midi":33,"dur":0.45,"vel":0.92},{"t":86.5,"midi":33,"dur":0.45,"vel":0.74},{"t":87,"midi":33,"dur":0.45,"vel":0.92},{"t":87.5,"midi":34,"dur":0.45,"vel":0.74},{"t":88,"midi":33,"dur":0.45,"vel":0.92},{"t":88.5,"midi":33,"dur":0.45,"vel":0.74},{"t":89,"midi":33,"dur":0.45,"vel":0.92},{"t":89.5,"midi":33,"dur":0.45,"vel":0.74},{"t":90,"midi":33,"dur":0.45,"vel":0.92},{"t":90.5,"midi":33,"dur":0.45,"vel":0.74},{"t":91,"midi":33,"dur":0.45,"vel":0.92},{"t":91.5,"midi":34,"dur":0.45,"vel":0.74},{"t":92,"midi":33,"dur":0.45,"vel":0.92},{"t":92.5,"midi":33,"dur":0.45,"vel":0.74},{"t":93,"midi":33,"dur":0.45,"vel":0.92},{"t":93.5,"midi":33,"dur":0.45,"vel":0.74},{"t":94,"midi":33,"dur":0.45,"vel":0.92},{"t":94.5,"midi":33,"dur":0.45,"vel":0.74},{"t":95,"midi":33,"dur":0.45,"vel":0.92},{"t":95.5,"midi":34,"dur":0.45,"vel":0.74},{"t":96,"midi":33,"dur":0.45,"vel":0.92},{"t":96.5,"midi":33,"dur":0.45,"vel":0.74},{"t":97,"midi":33,"dur":0.45,"vel":0.92},{"t":97.5,"midi":33,"dur":0.45,"vel":0.74},{"t":98,"midi":33,"dur":0.45,"vel":0.92},{"t":98.5,"midi":33,"dur":0.45,"vel":0.74},{"t":100,"midi":33,"dur":0.45,"vel":0.92},{"t":100.5,"midi":33,"dur":0.45,"vel":0.74},{"t":101,"midi":33,"dur":0.45,"vel":0.92},{"t":101.5,"midi":33,"dur":0.45,"vel":0.74},{"t":102,"midi":33,"dur":0.45,"vel":0.92},{"t":102.5,"midi":33,"dur":0.45,"vel":0.74},{"t":104,"midi":33,"dur":0.45,"vel":0.92},{"t":104.5,"midi":33,"dur":0.45,"vel":0.74},{"t":105,"midi":33,"dur":0.45,"vel":0.92},{"t":105.5,"midi":33,"dur":0.45,"vel":0.74},{"t":106,"midi":33,"dur":0.45,"vel":0.92},{"t":106.5,"midi":33,"dur":0.45,"vel":0.74},{"t":108,"midi":33,"dur":0.45,"vel":0.92},{"t":108.5,"midi":33,"dur":0.45,"vel":0.74},{"t":109,"midi":33,"dur":0.45,"vel":0.92},{"t":109.5,"midi":33,"dur":0.45,"vel":0.74},{"t":110,"midi":33,"dur":0.45,"vel":0.92},{"t":110.5,"midi":33,"dur":0.45,"vel":0.74},{"t":112,"midi":33,"dur":0.45,"vel":0.92},{"t":112.5,"midi":33,"dur":0.45,"vel":0.74},{"t":113,"midi":33,"dur":0.45,"vel":0.92},{"t":113.5,"midi":33,"dur":0.45,"vel":0.74},{"t":114,"midi":33,"dur":0.45,"vel":0.92},{"t":114.5,"midi":33,"dur":0.45,"vel":0.74},{"t":116,"midi":33,"dur":0.45,"vel":0.92},{"t":116.5,"midi":33,"dur":0.45,"vel":0.74},{"t":117,"midi":33,"dur":0.45,"vel":0.92},{"t":117.5,"midi":33,"dur":0.45,"vel":0.74},{"t":118,"midi":33,"dur":0.45,"vel":0.92},{"t":118.5,"midi":33,"dur":0.45,"vel":0.74},{"t":120,"midi":33,"dur":0.45,"vel":0.92},{"t":120.5,"midi":33,"dur":0.45,"vel":0.74},{"t":121,"midi":33,"dur":0.45,"vel":0.92},{"t":121.5,"midi":33,"dur":0.45,"vel":0.74},{"t":122,"midi":33,"dur":0.45,"vel":0.92},{"t":122.5,"midi":33,"dur":0.45,"vel":0.74},{"t":124,"midi":33,"dur":0.45,"vel":0.92},{"t":124.5,"midi":33,"dur":0.45,"vel":0.74},{"t":125,"midi":33,"dur":0.45,"vel":0.92},{"t":125.5,"midi":33,"dur":0.45,"vel":0.74},{"t":126,"midi":33,"dur":0.45,"vel":0.92},{"t":126.5,"midi":33,"dur":0.45,"vel":0.74},{"t":99,"midi":33,"dur":0.2,"vel":0.86},{"t":99.25,"midi":33,"dur":0.2,"vel":0.86},{"t":99.5,"midi":33,"dur":0.2,"vel":0.86},{"t":99.75,"midi":33,"dur":0.2,"vel":0.86},{"t":103,"midi":33,"dur":0.2,"vel":0.86},{"t":103.25,"midi":33,"dur":0.2,"vel":0.86},{"t":103.5,"midi":33,"dur":0.2,"vel":0.86},{"t":103.75,"midi":33,"dur":0.2,"vel":0.86},{"t":107,"midi":33,"dur":0.2,"vel":0.86},{"t":107.25,"midi":33,"dur":0.2,"vel":0.86},{"t":107.5,"midi":33,"dur":0.2,"vel":0.86},{"t":107.75,"midi":33,"dur":0.2,"vel":0.86},{"t":111,"midi":33,"dur":0.2,"vel":0.86},{"t":111.25,"midi":33,"dur":0.2,"vel":0.86},{"t":111.5,"midi":33,"dur":0.2,"vel":0.86},{"t":111.75,"midi":33,"dur":0.2,"vel":0.86},{"t":115,"midi":33,"dur":0.2,"vel":0.86},{"t":115.25,"midi":33,"dur":0.2,"vel":0.86},{"t":115.5,"midi":33,"dur":0.2,"vel":0.86},{"t":115.75,"midi":33,"dur":0.2,"vel":0.86},{"t":119,"midi":33,"dur":0.2,"vel":0.86},{"t":119.25,"midi":33,"dur":0.2,"vel":0.86},{"t":119.5,"midi":33,"dur":0.2,"vel":0.86},{"t":119.75,"midi":33,"dur":0.2,"vel":0.86},{"t":123,"midi":33,"dur":0.2,"vel":0.86},{"t":123.25,"midi":33,"dur":0.2,"vel":0.86},{"t":123.5,"midi":33,"dur":0.2,"vel":0.86},{"t":123.75,"midi":33,"dur":0.2,"vel":0.86},{"t":127,"midi":33,"dur":0.2,"vel":0.86},{"t":127.25,"midi":33,"dur":0.2,"vel":0.86},{"t":127.5,"midi":33,"dur":0.2,"vel":0.86},{"t":127.75,"midi":33,"dur":0.2,"vel":0.86}]},{"name":"perc","wave":"noise","gain":0.34,"adsr":{"a":0.001,"d":0.04,"s":0,"r":0.03},"notes":[{"t":0,"midi":0,"dur":0.13,"vel":0.95},{"t":1,"midi":0,"dur":0.13,"vel":0.95},{"t":1,"midi":0,"dur":0.1,"vel":0.9},{"t":2,"midi":0,"dur":0.13,"vel":0.95},{"t":3,"midi":0,"dur":0.13,"vel":0.95},{"t":3,"midi":0,"dur":0.1,"vel":0.9},{"t":0,"midi":0,"dur":0.05,"vel":0.42},{"t":0.5,"midi":0,"dur":0.05,"vel":0.55},{"t":1,"midi":0,"dur":0.05,"vel":0.42},{"t":1.5,"midi":0,"dur":0.05,"vel":0.55},{"t":2,"midi":0,"dur":0.05,"vel":0.42},{"t":2.5,"midi":0,"dur":0.05,"vel":0.55},{"t":3,"midi":0,"dur":0.05,"vel":0.42},{"t":3.5,"midi":0,"dur":0.05,"vel":0.55},{"t":4,"midi":0,"dur":0.13,"vel":0.95},{"t":5,"midi":0,"dur":0.13,"vel":0.95},{"t":5,"midi":0,"dur":0.1,"vel":0.9},{"t":6,"midi":0,"dur":0.13,"vel":0.95},{"t":7,"midi":0,"dur":0.13,"vel":0.95},{"t":7,"midi":0,"dur":0.1,"vel":0.9},{"t":4,"midi":0,"dur":0.05,"vel":0.42},{"t":4.5,"midi":0,"dur":0.05,"vel":0.55},{"t":5,"midi":0,"dur":0.05,"vel":0.42},{"t":5.5,"midi":0,"dur":0.05,"vel":0.55},{"t":6,"midi":0,"dur":0.05,"vel":0.42},{"t":6.5,"midi":0,"dur":0.05,"vel":0.55},{"t":7,"midi":0,"dur":0.05,"vel":0.42},{"t":7.5,"midi":0,"dur":0.05,"vel":0.55},{"t":8,"midi":0,"dur":0.13,"vel":0.95},{"t":9,"midi":0,"dur":0.13,"vel":0.95},{"t":9,"midi":0,"dur":0.1,"vel":0.9},{"t":10,"midi":0,"dur":0.13,"vel":0.95},{"t":11,"midi":0,"dur":0.13,"vel":0.95},{"t":11,"midi":0,"dur":0.1,"vel":0.9},{"t":8,"midi":0,"dur":0.05,"vel":0.42},{"t":8.5,"midi":0,"dur":0.05,"vel":0.55},{"t":9,"midi":0,"dur":0.05,"vel":0.42},{"t":9.5,"midi":0,"dur":0.05,"vel":0.55},{"t":10,"midi":0,"dur":0.05,"vel":0.42},{"t":10.5,"midi":0,"dur":0.05,"vel":0.55},{"t":11,"midi":0,"dur":0.05,"vel":0.42},{"t":11.5,"midi":0,"dur":0.05,"vel":0.55},{"t":12,"midi":0,"dur":0.13,"vel":0.95},{"t":13,"midi":0,"dur":0.13,"vel":0.95},{"t":13,"midi":0,"dur":0.1,"vel":0.9},{"t":14,"midi":0,"dur":0.13,"vel":0.95},{"t":15,"midi":0,"dur":0.13,"vel":0.95},{"t":15,"midi":0,"dur":0.1,"vel":0.9},{"t":12,"midi":0,"dur":0.05,"vel":0.42},{"t":12.5,"midi":0,"dur":0.05,"vel":0.55},{"t":13,"midi":0,"dur":0.05,"vel":0.42},{"t":13.5,"midi":0,"dur":0.05,"vel":0.55},{"t":14,"midi":0,"dur":0.05,"vel":0.42},{"t":14.5,"midi":0,"dur":0.05,"vel":0.55},{"t":15,"midi":0,"dur":0.05,"vel":0.42},{"t":15.5,"midi":0,"dur":0.05,"vel":0.55},{"t":16,"midi":0,"dur":0.13,"vel":0.95},{"t":17,"midi":0,"dur":0.13,"vel":0.95},{"t":17,"midi":0,"dur":0.1,"vel":0.9},{"t":18,"midi":0,"dur":0.13,"vel":0.95},{"t":19,"midi":0,"dur":0.13,"vel":0.95},{"t":19,"midi":0,"dur":0.1,"vel":0.9},{"t":16,"midi":0,"dur":0.05,"vel":0.42},{"t":16.5,"midi":0,"dur":0.05,"vel":0.55},{"t":17,"midi":0,"dur":0.05,"vel":0.42},{"t":17.5,"midi":0,"dur":0.05,"vel":0.55},{"t":18,"midi":0,"dur":0.05,"vel":0.42},{"t":18.5,"midi":0,"dur":0.05,"vel":0.55},{"t":19,"midi":0,"dur":0.05,"vel":0.42},{"t":19.5,"midi":0,"dur":0.05,"vel":0.55},{"t":20,"midi":0,"dur":0.13,"vel":0.95},{"t":21,"midi":0,"dur":0.13,"vel":0.95},{"t":21,"midi":0,"dur":0.1,"vel":0.9},{"t":22,"midi":0,"dur":0.13,"vel":0.95},{"t":23,"midi":0,"dur":0.13,"vel":0.95},{"t":23,"midi":0,"dur":0.1,"vel":0.9},{"t":20,"midi":0,"dur":0.05,"vel":0.42},{"t":20.5,"midi":0,"dur":0.05,"vel":0.55},{"t":21,"midi":0,"dur":0.05,"vel":0.42},{"t":21.5,"midi":0,"dur":0.05,"vel":0.55},{"t":22,"midi":0,"dur":0.05,"vel":0.42},{"t":22.5,"midi":0,"dur":0.05,"vel":0.55},{"t":23,"midi":0,"dur":0.05,"vel":0.42},{"t":23.5,"midi":0,"dur":0.05,"vel":0.55},{"t":24,"midi":0,"dur":0.13,"vel":0.95},{"t":25,"midi":0,"dur":0.13,"vel":0.95},{"t":25,"midi":0,"dur":0.1,"vel":0.9},{"t":26,"midi":0,"dur":0.13,"vel":0.95},{"t":27,"midi":0,"dur":0.13,"vel":0.95},{"t":27,"midi":0,"dur":0.1,"vel":0.9},{"t":24,"midi":0,"dur":0.05,"vel":0.42},{"t":24.5,"midi":0,"dur":0.05,"vel":0.55},{"t":25,"midi":0,"dur":0.05,"vel":0.42},{"t":25.5,"midi":0,"dur":0.05,"vel":0.55},{"t":26,"midi":0,"dur":0.05,"vel":0.42},{"t":26.5,"midi":0,"dur":0.05,"vel":0.55},{"t":27,"midi":0,"dur":0.05,"vel":0.42},{"t":27.5,"midi":0,"dur":0.05,"vel":0.55},{"t":28,"midi":0,"dur":0.13,"vel":0.95},{"t":29,"midi":0,"dur":0.13,"vel":0.95},{"t":29,"midi":0,"dur":0.1,"vel":0.9},{"t":30,"midi":0,"dur":0.13,"vel":0.95},{"t":31,"midi":0,"dur":0.13,"vel":0.95},{"t":31,"midi":0,"dur":0.1,"vel":0.9},{"t":28,"midi":0,"dur":0.05,"vel":0.42},{"t":28.5,"midi":0,"dur":0.05,"vel":0.55},{"t":29,"midi":0,"dur":0.05,"vel":0.42},{"t":29.5,"midi":0,"dur":0.05,"vel":0.55},{"t":30,"midi":0,"dur":0.05,"vel":0.42},{"t":30.5,"midi":0,"dur":0.05,"vel":0.55},{"t":31,"midi":0,"dur":0.05,"vel":0.42},{"t":31.5,"midi":0,"dur":0.05,"vel":0.55},{"t":32,"midi":0,"dur":0.13,"vel":0.95},{"t":33,"midi":0,"dur":0.13,"vel":0.95},{"t":33,"midi":0,"dur":0.1,"vel":0.9},{"t":34,"midi":0,"dur":0.13,"vel":0.95},{"t":35,"midi":0,"dur":0.13,"vel":0.95},{"t":35,"midi":0,"dur":0.1,"vel":0.9},{"t":32,"midi":0,"dur":0.05,"vel":0.42},{"t":32.5,"midi":0,"dur":0.05,"vel":0.55},{"t":33,"midi":0,"dur":0.05,"vel":0.42},{"t":33.5,"midi":0,"dur":0.05,"vel":0.55},{"t":34,"midi":0,"dur":0.05,"vel":0.42},{"t":34.5,"midi":0,"dur":0.05,"vel":0.55},{"t":35,"midi":0,"dur":0.05,"vel":0.42},{"t":35.5,"midi":0,"dur":0.05,"vel":0.55},{"t":36,"midi":0,"dur":0.13,"vel":0.95},{"t":37,"midi":0,"dur":0.13,"vel":0.95},{"t":37,"midi":0,"dur":0.1,"vel":0.9},{"t":38,"midi":0,"dur":0.13,"vel":0.95},{"t":39,"midi":0,"dur":0.13,"vel":0.95},{"t":39,"midi":0,"dur":0.1,"vel":0.9},{"t":36,"midi":0,"dur":0.05,"vel":0.42},{"t":36.5,"midi":0,"dur":0.05,"vel":0.55},{"t":37,"midi":0,"dur":0.05,"vel":0.42},{"t":37.5,"midi":0,"dur":0.05,"vel":0.55},{"t":38,"midi":0,"dur":0.05,"vel":0.42},{"t":38.5,"midi":0,"dur":0.05,"vel":0.55},{"t":39,"midi":0,"dur":0.05,"vel":0.42},{"t":39.5,"midi":0,"dur":0.05,"vel":0.55},{"t":40,"midi":0,"dur":0.13,"vel":0.95},{"t":41,"midi":0,"dur":0.13,"vel":0.95},{"t":41,"midi":0,"dur":0.1,"vel":0.9},{"t":42,"midi":0,"dur":0.13,"vel":0.95},{"t":43,"midi":0,"dur":0.13,"vel":0.95},{"t":43,"midi":0,"dur":0.1,"vel":0.9},{"t":40,"midi":0,"dur":0.05,"vel":0.42},{"t":40.5,"midi":0,"dur":0.05,"vel":0.55},{"t":41,"midi":0,"dur":0.05,"vel":0.42},{"t":41.5,"midi":0,"dur":0.05,"vel":0.55},{"t":42,"midi":0,"dur":0.05,"vel":0.42},{"t":42.5,"midi":0,"dur":0.05,"vel":0.55},{"t":43,"midi":0,"dur":0.05,"vel":0.42},{"t":43.5,"midi":0,"dur":0.05,"vel":0.55},{"t":44,"midi":0,"dur":0.13,"vel":0.95},{"t":45,"midi":0,"dur":0.13,"vel":0.95},{"t":45,"midi":0,"dur":0.1,"vel":0.9},{"t":46,"midi":0,"dur":0.13,"vel":0.95},{"t":47,"midi":0,"dur":0.13,"vel":0.95},{"t":47,"midi":0,"dur":0.1,"vel":0.9},{"t":44,"midi":0,"dur":0.05,"vel":0.42},{"t":44.5,"midi":0,"dur":0.05,"vel":0.55},{"t":45,"midi":0,"dur":0.05,"vel":0.42},{"t":45.5,"midi":0,"dur":0.05,"vel":0.55},{"t":46,"midi":0,"dur":0.05,"vel":0.42},{"t":46.5,"midi":0,"dur":0.05,"vel":0.55},{"t":47,"midi":0,"dur":0.05,"vel":0.42},{"t":47.5,"midi":0,"dur":0.05,"vel":0.55},{"t":48,"midi":0,"dur":0.13,"vel":0.95},{"t":49,"midi":0,"dur":0.13,"vel":0.95},{"t":49,"midi":0,"dur":0.1,"vel":0.9},{"t":50,"midi":0,"dur":0.13,"vel":0.95},{"t":51,"midi":0,"dur":0.13,"vel":0.95},{"t":51,"midi":0,"dur":0.1,"vel":0.9},{"t":48,"midi":0,"dur":0.05,"vel":0.42},{"t":48.5,"midi":0,"dur":0.05,"vel":0.55},{"t":49,"midi":0,"dur":0.05,"vel":0.42},{"t":49.5,"midi":0,"dur":0.05,"vel":0.55},{"t":50,"midi":0,"dur":0.05,"vel":0.42},{"t":50.5,"midi":0,"dur":0.05,"vel":0.55},{"t":51,"midi":0,"dur":0.05,"vel":0.42},{"t":51.5,"midi":0,"dur":0.05,"vel":0.55},{"t":52,"midi":0,"dur":0.13,"vel":0.95},{"t":53,"midi":0,"dur":0.13,"vel":0.95},{"t":53,"midi":0,"dur":0.1,"vel":0.9},{"t":54,"midi":0,"dur":0.13,"vel":0.95},{"t":55,"midi":0,"dur":0.13,"vel":0.95},{"t":55,"midi":0,"dur":0.1,"vel":0.9},{"t":52,"midi":0,"dur":0.05,"vel":0.42},{"t":52.5,"midi":0,"dur":0.05,"vel":0.55},{"t":53,"midi":0,"dur":0.05,"vel":0.42},{"t":53.5,"midi":0,"dur":0.05,"vel":0.55},{"t":54,"midi":0,"dur":0.05,"vel":0.42},{"t":54.5,"midi":0,"dur":0.05,"vel":0.55},{"t":55,"midi":0,"dur":0.05,"vel":0.42},{"t":55.5,"midi":0,"dur":0.05,"vel":0.55},{"t":56,"midi":0,"dur":0.13,"vel":0.95},{"t":57,"midi":0,"dur":0.13,"vel":0.95},{"t":57,"midi":0,"dur":0.1,"vel":0.9},{"t":58,"midi":0,"dur":0.13,"vel":0.95},{"t":59,"midi":0,"dur":0.13,"vel":0.95},{"t":59,"midi":0,"dur":0.1,"vel":0.9},{"t":56,"midi":0,"dur":0.05,"vel":0.42},{"t":56.5,"midi":0,"dur":0.05,"vel":0.55},{"t":57,"midi":0,"dur":0.05,"vel":0.42},{"t":57.5,"midi":0,"dur":0.05,"vel":0.55},{"t":58,"midi":0,"dur":0.05,"vel":0.42},{"t":58.5,"midi":0,"dur":0.05,"vel":0.55},{"t":59,"midi":0,"dur":0.05,"vel":0.42},{"t":59.5,"midi":0,"dur":0.05,"vel":0.55},{"t":60,"midi":0,"dur":0.13,"vel":0.95},{"t":61,"midi":0,"dur":0.13,"vel":0.95},{"t":61,"midi":0,"dur":0.1,"vel":0.9},{"t":62,"midi":0,"dur":0.13,"vel":0.95},{"t":63,"midi":0,"dur":0.13,"vel":0.95},{"t":63,"midi":0,"dur":0.1,"vel":0.9},{"t":60,"midi":0,"dur":0.05,"vel":0.42},{"t":60.5,"midi":0,"dur":0.05,"vel":0.55},{"t":61,"midi":0,"dur":0.05,"vel":0.42},{"t":61.5,"midi":0,"dur":0.05,"vel":0.55},{"t":62,"midi":0,"dur":0.05,"vel":0.42},{"t":62.5,"midi":0,"dur":0.05,"vel":0.55},{"t":63,"midi":0,"dur":0.05,"vel":0.42},{"t":63.5,"midi":0,"dur":0.05,"vel":0.55},{"t":64,"midi":0,"dur":0.13,"vel":0.95},{"t":65,"midi":0,"dur":0.13,"vel":0.95},{"t":65,"midi":0,"dur":0.1,"vel":0.9},{"t":66,"midi":0,"dur":0.13,"vel":0.95},{"t":67,"midi":0,"dur":0.13,"vel":0.95},{"t":67,"midi":0,"dur":0.1,"vel":0.9},{"t":64,"midi":0,"dur":0.05,"vel":0.42},{"t":64.5,"midi":0,"dur":0.05,"vel":0.55},{"t":65,"midi":0,"dur":0.05,"vel":0.42},{"t":65.5,"midi":0,"dur":0.05,"vel":0.55},{"t":66,"midi":0,"dur":0.05,"vel":0.42},{"t":66.5,"midi":0,"dur":0.05,"vel":0.55},{"t":67,"midi":0,"dur":0.05,"vel":0.42},{"t":67.5,"midi":0,"dur":0.05,"vel":0.55},{"t":68,"midi":0,"dur":0.13,"vel":0.95},{"t":69,"midi":0,"dur":0.13,"vel":0.95},{"t":69,"midi":0,"dur":0.1,"vel":0.9},{"t":70,"midi":0,"dur":0.13,"vel":0.95},{"t":71,"midi":0,"dur":0.13,"vel":0.95},{"t":71,"midi":0,"dur":0.1,"vel":0.9},{"t":68,"midi":0,"dur":0.05,"vel":0.42},{"t":68.5,"midi":0,"dur":0.05,"vel":0.55},{"t":69,"midi":0,"dur":0.05,"vel":0.42},{"t":69.5,"midi":0,"dur":0.05,"vel":0.55},{"t":70,"midi":0,"dur":0.05,"vel":0.42},{"t":70.5,"midi":0,"dur":0.05,"vel":0.55},{"t":71,"midi":0,"dur":0.05,"vel":0.42},{"t":71.5,"midi":0,"dur":0.05,"vel":0.55},{"t":72,"midi":0,"dur":0.13,"vel":0.95},{"t":73,"midi":0,"dur":0.13,"vel":0.95},{"t":73,"midi":0,"dur":0.1,"vel":0.9},{"t":74,"midi":0,"dur":0.13,"vel":0.95},{"t":75,"midi":0,"dur":0.13,"vel":0.95},{"t":75,"midi":0,"dur":0.1,"vel":0.9},{"t":72,"midi":0,"dur":0.05,"vel":0.42},{"t":72.5,"midi":0,"dur":0.05,"vel":0.55},{"t":73,"midi":0,"dur":0.05,"vel":0.42},{"t":73.5,"midi":0,"dur":0.05,"vel":0.55},{"t":74,"midi":0,"dur":0.05,"vel":0.42},{"t":74.5,"midi":0,"dur":0.05,"vel":0.55},{"t":75,"midi":0,"dur":0.05,"vel":0.42},{"t":75.5,"midi":0,"dur":0.05,"vel":0.55},{"t":76,"midi":0,"dur":0.13,"vel":0.95},{"t":77,"midi":0,"dur":0.13,"vel":0.95},{"t":77,"midi":0,"dur":0.1,"vel":0.9},{"t":78,"midi":0,"dur":0.13,"vel":0.95},{"t":79,"midi":0,"dur":0.13,"vel":0.95},{"t":79,"midi":0,"dur":0.1,"vel":0.9},{"t":76,"midi":0,"dur":0.05,"vel":0.42},{"t":76.5,"midi":0,"dur":0.05,"vel":0.55},{"t":77,"midi":0,"dur":0.05,"vel":0.42},{"t":77.5,"midi":0,"dur":0.05,"vel":0.55},{"t":78,"midi":0,"dur":0.05,"vel":0.42},{"t":78.5,"midi":0,"dur":0.05,"vel":0.55},{"t":79,"midi":0,"dur":0.05,"vel":0.42},{"t":79.5,"midi":0,"dur":0.05,"vel":0.55},{"t":80,"midi":0,"dur":0.13,"vel":0.95},{"t":81,"midi":0,"dur":0.13,"vel":0.95},{"t":81,"midi":0,"dur":0.1,"vel":0.9},{"t":82,"midi":0,"dur":0.13,"vel":0.95},{"t":83,"midi":0,"dur":0.13,"vel":0.95},{"t":83,"midi":0,"dur":0.1,"vel":0.9},{"t":80,"midi":0,"dur":0.05,"vel":0.42},{"t":80.5,"midi":0,"dur":0.05,"vel":0.55},{"t":81,"midi":0,"dur":0.05,"vel":0.42},{"t":81.5,"midi":0,"dur":0.05,"vel":0.55},{"t":82,"midi":0,"dur":0.05,"vel":0.42},{"t":82.5,"midi":0,"dur":0.05,"vel":0.55},{"t":83,"midi":0,"dur":0.05,"vel":0.42},{"t":83.5,"midi":0,"dur":0.05,"vel":0.55},{"t":84,"midi":0,"dur":0.13,"vel":0.95},{"t":85,"midi":0,"dur":0.13,"vel":0.95},{"t":85,"midi":0,"dur":0.1,"vel":0.9},{"t":86,"midi":0,"dur":0.13,"vel":0.95},{"t":87,"midi":0,"dur":0.13,"vel":0.95},{"t":87,"midi":0,"dur":0.1,"vel":0.9},{"t":84,"midi":0,"dur":0.05,"vel":0.42},{"t":84.5,"midi":0,"dur":0.05,"vel":0.55},{"t":85,"midi":0,"dur":0.05,"vel":0.42},{"t":85.5,"midi":0,"dur":0.05,"vel":0.55},{"t":86,"midi":0,"dur":0.05,"vel":0.42},{"t":86.5,"midi":0,"dur":0.05,"vel":0.55},{"t":87,"midi":0,"dur":0.05,"vel":0.42},{"t":87.5,"midi":0,"dur":0.05,"vel":0.55},{"t":88,"midi":0,"dur":0.13,"vel":0.95},{"t":89,"midi":0,"dur":0.13,"vel":0.95},{"t":89,"midi":0,"dur":0.1,"vel":0.9},{"t":90,"midi":0,"dur":0.13,"vel":0.95},{"t":91,"midi":0,"dur":0.13,"vel":0.95},{"t":91,"midi":0,"dur":0.1,"vel":0.9},{"t":88,"midi":0,"dur":0.05,"vel":0.42},{"t":88.5,"midi":0,"dur":0.05,"vel":0.55},{"t":89,"midi":0,"dur":0.05,"vel":0.42},{"t":89.5,"midi":0,"dur":0.05,"vel":0.55},{"t":90,"midi":0,"dur":0.05,"vel":0.42},{"t":90.5,"midi":0,"dur":0.05,"vel":0.55},{"t":91,"midi":0,"dur":0.05,"vel":0.42},{"t":91.5,"midi":0,"dur":0.05,"vel":0.55},{"t":92,"midi":0,"dur":0.13,"vel":0.95},{"t":93,"midi":0,"dur":0.13,"vel":0.95},{"t":93,"midi":0,"dur":0.1,"vel":0.9},{"t":94,"midi":0,"dur":0.13,"vel":0.95},{"t":95,"midi":0,"dur":0.13,"vel":0.95},{"t":95,"midi":0,"dur":0.1,"vel":0.9},{"t":92,"midi":0,"dur":0.05,"vel":0.42},{"t":92.5,"midi":0,"dur":0.05,"vel":0.55},{"t":93,"midi":0,"dur":0.05,"vel":0.42},{"t":93.5,"midi":0,"dur":0.05,"vel":0.55},{"t":94,"midi":0,"dur":0.05,"vel":0.42},{"t":94.5,"midi":0,"dur":0.05,"vel":0.55},{"t":95,"midi":0,"dur":0.05,"vel":0.42},{"t":95.5,"midi":0,"dur":0.05,"vel":0.55},{"t":96,"midi":0,"dur":0.13,"vel":0.95},{"t":97,"midi":0,"dur":0.13,"vel":0.95},{"t":97,"midi":0,"dur":0.1,"vel":0.9},{"t":98,"midi":0,"dur":0.13,"vel":0.95},{"t":99,"midi":0,"dur":0.13,"vel":0.95},{"t":99,"midi":0,"dur":0.1,"vel":0.9},{"t":96,"midi":0,"dur":0.05,"vel":0.42},{"t":96.5,"midi":0,"dur":0.05,"vel":0.55},{"t":97,"midi":0,"dur":0.05,"vel":0.42},{"t":97.5,"midi":0,"dur":0.05,"vel":0.55},{"t":98,"midi":0,"dur":0.05,"vel":0.42},{"t":98.5,"midi":0,"dur":0.05,"vel":0.55},{"t":99,"midi":0,"dur":0.05,"vel":0.42},{"t":99.5,"midi":0,"dur":0.05,"vel":0.55},{"t":99.5,"midi":0,"dur":0.1,"vel":0.9},{"t":99.75,"midi":0,"dur":0.1,"vel":0.9},{"t":100,"midi":0,"dur":0.13,"vel":0.95},{"t":101,"midi":0,"dur":0.13,"vel":0.95},{"t":101,"midi":0,"dur":0.1,"vel":0.9},{"t":102,"midi":0,"dur":0.13,"vel":0.95},{"t":103,"midi":0,"dur":0.13,"vel":0.95},{"t":103,"midi":0,"dur":0.1,"vel":0.9},{"t":100,"midi":0,"dur":0.05,"vel":0.42},{"t":100.5,"midi":0,"dur":0.05,"vel":0.55},{"t":101,"midi":0,"dur":0.05,"vel":0.42},{"t":101.5,"midi":0,"dur":0.05,"vel":0.55},{"t":102,"midi":0,"dur":0.05,"vel":0.42},{"t":102.5,"midi":0,"dur":0.05,"vel":0.55},{"t":103,"midi":0,"dur":0.05,"vel":0.42},{"t":103.5,"midi":0,"dur":0.05,"vel":0.55},{"t":103.5,"midi":0,"dur":0.1,"vel":0.9},{"t":103.75,"midi":0,"dur":0.1,"vel":0.9},{"t":104,"midi":0,"dur":0.13,"vel":0.95},{"t":105,"midi":0,"dur":0.13,"vel":0.95},{"t":105,"midi":0,"dur":0.1,"vel":0.9},{"t":106,"midi":0,"dur":0.13,"vel":0.95},{"t":107,"midi":0,"dur":0.13,"vel":0.95},{"t":107,"midi":0,"dur":0.1,"vel":0.9},{"t":104,"midi":0,"dur":0.05,"vel":0.42},{"t":104.5,"midi":0,"dur":0.05,"vel":0.55},{"t":105,"midi":0,"dur":0.05,"vel":0.42},{"t":105.5,"midi":0,"dur":0.05,"vel":0.55},{"t":106,"midi":0,"dur":0.05,"vel":0.42},{"t":106.5,"midi":0,"dur":0.05,"vel":0.55},{"t":107,"midi":0,"dur":0.05,"vel":0.42},{"t":107.5,"midi":0,"dur":0.05,"vel":0.55},{"t":107.5,"midi":0,"dur":0.1,"vel":0.9},{"t":107.75,"midi":0,"dur":0.1,"vel":0.9},{"t":108,"midi":0,"dur":0.13,"vel":0.95},{"t":109,"midi":0,"dur":0.13,"vel":0.95},{"t":109,"midi":0,"dur":0.1,"vel":0.9},{"t":110,"midi":0,"dur":0.13,"vel":0.95},{"t":111,"midi":0,"dur":0.13,"vel":0.95},{"t":111,"midi":0,"dur":0.1,"vel":0.9},{"t":108,"midi":0,"dur":0.05,"vel":0.42},{"t":108.5,"midi":0,"dur":0.05,"vel":0.55},{"t":109,"midi":0,"dur":0.05,"vel":0.42},{"t":109.5,"midi":0,"dur":0.05,"vel":0.55},{"t":110,"midi":0,"dur":0.05,"vel":0.42},{"t":110.5,"midi":0,"dur":0.05,"vel":0.55},{"t":111,"midi":0,"dur":0.05,"vel":0.42},{"t":111.5,"midi":0,"dur":0.05,"vel":0.55},{"t":111.5,"midi":0,"dur":0.1,"vel":0.9},{"t":111.75,"midi":0,"dur":0.1,"vel":0.9},{"t":112,"midi":0,"dur":0.13,"vel":0.95},{"t":113,"midi":0,"dur":0.13,"vel":0.95},{"t":113,"midi":0,"dur":0.1,"vel":0.9},{"t":114,"midi":0,"dur":0.13,"vel":0.95},{"t":115,"midi":0,"dur":0.13,"vel":0.95},{"t":115,"midi":0,"dur":0.1,"vel":0.9},{"t":112,"midi":0,"dur":0.05,"vel":0.42},{"t":112.5,"midi":0,"dur":0.05,"vel":0.55},{"t":113,"midi":0,"dur":0.05,"vel":0.42},{"t":113.5,"midi":0,"dur":0.05,"vel":0.55},{"t":114,"midi":0,"dur":0.05,"vel":0.42},{"t":114.5,"midi":0,"dur":0.05,"vel":0.55},{"t":115,"midi":0,"dur":0.05,"vel":0.42},{"t":115.5,"midi":0,"dur":0.05,"vel":0.55},{"t":115.5,"midi":0,"dur":0.1,"vel":0.9},{"t":115.75,"midi":0,"dur":0.1,"vel":0.9},{"t":116,"midi":0,"dur":0.13,"vel":0.95},{"t":117,"midi":0,"dur":0.13,"vel":0.95},{"t":117,"midi":0,"dur":0.1,"vel":0.9},{"t":118,"midi":0,"dur":0.13,"vel":0.95},{"t":119,"midi":0,"dur":0.13,"vel":0.95},{"t":119,"midi":0,"dur":0.1,"vel":0.9},{"t":116,"midi":0,"dur":0.05,"vel":0.42},{"t":116.5,"midi":0,"dur":0.05,"vel":0.55},{"t":117,"midi":0,"dur":0.05,"vel":0.42},{"t":117.5,"midi":0,"dur":0.05,"vel":0.55},{"t":118,"midi":0,"dur":0.05,"vel":0.42},{"t":118.5,"midi":0,"dur":0.05,"vel":0.55},{"t":119,"midi":0,"dur":0.05,"vel":0.42},{"t":119.5,"midi":0,"dur":0.05,"vel":0.55},{"t":119.5,"midi":0,"dur":0.1,"vel":0.9},{"t":119.75,"midi":0,"dur":0.1,"vel":0.9},{"t":120,"midi":0,"dur":0.13,"vel":0.95},{"t":121,"midi":0,"dur":0.13,"vel":0.95},{"t":121,"midi":0,"dur":0.1,"vel":0.9},{"t":122,"midi":0,"dur":0.13,"vel":0.95},{"t":123,"midi":0,"dur":0.13,"vel":0.95},{"t":123,"midi":0,"dur":0.1,"vel":0.9},{"t":120,"midi":0,"dur":0.05,"vel":0.42},{"t":120.5,"midi":0,"dur":0.05,"vel":0.55},{"t":121,"midi":0,"dur":0.05,"vel":0.42},{"t":121.5,"midi":0,"dur":0.05,"vel":0.55},{"t":122,"midi":0,"dur":0.05,"vel":0.42},{"t":122.5,"midi":0,"dur":0.05,"vel":0.55},{"t":123,"midi":0,"dur":0.05,"vel":0.42},{"t":123.5,"midi":0,"dur":0.05,"vel":0.55},{"t":123.5,"midi":0,"dur":0.1,"vel":0.9},{"t":123.75,"midi":0,"dur":0.1,"vel":0.9},{"t":124,"midi":0,"dur":0.13,"vel":0.95},{"t":125,"midi":0,"dur":0.13,"vel":0.95},{"t":125,"midi":0,"dur":0.1,"vel":0.9},{"t":126,"midi":0,"dur":0.13,"vel":0.95},{"t":127,"midi":0,"dur":0.13,"vel":0.95},{"t":127,"midi":0,"dur":0.1,"vel":0.9},{"t":124,"midi":0,"dur":0.05,"vel":0.42},{"t":124.5,"midi":0,"dur":0.05,"vel":0.55},{"t":125,"midi":0,"dur":0.05,"vel":0.42},{"t":125.5,"midi":0,"dur":0.05,"vel":0.55},{"t":126,"midi":0,"dur":0.05,"vel":0.42},{"t":126.5,"midi":0,"dur":0.05,"vel":0.55},{"t":127,"midi":0,"dur":0.05,"vel":0.42},{"t":127.5,"midi":0,"dur":0.05,"vel":0.55},{"t":127.5,"midi":0,"dur":0.1,"vel":0.9},{"t":127.75,"midi":0,"dur":0.1,"vel":0.9}]}]'
   ),
-  $j = { id: zj, bpm: Rj, loopBeats: Hj, channels: Uj },
-  Gj = 'title',
-  Yj = 88,
-  Vj = 128,
-  Kj = JSON.parse(
+  Gj = { id: Rj, bpm: Hj, loopBeats: Uj, channels: $j },
+  Yj = 'title',
+  Vj = 88,
+  Kj = 128,
+  Xj = JSON.parse(
     '[{"name":"lead","wave":"triangle","gain":0.32,"adsr":{"a":0.02,"d":0.1,"s":0.7,"r":0.2},"notes":[{"t":0,"dur":2,"midi":64,"vel":0.8},{"t":2,"dur":1,"midi":67,"vel":0.75},{"t":4,"dur":2,"midi":69,"vel":0.82},{"t":6,"dur":1,"midi":67,"vel":0.72},{"t":8,"dur":1.5,"midi":72,"vel":0.85},{"t":10,"dur":1,"midi":71,"vel":0.75},{"t":11,"dur":1,"midi":69,"vel":0.72},{"t":12,"dur":2,"midi":67,"vel":0.8},{"t":14,"dur":1,"midi":64,"vel":0.72},{"t":16,"dur":2,"midi":64,"vel":0.8},{"t":18,"dur":1,"midi":67,"vel":0.75},{"t":20,"dur":2,"midi":69,"vel":0.82},{"t":22,"dur":1,"midi":71,"vel":0.75},{"t":24,"dur":1.5,"midi":72,"vel":0.85},{"t":26,"dur":1,"midi":69,"vel":0.75},{"t":27,"dur":1,"midi":67,"vel":0.72},{"t":28,"dur":3,"midi":65,"vel":0.82},{"t":32,"dur":2,"midi":67,"vel":0.82},{"t":34,"dur":1,"midi":69,"vel":0.75},{"t":36,"dur":2,"midi":71,"vel":0.85},{"t":38,"dur":1,"midi":69,"vel":0.75},{"t":40,"dur":1.5,"midi":72,"vel":0.88},{"t":42,"dur":1,"midi":71,"vel":0.78},{"t":43,"dur":1,"midi":69,"vel":0.72},{"t":44,"dur":2,"midi":67,"vel":0.82},{"t":46,"dur":1,"midi":65,"vel":0.72},{"t":48,"dur":1.5,"midi":64,"vel":0.8},{"t":50,"dur":1,"midi":67,"vel":0.75},{"t":51,"dur":1,"midi":69,"vel":0.78},{"t":52,"dur":2,"midi":67,"vel":0.82},{"t":54,"dur":1,"midi":64,"vel":0.72},{"t":56,"dur":3,"midi":65,"vel":0.82},{"t":60,"dur":4,"midi":64,"vel":0.78},{"t":64,"dur":2,"midi":72,"vel":0.88},{"t":66,"dur":1,"midi":71,"vel":0.78},{"t":68,"dur":2,"midi":69,"vel":0.85},{"t":70,"dur":1,"midi":67,"vel":0.75},{"t":72,"dur":1.5,"midi":71,"vel":0.88},{"t":74,"dur":1,"midi":72,"vel":0.82},{"t":75,"dur":1,"midi":74,"vel":0.85},{"t":76,"dur":2,"midi":72,"vel":0.85},{"t":78,"dur":1,"midi":69,"vel":0.75},{"t":80,"dur":2,"midi":71,"vel":0.88},{"t":82,"dur":1,"midi":69,"vel":0.78},{"t":84,"dur":2,"midi":67,"vel":0.82},{"t":86,"dur":1,"midi":65,"vel":0.72},{"t":88,"dur":1.5,"midi":69,"vel":0.85},{"t":90,"dur":1,"midi":67,"vel":0.75},{"t":91,"dur":1,"midi":65,"vel":0.7},{"t":92,"dur":2,"midi":64,"vel":0.82},{"t":94,"dur":1,"midi":67,"vel":0.75},{"t":96,"dur":3,"midi":72,"vel":0.88},{"t":100,"dur":2,"midi":71,"vel":0.85},{"t":102,"dur":1,"midi":69,"vel":0.75},{"t":104,"dur":2,"midi":72,"vel":0.88},{"t":106,"dur":1,"midi":71,"vel":0.78},{"t":108,"dur":2,"midi":69,"vel":0.85},{"t":110,"dur":1,"midi":67,"vel":0.75},{"t":112,"dur":1.5,"midi":65,"vel":0.82},{"t":114,"dur":1,"midi":67,"vel":0.75},{"t":115,"dur":1,"midi":69,"vel":0.78},{"t":116,"dur":2,"midi":71,"vel":0.85},{"t":118,"dur":1,"midi":69,"vel":0.75},{"t":120,"dur":1.5,"midi":67,"vel":0.82},{"t":122,"dur":1,"midi":64,"vel":0.72},{"t":124,"dur":2,"midi":67,"vel":0.85},{"t":126,"dur":2,"midi":64,"vel":0.78}]},{"name":"harmony","wave":"square12","gain":0.15,"adsr":{"a":0.025,"d":0.12,"s":0.55,"r":0.2},"notes":[{"t":0,"dur":2,"midi":60,"vel":0.6},{"t":4,"dur":2,"midi":64,"vel":0.6},{"t":8,"dur":1.5,"midi":67,"vel":0.62},{"t":12,"dur":2,"midi":62,"vel":0.6},{"t":16,"dur":2,"midi":60,"vel":0.6},{"t":20,"dur":2,"midi":64,"vel":0.6},{"t":24,"dur":1.5,"midi":67,"vel":0.62},{"t":28,"dur":3,"midi":60,"vel":0.62},{"t":32,"dur":2,"midi":62,"vel":0.62},{"t":36,"dur":2,"midi":64,"vel":0.65},{"t":40,"dur":1.5,"midi":67,"vel":0.65},{"t":44,"dur":2,"midi":62,"vel":0.62},{"t":48,"dur":1.5,"midi":60,"vel":0.6},{"t":52,"dur":2,"midi":62,"vel":0.62},{"t":56,"dur":3,"midi":60,"vel":0.62},{"t":60,"dur":4,"midi":60,"vel":0.6},{"t":64,"dur":2,"midi":67,"vel":0.65},{"t":68,"dur":2,"midi":64,"vel":0.62},{"t":72,"dur":1.5,"midi":67,"vel":0.65},{"t":76,"dur":2,"midi":67,"vel":0.65},{"t":80,"dur":2,"midi":67,"vel":0.65},{"t":84,"dur":2,"midi":62,"vel":0.62},{"t":88,"dur":1.5,"midi":64,"vel":0.62},{"t":92,"dur":2,"midi":60,"vel":0.6},{"t":96,"dur":3,"midi":67,"vel":0.65},{"t":100,"dur":2,"midi":67,"vel":0.65},{"t":104,"dur":2,"midi":67,"vel":0.65},{"t":108,"dur":2,"midi":64,"vel":0.62},{"t":112,"dur":1.5,"midi":60,"vel":0.6},{"t":116,"dur":2,"midi":64,"vel":0.62},{"t":120,"dur":1.5,"midi":62,"vel":0.6},{"t":124,"dur":2,"midi":62,"vel":0.62},{"t":126,"dur":2,"midi":60,"vel":0.6}]},{"name":"pad","wave":"triangle","gain":0.28,"adsr":{"a":0.15,"d":0.3,"s":0.75,"r":0.5},"notes":[{"t":0,"dur":4,"midi":48,"vel":0.65},{"t":0,"dur":4,"midi":52,"vel":0.55},{"t":0,"dur":4,"midi":55,"vel":0.5},{"t":4,"dur":4,"midi":43,"vel":0.65},{"t":4,"dur":4,"midi":47,"vel":0.55},{"t":4,"dur":4,"midi":50,"vel":0.5},{"t":8,"dur":4,"midi":45,"vel":0.65},{"t":8,"dur":4,"midi":48,"vel":0.55},{"t":8,"dur":4,"midi":52,"vel":0.5},{"t":12,"dur":4,"midi":41,"vel":0.65},{"t":12,"dur":4,"midi":45,"vel":0.55},{"t":12,"dur":4,"midi":48,"vel":0.5},{"t":16,"dur":4,"midi":48,"vel":0.65},{"t":16,"dur":4,"midi":52,"vel":0.55},{"t":16,"dur":4,"midi":55,"vel":0.5},{"t":20,"dur":4,"midi":43,"vel":0.65},{"t":20,"dur":4,"midi":47,"vel":0.55},{"t":20,"dur":4,"midi":50,"vel":0.5},{"t":24,"dur":4,"midi":45,"vel":0.65},{"t":24,"dur":4,"midi":48,"vel":0.55},{"t":24,"dur":4,"midi":52,"vel":0.5},{"t":28,"dur":4,"midi":41,"vel":0.65},{"t":28,"dur":4,"midi":45,"vel":0.55},{"t":28,"dur":4,"midi":48,"vel":0.5},{"t":32,"dur":4,"midi":43,"vel":0.65},{"t":32,"dur":4,"midi":47,"vel":0.55},{"t":32,"dur":4,"midi":50,"vel":0.5},{"t":36,"dur":4,"midi":43,"vel":0.65},{"t":36,"dur":4,"midi":47,"vel":0.55},{"t":36,"dur":4,"midi":50,"vel":0.5},{"t":40,"dur":4,"midi":45,"vel":0.65},{"t":40,"dur":4,"midi":48,"vel":0.55},{"t":40,"dur":4,"midi":52,"vel":0.5},{"t":44,"dur":4,"midi":43,"vel":0.65},{"t":44,"dur":4,"midi":47,"vel":0.55},{"t":44,"dur":4,"midi":50,"vel":0.5},{"t":48,"dur":4,"midi":48,"vel":0.65},{"t":48,"dur":4,"midi":52,"vel":0.55},{"t":48,"dur":4,"midi":55,"vel":0.5},{"t":52,"dur":4,"midi":43,"vel":0.65},{"t":52,"dur":4,"midi":47,"vel":0.55},{"t":52,"dur":4,"midi":50,"vel":0.5},{"t":56,"dur":4,"midi":41,"vel":0.65},{"t":56,"dur":4,"midi":45,"vel":0.55},{"t":56,"dur":4,"midi":48,"vel":0.5},{"t":60,"dur":4,"midi":48,"vel":0.65},{"t":60,"dur":4,"midi":52,"vel":0.55},{"t":60,"dur":4,"midi":55,"vel":0.5},{"t":64,"dur":4,"midi":48,"vel":0.68},{"t":64,"dur":4,"midi":52,"vel":0.58},{"t":64,"dur":4,"midi":55,"vel":0.52},{"t":68,"dur":4,"midi":43,"vel":0.68},{"t":68,"dur":4,"midi":47,"vel":0.58},{"t":68,"dur":4,"midi":50,"vel":0.52},{"t":72,"dur":4,"midi":45,"vel":0.68},{"t":72,"dur":4,"midi":48,"vel":0.58},{"t":72,"dur":4,"midi":52,"vel":0.52},{"t":76,"dur":4,"midi":43,"vel":0.68},{"t":76,"dur":4,"midi":47,"vel":0.58},{"t":76,"dur":4,"midi":50,"vel":0.52},{"t":80,"dur":4,"midi":43,"vel":0.68},{"t":80,"dur":4,"midi":47,"vel":0.58},{"t":80,"dur":4,"midi":50,"vel":0.52},{"t":84,"dur":4,"midi":43,"vel":0.68},{"t":84,"dur":4,"midi":47,"vel":0.58},{"t":84,"dur":4,"midi":50,"vel":0.52},{"t":88,"dur":4,"midi":45,"vel":0.68},{"t":88,"dur":4,"midi":48,"vel":0.58},{"t":88,"dur":4,"midi":52,"vel":0.52},{"t":92,"dur":4,"midi":48,"vel":0.68},{"t":92,"dur":4,"midi":52,"vel":0.58},{"t":92,"dur":4,"midi":55,"vel":0.52},{"t":96,"dur":4,"midi":41,"vel":0.68},{"t":96,"dur":4,"midi":45,"vel":0.58},{"t":96,"dur":4,"midi":48,"vel":0.52},{"t":100,"dur":4,"midi":43,"vel":0.68},{"t":100,"dur":4,"midi":47,"vel":0.58},{"t":100,"dur":4,"midi":50,"vel":0.52},{"t":104,"dur":4,"midi":43,"vel":0.68},{"t":104,"dur":4,"midi":47,"vel":0.58},{"t":104,"dur":4,"midi":50,"vel":0.52},{"t":108,"dur":4,"midi":45,"vel":0.68},{"t":108,"dur":4,"midi":48,"vel":0.58},{"t":108,"dur":4,"midi":52,"vel":0.52},{"t":112,"dur":4,"midi":41,"vel":0.68},{"t":112,"dur":4,"midi":45,"vel":0.58},{"t":112,"dur":4,"midi":48,"vel":0.52},{"t":116,"dur":4,"midi":43,"vel":0.68},{"t":116,"dur":4,"midi":47,"vel":0.58},{"t":116,"dur":4,"midi":50,"vel":0.52},{"t":120,"dur":4,"midi":43,"vel":0.68},{"t":120,"dur":4,"midi":47,"vel":0.58},{"t":120,"dur":4,"midi":50,"vel":0.52},{"t":124,"dur":4,"midi":48,"vel":0.7},{"t":124,"dur":4,"midi":52,"vel":0.6},{"t":124,"dur":4,"midi":55,"vel":0.55}]},{"name":"bass","wave":"triangle","gain":0.3,"adsr":{"a":0.015,"d":0.12,"s":0.65,"r":0.2},"notes":[{"t":0,"dur":2,"midi":36,"vel":0.78},{"t":2,"dur":2,"midi":36,"vel":0.68},{"t":4,"dur":2,"midi":31,"vel":0.78},{"t":6,"dur":2,"midi":31,"vel":0.68},{"t":8,"dur":2,"midi":33,"vel":0.78},{"t":10,"dur":2,"midi":33,"vel":0.68},{"t":12,"dur":2,"midi":29,"vel":0.78},{"t":14,"dur":2,"midi":29,"vel":0.68},{"t":16,"dur":2,"midi":36,"vel":0.78},{"t":18,"dur":2,"midi":36,"vel":0.68},{"t":20,"dur":2,"midi":31,"vel":0.78},{"t":22,"dur":2,"midi":31,"vel":0.68},{"t":24,"dur":2,"midi":33,"vel":0.78},{"t":26,"dur":2,"midi":33,"vel":0.68},{"t":28,"dur":2,"midi":29,"vel":0.78},{"t":30,"dur":2,"midi":29,"vel":0.68},{"t":32,"dur":2,"midi":31,"vel":0.8},{"t":34,"dur":2,"midi":31,"vel":0.7},{"t":36,"dur":2,"midi":31,"vel":0.8},{"t":38,"dur":2,"midi":31,"vel":0.7},{"t":40,"dur":2,"midi":33,"vel":0.8},{"t":42,"dur":2,"midi":33,"vel":0.7},{"t":44,"dur":2,"midi":31,"vel":0.8},{"t":46,"dur":2,"midi":31,"vel":0.7},{"t":48,"dur":2,"midi":36,"vel":0.8},{"t":50,"dur":2,"midi":36,"vel":0.7},{"t":52,"dur":2,"midi":31,"vel":0.8},{"t":54,"dur":2,"midi":31,"vel":0.7},{"t":56,"dur":2,"midi":29,"vel":0.8},{"t":58,"dur":2,"midi":29,"vel":0.7},{"t":60,"dur":2,"midi":36,"vel":0.8},{"t":62,"dur":2,"midi":36,"vel":0.7},{"t":64,"dur":2,"midi":36,"vel":0.82},{"t":66,"dur":2,"midi":36,"vel":0.72},{"t":68,"dur":2,"midi":31,"vel":0.82},{"t":70,"dur":2,"midi":31,"vel":0.72},{"t":72,"dur":2,"midi":33,"vel":0.82},{"t":74,"dur":2,"midi":33,"vel":0.72},{"t":76,"dur":2,"midi":31,"vel":0.82},{"t":78,"dur":2,"midi":31,"vel":0.72},{"t":80,"dur":2,"midi":31,"vel":0.82},{"t":82,"dur":2,"midi":31,"vel":0.72},{"t":84,"dur":2,"midi":31,"vel":0.82},{"t":86,"dur":2,"midi":31,"vel":0.72},{"t":88,"dur":2,"midi":33,"vel":0.82},{"t":90,"dur":2,"midi":33,"vel":0.72},{"t":92,"dur":2,"midi":36,"vel":0.82},{"t":94,"dur":2,"midi":36,"vel":0.72},{"t":96,"dur":2,"midi":29,"vel":0.82},{"t":98,"dur":2,"midi":29,"vel":0.72},{"t":100,"dur":2,"midi":31,"vel":0.82},{"t":102,"dur":2,"midi":31,"vel":0.72},{"t":104,"dur":2,"midi":31,"vel":0.82},{"t":106,"dur":2,"midi":31,"vel":0.72},{"t":108,"dur":2,"midi":33,"vel":0.82},{"t":110,"dur":2,"midi":33,"vel":0.72},{"t":112,"dur":2,"midi":29,"vel":0.82},{"t":114,"dur":2,"midi":29,"vel":0.72},{"t":116,"dur":2,"midi":31,"vel":0.82},{"t":118,"dur":2,"midi":31,"vel":0.72},{"t":120,"dur":2,"midi":31,"vel":0.82},{"t":122,"dur":2,"midi":31,"vel":0.72},{"t":124,"dur":2,"midi":36,"vel":0.85},{"t":126,"dur":2,"midi":36,"vel":0.78}]}]'
   ),
-  Xj = { id: Gj, bpm: Yj, loopBeats: Vj, channels: Kj },
-  Qj = 'town',
-  Zj = 100,
-  Jj = 128,
-  Pj = JSON.parse(
+  Qj = { id: Yj, bpm: Vj, loopBeats: Kj, channels: Xj },
+  Zj = 'town',
+  Jj = 100,
+  Pj = 128,
+  Fj = JSON.parse(
     '[{"name":"lead","wave":"square12","gain":0.38,"adsr":{"a":0.015,"d":0.08,"s":0.72,"r":0.12},"notes":[{"t":0,"dur":1,"midi":67,"vel":0.82},{"t":1,"dur":0.5,"midi":69,"vel":0.75},{"t":1.5,"dur":0.5,"midi":71,"vel":0.72},{"t":2,"dur":1,"midi":72,"vel":0.85},{"t":3,"dur":1,"midi":71,"vel":0.78},{"t":4,"dur":1,"midi":74,"vel":0.88},{"t":5,"dur":0.5,"midi":72,"vel":0.78},{"t":5.5,"dur":0.5,"midi":71,"vel":0.72},{"t":6,"dur":1.5,"midi":69,"vel":0.82},{"t":8,"dur":1,"midi":71,"vel":0.82},{"t":9,"dur":0.5,"midi":69,"vel":0.75},{"t":9.5,"dur":0.5,"midi":67,"vel":0.72},{"t":10,"dur":1,"midi":69,"vel":0.82},{"t":11,"dur":1,"midi":67,"vel":0.78},{"t":12,"dur":1,"midi":65,"vel":0.8},{"t":13,"dur":0.5,"midi":64,"vel":0.75},{"t":13.5,"dur":0.5,"midi":65,"vel":0.7},{"t":14,"dur":2,"midi":67,"vel":0.82},{"t":16,"dur":1,"midi":67,"vel":0.82},{"t":17,"dur":0.5,"midi":69,"vel":0.75},{"t":17.5,"dur":0.5,"midi":71,"vel":0.72},{"t":18,"dur":1,"midi":72,"vel":0.85},{"t":19,"dur":1,"midi":71,"vel":0.78},{"t":20,"dur":1,"midi":74,"vel":0.88},{"t":21,"dur":0.5,"midi":72,"vel":0.78},{"t":21.5,"dur":0.5,"midi":71,"vel":0.72},{"t":22,"dur":1.5,"midi":69,"vel":0.82},{"t":24,"dur":1,"midi":67,"vel":0.82},{"t":25,"dur":0.5,"midi":69,"vel":0.75},{"t":25.5,"dur":0.5,"midi":71,"vel":0.72},{"t":26,"dur":1,"midi":72,"vel":0.85},{"t":27,"dur":1,"midi":71,"vel":0.78},{"t":28,"dur":1,"midi":74,"vel":0.88},{"t":29,"dur":1,"midi":72,"vel":0.82},{"t":30,"dur":2,"midi":67,"vel":0.85},{"t":32,"dur":1,"midi":72,"vel":0.88},{"t":33,"dur":0.5,"midi":71,"vel":0.8},{"t":33.5,"dur":0.5,"midi":69,"vel":0.75},{"t":34,"dur":1,"midi":67,"vel":0.82},{"t":35,"dur":1,"midi":69,"vel":0.78},{"t":36,"dur":1,"midi":74,"vel":0.88},{"t":37,"dur":0.5,"midi":72,"vel":0.8},{"t":37.5,"dur":0.5,"midi":71,"vel":0.75},{"t":38,"dur":1.5,"midi":69,"vel":0.82},{"t":40,"dur":1,"midi":71,"vel":0.85},{"t":41,"dur":0.5,"midi":72,"vel":0.8},{"t":41.5,"dur":0.5,"midi":74,"vel":0.78},{"t":42,"dur":1,"midi":76,"vel":0.88},{"t":43,"dur":1,"midi":74,"vel":0.82},{"t":44,"dur":1,"midi":72,"vel":0.85},{"t":45,"dur":0.5,"midi":71,"vel":0.78},{"t":45.5,"dur":0.5,"midi":69,"vel":0.72},{"t":46,"dur":2,"midi":67,"vel":0.82},{"t":48,"dur":1,"midi":72,"vel":0.88},{"t":49,"dur":0.5,"midi":71,"vel":0.8},{"t":49.5,"dur":0.5,"midi":69,"vel":0.75},{"t":50,"dur":1,"midi":67,"vel":0.82},{"t":51,"dur":1,"midi":69,"vel":0.78},{"t":52,"dur":1,"midi":71,"vel":0.85},{"t":53,"dur":0.5,"midi":72,"vel":0.8},{"t":53.5,"dur":0.5,"midi":74,"vel":0.78},{"t":54,"dur":1,"midi":76,"vel":0.88},{"t":55,"dur":1,"midi":74,"vel":0.82},{"t":56,"dur":1,"midi":72,"vel":0.85},{"t":57,"dur":0.5,"midi":71,"vel":0.78},{"t":57.5,"dur":0.5,"midi":72,"vel":0.75},{"t":58,"dur":1,"midi":74,"vel":0.85},{"t":59,"dur":1,"midi":72,"vel":0.8},{"t":60,"dur":1,"midi":71,"vel":0.85},{"t":61,"dur":1,"midi":69,"vel":0.78},{"t":62,"dur":2,"midi":67,"vel":0.85},{"t":64,"dur":1,"midi":72,"vel":0.88},{"t":65,"dur":0.5,"midi":74,"vel":0.82},{"t":65.5,"dur":0.5,"midi":76,"vel":0.8},{"t":66,"dur":1,"midi":77,"vel":0.9},{"t":67,"dur":1,"midi":76,"vel":0.82},{"t":68,"dur":1,"midi":74,"vel":0.85},{"t":69,"dur":0.5,"midi":72,"vel":0.78},{"t":69.5,"dur":0.5,"midi":71,"vel":0.72},{"t":70,"dur":1.5,"midi":69,"vel":0.82},{"t":72,"dur":1,"midi":71,"vel":0.85},{"t":73,"dur":0.5,"midi":72,"vel":0.8},{"t":73.5,"dur":0.5,"midi":74,"vel":0.78},{"t":74,"dur":1,"midi":76,"vel":0.88},{"t":75,"dur":1,"midi":74,"vel":0.82},{"t":76,"dur":1,"midi":72,"vel":0.85},{"t":77,"dur":1,"midi":74,"vel":0.82},{"t":78,"dur":2,"midi":76,"vel":0.88},{"t":80,"dur":1,"midi":74,"vel":0.85},{"t":81,"dur":0.5,"midi":72,"vel":0.78},{"t":81.5,"dur":0.5,"midi":71,"vel":0.72},{"t":82,"dur":1,"midi":72,"vel":0.82},{"t":83,"dur":1,"midi":71,"vel":0.78},{"t":84,"dur":1,"midi":69,"vel":0.82},{"t":85,"dur":0.5,"midi":67,"vel":0.75},{"t":85.5,"dur":0.5,"midi":69,"vel":0.72},{"t":86,"dur":1.5,"midi":71,"vel":0.82},{"t":88,"dur":1,"midi":72,"vel":0.88},{"t":89,"dur":0.5,"midi":74,"vel":0.82},{"t":89.5,"dur":0.5,"midi":76,"vel":0.8},{"t":90,"dur":1,"midi":77,"vel":0.9},{"t":91,"dur":1,"midi":76,"vel":0.85},{"t":92,"dur":1,"midi":74,"vel":0.85},{"t":93,"dur":1,"midi":72,"vel":0.82},{"t":94,"dur":2,"midi":74,"vel":0.88},{"t":96,"dur":1,"midi":67,"vel":0.82},{"t":97,"dur":0.5,"midi":69,"vel":0.75},{"t":97.5,"dur":0.5,"midi":71,"vel":0.72},{"t":98,"dur":1,"midi":72,"vel":0.85},{"t":99,"dur":1,"midi":71,"vel":0.78},{"t":100,"dur":1,"midi":74,"vel":0.88},{"t":101,"dur":0.5,"midi":72,"vel":0.78},{"t":101.5,"dur":0.5,"midi":71,"vel":0.72},{"t":102,"dur":1.5,"midi":69,"vel":0.82},{"t":104,"dur":1,"midi":71,"vel":0.82},{"t":105,"dur":0.5,"midi":72,"vel":0.78},{"t":105.5,"dur":0.5,"midi":74,"vel":0.75},{"t":106,"dur":1,"midi":72,"vel":0.85},{"t":107,"dur":1,"midi":71,"vel":0.78},{"t":108,"dur":1,"midi":65,"vel":0.8},{"t":109,"dur":0.5,"midi":64,"vel":0.75},{"t":109.5,"dur":0.5,"midi":65,"vel":0.7},{"t":110,"dur":2,"midi":67,"vel":0.82},{"t":112,"dur":1,"midi":69,"vel":0.82},{"t":113,"dur":0.5,"midi":71,"vel":0.78},{"t":113.5,"dur":0.5,"midi":72,"vel":0.75},{"t":114,"dur":1,"midi":74,"vel":0.88},{"t":115,"dur":1,"midi":72,"vel":0.82},{"t":116,"dur":1,"midi":71,"vel":0.85},{"t":117,"dur":0.5,"midi":69,"vel":0.78},{"t":117.5,"dur":0.5,"midi":67,"vel":0.72},{"t":118,"dur":1,"midi":69,"vel":0.82},{"t":119,"dur":1,"midi":67,"vel":0.78},{"t":120,"dur":1,"midi":66,"vel":0.82},{"t":121,"dur":1,"midi":67,"vel":0.78},{"t":122,"dur":1,"midi":69,"vel":0.8},{"t":123,"dur":1,"midi":71,"vel":0.82},{"t":124,"dur":1,"midi":74,"vel":0.85},{"t":125,"dur":1,"midi":72,"vel":0.8},{"t":126,"dur":2,"midi":67,"vel":0.88}]},{"name":"harmony","wave":"square12","gain":0.18,"adsr":{"a":0.02,"d":0.1,"s":0.6,"r":0.15},"notes":[{"t":0,"dur":2,"midi":64,"vel":0.6},{"t":2,"dur":2,"midi":64,"vel":0.6},{"t":4,"dur":2,"midi":66,"vel":0.62},{"t":6,"dur":1.5,"midi":66,"vel":0.6},{"t":8,"dur":2,"midi":64,"vel":0.6},{"t":10,"dur":2,"midi":64,"vel":0.6},{"t":12,"dur":2,"midi":60,"vel":0.6},{"t":14,"dur":2,"midi":62,"vel":0.62},{"t":16,"dur":2,"midi":64,"vel":0.6},{"t":18,"dur":2,"midi":64,"vel":0.6},{"t":20,"dur":2,"midi":66,"vel":0.62},{"t":22,"dur":1.5,"midi":66,"vel":0.6},{"t":24,"dur":2,"midi":64,"vel":0.6},{"t":26,"dur":2,"midi":67,"vel":0.65},{"t":28,"dur":2,"midi":69,"vel":0.65},{"t":30,"dur":2,"midi":67,"vel":0.62},{"t":32,"dur":2,"midi":67,"vel":0.65},{"t":34,"dur":2,"midi":64,"vel":0.62},{"t":36,"dur":2,"midi":66,"vel":0.62},{"t":38,"dur":1.5,"midi":64,"vel":0.6},{"t":40,"dur":2,"midi":67,"vel":0.65},{"t":42,"dur":2,"midi":71,"vel":0.68},{"t":44,"dur":2,"midi":69,"vel":0.65},{"t":46,"dur":2,"midi":64,"vel":0.62},{"t":48,"dur":2,"midi":67,"vel":0.65},{"t":50,"dur":2,"midi":64,"vel":0.62},{"t":52,"dur":2,"midi":67,"vel":0.65},{"t":54,"dur":2,"midi":71,"vel":0.68},{"t":56,"dur":2,"midi":69,"vel":0.65},{"t":58,"dur":2,"midi":71,"vel":0.68},{"t":60,"dur":2,"midi":67,"vel":0.65},{"t":62,"dur":2,"midi":64,"vel":0.62},{"t":64,"dur":2,"midi":67,"vel":0.65},{"t":66,"dur":2,"midi":72,"vel":0.68},{"t":68,"dur":2,"midi":71,"vel":0.65},{"t":70,"dur":1.5,"midi":69,"vel":0.62},{"t":72,"dur":2,"midi":67,"vel":0.65},{"t":74,"dur":2,"midi":71,"vel":0.68},{"t":76,"dur":2,"midi":69,"vel":0.65},{"t":78,"dur":2,"midi":72,"vel":0.68},{"t":80,"dur":2,"midi":71,"vel":0.65},{"t":82,"dur":2,"midi":67,"vel":0.62},{"t":84,"dur":2,"midi":64,"vel":0.62},{"t":86,"dur":1.5,"midi":67,"vel":0.62},{"t":88,"dur":2,"midi":67,"vel":0.65},{"t":90,"dur":2,"midi":72,"vel":0.68},{"t":92,"dur":2,"midi":71,"vel":0.65},{"t":94,"dur":2,"midi":71,"vel":0.65},{"t":96,"dur":2,"midi":64,"vel":0.6},{"t":98,"dur":2,"midi":67,"vel":0.62},{"t":100,"dur":2,"midi":69,"vel":0.62},{"t":102,"dur":1.5,"midi":66,"vel":0.6},{"t":104,"dur":2,"midi":67,"vel":0.62},{"t":106,"dur":2,"midi":67,"vel":0.62},{"t":108,"dur":2,"midi":60,"vel":0.6},{"t":110,"dur":2,"midi":62,"vel":0.6},{"t":112,"dur":2,"midi":64,"vel":0.62},{"t":114,"dur":2,"midi":69,"vel":0.65},{"t":116,"dur":2,"midi":67,"vel":0.65},{"t":118,"dur":2,"midi":64,"vel":0.62},{"t":120,"dur":2,"midi":62,"vel":0.62},{"t":122,"dur":2,"midi":64,"vel":0.62},{"t":124,"dur":2,"midi":69,"vel":0.65},{"t":126,"dur":2,"midi":64,"vel":0.62}]},{"name":"pad","wave":"triangle","gain":0.28,"adsr":{"a":0.12,"d":0.25,"s":0.7,"r":0.4},"notes":[{"t":0,"dur":4,"midi":55,"vel":0.62},{"t":0,"dur":4,"midi":59,"vel":0.52},{"t":0,"dur":4,"midi":62,"vel":0.48},{"t":4,"dur":4,"midi":50,"vel":0.62},{"t":4,"dur":4,"midi":54,"vel":0.52},{"t":4,"dur":4,"midi":57,"vel":0.48},{"t":8,"dur":4,"midi":52,"vel":0.62},{"t":8,"dur":4,"midi":55,"vel":0.52},{"t":8,"dur":4,"midi":59,"vel":0.48},{"t":12,"dur":4,"midi":48,"vel":0.62},{"t":12,"dur":4,"midi":52,"vel":0.52},{"t":12,"dur":4,"midi":55,"vel":0.48},{"t":16,"dur":4,"midi":55,"vel":0.62},{"t":16,"dur":4,"midi":59,"vel":0.52},{"t":16,"dur":4,"midi":62,"vel":0.48},{"t":20,"dur":4,"midi":50,"vel":0.62},{"t":20,"dur":4,"midi":54,"vel":0.52},{"t":20,"dur":4,"midi":57,"vel":0.48},{"t":24,"dur":4,"midi":52,"vel":0.62},{"t":24,"dur":4,"midi":55,"vel":0.52},{"t":24,"dur":4,"midi":59,"vel":0.48},{"t":28,"dur":4,"midi":50,"vel":0.62},{"t":28,"dur":4,"midi":54,"vel":0.52},{"t":28,"dur":4,"midi":57,"vel":0.48},{"t":32,"dur":4,"midi":48,"vel":0.65},{"t":32,"dur":4,"midi":52,"vel":0.55},{"t":32,"dur":4,"midi":55,"vel":0.5},{"t":36,"dur":4,"midi":50,"vel":0.65},{"t":36,"dur":4,"midi":54,"vel":0.55},{"t":36,"dur":4,"midi":57,"vel":0.5},{"t":40,"dur":4,"midi":52,"vel":0.65},{"t":40,"dur":4,"midi":55,"vel":0.55},{"t":40,"dur":4,"midi":59,"vel":0.5},{"t":44,"dur":4,"midi":50,"vel":0.65},{"t":44,"dur":4,"midi":54,"vel":0.55},{"t":44,"dur":4,"midi":57,"vel":0.5},{"t":48,"dur":4,"midi":55,"vel":0.65},{"t":48,"dur":4,"midi":59,"vel":0.55},{"t":48,"dur":4,"midi":62,"vel":0.5},{"t":52,"dur":4,"midi":50,"vel":0.65},{"t":52,"dur":4,"midi":54,"vel":0.55},{"t":52,"dur":4,"midi":57,"vel":0.5},{"t":56,"dur":4,"midi":52,"vel":0.65},{"t":56,"dur":4,"midi":55,"vel":0.55},{"t":56,"dur":4,"midi":59,"vel":0.5},{"t":60,"dur":4,"midi":50,"vel":0.65},{"t":60,"dur":4,"midi":54,"vel":0.55},{"t":60,"dur":4,"midi":57,"vel":0.5},{"t":64,"dur":4,"midi":48,"vel":0.68},{"t":64,"dur":4,"midi":52,"vel":0.58},{"t":64,"dur":4,"midi":55,"vel":0.52},{"t":68,"dur":4,"midi":50,"vel":0.68},{"t":68,"dur":4,"midi":54,"vel":0.58},{"t":68,"dur":4,"midi":57,"vel":0.52},{"t":72,"dur":4,"midi":52,"vel":0.68},{"t":72,"dur":4,"midi":55,"vel":0.58},{"t":72,"dur":4,"midi":59,"vel":0.52},{"t":76,"dur":4,"midi":50,"vel":0.68},{"t":76,"dur":4,"midi":54,"vel":0.58},{"t":76,"dur":4,"midi":57,"vel":0.52},{"t":80,"dur":4,"midi":55,"vel":0.68},{"t":80,"dur":4,"midi":59,"vel":0.58},{"t":80,"dur":4,"midi":62,"vel":0.52},{"t":84,"dur":4,"midi":52,"vel":0.68},{"t":84,"dur":4,"midi":55,"vel":0.58},{"t":84,"dur":4,"midi":59,"vel":0.52},{"t":88,"dur":4,"midi":48,"vel":0.68},{"t":88,"dur":4,"midi":52,"vel":0.58},{"t":88,"dur":4,"midi":55,"vel":0.52},{"t":92,"dur":4,"midi":50,"vel":0.68},{"t":92,"dur":4,"midi":54,"vel":0.58},{"t":92,"dur":4,"midi":57,"vel":0.52},{"t":96,"dur":4,"midi":55,"vel":0.65},{"t":96,"dur":4,"midi":59,"vel":0.55},{"t":96,"dur":4,"midi":62,"vel":0.5},{"t":100,"dur":4,"midi":50,"vel":0.65},{"t":100,"dur":4,"midi":54,"vel":0.55},{"t":100,"dur":4,"midi":57,"vel":0.5},{"t":104,"dur":4,"midi":52,"vel":0.65},{"t":104,"dur":4,"midi":55,"vel":0.55},{"t":104,"dur":4,"midi":59,"vel":0.5},{"t":108,"dur":4,"midi":48,"vel":0.65},{"t":108,"dur":4,"midi":52,"vel":0.55},{"t":108,"dur":4,"midi":55,"vel":0.5},{"t":112,"dur":4,"midi":52,"vel":0.65},{"t":112,"dur":4,"midi":55,"vel":0.55},{"t":112,"dur":4,"midi":59,"vel":0.5},{"t":116,"dur":4,"midi":52,"vel":0.65},{"t":116,"dur":4,"midi":55,"vel":0.55},{"t":116,"dur":4,"midi":59,"vel":0.5},{"t":120,"dur":4,"midi":50,"vel":0.65},{"t":120,"dur":4,"midi":54,"vel":0.55},{"t":120,"dur":4,"midi":57,"vel":0.5},{"t":124,"dur":4,"midi":55,"vel":0.68},{"t":124,"dur":4,"midi":59,"vel":0.58},{"t":124,"dur":4,"midi":62,"vel":0.52}]},{"name":"bass","wave":"triangle","gain":0.34,"adsr":{"a":0.01,"d":0.08,"s":0.6,"r":0.15},"notes":[{"t":0,"dur":0.85,"midi":43,"vel":0.82},{"t":1,"dur":0.7,"midi":50,"vel":0.62},{"t":2,"dur":0.85,"midi":43,"vel":0.78},{"t":3,"dur":0.7,"midi":50,"vel":0.6},{"t":4,"dur":0.85,"midi":38,"vel":0.82},{"t":5,"dur":0.7,"midi":45,"vel":0.62},{"t":6,"dur":0.85,"midi":38,"vel":0.78},{"t":7,"dur":0.7,"midi":45,"vel":0.6},{"t":8,"dur":0.85,"midi":40,"vel":0.82},{"t":9,"dur":0.7,"midi":47,"vel":0.62},{"t":10,"dur":0.85,"midi":40,"vel":0.78},{"t":11,"dur":0.7,"midi":47,"vel":0.6},{"t":12,"dur":0.85,"midi":36,"vel":0.82},{"t":13,"dur":0.7,"midi":43,"vel":0.62},{"t":14,"dur":0.85,"midi":36,"vel":0.78},{"t":15,"dur":0.7,"midi":43,"vel":0.6},{"t":16,"dur":0.85,"midi":43,"vel":0.82},{"t":17,"dur":0.7,"midi":50,"vel":0.62},{"t":18,"dur":0.85,"midi":43,"vel":0.78},{"t":19,"dur":0.7,"midi":50,"vel":0.6},{"t":20,"dur":0.85,"midi":38,"vel":0.82},{"t":21,"dur":0.7,"midi":45,"vel":0.62},{"t":22,"dur":0.85,"midi":38,"vel":0.78},{"t":23,"dur":0.7,"midi":45,"vel":0.6},{"t":24,"dur":0.85,"midi":40,"vel":0.82},{"t":25,"dur":0.7,"midi":47,"vel":0.62},{"t":26,"dur":0.85,"midi":40,"vel":0.78},{"t":27,"dur":0.7,"midi":47,"vel":0.6},{"t":28,"dur":0.85,"midi":38,"vel":0.82},{"t":29,"dur":0.7,"midi":45,"vel":0.62},{"t":30,"dur":0.85,"midi":38,"vel":0.78},{"t":31,"dur":0.7,"midi":45,"vel":0.6},{"t":32,"dur":0.85,"midi":36,"vel":0.84},{"t":33,"dur":0.7,"midi":43,"vel":0.64},{"t":34,"dur":0.85,"midi":36,"vel":0.8},{"t":35,"dur":0.7,"midi":43,"vel":0.62},{"t":36,"dur":0.85,"midi":38,"vel":0.84},{"t":37,"dur":0.7,"midi":45,"vel":0.64},{"t":38,"dur":0.85,"midi":38,"vel":0.8},{"t":39,"dur":0.7,"midi":45,"vel":0.62},{"t":40,"dur":0.85,"midi":40,"vel":0.84},{"t":41,"dur":0.7,"midi":47,"vel":0.64},{"t":42,"dur":0.85,"midi":40,"vel":0.8},{"t":43,"dur":0.7,"midi":47,"vel":0.62},{"t":44,"dur":0.85,"midi":38,"vel":0.84},{"t":45,"dur":0.7,"midi":45,"vel":0.64},{"t":46,"dur":0.85,"midi":38,"vel":0.8},{"t":47,"dur":0.7,"midi":45,"vel":0.62},{"t":48,"dur":0.85,"midi":43,"vel":0.84},{"t":49,"dur":0.7,"midi":50,"vel":0.64},{"t":50,"dur":0.85,"midi":43,"vel":0.8},{"t":51,"dur":0.7,"midi":50,"vel":0.62},{"t":52,"dur":0.85,"midi":38,"vel":0.84},{"t":53,"dur":0.7,"midi":45,"vel":0.64},{"t":54,"dur":0.85,"midi":38,"vel":0.8},{"t":55,"dur":0.7,"midi":45,"vel":0.62},{"t":56,"dur":0.85,"midi":40,"vel":0.84},{"t":57,"dur":0.7,"midi":47,"vel":0.64},{"t":58,"dur":0.85,"midi":40,"vel":0.8},{"t":59,"dur":0.7,"midi":47,"vel":0.62},{"t":60,"dur":0.85,"midi":38,"vel":0.84},{"t":61,"dur":0.7,"midi":45,"vel":0.64},{"t":62,"dur":0.85,"midi":38,"vel":0.8},{"t":63,"dur":0.7,"midi":45,"vel":0.62},{"t":64,"dur":0.85,"midi":36,"vel":0.84},{"t":65,"dur":0.7,"midi":43,"vel":0.64},{"t":66,"dur":0.85,"midi":36,"vel":0.8},{"t":67,"dur":0.7,"midi":43,"vel":0.62},{"t":68,"dur":0.85,"midi":38,"vel":0.84},{"t":69,"dur":0.7,"midi":45,"vel":0.64},{"t":70,"dur":0.85,"midi":38,"vel":0.8},{"t":71,"dur":0.7,"midi":45,"vel":0.62},{"t":72,"dur":0.85,"midi":40,"vel":0.84},{"t":73,"dur":0.7,"midi":47,"vel":0.64},{"t":74,"dur":0.85,"midi":40,"vel":0.8},{"t":75,"dur":0.7,"midi":47,"vel":0.62},{"t":76,"dur":0.85,"midi":38,"vel":0.84},{"t":77,"dur":0.7,"midi":45,"vel":0.64},{"t":78,"dur":0.85,"midi":38,"vel":0.8},{"t":79,"dur":0.7,"midi":45,"vel":0.62},{"t":80,"dur":0.85,"midi":43,"vel":0.84},{"t":81,"dur":0.7,"midi":50,"vel":0.64},{"t":82,"dur":0.85,"midi":43,"vel":0.8},{"t":83,"dur":0.7,"midi":50,"vel":0.62},{"t":84,"dur":0.85,"midi":40,"vel":0.84},{"t":85,"dur":0.7,"midi":47,"vel":0.64},{"t":86,"dur":0.85,"midi":40,"vel":0.8},{"t":87,"dur":0.7,"midi":47,"vel":0.62},{"t":88,"dur":0.85,"midi":36,"vel":0.84},{"t":89,"dur":0.7,"midi":43,"vel":0.64},{"t":90,"dur":0.85,"midi":36,"vel":0.8},{"t":91,"dur":0.7,"midi":43,"vel":0.62},{"t":92,"dur":0.85,"midi":38,"vel":0.84},{"t":93,"dur":0.7,"midi":45,"vel":0.64},{"t":94,"dur":0.85,"midi":38,"vel":0.8},{"t":95,"dur":0.7,"midi":45,"vel":0.62},{"t":96,"dur":0.85,"midi":43,"vel":0.82},{"t":97,"dur":0.7,"midi":50,"vel":0.62},{"t":98,"dur":0.85,"midi":43,"vel":0.78},{"t":99,"dur":0.7,"midi":50,"vel":0.6},{"t":100,"dur":0.85,"midi":38,"vel":0.82},{"t":101,"dur":0.7,"midi":45,"vel":0.62},{"t":102,"dur":0.85,"midi":38,"vel":0.78},{"t":103,"dur":0.7,"midi":45,"vel":0.6},{"t":104,"dur":0.85,"midi":40,"vel":0.82},{"t":105,"dur":0.7,"midi":47,"vel":0.62},{"t":106,"dur":0.85,"midi":40,"vel":0.78},{"t":107,"dur":0.7,"midi":47,"vel":0.6},{"t":108,"dur":0.85,"midi":36,"vel":0.82},{"t":109,"dur":0.7,"midi":43,"vel":0.62},{"t":110,"dur":0.85,"midi":36,"vel":0.78},{"t":111,"dur":0.7,"midi":43,"vel":0.6},{"t":112,"dur":0.85,"midi":40,"vel":0.82},{"t":113,"dur":0.7,"midi":47,"vel":0.62},{"t":114,"dur":0.85,"midi":40,"vel":0.78},{"t":115,"dur":0.7,"midi":47,"vel":0.6},{"t":116,"dur":0.85,"midi":40,"vel":0.82},{"t":117,"dur":0.7,"midi":47,"vel":0.62},{"t":118,"dur":0.85,"midi":40,"vel":0.78},{"t":119,"dur":0.7,"midi":47,"vel":0.6},{"t":120,"dur":0.85,"midi":38,"vel":0.82},{"t":121,"dur":0.7,"midi":45,"vel":0.62},{"t":122,"dur":0.85,"midi":38,"vel":0.78},{"t":123,"dur":0.7,"midi":45,"vel":0.6},{"t":124,"dur":0.85,"midi":43,"vel":0.85},{"t":125,"dur":0.7,"midi":50,"vel":0.65},{"t":126,"dur":0.85,"midi":43,"vel":0.82},{"t":127,"dur":0.7,"midi":50,"vel":0.62}]},{"name":"perc","wave":"noise","gain":0.18,"adsr":{"a":0.005,"d":0.04,"s":0,"r":0.05},"notes":[{"t":0.5,"dur":0.1,"midi":42,"vel":0.45},{"t":1.5,"dur":0.1,"midi":42,"vel":0.42},{"t":2.5,"dur":0.1,"midi":42,"vel":0.45},{"t":3.5,"dur":0.1,"midi":42,"vel":0.42},{"t":4.5,"dur":0.1,"midi":42,"vel":0.45},{"t":5.5,"dur":0.1,"midi":42,"vel":0.42},{"t":6.5,"dur":0.1,"midi":42,"vel":0.45},{"t":7.5,"dur":0.1,"midi":42,"vel":0.42},{"t":8.5,"dur":0.1,"midi":42,"vel":0.45},{"t":9.5,"dur":0.1,"midi":42,"vel":0.42},{"t":10.5,"dur":0.1,"midi":42,"vel":0.45},{"t":11.5,"dur":0.1,"midi":42,"vel":0.42},{"t":12.5,"dur":0.1,"midi":42,"vel":0.45},{"t":13.5,"dur":0.1,"midi":42,"vel":0.42},{"t":14.5,"dur":0.1,"midi":42,"vel":0.45},{"t":15.5,"dur":0.1,"midi":42,"vel":0.42},{"t":16.5,"dur":0.1,"midi":42,"vel":0.45},{"t":17.5,"dur":0.1,"midi":42,"vel":0.42},{"t":18.5,"dur":0.1,"midi":42,"vel":0.45},{"t":19.5,"dur":0.1,"midi":42,"vel":0.42},{"t":20.5,"dur":0.1,"midi":42,"vel":0.45},{"t":21.5,"dur":0.1,"midi":42,"vel":0.42},{"t":22.5,"dur":0.1,"midi":42,"vel":0.45},{"t":23.5,"dur":0.1,"midi":42,"vel":0.42},{"t":24.5,"dur":0.1,"midi":42,"vel":0.45},{"t":25.5,"dur":0.1,"midi":42,"vel":0.42},{"t":26.5,"dur":0.1,"midi":42,"vel":0.45},{"t":27.5,"dur":0.1,"midi":42,"vel":0.42},{"t":28.5,"dur":0.1,"midi":42,"vel":0.45},{"t":29.5,"dur":0.1,"midi":42,"vel":0.42},{"t":30.5,"dur":0.1,"midi":42,"vel":0.45},{"t":31.5,"dur":0.1,"midi":42,"vel":0.42},{"t":32.5,"dur":0.1,"midi":42,"vel":0.45},{"t":33.5,"dur":0.1,"midi":42,"vel":0.42},{"t":34.5,"dur":0.1,"midi":42,"vel":0.45},{"t":35.5,"dur":0.1,"midi":42,"vel":0.42},{"t":36.5,"dur":0.1,"midi":42,"vel":0.45},{"t":37.5,"dur":0.1,"midi":42,"vel":0.42},{"t":38.5,"dur":0.1,"midi":42,"vel":0.45},{"t":39.5,"dur":0.1,"midi":42,"vel":0.42},{"t":40.5,"dur":0.1,"midi":42,"vel":0.45},{"t":41.5,"dur":0.1,"midi":42,"vel":0.42},{"t":42.5,"dur":0.1,"midi":42,"vel":0.45},{"t":43.5,"dur":0.1,"midi":42,"vel":0.42},{"t":44.5,"dur":0.1,"midi":42,"vel":0.45},{"t":45.5,"dur":0.1,"midi":42,"vel":0.42},{"t":46.5,"dur":0.1,"midi":42,"vel":0.45},{"t":47.5,"dur":0.1,"midi":42,"vel":0.42},{"t":48.5,"dur":0.1,"midi":42,"vel":0.45},{"t":49.5,"dur":0.1,"midi":42,"vel":0.42},{"t":50.5,"dur":0.1,"midi":42,"vel":0.45},{"t":51.5,"dur":0.1,"midi":42,"vel":0.42},{"t":52.5,"dur":0.1,"midi":42,"vel":0.45},{"t":53.5,"dur":0.1,"midi":42,"vel":0.42},{"t":54.5,"dur":0.1,"midi":42,"vel":0.45},{"t":55.5,"dur":0.1,"midi":42,"vel":0.42},{"t":56.5,"dur":0.1,"midi":42,"vel":0.45},{"t":57.5,"dur":0.1,"midi":42,"vel":0.42},{"t":58.5,"dur":0.1,"midi":42,"vel":0.45},{"t":59.5,"dur":0.1,"midi":42,"vel":0.42},{"t":60.5,"dur":0.1,"midi":42,"vel":0.45},{"t":61.5,"dur":0.1,"midi":42,"vel":0.42},{"t":62.5,"dur":0.1,"midi":42,"vel":0.45},{"t":63.5,"dur":0.1,"midi":42,"vel":0.42},{"t":64.5,"dur":0.1,"midi":42,"vel":0.45},{"t":65.5,"dur":0.1,"midi":42,"vel":0.42},{"t":66.5,"dur":0.1,"midi":42,"vel":0.45},{"t":67.5,"dur":0.1,"midi":42,"vel":0.42},{"t":68.5,"dur":0.1,"midi":42,"vel":0.45},{"t":69.5,"dur":0.1,"midi":42,"vel":0.42},{"t":70.5,"dur":0.1,"midi":42,"vel":0.45},{"t":71.5,"dur":0.1,"midi":42,"vel":0.42},{"t":72.5,"dur":0.1,"midi":42,"vel":0.45},{"t":73.5,"dur":0.1,"midi":42,"vel":0.42},{"t":74.5,"dur":0.1,"midi":42,"vel":0.45},{"t":75.5,"dur":0.1,"midi":42,"vel":0.42},{"t":76.5,"dur":0.1,"midi":42,"vel":0.45},{"t":77.5,"dur":0.1,"midi":42,"vel":0.42},{"t":78.5,"dur":0.1,"midi":42,"vel":0.45},{"t":79.5,"dur":0.1,"midi":42,"vel":0.42},{"t":80.5,"dur":0.1,"midi":42,"vel":0.45},{"t":81.5,"dur":0.1,"midi":42,"vel":0.42},{"t":82.5,"dur":0.1,"midi":42,"vel":0.45},{"t":83.5,"dur":0.1,"midi":42,"vel":0.42},{"t":84.5,"dur":0.1,"midi":42,"vel":0.45},{"t":85.5,"dur":0.1,"midi":42,"vel":0.42},{"t":86.5,"dur":0.1,"midi":42,"vel":0.45},{"t":87.5,"dur":0.1,"midi":42,"vel":0.42},{"t":88.5,"dur":0.1,"midi":42,"vel":0.45},{"t":89.5,"dur":0.1,"midi":42,"vel":0.42},{"t":90.5,"dur":0.1,"midi":42,"vel":0.45},{"t":91.5,"dur":0.1,"midi":42,"vel":0.42},{"t":92.5,"dur":0.1,"midi":42,"vel":0.45},{"t":93.5,"dur":0.1,"midi":42,"vel":0.42},{"t":94.5,"dur":0.1,"midi":42,"vel":0.45},{"t":95.5,"dur":0.1,"midi":42,"vel":0.42},{"t":96.5,"dur":0.1,"midi":42,"vel":0.45},{"t":97.5,"dur":0.1,"midi":42,"vel":0.42},{"t":98.5,"dur":0.1,"midi":42,"vel":0.45},{"t":99.5,"dur":0.1,"midi":42,"vel":0.42},{"t":100.5,"dur":0.1,"midi":42,"vel":0.45},{"t":101.5,"dur":0.1,"midi":42,"vel":0.42},{"t":102.5,"dur":0.1,"midi":42,"vel":0.45},{"t":103.5,"dur":0.1,"midi":42,"vel":0.42},{"t":104.5,"dur":0.1,"midi":42,"vel":0.45},{"t":105.5,"dur":0.1,"midi":42,"vel":0.42},{"t":106.5,"dur":0.1,"midi":42,"vel":0.45},{"t":107.5,"dur":0.1,"midi":42,"vel":0.42},{"t":108.5,"dur":0.1,"midi":42,"vel":0.45},{"t":109.5,"dur":0.1,"midi":42,"vel":0.42},{"t":110.5,"dur":0.1,"midi":42,"vel":0.45},{"t":111.5,"dur":0.1,"midi":42,"vel":0.42},{"t":112.5,"dur":0.1,"midi":42,"vel":0.45},{"t":113.5,"dur":0.1,"midi":42,"vel":0.42},{"t":114.5,"dur":0.1,"midi":42,"vel":0.45},{"t":115.5,"dur":0.1,"midi":42,"vel":0.42},{"t":116.5,"dur":0.1,"midi":42,"vel":0.45},{"t":117.5,"dur":0.1,"midi":42,"vel":0.42},{"t":118.5,"dur":0.1,"midi":42,"vel":0.45},{"t":119.5,"dur":0.1,"midi":42,"vel":0.42},{"t":120.5,"dur":0.1,"midi":42,"vel":0.45},{"t":121.5,"dur":0.1,"midi":42,"vel":0.42},{"t":122.5,"dur":0.1,"midi":42,"vel":0.45},{"t":123.5,"dur":0.1,"midi":42,"vel":0.42},{"t":124.5,"dur":0.1,"midi":42,"vel":0.45},{"t":125.5,"dur":0.1,"midi":42,"vel":0.42},{"t":126.5,"dur":0.1,"midi":42,"vel":0.45},{"t":127.5,"dur":0.1,"midi":42,"vel":0.42}]}]'
   ),
-  Fj = { id: Qj, bpm: Zj, loopBeats: Jj, channels: Pj },
-  Sf = { title: Xj, town: Fj, explore: Dj, battle: Nj, boss: Ij, foe: $j };
-function Wj(l) {
+  Wj = { id: Zj, bpm: Jj, loopBeats: Pj, channels: Fj },
+  Sf = { title: Qj, town: Wj, explore: zj, battle: Aj, boss: Lj, foe: Gj };
+function eT(l) {
   return l === 'title'
     ? 'title'
     : l === 'town' ||
@@ -29954,8 +29972,8 @@ function Wj(l) {
         ? 'explore'
         : null;
 }
-const eT = ({ children: l }) => {
-    const n = bj(),
+const tT = ({ children: l }) => {
+    const n = xj(),
       [d, r] = N.useState(n.volume),
       [m, o] = N.useState(n.muted),
       [_, h] = N.useState(null),
@@ -29979,7 +29997,7 @@ const eT = ({ children: l }) => {
       }, []),
       D = N.useCallback(() => {
         if (C.current) return;
-        const O = yj();
+        const O = bj();
         if (O) {
           C.current = !0;
           try {
@@ -29989,7 +30007,7 @@ const eT = ({ children: l }) => {
             ((le.gain.value = A.current ? 0 : K.current),
               le.connect(ie.destination),
               (y.current = le));
-            const ue = new kj(ie, le);
+            const ue = new yj(ie, le);
             ((b.current = ue), F(ie));
             const _e = Q.current;
             if (_e) {
@@ -30019,7 +30037,7 @@ const eT = ({ children: l }) => {
       );
     }, [D, F]),
       N.useEffect(() => {
-        const O = L.name === 'battle' ? p : Wj(L.name);
+        const O = L.name === 'battle' ? p : eT(L.name);
         if (b.current) {
           const ie = O ? Sf[O] : null;
           (b.current.setTrack(ie), h(O));
@@ -30030,7 +30048,7 @@ const eT = ({ children: l }) => {
         ((K.current = d),
           (A.current = m),
           (O = b.current) == null || O.setGain(d, m),
-          xj({ volume: d, muted: m }));
+          Sj({ volume: d, muted: m }));
       }, [d, m]),
       N.useEffect(
         () => () => {
@@ -30064,7 +30082,7 @@ const eT = ({ children: l }) => {
       children: l,
     });
   },
-  tT = [
+  iT = [
     'cursor',
     'decide',
     'cancel',
@@ -30092,11 +30110,11 @@ const eT = ({ children: l }) => {
     'warp',
     'save',
   ],
-  iT = { victory: 0.9, levelup: 0.9, error: 0.8, down: 0.85, encounter: 0.85 },
-  lT = (l) => `/sekaiju-like-game/sfx/${l}.wav`,
+  lT = { victory: 0.9, levelup: 0.9, error: 0.8, down: 0.85, encounter: 0.85 },
+  aT = (l) => `/sekaiju-like-game/sfx/${l}.wav`,
   qv = 'sekaiju-sfx-settings',
   Pc = { volume: 0.6, muted: !1 };
-function aT() {
+function nT() {
   try {
     const l = localStorage.getItem(qv);
     if (!l) return { ...Pc };
@@ -30113,17 +30131,17 @@ function aT() {
     return { ...Pc };
   }
 }
-function nT(l) {
+function sT(l) {
   try {
     localStorage.setItem(qv, JSON.stringify(l));
   } catch {}
 }
-function sT() {
+function rT() {
   if (!(typeof window > 'u')) return window.AudioContext ?? window.webkitAudioContext ?? void 0;
 }
-const rT = 30,
-  dT = ({ children: l }) => {
-    const n = aT(),
+const dT = 30,
+  uT = ({ children: l }) => {
+    const n = nT(),
       [d, r] = N.useState(n.volume),
       [m, o] = N.useState(n.muted),
       _ = N.useRef(null),
@@ -30133,7 +30151,7 @@ const rT = 30,
       b = N.useRef({}),
       y = N.useCallback(() => {
         if (v.current) return;
-        const K = sT();
+        const K = rT();
         if (K) {
           v.current = !0;
           try {
@@ -30144,9 +30162,9 @@ const rT = 30,
               L.connect(A.destination),
               (h.current = L),
               Promise.all(
-                tT.map(async (F) => {
+                iT.map(async (F) => {
                   try {
-                    const D = lT(F),
+                    const D = aT(F),
                       G = await (await fetch(D)).arrayBuffer(),
                       S = await A.decodeAudioData(G);
                     p.current[F] = S;
@@ -30176,7 +30194,7 @@ const rT = 30,
       );
     }, [y]),
       N.useEffect(() => {
-        (h.current && (h.current.gain.value = m ? 0 : d), nT({ volume: d, muted: m }));
+        (h.current && (h.current.gain.value = m ? 0 : d), sT({ volume: d, muted: m }));
       }, [d, m]));
     const j = N.useCallback((K) => {
         const A = _.current,
@@ -30186,12 +30204,12 @@ const rT = 30,
         if (!F) return;
         const D = performance.now(),
           se = b.current[K] ?? -1 / 0;
-        if (!(D - se < rT)) {
+        if (!(D - se < dT)) {
           b.current[K] = D;
           try {
             A.state === 'suspended' && A.resume();
             const G = A.createGain();
-            ((G.gain.value = iT[K] ?? 1), G.connect(L));
+            ((G.gain.value = lT[K] ?? 1), G.connect(L));
             const S = A.createBufferSource();
             ((S.buffer = F),
               S.connect(G),
@@ -30218,7 +30236,7 @@ const rT = 30,
       children: l,
     });
   },
-  uT = {
+  cT = {
     races: Ke,
     classes: Ve,
     titles: dl,
@@ -30231,10 +30249,10 @@ const rT = 30,
     items: lt,
     equipment: at,
   },
-  cT = /^[a-z]+_[a-z0-9_]+$/;
+  mT = /^[a-z]+_[a-z0-9_]+$/;
 function xi(l, n, d) {
   for (const r of n)
-    cT.test(r) || d.push(`[${l}] ID 命名規約違反: "${r}"（期待: <domain>_<name>）`);
+    mT.test(r) || d.push(`[${l}] ID 命名規約違反: "${r}"（期待: <domain>_<name>）`);
 }
 function Fc(l, n, d, r) {
   const m = new Set(n.skills.map((o) => o.skillId));
@@ -30245,7 +30263,7 @@ function Fc(l, n, d, r) {
         r.push(`[${l}] スキル "${o.skillId}" の前提 "${_.skillId}" が同ツリーに存在しない`);
   }
 }
-function mT() {
+function oT() {
   var K;
   const l = [],
     {
@@ -30260,7 +30278,7 @@ function mT() {
       enemies: v,
       items: b,
       equipment: y,
-    } = uT;
+    } = cT;
   (xi('races', Object.keys(n), l),
     xi('classes', Object.keys(d), l),
     xi('titles', Object.keys(r), l),
@@ -30397,14 +30415,14 @@ function mT() {
   }
   return { ok: l.length === 0, errors: l };
 }
-const wf = mT();
+const wf = oT();
 wf.ok || console.error('マスターデータ検証エラー:', wf.errors);
 const Dv = document.getElementById('root');
 if (!Dv) throw new Error('Failed to find #root element');
 a2.createRoot(Dv).render(
-  c.jsx(dT, {
+  c.jsx(uT, {
     children: c.jsx(r2, {
-      children: c.jsx(eT, { children: c.jsx(A8, { children: c.jsx(oj, {}) }) }),
+      children: c.jsx(tT, { children: c.jsx(A8, { children: c.jsx(_j, {}) }) }),
     }),
   })
 );
