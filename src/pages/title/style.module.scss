@@ -94,7 +94,6 @@
 }
 
 .danger {
-  flex: 1;
   min-height: 48px;
   border: none;
   border-radius: 0;
@@ -154,10 +153,15 @@
 .dialogActions {
   display: flex;
   gap: 8px;
+
+  // 行内では「はじめる」「データを消して始める」を主、「もどる」を副として等分しない
+  .primary,
+  .danger {
+    flex: 1;
+  }
 }
 
 .primary {
-  flex: 1;
   min-height: 48px;
   border: none;
   border-radius: 0;
