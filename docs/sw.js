@@ -31,7 +31,7 @@ define(['./workbox-1ef09536'], function (s) {
   }),
     s.precacheAndRoute(
       [
-        { url: 'index.html', revision: '35e3ef7129be2d07aa887681aa11c583' },
+        { url: 'index.html', revision: '9ca687574fc29faa3d9725ae694aafc9' },
         { url: 'icon-512.png', revision: 'aea6735f0e3902695c58dbca460dc603' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
@@ -93,7 +93,7 @@ define(['./workbox-1ef09536'], function (s) {
         { url: 'assets/race_garon_class_guardian-Q0SZ35gI.png', revision: null },
         { url: 'assets/race_garon_class_dancer-Mv4Ly2hD.png', revision: null },
         { url: 'assets/index-v6626Pbl.css', revision: null },
-        { url: 'assets/index-D8BtEl9w.js', revision: null },
+        { url: 'assets/index-DxJenFIX.js', revision: null },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
         { url: 'icon-512.png', revision: 'aea6735f0e3902695c58dbca460dc603' },

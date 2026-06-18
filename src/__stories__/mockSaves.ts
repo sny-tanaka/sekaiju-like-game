@@ -168,3 +168,29 @@ export const mockBattle: SaveData = (() => {
     },
   };
 })();
+
+// ============================================================
+// mockBattleSkillMenu — mockBattle と同じ状況だが、戦士が複数スキルを習得済み
+// （スキル選択画面のスクショ用。2列レイアウト + TP 不足のグレーアウトを確認できる）
+// ============================================================
+export const mockBattleSkillMenu: SaveData = {
+  ...mockBattle,
+  guild: {
+    ...mockBattle.guild,
+    members: mockBattle.guild.members.map((m) =>
+      m.classId === 'class_warrior'
+        ? {
+            ...m,
+            learnedSkills: {
+              skill_power_slash: 1, // 使える
+              skill_cleave: 1, // 使える
+              skill_chain_slash: 1, // 使える
+              skill_warrior_war_cry: 1, // 使える
+              skill_warrior_blade_storm: 1, // 高 TP (使えない想定)
+              skill_warrior_executioner: 1, // 高 TP (使えない想定)
+            },
+          }
+        : m
+    ),
+  },
+};

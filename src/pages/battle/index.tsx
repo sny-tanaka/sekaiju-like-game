@@ -177,11 +177,13 @@ type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: n
 export interface BattlePageProps {
   /** Storybook 専用: 初期 BattleState の log を擬似的に埋める。本番経路では未使用。 */
   __storyMockLogPreview?: string[];
+  /** Storybook 専用: マウント後にスキル選択画面を直接開く。本番経路では未使用。 */
+  __storyMockOpenSkillMenu?: boolean;
 }
 
 // 戦闘（[03]）。一括入力型ターン制。本家に倣い、味方は前衛/後衛の2段で表示し、
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
-export const Page = ({ __storyMockLogPreview }: BattlePageProps) => {
+export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: BattlePageProps) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist, applySave } = useGameState();
   const play = useSfx();
@@ -258,6 +260,16 @@ export const Page = ({ __storyMockLogPreview }: BattlePageProps) => {
       log: __storyMockLogPreview.map((text) => ({ text, snapshot: snap })),
     });
   }, [state, __storyMockLogPreview]);
+
+  // Storybook 専用: 初期マウントでスキル選択画面を直接開く（本番では未使用）。
+  useEffect(() => {
+    if (!__storyMockOpenSkillMenu || !state || activeId) return;
+    const first = state.allies.find((a) => !a.isDown);
+    if (!first) return;
+    setActiveId(first.id);
+    setUiMode({ kind: 'individual' });
+    setSkillMenu(true);
+  }, [__storyMockOpenSkillMenu, state, activeId]);
   useEffect(() => () => setBattleVariant(null), [setBattleVariant]);
 
   // エンカウント演出（issue #18）: 突入直後の暗転を一定時間で晴らす。

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Page } from './index';
 
 import { withGameContext } from '@/__stories__/decorators';
-import { mockBattle } from '@/__stories__/mockSaves';
+import { mockBattle, mockBattleSkillMenu } from '@/__stories__/mockSaves';
 
 const meta = {
   title: 'Pages/Battle',
@@ -46,4 +46,15 @@ export const Default: Story = {
  */
 export const NoLog: Story = {
   decorators: [withGameContext(mockBattle, { name: 'battle' })],
+};
+
+/**
+ * スキル選択画面。戦士が 5 スキルを習得済みで TP 20 想定。
+ * 2 列レイアウト + TP 不足のスキルがグレーアウトされる様子を確認できる。
+ */
+export const SkillMenu: Story = {
+  decorators: [withGameContext(mockBattleSkillMenu, { name: 'battle' })],
+  args: {
+    __storyMockOpenSkillMenu: true,
+  },
 };
