@@ -758,6 +758,10 @@ export const Page = () => {
     return char ? (CLASSES[char.classId]?.name ?? '') : '';
   };
 
+  // カード右上バッジ用の頭文字 1 文字（戦士=戦/薬師=薬/魔導士=魔...）。
+  // 9 職業すべて頭文字が一意のため衝突なし。
+  const classInitialOf = (ally: Combatant): string => classNameOf(ally).slice(0, 1);
+
   // 味方の作戦短縮ラベル（issue #61）。
   const strategyShortLabelOf = (ally: Combatant): string => {
     const char = save.guild.members.find((m) => m.id === ally.id);
@@ -850,7 +854,7 @@ export const Page = () => {
         }}
       >
         {/* 職業バッジ（右上に固定） */}
-        {!a.isSummon ? <span className={styles.jobBadge}>{classNameOf(a)}</span> : null}
+        {!a.isSummon ? <span className={styles.jobBadge}>{classInitialOf(a)}</span> : null}
         {/* 立ち絵 + 名前 + 作戦短縮（横並び） */}
         <div className={styles.cardHeader}>
           {!a.isSummon &&
