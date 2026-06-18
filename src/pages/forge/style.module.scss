@@ -75,6 +75,18 @@
   background-color: var.$white;
 }
 
+.rowSelected {
+  border-color: var.$primary;
+  background-color: #e3f2fd;
+}
+
+.check {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
 .info {
   display: flex;
   flex-direction: column;
@@ -135,6 +147,47 @@
 .empty {
   opacity: 0.6;
   font-size: 14px;
+}
+
+.bulkBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var.$primary;
+  border-radius: 10px;
+  background-color: #e3f2fd;
+}
+
+.bulkInfo {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1565c0;
+}
+
+.bulkClear {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var.$gray;
+  border-radius: 8px;
+  background-color: var.$white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bulkRecycle {
+  min-height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background-color: var.$primary;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .foot {

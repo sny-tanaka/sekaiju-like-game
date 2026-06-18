@@ -528,6 +528,14 @@ export const Page = () => {
                 </button>
                 <button
                   type="button"
+                  className={styles.stepperBtn}
+                  disabled={pendingQty >= pendingMax}
+                  onClick={() => setPendingQty((q) => Math.min(pendingMax, q + 10))}
+                >
+                  +10
+                </button>
+                <button
+                  type="button"
                   className={styles.stepperMax}
                   disabled={pendingQty >= pendingMax}
                   onClick={() => setPendingQty(pendingMax)}

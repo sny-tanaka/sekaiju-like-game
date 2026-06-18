@@ -5,6 +5,7 @@ import {
   forgeWithIngot,
   recycle,
   recycleFragments,
+  recycleMany,
 } from '@/domain/forge';
 import { addEquipment } from '@/domain/inventory';
 import { createInitialSaveData } from '@/domain/saveData';
@@ -144,5 +145,51 @@ describe('forge: recycle', () => {
     expect(res.save.forgeInventory.fragments.common).toBe(
       9 + recycleFragments('equip_golem_blade') - 10
     );
+  });
+});
+
+describe('forge: recycleMany', () => {
+  test('複数の装備を一括分解し、断片を累積する', () => {
+    let save = createInitialSaveData('g');
+    save = addEquipment(save, 'equip_short_sword'); // 2断片
+    save = addEquipment(save, 'equip_short_sword'); // 2断片
+    save = addEquipment(save, 'equip_short_sword'); // 2断片
+    const ids = save.guild.equipment.map((e) => e.id);
+    const res = recycleMany(save, ids);
+    expect(res.ok).toBe(true);
+    expect(res.save.guild.equipment).toHaveLength(0);
+    expect(res.save.forgeInventory.fragments.common).toBe(6);
+  });
+
+  test('断片の繰り上げ（10→銅+1）が一括分解でも適用される', () => {
+    let save = createInitialSaveData('g');
+    // equip_golem_blade: 4 断片 / 3個分解 → 12断片 → 銅1+残2
+    save = addEquipment(save, 'equip_golem_blade');
+    save = addEquipment(save, 'equip_golem_blade');
+    save = addEquipment(save, 'equip_golem_blade');
+    const ids = save.guild.equipment.map((e) => e.id);
+    const res = recycleMany(save, ids);
+    expect(res.save.guild.equipment).toHaveLength(0);
+    expect(res.save.forgeInventory.ingots.copper).toBe(1);
+    expect(res.save.forgeInventory.fragments.common).toBe(2);
+  });
+
+  test('未知の ID はスキップして処理を続行する', () => {
+    let save = createInitialSaveData('g');
+    save = addEquipment(save, 'equip_short_sword');
+    const ids = [save.guild.equipment[0].id, 'eq_unknown'];
+    const res = recycleMany(save, ids);
+    expect(res.ok).toBe(true);
+    expect(res.save.guild.equipment).toHaveLength(0);
+    expect(res.save.forgeInventory.fragments.common).toBe(2);
+  });
+
+  test('空配列なら何も変わらない', () => {
+    let save = createInitialSaveData('g');
+    save = addEquipment(save, 'equip_short_sword');
+    const before = save.guild.equipment.length;
+    const res = recycleMany(save, []);
+    expect(res.ok).toBe(true);
+    expect(res.save.guild.equipment).toHaveLength(before);
   });
 });
