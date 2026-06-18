@@ -1,6 +1,30 @@
 @use 'variables' as var;
 
-// 最低限のリセット。body のデフォルト margin で 100dvh とずれるのを防ぐ。
+// ==========================================================
+// モーション トークン（CSS カスタムプロパティ）
+// ==========================================================
+:root {
+  --motion-quick:    140ms cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-base:     220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-emphasis: 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-ink:      320ms cubic-bezier(0.5, 0, 0.2, 1);
+  --motion-page:     260ms cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+// アクセシビリティ: モーション抑制
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-quick:    0ms linear;
+    --motion-base:     0ms linear;
+    --motion-emphasis: 0ms linear;
+    --motion-ink:      0ms linear;
+    --motion-page:     0ms linear;
+  }
+}
+
+// ==========================================================
+// 最低限のリセット
+// ==========================================================
 *,
 *::before,
 *::after {
@@ -33,21 +57,15 @@ body {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   // Android Chrome / デスクトップ Chrome 系でタップ時に発生する半透明青のハイライトを抑止。
-  // ゲーム盤面のような大きな pointer 要素全体が一瞬青くフラッシュする現象が出る。
-  // iOS Safari は自前のフォーカス制御があるので元々目立たないが、明示しておけば全環境で
-  // 統一できる。
   -webkit-tap-highlight-color: transparent;
 }
 
-// .layout は 100svh (最小ビューポート) なので URL バー収納時に layout の下に
-// 隙間が出る。隙間を背景ベースカラーで塗って繋ぎ目を消す。
-// 背景は本家・世界樹の迷宮に寄せたライトグリーン系。
+// 写本の紙地で全体を塗る（URL バー収納時の隙間対策）
 body {
-  background-color: var.$bg-base;
+  background-color: var.$parchment;
 }
 
-// 各ページ（.layout は height:100%）がビューポート全高を使えるよう #root を全高にする。
-// これにより戦闘ログの flex:1 や各画面の margin-top:auto が画面下端まで届く。
+// 各ページが 100dvh を使えるよう #root を全高にする。
 #root {
   height: 100%;
 }

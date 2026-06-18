@@ -38,13 +38,14 @@ type Props = {
 // 単色＋遠近の台形だけで描く軽量な擬似3D一人称視界（3D/WebGL不使用）。
 // 直線上の階段・FOE 等を「正面に見える」形で提示し、マッピングの手がかりにする。
 // 開口部は sky 色を流用するため opening 定数は持たない。
+// 色は写本ダンジョンパレット（_variables.scss $fpv-* と同値）。
 const COLORS = {
-  sky: '#26301c',
-  ceiling: '#3a4a2c',
-  floor: '#5d6b46',
-  wall: '#8b9a6b',
-  frontWall: '#7a8a5c',
-  outline: '#2c3720',
+  sky: '#1A1612', // $fpv-shadow — 通路の影
+  ceiling: '#2A2520', // $fpv-ceiling
+  floor: '#B89255', // $fpv-floor-near（手前の床色）
+  wall: '#544A36', // $fpv-wall-mid
+  frontWall: '#3A3528', // $fpv-wall-near（最濃）
+  outline: '#1A1612', // $fpv-shadow
 };
 
 // 各奥行き境界の縮小率（手前=1、奥ほど小さく）。
@@ -190,7 +191,7 @@ export const FirstPersonView = ({
         const mx = cx;
         const my = (near.b + far.b) / 2 - (near.b - far.b) * 0.1;
         const size = Math.max(14, (near.b - near.t) * 0.22);
-        ctx.fillStyle = alerted ? '#d32f2f' : '#b0533a';
+        ctx.fillStyle = alerted ? '#B22C2C' : '#8A1F1F'; // $vermilion / $vermilion-dark
         ctx.beginPath();
         ctx.arc(mx, my, size, 0, Math.PI * 2);
         ctx.fill();

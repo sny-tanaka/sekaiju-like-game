@@ -3,29 +3,29 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px 16px;
-  background-color: var.$white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px var.$shadow-light;
+  gap: 16px;
+  padding: 16px;
+  background-color: var.$parchment-card;
+  border-radius: 0;
+  border: 0.75px solid var.$rule;
+  box-shadow: 0 1px 3px var.$shadow-ink;
 }
 
 .title {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: var.$text-dark;
+  color: var.$ink;
 }
 
 .sectionTitle {
   margin: 4px 0 0;
   font-size: 14px;
   font-weight: 700;
-  color: var.$text-dark;
-  opacity: 0.65;
+  color: var.$ink-faint;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  border-bottom: 1px solid var.$gray;
+  border-bottom: 0.75px solid var.$rule;
   padding-bottom: 4px;
 }
 
@@ -40,7 +40,7 @@
 .label {
   font-size: 16px;
   font-weight: 600;
-  color: var.$text-dark;
+  color: var.$ink;
   flex-shrink: 0;
 }
 
@@ -51,25 +51,25 @@
   justify-content: center;
   min-width: 88px;
   min-height: 44px;
-  padding: 10px 16px;
-  border: 1px solid var.$gray;
-  border-radius: 12px;
-  background-color: var.$primary;
-  color: var.$white;
+  padding: 8px 16px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$verdant;
+  color: var.$parchment;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 1px 3px var.$shadow-light;
-  transition: transform 0.05s ease;
+  box-shadow: 0 1px 3px var.$shadow-ink;
+  transition: transform var(--motion-quick);
 
   &:active {
     transform: scale(0.97);
   }
 
   &.muted {
-    background-color: var.$gray;
-    color: var.$text-dark;
-    border-color: var.$gray;
+    background-color: var.$parchment-edge;
+    color: var.$ink;
+    border-color: var.$rule;
   }
 }
 
@@ -85,7 +85,7 @@
   flex: 1;
   height: 6px;
   cursor: pointer;
-  accent-color: var.$primary;
+  accent-color: var.$verdant;
 
   // スマホ前提：タップターゲットを広くする
   padding: 12px 0;
@@ -97,9 +97,10 @@
 }
 
 .volumeValue {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
-  font-weight: 600;
-  color: var.$text-dark;
+  font-weight: 700;
+  color: var.$ink;
   min-width: 40px;
   text-align: right;
 }

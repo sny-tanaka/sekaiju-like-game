@@ -110,7 +110,8 @@ export const Page = () => {
       <header className={styles.head}>
         <h1 className={styles.title}>ギルド管理</h1>
         <span className={styles.count}>
-          団員 {members.length} / {GUILD_MEMBER_LIMIT}
+          団員 {members.length}
+          <span className={styles.countLimit}> / {GUILD_MEMBER_LIMIT}</span>
         </span>
       </header>
 

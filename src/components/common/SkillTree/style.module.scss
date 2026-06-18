@@ -1,3 +1,5 @@
+@use 'variables' as var;
+
 .wrap {
   display: flex;
   flex-direction: column;
@@ -8,9 +10,9 @@
   overflow: auto;
   max-height: 440px;
   padding: 8px;
-  border: 1px solid #cfd8c5;
-  border-radius: 8px;
-  background: #f3f7ee;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background: var.$parchment;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -27,12 +29,12 @@
 }
 
 .edge {
-  stroke: #9caa86;
+  stroke: var.$rule;
   stroke-width: 2;
 }
 
 .edgeLabel {
-  fill: #5f7a3a;
+  fill: var.$verdant-dark;
   font-size: 10px;
   font-weight: 700;
 }
@@ -44,32 +46,34 @@
   justify-content: center;
   gap: 3px;
   padding: 4px 6px;
-  border: 1px solid #b9c4ab;
-  border-radius: 7px;
-  background: #ffffff;
-  color: #33402a;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background: var.$parchment-edge;
+  color: var.$ink;
   text-align: left;
   cursor: pointer;
   overflow: hidden;
   box-sizing: border-box;
 }
 
-// 習得済み（緑）
+// 習得済み（製本緑）
 .learned {
-  background: #d8ecc6;
-  border-color: #8db86a;
+  background: var.$verdant;
+  border-color: var.$verdant-dark;
+  color: var.$parchment;
 }
 
-// 最大Lv（金枠）
+// 最大Lv（金箔枠）
 .maxed {
-  border-color: #d4a637;
-  background: #e7efbf;
+  border-color: var.$illumination-gold;
+  background: var.$verdant;
+  color: var.$parchment;
 }
 
-// 習得可能（強調枠＋発光）
+// 習得可能（金箔縁）
 .available {
-  border-color: #4a90d9;
-  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.35);
+  border-color: var.$illumination-gold;
+  box-shadow: 0 0 0 1px rgba(184, 146, 85, 0.4);
 }
 
 // 前提未達（暗く）
@@ -79,7 +83,7 @@
 
 // 選択中
 .selected {
-  outline: 2px solid #ef8a3a;
+  outline: 2px solid var.$illumination-gold;
   outline-offset: 1px;
 }
 
@@ -100,9 +104,9 @@
   right: 4px;
   font-size: 8px;
   font-weight: 700;
-  color: #5f7a3a;
-  background: #eef3e4;
-  border-radius: 4px;
+  color: var.$verdant-dark;
+  background: var.$parchment-card;
+  border-radius: 0;
   padding: 0 3px;
 }
 
@@ -111,7 +115,7 @@
   align-items: center;
   gap: 3px;
   font-size: 9px;
-  color: #5b6b4a;
+  color: var.$ink-faint;
 }
 
 .lvNum {
@@ -123,26 +127,26 @@
 .lvBar {
   flex: 1;
   height: 4px;
-  border-radius: 2px;
-  background: #d4dcc8;
+  border-radius: 0;
+  background: var.$parchment-edge;
   overflow: hidden;
 }
 
 .lvFill {
   display: block;
   height: 100%;
-  background: #6fae46;
+  background: var.$verdant;
 }
 
 .lvMax {
-  color: #97a585;
+  color: var.$illumination-gold-soft;
 }
 
 .detail {
   padding: 8px 10px;
-  border: 1px solid #cfd8c5;
-  border-radius: 8px;
-  background: #fbfdf7;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background: var.$parchment-card;
 }
 
 .detailName {
@@ -150,31 +154,32 @@
   align-items: baseline;
   gap: 8px;
   font-weight: 700;
-  color: #33402a;
+  color: var.$ink;
 }
 
 .detailLv {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: #6b7a58;
+  color: var.$ink-faint;
   font-weight: 600;
 }
 
 .detailDesc {
   margin-top: 3px;
   font-size: 12px;
-  color: #4c5a3c;
+  color: var.$ink-faint;
   line-height: 1.4;
 }
 
 .detailReq {
   margin-top: 4px;
   font-size: 11px;
-  color: #8a6a3a;
+  color: var.$illumination-gold;
 }
 
 .hint {
   font-size: 11px;
-  color: #8a9678;
+  color: var.$ink-faint;
   line-height: 1.4;
 }
 
@@ -183,16 +188,16 @@
   min-height: 44px;
   margin-top: 8px;
   border: none;
-  border-radius: 10px;
-  background-color: #6fae46;
-  color: #fff;
+  border-radius: 0;
+  background-color: var.$verdant;
+  color: var.$parchment;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 
   &:disabled {
-    background-color: #cfd8c5;
-    color: #7a8568;
+    background-color: var.$parchment-edge;
+    color: var.$ink-faint;
     cursor: default;
   }
 }

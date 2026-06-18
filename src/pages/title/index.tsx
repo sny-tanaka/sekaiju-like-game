@@ -64,6 +64,7 @@ export const Page = () => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
+        <p className={styles.chapterMark}>❦ 同見の書</p>
         <h1 className={styles.title}>世界樹ライク</h1>
         <p className={styles.subtitle}>無限タワー探索 RPG</p>
         <button
@@ -145,6 +146,7 @@ export const Page = () => {
           </div>
         ) : (
           <div className={styles.menu}>
+            <p className={styles.menuQuote}>— 樹は今日も、まだ誰も書いていない頁を孕む。—</p>
             {meta !== null && (
               <SaveCard
                 meta={meta}
@@ -158,6 +160,7 @@ export const Page = () => {
             >
               最初から
             </button>
+            <hr className={styles.menuDivider} />
           </div>
         )}
       </main>

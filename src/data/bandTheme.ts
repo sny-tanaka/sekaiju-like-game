@@ -16,61 +16,62 @@ export interface BandTheme {
 }
 
 // 帯ごとのテーマ。配列を巡回して使う（深層でも破綻しない）。
+// 写本(Codex) パレットに統一: 墨/羊皮紙/金箔/緑/朱を帯ごとに比率を変えて配色する。
 export const BAND_THEMES: BandTheme[] = [
-  // 0: 樹海（緑）
+  // 0: 樹海（製本緑＋金箔の床。樹冠の隙間から差す光のイメージ）
   {
     name: '樹海',
-    sky: '#26301c',
-    ceiling: '#3a4a2c',
-    floor: '#5d6b46',
-    wall: '#8b9a6b',
-    frontWall: '#7a8a5c',
-    outline: '#2c3720',
-    mapFloor: '#fbfdf7',
+    sky: '#1F2A1A',
+    ceiling: '#2A4A33',
+    floor: '#8A6A38',
+    wall: '#3F6B4A',
+    frontWall: '#2A4A33',
+    outline: '#21241B',
+    mapFloor: '#F2E9D2',
   },
-  // 1: 洞窟（青灰）
+  // 1: 洞窟（オーク墨の通路。光が乏しい）
   {
     name: '洞窟',
-    sky: '#1c2630',
-    ceiling: '#2c3a4a',
-    floor: '#46586b',
-    wall: '#6b7f9a',
-    frontWall: '#5c708a',
-    outline: '#202c37',
-    mapFloor: '#f5f8fb',
+    sky: '#1A1612',
+    ceiling: '#2D2A22',
+    floor: '#4A4438',
+    wall: '#615C4F',
+    frontWall: '#544A36',
+    outline: '#21241B',
+    mapFloor: '#EDE3CC',
   },
-  // 2: 灼熱（赤茶）
+  // 2: 火山（封蝋朱の煮え立つ通路）
   {
     name: '火山',
-    sky: '#30201c',
-    ceiling: '#4a302c',
-    floor: '#6b4a46',
-    wall: '#9a6f6b',
-    frontWall: '#8a5f5c',
-    outline: '#371f20',
-    mapFloor: '#fdf6f4',
+    sky: '#2A1612',
+    ceiling: '#3A2018',
+    floor: '#6A3D2D',
+    wall: '#8A1F1F',
+    frontWall: '#5A2018',
+    outline: '#21241B',
+    mapFloor: '#F2E9D2',
   },
-  // 3: 氷窟（白青）
+  // 3: 氷窟（青寄り墨、漂白された羊皮紙）
   {
     name: '氷窟',
-    sky: '#243038',
-    ceiling: '#3a4e58',
-    floor: '#5d7682',
-    wall: '#8fb0bd',
-    frontWall: '#7f9fad',
-    outline: '#22343c',
-    mapFloor: '#f4fafd',
+    sky: '#2A2E33',
+    ceiling: '#3D424A',
+    floor: '#7A7E82',
+    wall: '#9AA0A6',
+    frontWall: '#8A8F95',
+    outline: '#21241B',
+    mapFloor: '#F2EFE5',
   },
-  // 4: 霊廟（紫）
+  // 4: 霊廟（金箔の壁＋紫墨の影。聖堂的）
   {
     name: '霊廟',
-    sky: '#2a2030',
-    ceiling: '#3e2c4a',
-    floor: '#5d466b',
-    wall: '#8a6f9a',
-    frontWall: '#7a5f8a',
-    outline: '#2c2237',
-    mapFloor: '#faf4fd',
+    sky: '#1F1A22',
+    ceiling: '#2D2330',
+    floor: '#5C4538',
+    wall: '#B89255',
+    frontWall: '#8A6A38',
+    outline: '#21241B',
+    mapFloor: '#F2E9D2',
   },
 ];
 

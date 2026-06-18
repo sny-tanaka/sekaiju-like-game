@@ -41,7 +41,7 @@ export const BattleExpBar = ({
   fromExp,
   gainedExp,
   start,
-  color = '#ffca28',
+  color = '#B89255', // $illumination-gold
   durationMs = 1000,
 }: Props) => {
   const [progress, setProgress] = useState(0);

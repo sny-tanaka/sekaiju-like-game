@@ -1,4 +1,33 @@
 import type { StorybookConfig } from '@storybook/react-vite';
+import type { Plugin } from 'vite';
+
+/**
+ * PWA が提供する `virtual:pwa-register/react` をストーリーブック用にスタブ化する。
+ * Storybook では PWA プラグインを除外しているため、この仮想モジュールが解決されず
+ * ビルドエラーになる。no-op の useRegisterSW を返して動かなくする。
+ */
+function pwaStubPlugin(): Plugin {
+  const moduleId = 'virtual:pwa-register/react';
+  const resolvedId = `\0${moduleId}`;
+  return {
+    name: 'storybook-pwa-stub',
+    resolveId(id) {
+      if (id === moduleId) return resolvedId;
+    },
+    load(id) {
+      if (id !== resolvedId) return;
+      return `
+        export function useRegisterSW(_opts) {
+          return {
+            needRefresh: [false, () => {}],
+            offlineReady: [false, () => {}],
+            updateServiceWorker: async () => {},
+          };
+        }
+      `;
+    },
+  };
+}
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
@@ -9,11 +38,13 @@ const config: StorybookConfig = {
   // (PWA は本番アプリ用であり Storybook では不要)
   viteFinal: async (viteConfig) => {
     const flat = (await Promise.all((viteConfig.plugins ?? []).flat(Infinity))).flat(Infinity);
-    viteConfig.plugins = flat.filter((plugin) => {
+    const filtered = flat.filter((plugin) => {
       const name =
         plugin && typeof plugin === 'object' && 'name' in plugin ? String(plugin.name) : '';
       return !name.includes('pwa') && !name.includes('workbox');
     });
+    // PWA 仮想モジュールのスタブを先頭に追加
+    viteConfig.plugins = [pwaStubPlugin(), ...filtered];
     return viteConfig;
   },
 };

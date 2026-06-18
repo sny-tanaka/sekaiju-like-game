@@ -1,0 +1,157 @@
+@use 'variables' as var;
+
+// ==========================================================
+// InkSplatter — SVG インク飛沫アニメーション
+// --motion-ink: 320ms cubic-bezier(0.5, 0, 0.2, 1)
+// ==========================================================
+
+.root {
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
+}
+
+// -- 飛沫グループ --
+// 中心から拡散しながらフェードアウト
+.splatGroup {
+  animation: splat-burst var(--motion-ink, 320ms cubic-bezier(0.5, 0, 0.2, 1)) both;
+}
+
+@keyframes splat-burst {
+  0% {
+    transform: scale(0.05);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+// 個別飛沫ドット（微妙なディレイ）
+.splat {
+  animation: splat-dot var(--motion-ink, 320ms cubic-bezier(0.5, 0, 0.2, 1)) var(--splat-delay, 0ms) both;
+}
+
+@keyframes splat-dot {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+// -- ラベルテキスト --
+// 飛沫の後でフェードイン、一定時間表示してフェードアウト
+.label {
+  animation: label-appear 440ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both;
+}
+
+@keyframes label-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(4px);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-3px);
+  }
+}
+
+// -- 封蝋（seal）バリアント --
+.sealCircle {
+  animation: seal-stamp 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: center;
+}
+
+.sealGeo {
+  animation: seal-geo 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both;
+  transform-origin: center;
+}
+
+@keyframes seal-stamp {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes seal-geo {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-15deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+// crit バリアント強調
+.variant-crit {
+  .label {
+    text-shadow:
+      0 0 8px #b22c2c66,
+      0 0 2px #00000088;
+  }
+}
+
+// アクセシビリティ: モーション抑制時はフェードのみ
+@media (prefers-reduced-motion: reduce) {
+  .splatGroup,
+  .splat {
+    animation: none;
+    opacity: 0;
+  }
+
+  .label {
+    animation: label-fade-only 280ms ease both;
+  }
+
+  @keyframes label-fade-only {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .sealCircle,
+  .sealGeo {
+    animation: none;
+    opacity: 1;
+  }
+}

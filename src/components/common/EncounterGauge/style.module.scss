@@ -5,14 +5,16 @@
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  border-radius: 999px;
-  background-color: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 1px 3px var.$shadow-light;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  border: 0.75px solid var.$rule;
+  box-shadow: 0 1px 3px var.$shadow-ink;
 }
 
 .icon {
   font-size: 16px;
   line-height: 1;
+  color: var.$ink;
 }
 
 .segments {
@@ -23,14 +25,14 @@
 .seg {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
-  background-color: var.$gray;
+  border-radius: 0;
+  background-color: var.$parchment-edge;
 }
 
 .filled {
-  background-color: var.$secondary;
+  background-color: var.$verdant;
 }
 
 .danger.filled {
-  background-color: #e53935;
+  background-color: var.$vermilion;
 }

@@ -131,7 +131,7 @@ export const Page = ({ id }: { id: string }) => {
       ) : (
         <section className={styles.card}>
           <h2 className={styles.h2}>種族耐性</h2>
-          <p className={styles.warn}>この種族は特別な耐性を持ちません。</p>
+          <p className={styles.warnCaption}>この種族は特別な耐性を持ちません。</p>
         </section>
       )}
 

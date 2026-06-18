@@ -3,12 +3,13 @@
 .layout {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 20px 16px;
-  overflow-y: auto;
-  color: var.$text-dark;
+  padding: 16px 16px env(safe-area-inset-bottom, 12px);
+  overflow: hidden;
+  color: var.$ink;
+  background-color: var.$parchment;
 }
 
 .head {
@@ -16,34 +17,45 @@
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 0.75px solid var.$rule;
 }
 
 .title {
   margin: 0;
   font-size: 24px;
   font-weight: 900;
+  color: var.$ink;
 }
 
 .count {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
+  color: var.$ink-faint;
+}
+
+.countLimit {
+  font-size: 11px;
   opacity: 0.6;
 }
 
 .create {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   padding: 16px;
-  border-radius: 14px;
-  background-color: var.$white;
-  box-shadow: 0 2px 6px var.$shadow-light;
-  margin-bottom: 20px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  box-shadow: 0 1px 3px var.$shadow-ink;
+  margin-bottom: 16px;
 }
 
 .sectionTitle {
   margin: 0;
   font-size: 15px;
   font-weight: 700;
+  color: var.$ink;
 }
 
 .field {
@@ -51,15 +63,17 @@
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
+  color: var.$ink;
 
   input,
   select {
     min-height: 44px;
     padding: 0 12px;
-    border: 1px solid var.$gray;
-    border-radius: 10px;
+    border: 0.75px solid var.$rule;
+    border-radius: 0;
     font-size: 16px;
-    background-color: var.$white;
+    background-color: var.$parchment;
+    color: var.$ink;
   }
 }
 
@@ -68,27 +82,28 @@
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 8px;
+  background: rgba(33, 36, 27, 0.04);
+  border-radius: 0;
   margin-bottom: 12px;
 }
 
 .previewLabel {
   font-size: 12px;
-  color: #666;
+  color: var.$ink-faint;
 }
 
 .previewName {
   font-size: 14px;
   font-weight: bold;
+  color: var.$ink;
 }
 
 .primary {
   min-height: 48px;
   border: none;
-  border-radius: 10px;
-  background-color: var.$primary;
-  color: var.$white;
+  border-radius: 0;
+  background-color: var.$verdant;
+  color: var.$parchment;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
@@ -101,20 +116,30 @@
 
 .list {
   flex: 1;
+  min-height: 0;
 }
 
 .empty {
   font-size: 14px;
-  opacity: 0.6;
+  color: var.$ink-faint;
+}
+
+// ---- ロスター（内部スクロール） ----
+.roster {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .members {
   list-style: none;
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
 
 .member {
@@ -122,9 +147,12 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  border-top: 0.75px solid var.$rule;
+  background-color: transparent;
+
+  &:last-child {
+    border-bottom: 0.75px solid var.$rule;
+  }
 }
 
 .memberMain {
@@ -154,6 +182,7 @@
 .memberName {
   font-size: 16px;
   font-weight: 700;
+  color: var.$ink;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -163,22 +192,24 @@
   font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
-  border-radius: 999px;
-  background-color: var.$gray;
-  color: var.$text-dark;
+  border-radius: 0;
+  background-color: var.$parchment-edge;
+  color: var.$ink;
 }
 
 .pos_前衛 {
-  background-color: #ffccbc;
+  background-color: rgba(178, 44, 44, 0.12);
+  color: var.$vermilion-dark;
 }
 
 .pos_後衛 {
-  background-color: #c5cae9;
+  background-color: rgba(63, 107, 74, 0.12);
+  color: var.$verdant-dark;
 }
 
 .memberSub {
   font-size: 12px;
-  opacity: 0.7;
+  color: var.$ink-faint;
 }
 
 .posBtns {
@@ -189,16 +220,18 @@
 .posBtn {
   width: 34px;
   min-height: 38px;
-  border: 1px solid var.$gray;
-  border-radius: 8px;
-  background-color: var.$white;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 13px;
   cursor: pointer;
 }
 
 .posBtnActive {
-  border-color: var.$primary;
-  background-color: #e3f2fd;
+  border-color: var.$verdant;
+  background-color: var.$parchment;
+  color: var.$verdant;
   font-weight: 700;
 }
 
@@ -212,26 +245,29 @@
 .tab {
   flex: 1;
   min-height: 44px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .tabActive {
-  border-color: var.$primary;
-  background-color: #e3f2fd;
+  border-color: var.$verdant;
+  background-color: var.$parchment;
+  color: var.$verdant;
 }
 
 // 作成完了メッセージ
 .notice {
   margin: 0;
   padding: 8px 10px;
-  border-radius: 8px;
-  background-color: #eaf5ea;
-  color: #2f6d36;
+  border-radius: 0;
+  border: 0.75px solid var.$verdant;
+  background-color: var.$parchment-card;
+  color: var.$verdant-dark;
   font-size: 13px;
   font-weight: 700;
 }
@@ -241,17 +277,18 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 10px 0;
+  margin: 8px 0;
 }
 
 .filter {
   flex: 1;
   min-width: 120px;
   min-height: 40px;
-  padding: 0 10px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  padding: 0 8px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 13px;
   font-weight: 600;
 }
@@ -259,7 +296,7 @@
 .hint {
   margin: 6px 0 12px;
   font-size: 12px;
-  opacity: 0.65;
+  color: var.$ink-faint;
 }
 
 // ---- パーティー編成スロット ----
@@ -273,7 +310,8 @@
 .slotGroupLabel {
   font-size: 12px;
   font-weight: 800;
-  opacity: 0.7;
+  color: var.$ink-faint;
+  letter-spacing: 0.04em;
 }
 
 .slot {
@@ -282,8 +320,8 @@
   gap: 8px;
   align-items: center;
   min-height: 56px;
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 8px 12px;
+  border-radius: 0;
   text-align: left;
   cursor: pointer;
 }
@@ -300,28 +338,30 @@
 }
 
 .slotFilled {
-  border: 1px solid var.$primary;
-  background-color: #e3f2fd;
+  border: 0.75px solid var.$verdant;
+  background-color: var.$parchment-card;
 }
 
 .slotEmpty {
-  border: 1px dashed var.$gray;
-  background-color: var.$white;
+  border: 0.75px dashed var.$rule;
+  background-color: transparent;
 }
 
 .slotName {
   font-size: 16px;
   font-weight: 700;
+  color: var.$ink;
 }
 
 .slotSub {
   font-size: 12px;
-  opacity: 0.7;
+  color: var.$ink-faint;
 }
 
 .slotPlaceholder {
   font-size: 14px;
   font-weight: 700;
+  color: var.$ink-faint;
   opacity: 0.55;
 }
 
@@ -329,10 +369,10 @@
 .banishBtn {
   min-height: 40px;
   padding: 0 16px;
-  border: 1px solid #e57373;
-  border-radius: 10px;
-  background-color: #fff;
-  color: #c62828;
+  border: 0.75px solid var.$vermilion;
+  border-radius: 0;
+  background-color: transparent;
+  color: var.$vermilion;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -347,26 +387,28 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background-color: rgba(0, 0, 0, 0.45);
+  background-color: rgba(33, 36, 27, 0.45);
 }
 
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   max-width: 420px;
   max-height: 80%;
   overflow-y: auto;
   padding: 16px;
-  border-radius: 16px;
-  background-color: var.$white;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 0.75px solid var.$rule;
+  background-color: var.$parchment-card;
+  box-shadow: 0 6px 24px var.$shadow-ink;
 }
 
 .panelTitle {
   font-size: 16px;
   font-weight: 800;
+  color: var.$ink;
 }
 
 .pickerList {
@@ -383,25 +425,27 @@
   flex-direction: column;
   gap: 2px;
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  padding: 8px 12px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment;
+  color: var.$ink;
   text-align: left;
   cursor: pointer;
 }
 
 .pickerItemActive {
-  border-color: var.$primary;
-  background-color: #e3f2fd;
+  border-color: var.$verdant;
+  background-color: var.$parchment-card;
+  color: var.$verdant-dark;
 }
 
 .removeRow {
   min-height: 44px;
-  border: 1px solid #e57373;
-  border-radius: 10px;
-  background-color: #fff;
-  color: #c62828;
+  border: 0.75px solid var.$vermilion;
+  border-radius: 0;
+  background-color: transparent;
+  color: var.$vermilion;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -409,9 +453,10 @@
 
 .panelClose {
   min-height: 44px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
   background-color: transparent;
+  color: var.$ink;
   font-size: 14px;
   cursor: pointer;
 }
@@ -423,20 +468,22 @@
   width: 100%;
   max-width: 360px;
   padding: 20px 18px;
-  border-radius: 16px;
-  background-color: var.$white;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 0.75px solid var.$rule;
+  background-color: var.$parchment-card;
+  box-shadow: 0 6px 24px var.$shadow-ink;
 }
 
 .confirmText {
   font-size: 15px;
   line-height: 1.5;
   text-align: center;
+  color: var.$ink;
 }
 
 .confirmActions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .confirmCancel,
@@ -444,34 +491,36 @@
   flex: 1;
   min-height: 48px;
   border: none;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .confirmCancel {
-  border: 1px solid var.$gray;
-  background-color: var.$white;
-  color: var.$text-dark;
+  border: 0.75px solid var.$rule;
+  background-color: transparent;
+  color: var.$ink;
 }
 
 .confirmOk {
-  background-color: #c62828;
-  color: var.$white;
+  background-color: var.$vermilion;
+  color: var.$parchment;
 }
 
 .foot {
-  margin-top: 20px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 0.75px solid var.$rule;
 }
 
 .sub {
   width: 100%;
   min-height: 44px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
   background-color: transparent;
-  color: var.$text-dark;
+  color: var.$ink;
   font-size: 14px;
   cursor: pointer;
 }

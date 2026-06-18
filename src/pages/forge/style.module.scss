@@ -3,11 +3,13 @@
 .layout {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 20px 16px;
-  color: var.$text-dark;
+  padding: 16px 16px env(safe-area-inset-bottom, 12px);
+  color: var.$ink;
+  overflow: hidden;
+  background-color: var.$parchment;
 }
 
 .head {
@@ -15,17 +17,22 @@
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.75px solid var.$rule;
 }
 
 .title {
   margin: 0;
   font-size: 24px;
   font-weight: 900;
+  color: var.$ink;
 }
 
 .stock {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   font-weight: 700;
+  color: var.$ink-faint;
 }
 
 .tabs {
@@ -37,28 +44,35 @@
 .tab {
   flex: 1;
   min-height: 44px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .tabActive {
-  border-color: var.$primary;
-  background-color: #e3f2fd;
+  border-color: var.$verdant;
+  background-color: var.$parchment;
+  color: var.$verdant;
 }
 
 .hint {
   margin: 0 0 12px;
-  font-size: 12px;
-  opacity: 0.7;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var.$ink-faint;
 }
 
+// ---- 装備リスト（内部スクロール） ----
 .list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -68,23 +82,47 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
 }
 
 .rowSelected {
-  border-color: var.$primary;
-  background-color: #e3f2fd;
+  border-color: var.$verdant;
+  background-color: var.$parchment;
 }
 
+// ---- カスタム checkbox ----
 .check {
-  width: 20px;
-  height: 20px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   cursor: pointer;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  position: relative;
+
+  &:checked {
+    background-color: var.$verdant;
+    border-color: var.$verdant;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%) rotate(45deg);
+      width: 4px;
+      height: 7px;
+      border-right: 1.5px solid var.$parchment;
+      border-bottom: 1.5px solid var.$parchment;
+    }
+  }
 }
 
 .info {
@@ -96,11 +134,12 @@
 .name {
   font-size: 15px;
   font-weight: 700;
+  color: var.$ink;
 }
 
 .note {
   font-size: 12px;
-  opacity: 0.7;
+  color: var.$ink-faint;
 }
 
 .actions {
@@ -108,17 +147,23 @@
   gap: 6px;
 }
 
+// インゴットボタン（銅・銀・金）— 写本トークン
 .ingot {
   min-height: 38px;
-  padding: 0 10px;
-  border: 1px solid #b08d57;
-  border-radius: 8px;
-  background-color: #f6efe4;
-  color: #7a5b2c;
+  padding: 0 8px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-edge;
+  color: var.$ink-faint;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
+
+  // 押下可能な状態（disabled でない）
+  &:not(:disabled) {
+    color: var.$ink;
+  }
 
   &:disabled {
     opacity: 0.35;
@@ -129,9 +174,10 @@
 .recycle {
   min-height: 38px;
   padding: 0 12px;
-  border: 1px solid var.$gray;
-  border-radius: 8px;
-  background-color: var.$white;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -141,38 +187,39 @@
 .maxed {
   font-size: 13px;
   font-weight: 700;
-  color: #c0392b;
+  color: var.$vermilion;
 }
 
 .empty {
-  opacity: 0.6;
+  color: var.$ink-faint;
   font-size: 14px;
 }
 
+// 一括分解バー — $verdant 地
 .bulkBar {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid var.$primary;
-  border-radius: 10px;
-  background-color: #e3f2fd;
+  padding: 8px 12px;
+  border-radius: 0;
+  background-color: var.$verdant;
 }
 
 .bulkInfo {
   flex: 1;
   font-size: 13px;
   font-weight: 700;
-  color: #1565c0;
+  color: var.$parchment;
 }
 
 .bulkClear {
   min-height: 38px;
   padding: 0 12px;
-  border: 1px solid var.$gray;
-  border-radius: 8px;
-  background-color: var.$white;
+  border: 0.75px solid var.$parchment-edge;
+  border-radius: 0;
+  background-color: transparent;
+  color: var.$parchment;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -182,9 +229,9 @@
   min-height: 38px;
   padding: 0 14px;
   border: none;
-  border-radius: 8px;
-  background-color: var.$primary;
-  color: #fff;
+  border-radius: 0;
+  background-color: var.$verdant-dark;
+  color: var.$parchment;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -192,14 +239,17 @@
 
 .foot {
   margin-top: 16px;
+  padding-top: 12px;
+  border-top: 0.75px solid var.$rule;
 }
 
 .back {
   width: 100%;
   min-height: 44px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
   background-color: transparent;
+  color: var.$ink;
   font-size: 14px;
   cursor: pointer;
 }
@@ -213,7 +263,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background-color: rgba(0, 0, 0, 0.45);
+  background-color: rgba(33, 36, 27, 0.45);
 }
 
 .confirmBox {
@@ -223,21 +273,22 @@
   width: 100%;
   max-width: 360px;
   padding: 20px 18px;
-  border-radius: 16px;
-  background-color: #fff;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 0.75px solid var.$rule;
+  background-color: var.$parchment-card;
+  box-shadow: 0 6px 24px var.$shadow-ink;
 }
 
 .confirmText {
   font-size: 15px;
   line-height: 1.5;
   text-align: center;
-  color: #33402a;
+  color: var.$ink;
 }
 
 .confirmActions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .confirmCancel,
@@ -245,19 +296,37 @@
   flex: 1;
   min-height: 48px;
   border: none;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
 
+// 「やめる」枠線のみ
 .confirmCancel {
-  border: 1px solid #cfd8c5;
-  background-color: #fff;
-  color: #4c5a3c;
+  border: 0.75px solid var.$rule;
+  background-color: transparent;
+  color: var.$ink;
 }
 
+// 「強化する」$verdant 地
 .confirmOk {
-  background-color: #6fae46;
-  color: #fff;
+  background-color: var.$verdant;
+  color: var.$parchment;
+}
+
+// 「分解する」$vermilion 地（取り消せない破壊アクション）
+.confirmOkDanger {
+  background-color: var.$vermilion;
+  color: var.$parchment;
+}
+
+// 強化成功 gold InkSplatter（Phase 2）
+.forgeGold {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  pointer-events: none;
 }

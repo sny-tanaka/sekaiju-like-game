@@ -77,6 +77,23 @@
 - 見た目はヘッドレス Chrome 等でスクリーンショットを撮り、セッション上でユーザーに共有してください。
   - スクリーンショットは git リポジトリ内には保存しないでください。
 
+### 特定画面のスクショ確認は Storybook を使う（Playwright で実ゲームを動かさない）
+
+- 「戦闘画面だけ撮りたい」「装備が入った状態の鍛冶屋を撮りたい」のような **特定状態のページを撮影したい**
+  ときは、**必ず Storybook のページ用ストーリーを使う**。Playwright で実ゲームを起動して「キャラ作成→編成→
+  ダイブ→遭遇」まで自動操作するのは無駄でしかない（IndexedDB / SaveData スキーマ / 遭遇ロジックに依存して
+  毎回壊れる）。
+- 本リポジトリには既に `.storybook/` と `src/__stories__/`（mock SaveData ファクトリ + decorator）と
+  `src/pages/**/*.stories.tsx`（全ページのストーリー）が用意されている。
+  - mock SaveData: `mockEmpty` / `mockWithParty` / `mockMidDive` / `mockPostBoss` / `mockShop` /
+    `mockForge` / `mockBattle` （`src/__stories__/mockSaves.ts`）
+  - decorator: `withGameContext(save, initialScreen?)`（`src/__stories__/decorators.tsx`）
+  - 既存ストーリーで足りない状態が要るときは **`__stories__/mockSaves.ts` に preset を追加**してから新規
+    ストーリーを書く。
+- 撮影は `yarn storybook` を立ち上げ、`http://localhost:6006/iframe.html?id=<story-id>&viewMode=story`
+  に Playwright で goto して `page.screenshot()` するだけ。詳細手順は
+  [dev-docs/screenshot-setup.md](./dev-docs/screenshot-setup.md) の「Storybook を撮る場合」セクション。
+
 ## スクリーンショットの撮影環境構築について
 
 - クラウド実行環境でヘッドレス Chrome を使ってスクリーンショットを撮る手順は

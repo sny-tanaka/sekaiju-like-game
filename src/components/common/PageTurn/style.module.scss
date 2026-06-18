@@ -1,0 +1,62 @@
+@use 'variables' as var;
+
+// ==========================================================
+// PageTurn — 画面遷移ページめくりオーバーレイ
+// --motion-page: 260ms cubic-bezier(0.4, 0, 0.6, 1)
+// ==========================================================
+
+.root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  // PageTurn 自体はレイアウトに影響を与えない
+  display: contents;
+}
+
+// 羊皮紙色のオーバーレイ: 右から左へ wipe
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var.$parchment;
+  pointer-events: none;
+  z-index: 9999;
+  // 右から左へスライドイン → スライドアウト
+  animation: page-wipe var(--motion-page, 260ms cubic-bezier(0.4, 0, 0.6, 1)) both;
+}
+
+@keyframes page-wipe {
+  0% {
+    // 右端から現れる
+    clip-path: inset(0 100% 0 0);
+    opacity: 1;
+  }
+  40% {
+    // 全面を覆う
+    clip-path: inset(0 0% 0 0);
+    opacity: 1;
+  }
+  60% {
+    clip-path: inset(0 0% 0 0);
+    opacity: 1;
+  }
+  100% {
+    // 左端へ退場
+    clip-path: inset(0 0% 0 100%);
+    opacity: 0;
+  }
+}
+
+// アクセシビリティ: モーション抑制時は単純フェード
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: page-fade 200ms ease both;
+    clip-path: none;
+  }
+
+  @keyframes page-fade {
+    0% { opacity: 0; }
+    30% { opacity: 0.7; }
+    70% { opacity: 0.7; }
+    100% { opacity: 0; }
+  }
+}

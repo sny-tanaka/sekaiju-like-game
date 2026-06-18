@@ -1,17 +1,65 @@
-// colors
-$black: #000000;
-$gray: #e5e5e5;
-$white: #ffffff;
-$primary: #2196f3;
-$secondary: #00bcd4;
-$text-dark: #2c3e50;
-$shadow-light: rgba(0, 0, 0, 0.1);
+// ==========================================================
+// 写本 (Illuminated Codex) カラーパレット
+// ==========================================================
 
-// 背景ベースカラー（本家・世界樹の迷宮に寄せたライトグリーン系）
-$bg-base: #e7f1d3;
-$bg-base-edge: #dcebc2; // ビューポート末端の繋ぎ目用（少し濃いめ）
+// --- 基本紙色 ---
+$parchment:      #EDE3CC; // 紙の地
+$parchment-edge: #D4C7A8; // 紙の縁
+$parchment-card: #F2E9D2; // カード地
 
+// --- 墨 ---
+$ink:       #21241B; // 墨 (本文)
+$ink-faint: #5A4F36; // 墨 (薄)
+
+// --- 製本緑 ---
+$verdant:      #3F6B4A; // 製本緑 (主) — メニュー前進色
+$verdant-dark: #2A4A33; // 製本緑 (濃)
+
+// --- 金箔 ---
+$illumination-gold:      #B89255; // 金箔 (重要数値)
+$illumination-gold-soft: #D4B47A; // 金箔 (淡)
+
+// --- 封蝋朱 ---
+$vermilion:      #B22C2C; // 封蝋朱 (危険)
+$vermilion-dark: #8A1F1F; // 封蝋朱 (濃)
+
+// --- 罫線・影 ---
+$rule:       rgba(33, 36, 27, 0.9); // 罫線
+$shadow-ink: rgba(33, 36, 27, 0.15); // 影
+
+// --- 意味的エイリアス ---
+$color-success: $verdant;
+$color-danger:  $vermilion;
+$color-warning: $illumination-gold;
+$color-info:    $verdant-dark;
+
+// ==========================================================
+// 旧変数との互換エイリアス（段階的移行中）
+// ==========================================================
+$black:        #000000;
+$white:        $parchment-card; // 白地 → カード地へ
+$gray:         $parchment-edge; // グレー枠 → 紙縁へ
+$primary:      $verdant;        // 青 → 製本緑へ
+$secondary:    $illumination-gold; // シアン → 金箔へ
+$text-dark:    $ink;            // テキスト → 墨へ
+$bg-base:      $parchment;      // 背景 → 紙地へ
+$bg-base-edge: $parchment-edge; // 背景縁 → 紙縁へ
+$shadow-light: $shadow-ink;     // 影 → インク影へ
+
+// ==========================================================
+// FirstPersonView 用の写本ダンジョン色
+// ==========================================================
+$fpv-wall-near:  #3A3528;
+$fpv-wall-mid:   #544A36;
+$fpv-wall-far:   #7A6E4F;
+$fpv-floor-near: #B89255;
+$fpv-floor-far:  #8A6A38;
+$fpv-ceiling:    #2A2520;
+$fpv-shadow:     #1A1612;
+
+// ==========================================================
 // responsive
+// ==========================================================
 $breakpoint: (
   sp: 'screen and (max-width: 991px)',
 );

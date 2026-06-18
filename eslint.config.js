@@ -8,7 +8,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['node_modules/', 'docs/', 'dist/', 'coverage/', '.claude/'] },
+  { ignores: ['node_modules/', 'docs/', 'dist/', 'coverage/', '.claude/', 'storybook-static/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

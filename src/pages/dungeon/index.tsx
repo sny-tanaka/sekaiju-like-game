@@ -244,8 +244,11 @@ export const Page = () => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
-        <div className={styles.depth}>
-          {dive.depth}F <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
+        <div className={styles.depthWrap}>
+          <span className={styles.depthChapterMark}>❦ 探索</span>
+          <div className={styles.depth}>
+            {dive.depth}F <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
+          </div>
         </div>
         <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
         <button

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { MenuButton } from '@/components/common/MenuButton/MenuButton';
 import { startDive } from '@/domain/dive';
 import { useGameState } from '@/store/gameState';
@@ -14,6 +15,8 @@ export const Page = () => {
   const { save, exitToTitle, applyAndPersist } = useGameState();
   const play = useSfx();
   const [warpOpen, setWarpOpen] = useState(false);
+  // ダイブ開始 封蝋スタンプ演出（Phase 2）。早期リターンより前に置く必要あり。
+  const [sealActive, setSealActive] = useState(false);
 
   // セーブが無い状態で直接来たらタイトルへ
   if (!save) {
@@ -35,6 +38,9 @@ export const Page = () => {
     play('dive');
     if (!diveState) {
       await applyAndPersist((s) => startDive(s, 1));
+      // 封蝋スタンプ演出（Phase 2）: 300ms 待ってからダンジョンへ遷移
+      setSealActive(true);
+      await new Promise((r) => setTimeout(r, 320));
     }
     navigate({ name: 'dungeon' });
   };
@@ -51,18 +57,19 @@ export const Page = () => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
+        <p className={styles.chapterMark}>❦ 拠点</p>
         <div className={styles.guildName}>{guild.name}</div>
         <dl className={styles.stats}>
           <div>
             <dt>所持金</dt>
             <dd>{guild.gold} G</dd>
           </div>
-          <div>
-            <dt>最高到達</dt>
-            <dd>
-              {towerState.record.deepestReached > 0 ? `${towerState.record.deepestReached}F` : '-'}
-            </dd>
-          </div>
+          {towerState.record.deepestReached > 0 && (
+            <div>
+              <dt>最高到達</dt>
+              <dd>{towerState.record.deepestReached}F</dd>
+            </div>
+          )}
           <div>
             <dt>団員</dt>
             <dd>{guild.members.length}人</dd>
@@ -176,6 +183,21 @@ export const Page = () => {
               とじる
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {/* ダイブ開始 封蝋スタンプ（Phase 2） */}
+      {sealActive ? (
+        <div
+          className={styles.sealOverlay}
+          aria-hidden="true"
+        >
+          <InkSplatter
+            value="潜行"
+            variant="seal"
+            size={120}
+            onDone={() => setSealActive(false)}
+          />
         </div>
       ) : null}
     </div>

@@ -6,6 +6,7 @@ import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
+import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
@@ -204,6 +205,13 @@ export const Page = () => {
   const [anim, setAnim] = useState<Anim | null>(null);
   // ダメージを受けたカードの点滅対象 ID（issue #18）。
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
+  // InkSplatter: ID → { value, variant } のマップ（Phase 2）。
+  // ログ行が表示されるたびに被弾者のダメージ量を記録し、アニメ終了後に削除。
+  const [inkSplatters, setInkSplatters] = useState<
+    Map<string, { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }>
+  >(new Map());
+  // 勝利演出の gold InkSplatter（Phase 2）。
+  const [showVictoryGold, setShowVictoryGold] = useState(false);
   // エンカウント/戦闘終了の暗転エフェクト（issue #18）。
   const [introFx, setIntroFx] = useState(true);
   const [outroFx, setOutroFx] = useState<'win' | 'lose' | 'fled' | null>(null);
@@ -211,6 +219,10 @@ export const Page = () => {
   const [levelQueue, setLevelQueue] = useState<LevelUpResult[]>([]);
   // 経験値バーのアニメーションが完了したか（issue #52: バーが伸び切ってからレベルアップ）。
   const [expDone, setExpDone] = useState(false);
+  // 戦闘ログの bottom-sheet 高さ（px）。ハンドルをドラッグして高さを変えられる。
+  // 既定はハンドルのみ見える 54px。スナップは [54, 240, window.innerHeight * 0.85]。
+  const [logHeight, setLogHeight] = useState(54);
+  const logDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -260,6 +272,7 @@ export const Page = () => {
       setUnionSetup(null);
       setActiveId(null);
       setFlashIds(new Set());
+      setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
       setAnim(final.log.length > 0 ? { base, revealed: 0 } : null);
     },
@@ -283,6 +296,7 @@ export const Page = () => {
       const t = setTimeout(() => {
         setAnim(null);
         setFlashIds(new Set());
+        setInkSplatters(new Map());
       }, 200);
       return () => clearTimeout(t);
     }
@@ -292,13 +306,33 @@ export const Page = () => {
         const cur = state.log[idx]?.snapshot;
         const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
         const fl = new Set<string>();
+        const nextSplatters = new Map<
+          string,
+          { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }
+        >();
         if (cur) {
           for (const id of Object.keys(cur)) {
             const p = prev?.[id];
-            if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) fl.add(id);
+            if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) {
+              fl.add(id);
+              // InkSplatter: HP 差をダメージ値として表示
+              const dmg = Math.round(p.hp - cur[id].hp);
+              const logText = state.log[idx]?.text ?? '';
+              const isCrit = logText.includes('（会心）');
+              const isHeal = logText.includes('回復') && cur[id].hp > p.hp;
+              nextSplatters.set(id, {
+                value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
+                variant: isHeal ? 'heal' : isCrit ? 'crit' : 'damage',
+              });
+            } else if (p && cur[id].hp > p.hp) {
+              // HP 回復
+              const healed = Math.round(cur[id].hp - p.hp);
+              nextSplatters.set(id, { value: healed, variant: 'heal' });
+            }
           }
         }
         setFlashIds(fl);
+        setInkSplatters(nextSplatters);
         setAnim({ ...anim, revealed: anim.revealed + 1 });
       },
       anim.revealed === 0 ? 240 : 540
@@ -325,6 +359,14 @@ export const Page = () => {
     );
     return () => clearTimeout(t);
   }, [state?.outcome, anim, expResults]);
+
+  // 勝利時に gold InkSplatter を一時表示（Phase 2）。早期リターン前に置く必要あり。
+  useEffect(() => {
+    if (state?.outcome !== 'win' || anim) return;
+    setShowVictoryGold(true);
+    const t = setTimeout(() => setShowVictoryGold(false), 500);
+    return () => clearTimeout(t);
+  }, [state?.outcome, anim]);
 
   // 戦闘終了 SE（outcome が確定し、anim が終わったタイミングで1回鳴らす）。
   const prevOutcomeRef = useRef<string | null>(null);
@@ -754,6 +796,10 @@ export const Page = () => {
     return char ? (CLASSES[char.classId]?.name ?? '') : '';
   };
 
+  // カード右上バッジ用の頭文字 1 文字（戦士=戦/薬師=薬/魔導士=魔...）。
+  // 9 職業すべて頭文字が一意のため衝突なし。
+  const classInitialOf = (ally: Combatant): string => classNameOf(ally).slice(0, 1);
+
   // 味方の作戦短縮ラベル（issue #61）。
   const strategyShortLabelOf = (ally: Combatant): string => {
     const char = save.guild.members.find((m) => m.id === ally.id);
@@ -845,6 +891,33 @@ export const Page = () => {
           }
         }}
       >
+        {/* InkSplatter — 被弾/回復時に重ね描画（Phase 2） */}
+        {inkSplatters.has(a.id) &&
+          (() => {
+            const splat = inkSplatters.get(a.id)!;
+            return (
+              <div
+                className={styles.inkOverlay}
+                aria-hidden="true"
+              >
+                <InkSplatter
+                  value={splat.value}
+                  variant={splat.variant}
+                  size={64}
+                  onDone={() =>
+                    setInkSplatters((prev) => {
+                      const next = new Map(prev);
+                      next.delete(a.id);
+                      return next;
+                    })
+                  }
+                />
+              </div>
+            );
+          })()}
+        {/* 職業バッジ（右上に固定） */}
+        {!a.isSummon ? <span className={styles.jobBadge}>{classInitialOf(a)}</span> : null}
+        {/* 立ち絵 + 名前 + 作戦短縮（横並び） */}
         <div className={styles.cardHeader}>
           {!a.isSummon &&
             (() => {
@@ -859,29 +932,26 @@ export const Page = () => {
               ) : null;
             })()}
           <div className={styles.cardHeaderText}>
-            <div className={styles.cardName}>
+            <span className={styles.cardName}>
               <span className={styles.cardNameText}>{a.name}</span>
               <span className={styles.cardMarks}>
                 {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
                 {ailmentMark(a)}
               </span>
-            </div>
-            <div className={styles.cardJob}>
-              {classNameOf(a)}
-              <span className={styles.cardStrategy}>[{strategyShortLabelOf(a)}]</span>
-            </div>
+            </span>
+            <span className={styles.cardStrategy}>{strategyShortLabelOf(a)}</span>
           </div>
         </div>
         <StatBar
           value={d.hp}
           max={a.maxHp}
-          color="#4caf50"
+          color={d.hp / a.maxHp <= 0.3 ? '#B22C2C' : '#3F6B4A'} // $vermilion / $verdant (≤30%)
           showValue={false}
         />
         <StatBar
           value={a.tp}
           max={a.maxTp}
-          color="#2196f3"
+          color="#B89255" // $illumination-gold
           showValue={false}
         />
         <div className={styles.cardNums}>
@@ -892,7 +962,7 @@ export const Page = () => {
           <StatBar
             value={a.unionGauge}
             max={100}
-            color="#ff9800"
+            color="#B89255" // $illumination-gold
             showValue={false}
           />
           <span className={styles.gaugeLabel}>U {a.unionGauge}%</span>
@@ -907,6 +977,8 @@ export const Page = () => {
 
   return (
     <div className={styles.layout}>
+      {/* 章マーカー */}
+      <p className={styles.chapterMark}>❦ 戦闘</p>
       {/* 敵 */}
       <div className={styles.enemies}>
         {state.enemies.map((e) => {
@@ -922,6 +994,30 @@ export const Page = () => {
               disabled={e.isDown || !!anim || isAllyTargeting}
               onClick={() => setTargetId(e.id)}
             >
+              {/* InkSplatter — 敵への命中時（Phase 2） */}
+              {inkSplatters.has(e.id) &&
+                (() => {
+                  const splat = inkSplatters.get(e.id)!;
+                  return (
+                    <div
+                      className={styles.inkOverlay}
+                      aria-hidden="true"
+                    >
+                      <InkSplatter
+                        value={splat.value}
+                        variant={splat.variant}
+                        size={56}
+                        onDone={() =>
+                          setInkSplatters((prev) => {
+                            const next = new Map(prev);
+                            next.delete(e.id);
+                            return next;
+                          })
+                        }
+                      />
+                    </div>
+                  );
+                })()}
               <span className={styles.enemyName}>
                 <span className={styles.enemyNameText}>{e.name}</span>
                 <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
@@ -929,7 +1025,7 @@ export const Page = () => {
               <StatBar
                 value={d.hp}
                 max={e.maxHp}
-                color="#e57373"
+                color="#B22C2C" // $vermilion
                 showValue={false}
               />
               {/* §16: 選択中の敵の耐性コンパクト表示 */}
@@ -963,7 +1059,7 @@ export const Page = () => {
                 <StatBar
                   value={d.hp}
                   max={s.maxHp}
-                  color="#8d6e63"
+                  color="#5A4F36" // $ink-faint
                   showValue={false}
                 />
                 <span className={styles.summonHp}>HP {Math.max(0, d.hp)}</span>
@@ -977,10 +1073,12 @@ export const Page = () => {
       <div className={styles.party}>
         <div className={styles.rowTag}>前衛</div>
         <div className={styles.cardRow}>{front.map(renderCard)}</div>
-        <div className={styles.rowTag}>後衛（近接ダメージ -30%）</div>
-        <div className={styles.cardRow}>
-          {back.length > 0 ? back.map(renderCard) : <div className={styles.empty}>（なし）</div>}
-        </div>
+        {back.length > 0 && (
+          <>
+            <div className={styles.rowTag}>後衛（近接ダメージ -30%）</div>
+            <div className={styles.cardRow}>{back.map(renderCard)}</div>
+          </>
+        )}
       </div>
 
       {/* コマンド入力 / 実行 / 結果（再生中は再生コントロールのみ） */}
@@ -1008,6 +1106,19 @@ export const Page = () => {
                   ? '逃走した'
                   : '全滅...'}
             </div>
+            {/* 勝利時 gold InkSplatter（Phase 2） */}
+            {showVictoryGold ? (
+              <div
+                className={styles.victoryGold}
+                aria-hidden="true"
+              >
+                <InkSplatter
+                  value={`${rewards.gold}G`}
+                  variant="gold"
+                  size={72}
+                />
+              </div>
+            ) : null}
             {state.outcome === 'win' ? (
               <>
                 <div className={styles.resultBody}>
@@ -1064,7 +1175,13 @@ export const Page = () => {
                 {BATTLE_SKILLS[allyTargetMenu!]?.name ?? 'スキル'}: 味方をタップで対象を選択
               </div>
             ) : (
-              <div className={styles.target}>対象: {targetName}（敵をタップで変更）</div>
+              <div className={styles.target}>
+                <span className={styles.targetMark}>❦ 対象</span>
+                <span>
+                  <span className={styles.targetName}>{targetName}</span>
+                  <span className={styles.targetHint}>（敵をタップで変更）</span>
+                </span>
+              </div>
             ))}
 
           {/* ---- 全体行動選択UI（uiMode.kind === 'global'） ---- */}
@@ -1473,24 +1590,74 @@ export const Page = () => {
         </div>
       )}
 
-      {/* ログ（最下部・残りエリアを使用）。再生中は revealed 行までを順に表示する。 */}
-      <div className={styles.log}>
-        {(() => {
-          const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-          if (visible.length === 0) {
-            return (
-              <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
-            );
-          }
-          return visible.map((l, i) => (
-            <div
-              key={i}
-              className={`${styles.logLine} ${anim && i === visible.length - 1 ? styles.logLineNew : ''}`}
-            >
-              {l.text}
-            </div>
-          ));
-        })()}
+      {/* 戦闘ログ（下から引っ張り上げる bottom sheet）。
+          墨色ハンドルをドラッグして高さを変えられる。タップで 3 段スナップを巡回。
+          再生中は revealed 行までを順に表示する。 */}
+      <div
+        className={styles.log}
+        style={{ height: `${logHeight}px` }}
+      >
+        <div
+          className={styles.logHandle}
+          role="slider"
+          aria-label="戦闘ログの高さ"
+          aria-valuenow={Math.round(logHeight)}
+          aria-valuemin={54}
+          aria-valuemax={Math.round(window.innerHeight * 0.92)}
+          tabIndex={0}
+          onPointerDown={(e) => {
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+            logDragRef.current = { startY: e.clientY, startHeight: logHeight };
+          }}
+          onPointerMove={(e) => {
+            const drag = logDragRef.current;
+            if (!drag) return;
+            const dy = drag.startY - e.clientY; // 上方向で正
+            const next = Math.max(54, Math.min(window.innerHeight * 0.92, drag.startHeight + dy));
+            setLogHeight(next);
+          }}
+          onPointerUp={(e) => {
+            const drag = logDragRef.current;
+            if (!drag) return;
+            logDragRef.current = null;
+            const moved = Math.abs(e.clientY - drag.startY);
+            // ドラッグでほぼ動いていなければタップ扱い: スナップ巡回
+            const snaps = [54, 240, Math.round(window.innerHeight * 0.85)];
+            if (moved < 6) {
+              const idx = snaps.findIndex((s) => Math.abs(s - logHeight) <= 8);
+              setLogHeight(snaps[(idx + 1) % snaps.length]);
+            } else {
+              const nearest = snaps.reduce((b, s) =>
+                Math.abs(s - logHeight) < Math.abs(b - logHeight) ? s : b
+              );
+              setLogHeight(nearest);
+            }
+          }}
+        >
+          <span
+            className={styles.logHandleBar}
+            aria-hidden
+          />
+          <span className={styles.logHandleLabel}>戦闘ログ</span>
+        </div>
+        <div className={styles.logBody}>
+          {(() => {
+            const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
+            if (visible.length === 0) {
+              return (
+                <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
+              );
+            }
+            return visible.map((l, i) => (
+              <div
+                key={i}
+                className={`${styles.logLine} ${anim && i === visible.length - 1 ? styles.logLineNew : ''}`}
+              >
+                {l.text}
+              </div>
+            ));
+          })()}
+        </div>
       </div>
 
       {/* レベルアップダイアログ（issue #18）。レベルアップしたキャラを順に表示する。 */}
@@ -1500,6 +1667,17 @@ export const Page = () => {
             return (
               <div className={styles.dialogOverlay}>
                 <div className={styles.dialog}>
+                  {/* レベルアップ gold InkSplatter（Phase 2） */}
+                  <div
+                    className={styles.levelUpGold}
+                    aria-hidden="true"
+                  >
+                    <InkSplatter
+                      value={`Lv${r.toLevel}`}
+                      variant="gold"
+                      size={72}
+                    />
+                  </div>
                   <div className={styles.dialogTitle}>レベルアップ！</div>
                   <div className={styles.dialogName}>
                     {r.name} は Lv{r.fromLevel} → <strong>Lv{r.toLevel}</strong> になった！
