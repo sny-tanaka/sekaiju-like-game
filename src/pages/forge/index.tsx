@@ -10,6 +10,7 @@ import {
   forgeWithIngot,
   recycle,
   recycleFragments,
+  recycleMany,
   type IngotType,
 } from '@/domain/forge';
 import { useGameState } from '@/store/gameState';
@@ -18,7 +19,8 @@ import { Redirect, useNavigation } from '@/store/navigation';
 // 確認待ちの操作（タップ1回での誤強化/誤分解を防ぐ。確認ダイアログ経由でのみ実行）。
 type Pending =
   | { kind: 'forge'; instanceId: string; ingot: IngotType; name: string; ingotLabel: string }
-  | { kind: 'recycle'; id: string; name: string };
+  | { kind: 'recycle'; id: string; name: string }
+  | { kind: 'recycleBulk'; ids: string[]; totalFragments: number };
 
 // 鍛冶屋（[04 §4]）。所有装備（個体）の強化（インゴット消費）とリサイクル。
 export const Page = () => {
@@ -27,6 +29,8 @@ export const Page = () => {
   const play = useSfx();
   const [tab, setTab] = useState<'forge' | 'recycle'>('forge');
   const [pending, setPending] = useState<Pending | null>(null);
+  // リサイクル一括選択（タブ切替で破棄）。
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
@@ -36,14 +40,35 @@ export const Page = () => {
   const fragments = save.forgeInventory.fragments.common ?? 0;
   const pool = save.guild.equipment;
 
+  const toggleSelect = (id: string) => {
+    play('cursor');
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelected(new Set());
+
+  const switchTab = (t: 'forge' | 'recycle') => {
+    play('cursor');
+    setTab(t);
+    clearSelection();
+  };
+
   // 確認ダイアログで「はい」を押したときだけ実際に強化/分解を確定する。
   const confirmPending = () => {
     if (!pending) return;
     play(pending.kind === 'forge' ? 'forge' : 'recycle');
     if (pending.kind === 'forge') {
       void applyAndPersist((s) => forgeWithIngot(s, pending.instanceId, pending.ingot).save);
-    } else {
+    } else if (pending.kind === 'recycle') {
       void applyAndPersist((s) => recycle(s, pending.id).save);
+    } else {
+      void applyAndPersist((s) => recycleMany(s, pending.ids).save);
+      clearSelection();
     }
     setPending(null);
   };
@@ -80,20 +105,14 @@ export const Page = () => {
         <button
           type="button"
           className={`${styles.tab} ${tab === 'forge' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('forge');
-          }}
+          onClick={() => switchTab('forge')}
         >
           強化
         </button>
         <button
           type="button"
           className={`${styles.tab} ${tab === 'recycle' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('recycle');
-          }}
+          onClick={() => switchTab('recycle')}
         >
           リサイクル
         </button>
@@ -102,7 +121,7 @@ export const Page = () => {
       <p className={styles.hint}>
         {tab === 'forge'
           ? 'インゴットで装備を強化（最大 +5）。銅+1・銀+3・金+5。'
-          : '不要な装備を断片に変換。断片10個で銅インゴット1個になる。'}
+          : '不要な装備を断片に変換。断片10個で銅インゴット1個になる。チェックで複数選択 → 一括分解。'}
       </p>
 
       <div className={styles.list}>
@@ -112,11 +131,21 @@ export const Page = () => {
           pool.map((e) => {
             const eq = EQUIPMENT[e.masterId];
             const maxed = e.forgeLevel >= FORGE.MAX_LEVEL;
+            const isSelected = selected.has(e.id);
             return (
               <div
                 key={e.id}
-                className={styles.row}
+                className={`${styles.row} ${tab === 'recycle' && isSelected ? styles.rowSelected : ''}`}
               >
+                {tab === 'recycle' && (
+                  <input
+                    type="checkbox"
+                    className={styles.check}
+                    checked={isSelected}
+                    onChange={() => toggleSelect(e.id)}
+                    aria-label={`${equipDisplayName(e)} を選択`}
+                  />
+                )}
                 <div className={styles.info}>
                   <span className={styles.name}>{equipDisplayName(e)}</span>
                   <span className={styles.note}>{eq?.slot}</span>
@@ -150,6 +179,38 @@ export const Page = () => {
         )}
       </div>
 
+      {/* リサイクル: 選択中の一括分解バー */}
+      {tab === 'recycle' && selected.size > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkInfo}>
+            {selected.size} 件選択 ・ 断片+
+            {pool
+              .filter((e) => selected.has(e.id))
+              .reduce((s, e) => s + recycleFragments(e.masterId), 0)}
+          </span>
+          <button
+            type="button"
+            className={styles.bulkClear}
+            onClick={clearSelection}
+          >
+            解除
+          </button>
+          <button
+            type="button"
+            className={styles.bulkRecycle}
+            onClick={() => {
+              const ids = pool.filter((e) => selected.has(e.id)).map((e) => e.id);
+              const totalFragments = pool
+                .filter((e) => selected.has(e.id))
+                .reduce((s, e) => s + recycleFragments(e.masterId), 0);
+              setPending({ kind: 'recycleBulk', ids, totalFragments });
+            }}
+          >
+            一括分解
+          </button>
+        </div>
+      )}
+
       <footer className={styles.foot}>
         <button
           type="button"
@@ -175,9 +236,15 @@ export const Page = () => {
                 <>
                   <strong>{pending.name}</strong> を{pending.ingotLabel}インゴットで強化しますか？
                 </>
-              ) : (
+              ) : pending.kind === 'recycle' ? (
                 <>
                   <strong>{pending.name}</strong> を分解しますか？（装備は失われます）
+                </>
+              ) : (
+                <>
+                  選択した <strong>{pending.ids.length} 件</strong> の装備を分解しますか？
+                  <br />
+                  （断片 +{pending.totalFragments}・装備は失われます）
                 </>
               )}
             </div>
@@ -197,7 +264,11 @@ export const Page = () => {
                 className={styles.confirmOk}
                 onClick={confirmPending}
               >
-                {pending.kind === 'forge' ? '強化する' : '分解する'}
+                {pending.kind === 'forge'
+                  ? '強化する'
+                  : pending.kind === 'recycleBulk'
+                    ? '一括分解する'
+                    : '分解する'}
               </button>
             </div>
           </div>

@@ -142,6 +142,20 @@ export function recycle(save: SaveData, instanceId: string): ForgeResult {
   };
 }
 
+/**
+ * 複数の装備個体を一括分解する（純粋）。
+ * 内部的に recycle を順次適用するため、断片→銅インゴットの繰り上げも自然に行われる。
+ * 未知の instanceId はスキップ（途中で失敗扱いにしない）。
+ */
+export function recycleMany(save: SaveData, instanceIds: string[]): ForgeResult {
+  let cur = save;
+  for (const id of instanceIds) {
+    const r = recycle(cur, id);
+    if (r.ok) cur = r.save;
+  }
+  return { ok: true, save: cur };
+}
+
 /** 表示用: 装備名（+N 付き）。 */
 export function equipDisplayName(inst: EquipInstance): string {
   const base = EQUIPMENT[inst.masterId]?.name ?? inst.masterId;
