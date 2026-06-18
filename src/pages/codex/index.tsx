@@ -37,6 +37,7 @@ export const Page = () => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
+        <p className={styles.chapterMark}>❦ 台帳</p>
         <h1 className={styles.title}>図鑑 / 記録</h1>
       </header>
 

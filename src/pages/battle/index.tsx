@@ -875,13 +875,13 @@ export const Page = () => {
         <StatBar
           value={d.hp}
           max={a.maxHp}
-          color="#4caf50"
+          color={d.hp / a.maxHp <= 0.3 ? '#B22C2C' : '#3F6B4A'} // $vermilion / $verdant (≤30%)
           showValue={false}
         />
         <StatBar
           value={a.tp}
           max={a.maxTp}
-          color="#2196f3"
+          color="#B89255" // $illumination-gold
           showValue={false}
         />
         <div className={styles.cardNums}>
@@ -892,7 +892,7 @@ export const Page = () => {
           <StatBar
             value={a.unionGauge}
             max={100}
-            color="#ff9800"
+            color="#B89255" // $illumination-gold
             showValue={false}
           />
           <span className={styles.gaugeLabel}>U {a.unionGauge}%</span>
@@ -907,6 +907,8 @@ export const Page = () => {
 
   return (
     <div className={styles.layout}>
+      {/* 章マーカー */}
+      <p className={styles.chapterMark}>❦ 戦闘</p>
       {/* 敵 */}
       <div className={styles.enemies}>
         {state.enemies.map((e) => {
@@ -929,7 +931,7 @@ export const Page = () => {
               <StatBar
                 value={d.hp}
                 max={e.maxHp}
-                color="#e57373"
+                color="#B22C2C" // $vermilion
                 showValue={false}
               />
               {/* §16: 選択中の敵の耐性コンパクト表示 */}
@@ -963,7 +965,7 @@ export const Page = () => {
                 <StatBar
                   value={d.hp}
                   max={s.maxHp}
-                  color="#8d6e63"
+                  color="#5A4F36" // $ink-faint
                   showValue={false}
                 />
                 <span className={styles.summonHp}>HP {Math.max(0, d.hp)}</span>

@@ -3,11 +3,13 @@
 .layout {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 20px 16px;
-  color: var.$text-dark;
+  padding: 16px 16px env(safe-area-inset-bottom, 12px);
+  color: var.$ink;
+  overflow: hidden;
+  background-color: var.$parchment;
 }
 
 .head {
@@ -15,17 +17,22 @@
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.75px solid var.$rule;
 }
 
 .title {
   margin: 0;
   font-size: 24px;
   font-weight: 900;
+  color: var.$ink;
 }
 
 .gold {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 16px;
   font-weight: 700;
+  color: var.$illumination-gold;
 }
 
 .tabs {
@@ -37,17 +44,19 @@
 .tab {
   flex: 1;
   min-height: 44px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .tabActive {
-  border-color: var.$primary;
-  background-color: #e3f2fd;
+  border-color: var.$verdant;
+  background-color: var.$parchment;
+  color: var.$verdant;
 }
 
 // カテゴリ絞り込み＋並び替え
@@ -67,18 +76,19 @@
 .chip {
   min-height: 34px;
   padding: 0 12px;
-  border: 1px solid var.$gray;
-  border-radius: 999px;
-  background-color: var.$white;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .chipActive {
-  border-color: var.$primary;
-  background-color: #e3f2fd;
-  color: var.$primary;
+  border-color: var.$verdant;
+  background-color: var.$parchment;
+  color: var.$verdant;
 }
 
 .sortRow {
@@ -90,24 +100,29 @@
 .sortLabel {
   font-size: 13px;
   font-weight: 700;
-  opacity: 0.7;
+  color: var.$ink-faint;
 }
 
 .sort {
   flex: 1;
   min-height: 40px;
-  padding: 0 10px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  padding: 0 8px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
 
+// ---- 商品リスト（内部スクロール） ----
 .list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -117,11 +132,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
-  background-color: var.$white;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
 }
 
 .info {
@@ -133,20 +148,21 @@
 .name {
   font-size: 15px;
   font-weight: 700;
+  color: var.$ink;
 }
 
 .note {
   font-size: 12px;
-  opacity: 0.7;
+  color: var.$ink-faint;
 }
 
 .action {
   min-height: 40px;
   padding: 0 14px;
   border: none;
-  border-radius: 10px;
-  background-color: var.$primary;
-  color: var.$white;
+  border-radius: 0;
+  background-color: var.$verdant;
+  color: var.$parchment;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -159,20 +175,23 @@
 }
 
 .empty {
-  opacity: 0.6;
+  color: var.$ink-faint;
   font-size: 14px;
 }
 
 .foot {
   margin-top: 16px;
+  padding-top: 12px;
+  border-top: 0.75px solid var.$rule;
 }
 
 .back {
   width: 100%;
   min-height: 44px;
-  border: 1px solid var.$gray;
-  border-radius: 10px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
   background-color: transparent;
+  color: var.$ink;
   font-size: 14px;
   cursor: pointer;
 }
@@ -186,7 +205,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background-color: rgba(0, 0, 0, 0.45);
+  background-color: rgba(33, 36, 27, 0.45);
 }
 
 .confirmBox {
@@ -196,21 +215,22 @@
   width: 100%;
   max-width: 360px;
   padding: 20px 18px;
-  border-radius: 16px;
-  background-color: #fff;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 0.75px solid var.$rule;
+  background-color: var.$parchment-card;
+  box-shadow: 0 6px 24px var.$shadow-ink;
 }
 
 .confirmText {
   font-size: 15px;
   line-height: 1.5;
   text-align: center;
-  color: #33402a;
+  color: var.$ink;
 }
 
 .confirmActions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .confirmCancel,
@@ -218,24 +238,24 @@
   flex: 1;
   min-height: 48px;
   border: none;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .confirmCancel {
-  border: 1px solid #cfd8c5;
-  background-color: #fff;
-  color: #4c5a3c;
+  border: 0.75px solid var.$rule;
+  background-color: transparent;
+  color: var.$ink;
 }
 
 .confirmOk {
-  background-color: #6fae46;
-  color: #fff;
+  background-color: var.$verdant;
+  color: var.$parchment;
 }
 
-// 数量ステッパー（#30）
+// 数量ステッパー（#30）— 写本トークンで再塗装
 .stepperRow {
   display: flex;
   align-items: center;
@@ -246,12 +266,17 @@
 .stepperBtn {
   min-width: 40px;
   min-height: 40px;
-  border: 1px solid #cfd8c5;
-  border-radius: 8px;
-  background-color: #fff;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
+
+  &:active {
+    color: var.$verdant-dark;
+  }
 
   &:disabled {
     opacity: 0.35;
@@ -262,17 +287,19 @@
 .stepperVal {
   min-width: 48px;
   text-align: center;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 20px;
   font-weight: 700;
+  color: var.$ink;
 }
 
 .stepperMax {
   min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid var.$primary;
-  border-radius: 8px;
-  background-color: #e3f2fd;
-  color: var.$primary;
+  padding: 0 8px;
+  border: 0.75px solid var.$verdant;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$verdant-dark;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -286,7 +313,7 @@
 .totalRow {
   text-align: center;
   font-size: 14px;
-  color: #4c5a3c;
+  color: var.$ink-faint;
 }
 
 // 装備名をタップ可能にするボタン（#31）
@@ -297,7 +324,7 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: var.$primary;
+  color: var.$verdant;
   text-decoration: underline;
   cursor: pointer;
   text-align: left;
@@ -314,14 +341,16 @@
 .detailName {
   font-size: 16px;
   font-weight: 900;
+  color: var.$ink;
 }
 
 .detailSlot {
   font-size: 12px;
   padding: 2px 8px;
-  border: 1px solid var.$gray;
-  border-radius: 999px;
-  background-color: #f5f5f5;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment;
+  color: var.$ink-faint;
 }
 
 .detailRow {
@@ -329,11 +358,13 @@
   flex-direction: column;
   gap: 2px;
   font-size: 14px;
+  color: var.$ink;
 }
 
 .detailLabel {
   font-size: 11px;
   font-weight: 700;
-  opacity: 0.6;
+  color: var.$ink-faint;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

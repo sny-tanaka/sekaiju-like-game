@@ -64,6 +64,7 @@ export const Page = () => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
+        <p className={styles.chapterMark}>❦ Illuminated Codex</p>
         <h1 className={styles.title}>世界樹ライク</h1>
         <p className={styles.subtitle}>無限タワー探索 RPG</p>
         <button

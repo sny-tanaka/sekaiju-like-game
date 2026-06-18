@@ -17,7 +17,7 @@
 .groupLabel {
   font-size: 10px;
   font-weight: 700;
-  opacity: 0.65;
+  color: var.$ink-faint;
   min-width: 42px;
   padding-top: 3px;
   flex-shrink: 0;
@@ -34,33 +34,40 @@
   font-size: 11px;
   font-weight: 700;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: 0;
   line-height: 1.4;
   letter-spacing: 0.02em;
 }
 
-// 弱点: 赤系
+// 弱点: 封蝋朱
 .weak {
-  color: #b71c1c;
-  background-color: #ffebee;
-  border: 1px solid #ef9a9a;
+  color: var.$parchment;
+  background-color: var.$vermilion;
+  border: none;
 }
 
-// 耐性: 青系
+// 耐性: 製本緑
 .half {
-  color: #1a237e;
-  background-color: #e8eaf6;
-  border: 1px solid #9fa8da;
+  color: var.$parchment;
+  background-color: var.$verdant;
+  border: none;
 }
 
-// 無効: グレー系
+// 無効: 墨
 .null {
-  color: #424242;
-  background-color: #eeeeee;
-  border: 1px solid #bdbdbd;
+  color: var.$parchment;
+  background-color: var.$ink;
+  border: none;
+}
+
+// 吸収: 金箔淡
+.absorb {
+  color: var.$ink;
+  background-color: var.$illumination-gold-soft;
+  border: none;
 }
 
 .none {
   font-size: 11px;
-  opacity: 0.55;
+  color: var.$ink-faint;
 }

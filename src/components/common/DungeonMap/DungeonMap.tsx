@@ -31,16 +31,16 @@ type Props = {
 };
 
 const COLORS = {
-  fog: '#cdd9b8', // 未踏（背景より少し濃い緑）
-  floor: '#fbfdf7', // 踏破済みの床
-  wall: '#4a5a3a', // 壁線
-  grid: '#e3ebd6', // 床のうっすらした境界
-  player: '#2196f3',
-  foe: '#b0533a', // 徘徊敵（未感知）
-  foeAlert: '#d32f2f', // 徘徊敵（追跡中）
-  gather: '#4a9d52', // 採集ポイント
-  gatherDone: '#a9c6ab', // 採集済み（枯渇）
-  cooking: '#e8923a', // 調理地点
+  fog: '#D4C7A8', // 未踏 = $parchment-edge
+  floor: '#F2E9D2', // 踏破済みの床 = $parchment-card
+  wall: '#21241B', // 壁線 = $ink
+  grid: '#EDE3CC', // 床のうっすらした境界 = $parchment
+  player: '#B22C2C', // 現在位置 = $vermilion
+  foe: '#5A4F36', // 徘徊敵（未感知）= $ink-faint
+  foeAlert: '#B22C2C', // 徘徊敵（追跡中）= $vermilion
+  gather: '#B89255', // 採集ポイント = $illumination-gold
+  gatherDone: '#D4C7A8', // 採集済み（枯渇）= $parchment-edge
+  cooking: '#B89255', // 調理地点 = $illumination-gold
 };
 
 // 採集種類ごとの絵文字アイコン（issue #20。地図上で種類を見分けやすく）。

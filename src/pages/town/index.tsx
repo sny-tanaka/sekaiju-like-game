@@ -51,6 +51,7 @@ export const Page = () => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
+        <p className={styles.chapterMark}>❦ 拠点</p>
         <div className={styles.guildName}>{guild.name}</div>
         <dl className={styles.stats}>
           <div>

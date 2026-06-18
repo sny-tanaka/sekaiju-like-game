@@ -190,7 +190,7 @@ export const FirstPersonView = ({
         const mx = cx;
         const my = (near.b + far.b) / 2 - (near.b - far.b) * 0.1;
         const size = Math.max(14, (near.b - near.t) * 0.22);
-        ctx.fillStyle = alerted ? '#d32f2f' : '#b0533a';
+        ctx.fillStyle = alerted ? '#B22C2C' : '#8A1F1F'; // $vermilion / $vermilion-dark
         ctx.beginPath();
         ctx.arc(mx, my, size, 0, Math.PI * 2);
         ctx.fill();
