@@ -14,7 +14,6 @@ import { CLASSES } from '@/data/classes';
 import { ENEMIES } from '@/data/enemies';
 import { ITEMS } from '@/data/items';
 import { RACES } from '@/data/races';
-import { SKILLS } from '@/data/skills';
 import { UNION_SKILLS } from '@/data/unionSkills';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import {
@@ -746,14 +745,18 @@ export const Page = () => {
   }
   if (!state) return <div className={styles.layout}>戦闘準備中...</div>;
 
-  const usableSkills = (ally: Combatant): SkillId[] => {
+  /** 習得済みの全戦闘スキルを返す。usable=true のものを先頭に並べる。 */
+  const learnedSkillsList = (ally: Combatant): { id: SkillId; usable: boolean }[] => {
     const char = save.guild.members.find((m) => m.id === ally.id);
     if (!char) return [];
-    return Object.keys(char.learnedSkills).filter(
-      (sid) =>
-        sid in BATTLE_SKILLS &&
-        ally.tp >= computeSkillTpCost(BATTLE_SKILLS[sid], ally.skillLevels?.[sid] ?? 1)
-    );
+    const list = Object.keys(char.learnedSkills)
+      .filter((sid) => sid in BATTLE_SKILLS)
+      .map((sid) => ({
+        id: sid as SkillId,
+        usable: ally.tp >= computeSkillTpCost(BATTLE_SKILLS[sid], ally.skillLevels?.[sid] ?? 1),
+      }));
+    // usable=true を上に、false を下に
+    return [...list.filter((x) => x.usable), ...list.filter((x) => !x.usable)];
   };
 
   // 戦闘で使えるアイテム（倉庫所持 − 既消費 − このターンの予約分 > 0）
@@ -1332,11 +1335,14 @@ export const Page = () => {
                     </div>
                   ) : skillMenu ? (
                     <div className={styles.skillList}>
-                      {usableSkills(active).map((sid) => (
+                      {learnedSkillsList(active).map(({ id: sid, usable }) => (
                         <button
                           type="button"
                           key={sid}
-                          className={styles.skillBtn}
+                          className={[styles.skillBtn, !usable ? styles.skillBtnDisabled : ''].join(
+                            ' '
+                          )}
+                          disabled={!usable}
                           onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
                         >
                           <span className={styles.skillTop}>
@@ -1357,11 +1363,10 @@ export const Page = () => {
                               active.skillLevels?.[sid] ?? 1
                             )}
                           </span>
-                          <span className={styles.skillDesc}>{SKILLS[sid]?.description ?? ''}</span>
                         </button>
                       ))}
-                      {usableSkills(active).length === 0 ? (
-                        <div className={styles.empty}>使えるスキルがない</div>
+                      {learnedSkillsList(active).length === 0 ? (
+                        <div className={styles.empty}>学んでいるスキルがありません</div>
                       ) : null}
                       <button
                         type="button"
@@ -1485,7 +1490,7 @@ export const Page = () => {
                         <button
                           type="button"
                           className={styles.menuBtn}
-                          disabled={usableSkills(active).length === 0}
+                          disabled={learnedSkillsList(active).length === 0}
                           onClick={() => setSkillMenu(true)}
                         >
                           スキル

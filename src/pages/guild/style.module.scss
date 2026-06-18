@@ -48,7 +48,12 @@
   border-radius: 0;
   background-color: var.$parchment-card;
   box-shadow: 0 1px 3px var.$shadow-ink;
-  margin-bottom: 16px;
+  // タブコンテンツとして表示するときはフレックスの残り高を取って内部スクロール
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .sectionTitle {
@@ -117,6 +122,9 @@
 .list {
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .empty {
