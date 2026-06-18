@@ -6,9 +6,8 @@
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  // bottom sheet 戦闘ログのハンドル分だけ下に余白を確保する。
   // safe-area が無い端末でも最低 20px を確保して見切れを防ぐ。
-  padding: 12px 12px calc(54px + max(20px, env(safe-area-inset-bottom, 0px)));
+  padding: 12px 12px max(20px, env(safe-area-inset-bottom, 0px));
   color: var.$ink;
   overflow: hidden;
   background-color: var.$parchment;
@@ -85,69 +84,119 @@
   opacity: 0.4;
 }
 
-// ---- 戦闘ログ（下から引っ張り上げる bottom sheet）----
-// 画面下端に固定し、ハンドルをドラッグして高さを変えられる。
+// ---- 戦闘ログ（インライン 3 行 + タップで全履歴オーバーレイ）----
+// 画面下端の通常フローに常時 3 行表示。タップでフル履歴の overlay を開く。
 .log {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 25;
-  margin: 0 auto;
-  max-width: 560px;
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
+  border: 0.75px solid var.$rule;
   background-color: var.$parchment-card;
-  border-top: 0.75px solid var.$ink;
-  box-shadow: 0 -4px 16px rgba(33, 36, 27, 0.18);
-  // 高さは inline style で動的指定
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
-// 引っ張り上げ用のハンドル領域
-.logHandle {
+.logHeader {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 5px 0 4px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  padding: 3px 10px;
   background-color: var.$ink;
   color: var.$parchment;
-  cursor: ns-resize;
-  touch-action: none;
-  user-select: none;
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
 }
 
-.logHandleBar {
-  width: 40px;
-  height: 3px;
-  background-color: var.$parchment;
-  border-radius: 0;
+.logHeaderHint {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   opacity: 0.7;
 }
 
-.logHandleLabel {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+// インライン表示の 3 行プレビュー（最新を下に表示。古いものは見えない）
+.logBody {
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var.$ink;
+  // 3 行ぶんの高さに固定。溢れた古い行は非表示。
+  height: calc(12px * 1.5 * 3 + 12px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
-.logBody {
+.logLine {
+  white-space: pre-wrap;
+}
+
+// ---- 戦闘ログのオーバーレイ（全履歴）----
+.logOverlayBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background-color: rgba(33, 36, 27, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6% 5% calc(6% + env(safe-area-inset-bottom, 0px));
+  cursor: pointer;
+}
+
+.logOverlay {
+  width: 100%;
+  max-width: 560px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var.$parchment-card;
+  border: 0.75px solid var.$ink;
+  box-shadow: 0 6px 32px rgba(33, 36, 27, 0.45);
+  cursor: default;
+}
+
+.logOverlayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background-color: var.$ink;
+  color: var.$parchment;
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.logOverlayClose {
+  border: none;
+  background: transparent;
+  color: var.$parchment;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.logOverlayBody {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
-  padding: 8px 10px max(20px, env(safe-area-inset-bottom, 0px));
-  font-size: 12.5px;
-  line-height: 1.5;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
   color: var.$ink;
-}
-
-.logLine {
-  white-space: pre-wrap;
+  display: flex;
+  flex-direction: column;
 }
 
 // ---- 味方（2段グリッド） ----
@@ -386,6 +435,8 @@
 .empty {
   font-size: 12px;
   color: var.$ink-faint;
+  // skillList が2列グリッドのとき、全幅をまたぐ
+  grid-column: 1 / -1;
 }
 
 // ---- コマンド入力 ----
@@ -402,24 +453,34 @@
   touch-action: pan-y;
 }
 
-// スキル選択（説明文つき・縦リスト）
+// スキル選択（2列グリッド）
 .skillList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
 }
 
 .skillBtn {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 0.75px solid var.$rule;
   border-radius: 0;
   background-color: var.$parchment-card;
   text-align: left;
   cursor: pointer;
   color: var.$ink;
+}
+
+// TP 不足スキル: グレーアウト表示（完全非表示にはしない）
+.skillBtnDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+
+  .tp {
+    color: var.$vermilion;
+  }
 }
 
 .skillTop {
@@ -430,7 +491,7 @@
 }
 
 .skillName {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: var.$ink;
 }
@@ -447,6 +508,11 @@
   font-weight: 700;
   color: var.$verdant-dark;
   line-height: 1.35;
+  // 2行を超えたら省略
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .target {
@@ -537,6 +603,8 @@
   font-size: 12px;
   font-weight: 700;
   color: var.$illumination-gold;
+  // skillList が2列グリッドのとき、全幅をまたぐ
+  grid-column: 1 / -1;
 }
 
 // 味方対象選択フェーズのヒント
@@ -549,6 +617,8 @@
   background-color: var.$parchment-card;
   border: 0.75px solid var.$verdant;
   line-height: 1.45;
+  // skillList が2列グリッドのとき、全幅をまたぐ
+  grid-column: 1 / -1;
 }
 
 .allyTargetSub {
@@ -608,6 +678,7 @@
 }
 
 .menuBack {
+  // skillList が2列グリッドのとき、全幅をまたぐ
   grid-column: 1 / -1;
   min-height: 40px;
   border: 0.75px solid var.$rule;

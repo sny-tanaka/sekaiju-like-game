@@ -14,7 +14,6 @@ import { CLASSES } from '@/data/classes';
 import { ENEMIES } from '@/data/enemies';
 import { ITEMS } from '@/data/items';
 import { RACES } from '@/data/races';
-import { SKILLS } from '@/data/skills';
 import { UNION_SKILLS } from '@/data/unionSkills';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import {
@@ -175,9 +174,16 @@ type UiMode = { kind: 'global' } | { kind: 'individual' } | { kind: 'strategy' }
 /** 逐次再生の状態（issue #18）。base=ターン開始時HP、revealed=表示済みログ行数。 */
 type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: number };
 
+export interface BattlePageProps {
+  /** Storybook 専用: 初期 BattleState の log を擬似的に埋める。本番経路では未使用。 */
+  __storyMockLogPreview?: string[];
+  /** Storybook 専用: マウント後にスキル選択画面を直接開く。本番経路では未使用。 */
+  __storyMockOpenSkillMenu?: boolean;
+}
+
 // 戦闘（[03]）。一括入力型ターン制。本家に倣い、味方は前衛/後衛の2段で表示し、
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
-export const Page = () => {
+export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: BattlePageProps) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist, applySave } = useGameState();
   const play = useSfx();
@@ -219,10 +225,8 @@ export const Page = () => {
   const [levelQueue, setLevelQueue] = useState<LevelUpResult[]>([]);
   // 経験値バーのアニメーションが完了したか（issue #52: バーが伸び切ってからレベルアップ）。
   const [expDone, setExpDone] = useState(false);
-  // 戦闘ログの bottom-sheet 高さ（px）。ハンドルをドラッグして高さを変えられる。
-  // 既定はハンドルのみ見える 54px。スナップは [54, 240, window.innerHeight * 0.85]。
-  const [logHeight, setLogHeight] = useState(54);
-  const logDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+  // 戦闘ログ。インラインで最新 3 行を常時表示、タップで全履歴オーバーレイ。
+  const [logOpen, setLogOpen] = useState(false);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -246,6 +250,26 @@ export const Page = () => {
     const isFoe = state.enemies.some((e) => e.enemyId && ENEMIES[e.enemyId]?.kind === 'foe');
     setBattleVariant(isBoss ? 'boss' : isFoe ? 'foe' : 'battle');
   }, [state, setBattleVariant]);
+
+  // Storybook 専用: BattleState 初期化後に log を擬似的に埋める（本番では未使用）。
+  useEffect(() => {
+    if (!state || !__storyMockLogPreview || state.log.length > 0) return;
+    const snap = snapshotOf(state);
+    setState({
+      ...state,
+      log: __storyMockLogPreview.map((text) => ({ text, snapshot: snap })),
+    });
+  }, [state, __storyMockLogPreview]);
+
+  // Storybook 専用: 初期マウントでスキル選択画面を直接開く（本番では未使用）。
+  useEffect(() => {
+    if (!__storyMockOpenSkillMenu || !state || activeId) return;
+    const first = state.allies.find((a) => !a.isDown);
+    if (!first) return;
+    setActiveId(first.id);
+    setUiMode({ kind: 'individual' });
+    setSkillMenu(true);
+  }, [__storyMockOpenSkillMenu, state, activeId]);
   useEffect(() => () => setBattleVariant(null), [setBattleVariant]);
 
   // エンカウント演出（issue #18）: 突入直後の暗転を一定時間で晴らす。
@@ -335,7 +359,7 @@ export const Page = () => {
         setInkSplatters(nextSplatters);
         setAnim({ ...anim, revealed: anim.revealed + 1 });
       },
-      anim.revealed === 0 ? 240 : 540
+      anim.revealed === 0 ? 380 : 900
     );
     return () => clearTimeout(t);
   }, [state, anim]);
@@ -748,14 +772,18 @@ export const Page = () => {
   }
   if (!state) return <div className={styles.layout}>戦闘準備中...</div>;
 
-  const usableSkills = (ally: Combatant): SkillId[] => {
+  /** 習得済みの全戦闘スキルを返す。usable=true のものを先頭に並べる。 */
+  const learnedSkillsList = (ally: Combatant): { id: SkillId; usable: boolean }[] => {
     const char = save.guild.members.find((m) => m.id === ally.id);
     if (!char) return [];
-    return Object.keys(char.learnedSkills).filter(
-      (sid) =>
-        sid in BATTLE_SKILLS &&
-        ally.tp >= computeSkillTpCost(BATTLE_SKILLS[sid], ally.skillLevels?.[sid] ?? 1)
-    );
+    const list = Object.keys(char.learnedSkills)
+      .filter((sid) => sid in BATTLE_SKILLS)
+      .map((sid) => ({
+        id: sid as SkillId,
+        usable: ally.tp >= computeSkillTpCost(BATTLE_SKILLS[sid], ally.skillLevels?.[sid] ?? 1),
+      }));
+    // usable=true を上に、false を下に
+    return [...list.filter((x) => x.usable), ...list.filter((x) => !x.usable)];
   };
 
   // 戦闘で使えるアイテム（倉庫所持 − 既消費 − このターンの予約分 > 0）
@@ -1081,6 +1109,38 @@ export const Page = () => {
         )}
       </div>
 
+      {/* 戦闘ログ（インライン 3 行プレビュー / キャラ下・コマンド上）。
+          タップで全履歴オーバーレイ。再生中は revealed 行までを順に表示する。 */}
+      <button
+        type="button"
+        className={styles.log}
+        onClick={() => setLogOpen(true)}
+        aria-label="戦闘ログの全履歴を見る"
+      >
+        <div className={styles.logHeader}>
+          <span>戦闘ログ</span>
+          <span className={styles.logHeaderHint}>タップで全履歴</span>
+        </div>
+        <div className={styles.logBody}>
+          {(() => {
+            const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
+            if (visible.length === 0) {
+              return (
+                <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
+              );
+            }
+            return visible.slice(-3).map((l, i, arr) => (
+              <div
+                key={visible.length - arr.length + i}
+                className={`${styles.logLine} ${anim && i === arr.length - 1 ? styles.logLineNew : ''}`}
+              >
+                {l.text}
+              </div>
+            ));
+          })()}
+        </div>
+      </button>
+
       {/* コマンド入力 / 実行 / 結果（再生中は再生コントロールのみ） */}
       {anim ? (
         <div className={styles.playback}>
@@ -1334,11 +1394,14 @@ export const Page = () => {
                     </div>
                   ) : skillMenu ? (
                     <div className={styles.skillList}>
-                      {usableSkills(active).map((sid) => (
+                      {learnedSkillsList(active).map(({ id: sid, usable }) => (
                         <button
                           type="button"
                           key={sid}
-                          className={styles.skillBtn}
+                          className={[styles.skillBtn, !usable ? styles.skillBtnDisabled : ''].join(
+                            ' '
+                          )}
+                          disabled={!usable}
                           onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
                         >
                           <span className={styles.skillTop}>
@@ -1359,11 +1422,10 @@ export const Page = () => {
                               active.skillLevels?.[sid] ?? 1
                             )}
                           </span>
-                          <span className={styles.skillDesc}>{SKILLS[sid]?.description ?? ''}</span>
                         </button>
                       ))}
-                      {usableSkills(active).length === 0 ? (
-                        <div className={styles.empty}>使えるスキルがない</div>
+                      {learnedSkillsList(active).length === 0 ? (
+                        <div className={styles.empty}>学んでいるスキルがありません</div>
                       ) : null}
                       <button
                         type="button"
@@ -1487,7 +1549,7 @@ export const Page = () => {
                         <button
                           type="button"
                           className={styles.menuBtn}
-                          disabled={usableSkills(active).length === 0}
+                          disabled={learnedSkillsList(active).length === 0}
                           onClick={() => setSkillMenu(true)}
                         >
                           スキル
@@ -1590,75 +1652,50 @@ export const Page = () => {
         </div>
       )}
 
-      {/* 戦闘ログ（下から引っ張り上げる bottom sheet）。
-          墨色ハンドルをドラッグして高さを変えられる。タップで 3 段スナップを巡回。
-          再生中は revealed 行までを順に表示する。 */}
-      <div
-        className={styles.log}
-        style={{ height: `${logHeight}px` }}
-      >
+      {/* 戦闘ログの全履歴オーバーレイ */}
+      {logOpen ? (
         <div
-          className={styles.logHandle}
-          role="slider"
-          aria-label="戦闘ログの高さ"
-          aria-valuenow={Math.round(logHeight)}
-          aria-valuemin={54}
-          aria-valuemax={Math.round(window.innerHeight * 0.92)}
-          tabIndex={0}
-          onPointerDown={(e) => {
-            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-            logDragRef.current = { startY: e.clientY, startHeight: logHeight };
-          }}
-          onPointerMove={(e) => {
-            const drag = logDragRef.current;
-            if (!drag) return;
-            const dy = drag.startY - e.clientY; // 上方向で正
-            const next = Math.max(54, Math.min(window.innerHeight * 0.92, drag.startHeight + dy));
-            setLogHeight(next);
-          }}
-          onPointerUp={(e) => {
-            const drag = logDragRef.current;
-            if (!drag) return;
-            logDragRef.current = null;
-            const moved = Math.abs(e.clientY - drag.startY);
-            // ドラッグでほぼ動いていなければタップ扱い: スナップ巡回
-            const snaps = [54, 240, Math.round(window.innerHeight * 0.85)];
-            if (moved < 6) {
-              const idx = snaps.findIndex((s) => Math.abs(s - logHeight) <= 8);
-              setLogHeight(snaps[(idx + 1) % snaps.length]);
-            } else {
-              const nearest = snaps.reduce((b, s) =>
-                Math.abs(s - logHeight) < Math.abs(b - logHeight) ? s : b
-              );
-              setLogHeight(nearest);
-            }
-          }}
+          className={styles.logOverlayBackdrop}
+          onClick={() => setLogOpen(false)}
         >
-          <span
-            className={styles.logHandleBar}
-            aria-hidden
-          />
-          <span className={styles.logHandleLabel}>戦闘ログ</span>
-        </div>
-        <div className={styles.logBody}>
-          {(() => {
-            const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-            if (visible.length === 0) {
-              return (
-                <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
-              );
-            }
-            return visible.map((l, i) => (
-              <div
-                key={i}
-                className={`${styles.logLine} ${anim && i === visible.length - 1 ? styles.logLineNew : ''}`}
+          <div
+            className={styles.logOverlay}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.logOverlayHeader}>
+              <span>❦ 戦闘ログ</span>
+              <button
+                type="button"
+                className={styles.logOverlayClose}
+                onClick={() => setLogOpen(false)}
+                aria-label="戦闘ログを閉じる"
               >
-                {l.text}
-              </div>
-            ));
-          })()}
+                ✕
+              </button>
+            </div>
+            <div className={styles.logOverlayBody}>
+              {(() => {
+                const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
+                if (visible.length === 0) {
+                  return (
+                    <div className={styles.logLine}>
+                      てきが あらわれた！（{state.turn} ターン目）
+                    </div>
+                  );
+                }
+                return visible.map((l, i) => (
+                  <div
+                    key={i}
+                    className={styles.logLine}
+                  >
+                    {l.text}
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* レベルアップダイアログ（issue #18）。レベルアップしたキャラを順に表示する。 */}
       {levelQueue.length > 0

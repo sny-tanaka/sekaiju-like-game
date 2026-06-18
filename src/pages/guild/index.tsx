@@ -20,7 +20,7 @@ import type { Character, ClassId, RaceId, Row, SaveData } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
-type Tab = 'roster' | 'party' | 'banish';
+type Tab = 'create' | 'roster' | 'party' | 'banish';
 type Pos = '前衛' | '後衛' | '控え';
 type SortKey = 'created' | 'levelDesc' | 'levelAsc';
 
@@ -38,7 +38,7 @@ function positionOf(save: SaveData, charId: string): Pos {
   return '控え';
 }
 
-// ギルド管理（[01 §9]・issue #26）。作成＋一覧 / 編成 / 追放の3タブ構成。
+// ギルド管理（[01 §9]・issue #26）。作成 / 一覧 / 編成 / 追放の4タブ構成。
 export const Page = () => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
@@ -46,7 +46,7 @@ export const Page = () => {
 
   const raceIds = Object.keys(RACES);
   const classIds = Object.keys(CLASSES);
-  const [tab, setTab] = useState<Tab>('roster');
+  const [tab, setTab] = useState<Tab>('create');
 
   // 作成フォーム
   const [name, setName] = useState('');
@@ -119,13 +119,24 @@ export const Page = () => {
       <div className={styles.tabs}>
         <button
           type="button"
+          className={`${styles.tab} ${tab === 'create' ? styles.tabActive : ''}`}
+          onClick={() => {
+            play('cursor');
+            setNotice(null);
+            setTab('create');
+          }}
+        >
+          作成
+        </button>
+        <button
+          type="button"
           className={`${styles.tab} ${tab === 'roster' ? styles.tabActive : ''}`}
           onClick={() => {
             play('cursor');
             setTab('roster');
           }}
         >
-          作成・一覧
+          一覧
         </button>
         <button
           type="button"
@@ -149,174 +160,175 @@ export const Page = () => {
         </button>
       </div>
 
-      {/* ===== 1ページ目: 冒険者作成 + 団員一覧 ===== */}
-      {tab === 'roster' ? (
-        <>
-          <section className={styles.create}>
-            <h2 className={styles.sectionTitle}>冒険者を作成</h2>
-            <label className={styles.field}>
-              <span>名前</span>
-              <input
-                type="text"
-                value={name}
-                maxLength={16}
-                placeholder="名もなき冒険者"
-                onChange={(e) => setName(e.target.value)}
-              />
-            </label>
-            <label className={styles.field}>
-              <span>種族</span>
-              <select
-                value={raceId}
-                onChange={(e) => setRaceId(e.target.value)}
-              >
-                {raceIds.map((id) => (
-                  <option
-                    key={id}
-                    value={id}
-                  >
-                    {RACES[id].name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <RaceInfoCard raceId={raceId} />
-            <label className={styles.field}>
-              <span>職業</span>
-              <select
-                value={classId}
-                onChange={(e) => setClassId(e.target.value)}
-              >
-                {classIds.map((id) => (
-                  <option
-                    key={id}
-                    value={id}
-                  >
-                    {CLASSES[id].name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <ClassInfoCard classId={classId} />
-            <div className={styles.preview}>
-              <span className={styles.previewLabel}>プレビュー</span>
-              <CharacterPortrait
-                raceId={raceId}
-                classId={classId}
-                size={60}
-              />
-              <span className={styles.previewName}>
-                {RACES[raceId]?.name} / {CLASSES[classId]?.name}
-              </span>
-            </div>
-            <button
-              type="button"
-              className={styles.primary}
-              disabled={busy || isFull}
-              onClick={() => void handleCreate()}
+      {/* ===== 作成タブ ===== */}
+      {tab === 'create' ? (
+        <section className={styles.create}>
+          <h2 className={styles.sectionTitle}>冒険者を作成</h2>
+          <label className={styles.field}>
+            <span>名前</span>
+            <input
+              type="text"
+              value={name}
+              maxLength={16}
+              placeholder="名もなき冒険者"
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+          <label className={styles.field}>
+            <span>種族</span>
+            <select
+              value={raceId}
+              onChange={(e) => setRaceId(e.target.value)}
             >
-              {isFull ? '団員が上限です' : '作成する'}
-            </button>
-            {notice ? <p className={styles.notice}>{notice}</p> : null}
-          </section>
+              {raceIds.map((id) => (
+                <option
+                  key={id}
+                  value={id}
+                >
+                  {RACES[id].name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <RaceInfoCard raceId={raceId} />
+          <label className={styles.field}>
+            <span>職業</span>
+            <select
+              value={classId}
+              onChange={(e) => setClassId(e.target.value)}
+            >
+              {classIds.map((id) => (
+                <option
+                  key={id}
+                  value={id}
+                >
+                  {CLASSES[id].name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <ClassInfoCard classId={classId} />
+          <div className={styles.preview}>
+            <span className={styles.previewLabel}>プレビュー</span>
+            <CharacterPortrait
+              raceId={raceId}
+              classId={classId}
+              size={60}
+            />
+            <span className={styles.previewName}>
+              {RACES[raceId]?.name} / {CLASSES[classId]?.name}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={styles.primary}
+            disabled={busy || isFull}
+            onClick={() => void handleCreate()}
+          >
+            {isFull ? '団員が上限です' : '作成する'}
+          </button>
+          {notice ? <p className={styles.notice}>{notice}</p> : null}
+        </section>
+      ) : null}
 
-          <section className={styles.list}>
-            <h2 className={styles.sectionTitle}>
-              団員一覧{' '}
-              <span className={styles.count}>
-                （出撃 {formationCount(save)} / {PARTY_MAX}）
-              </span>
-            </h2>
+      {/* ===== 一覧タブ ===== */}
+      {tab === 'roster' ? (
+        <section className={styles.list}>
+          <h2 className={styles.sectionTitle}>
+            団員一覧{' '}
+            <span className={styles.count}>
+              （出撃 {formationCount(save)} / {PARTY_MAX}）
+            </span>
+          </h2>
 
-            {/* フィルター/ソート */}
-            <div className={styles.filters}>
-              <select
-                className={styles.filter}
-                value={raceFilter}
-                onChange={(e) => setRaceFilter(e.target.value)}
-              >
-                <option value="all">種族: すべて</option>
-                {presentRaces.map((id) => (
-                  <option
-                    key={id}
-                    value={id}
-                  >
-                    {RACES[id].name}
-                  </option>
-                ))}
-              </select>
-              <select
-                className={styles.filter}
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-              >
-                <option value="all">職業: すべて</option>
-                {presentClasses.map((id) => (
-                  <option
-                    key={id}
-                    value={id}
-                  >
-                    {CLASSES[id].name}
-                  </option>
-                ))}
-              </select>
-              <select
-                className={styles.filter}
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortKey)}
-              >
-                {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
-                  <option
-                    key={k}
-                    value={k}
-                  >
-                    {SORT_LABEL[k]}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* フィルター/ソート */}
+          <div className={styles.filters}>
+            <select
+              className={styles.filter}
+              value={raceFilter}
+              onChange={(e) => setRaceFilter(e.target.value)}
+            >
+              <option value="all">種族: すべて</option>
+              {presentRaces.map((id) => (
+                <option
+                  key={id}
+                  value={id}
+                >
+                  {RACES[id].name}
+                </option>
+              ))}
+            </select>
+            <select
+              className={styles.filter}
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+            >
+              <option value="all">職業: すべて</option>
+              {presentClasses.map((id) => (
+                <option
+                  key={id}
+                  value={id}
+                >
+                  {CLASSES[id].name}
+                </option>
+              ))}
+            </select>
+            <select
+              className={styles.filter}
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+            >
+              {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
+                <option
+                  key={k}
+                  value={k}
+                >
+                  {SORT_LABEL[k]}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            {members.length === 0 ? (
-              <p className={styles.empty}>まだ冒険者がいません。</p>
-            ) : rosterMembers.length === 0 ? (
-              <p className={styles.empty}>条件に合う団員がいません。</p>
-            ) : (
-              <ul className={styles.members}>
-                {rosterMembers.map((m) => {
-                  const pos = positionOf(save, m.id);
-                  return (
-                    <li
-                      key={m.id}
-                      className={styles.member}
+          {members.length === 0 ? (
+            <p className={styles.empty}>まだ冒険者がいません。</p>
+          ) : rosterMembers.length === 0 ? (
+            <p className={styles.empty}>条件に合う団員がいません。</p>
+          ) : (
+            <ul className={styles.members}>
+              {rosterMembers.map((m) => {
+                const pos = positionOf(save, m.id);
+                return (
+                  <li
+                    key={m.id}
+                    className={styles.member}
+                  >
+                    <button
+                      type="button"
+                      className={styles.memberMain}
+                      onClick={() => navigate({ name: 'guildChar', id: m.id })}
                     >
-                      <button
-                        type="button"
-                        className={styles.memberMain}
-                        onClick={() => navigate({ name: 'guildChar', id: m.id })}
-                      >
-                        <CharacterPortrait
-                          raceId={m.raceId}
-                          classId={m.classId}
-                          size={36}
-                          className={styles.memberPortrait}
-                        />
-                        <div className={styles.memberMainText}>
-                          <span className={styles.memberName}>
-                            {m.name}
-                            <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>
-                              {pos}
-                            </span>
+                      <CharacterPortrait
+                        raceId={m.raceId}
+                        classId={m.classId}
+                        size={36}
+                        className={styles.memberPortrait}
+                      />
+                      <div className={styles.memberMainText}>
+                        <span className={styles.memberName}>
+                          {m.name}
+                          <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>
+                            {pos}
                           </span>
-                          <span className={styles.memberSub}>{memberLine(m)} ›</span>
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-        </>
+                        </span>
+                        <span className={styles.memberSub}>{memberLine(m)} ›</span>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
       ) : null}
 
       {/* ===== 2ページ目: パーティー編成 ===== */}
