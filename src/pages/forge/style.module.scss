@@ -313,3 +313,13 @@
   background-color: var.$verdant;
   color: var.$parchment;
 }
+
+// 強化成功 gold InkSplatter（Phase 2）
+.forgeGold {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  pointer-events: none;
+}

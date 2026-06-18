@@ -38,4 +38,12 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: var.$ink;
+  transition: opacity 0.1s ease;
+}
+
+// writeOn アニメーション中: Kaisei Tokumin で薄く表示（書き起こし感）
+.valueWriting {
+  font-family: 'Kaisei Tokumin', serif;
+  opacity: 0.55;
+  transition: opacity calc(var(--motion-quick, 140ms) * 0.5) ease;
 }

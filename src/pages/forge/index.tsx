@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { FORGE } from '@/data/balance';
 import { EQUIPMENT } from '@/data/equipment';
 import {
@@ -31,6 +32,8 @@ export const Page = () => {
   const [pending, setPending] = useState<Pending | null>(null);
   // リサイクル一括選択（タブ切替で破棄）。
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // 強化成功演出（Phase 2）: 確定後に gold InkSplatter を一時表示。
+  const [forgeSuccessLabel, setForgeSuccessLabel] = useState<string | null>(null);
 
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
@@ -64,6 +67,9 @@ export const Page = () => {
     play(pending.kind === 'forge' ? 'forge' : 'recycle');
     if (pending.kind === 'forge') {
       void applyAndPersist((s) => forgeWithIngot(s, pending.instanceId, pending.ingot).save);
+      // 強化成功演出（Phase 2）: gold InkSplatter で「+N」を表示
+      const inc = FORGE.INGOT_INC[pending.ingot];
+      setForgeSuccessLabel(`+${inc}`);
     } else if (pending.kind === 'recycle') {
       void applyAndPersist((s) => recycle(s, pending.id).save);
     } else {
@@ -272,6 +278,21 @@ export const Page = () => {
               </button>
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {/* 強化成功 gold InkSplatter（Phase 2） */}
+      {forgeSuccessLabel ? (
+        <div
+          className={styles.forgeGold}
+          aria-hidden="true"
+        >
+          <InkSplatter
+            value={forgeSuccessLabel}
+            variant="gold"
+            size={80}
+            onDone={() => setForgeSuccessLabel(null)}
+          />
         </div>
       ) : null}
     </div>

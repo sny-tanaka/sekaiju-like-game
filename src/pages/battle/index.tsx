@@ -6,6 +6,7 @@ import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
+import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
@@ -204,6 +205,13 @@ export const Page = () => {
   const [anim, setAnim] = useState<Anim | null>(null);
   // ダメージを受けたカードの点滅対象 ID（issue #18）。
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
+  // InkSplatter: ID → { value, variant } のマップ（Phase 2）。
+  // ログ行が表示されるたびに被弾者のダメージ量を記録し、アニメ終了後に削除。
+  const [inkSplatters, setInkSplatters] = useState<
+    Map<string, { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }>
+  >(new Map());
+  // 勝利演出の gold InkSplatter（Phase 2）。
+  const [showVictoryGold, setShowVictoryGold] = useState(false);
   // エンカウント/戦闘終了の暗転エフェクト（issue #18）。
   const [introFx, setIntroFx] = useState(true);
   const [outroFx, setOutroFx] = useState<'win' | 'lose' | 'fled' | null>(null);
@@ -264,6 +272,7 @@ export const Page = () => {
       setUnionSetup(null);
       setActiveId(null);
       setFlashIds(new Set());
+      setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
       setAnim(final.log.length > 0 ? { base, revealed: 0 } : null);
     },
@@ -287,6 +296,7 @@ export const Page = () => {
       const t = setTimeout(() => {
         setAnim(null);
         setFlashIds(new Set());
+        setInkSplatters(new Map());
       }, 200);
       return () => clearTimeout(t);
     }
@@ -296,13 +306,33 @@ export const Page = () => {
         const cur = state.log[idx]?.snapshot;
         const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
         const fl = new Set<string>();
+        const nextSplatters = new Map<
+          string,
+          { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }
+        >();
         if (cur) {
           for (const id of Object.keys(cur)) {
             const p = prev?.[id];
-            if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) fl.add(id);
+            if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) {
+              fl.add(id);
+              // InkSplatter: HP 差をダメージ値として表示
+              const dmg = Math.round(p.hp - cur[id].hp);
+              const logText = state.log[idx]?.text ?? '';
+              const isCrit = logText.includes('（会心）');
+              const isHeal = logText.includes('回復') && cur[id].hp > p.hp;
+              nextSplatters.set(id, {
+                value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
+                variant: isHeal ? 'heal' : isCrit ? 'crit' : 'damage',
+              });
+            } else if (p && cur[id].hp > p.hp) {
+              // HP 回復
+              const healed = Math.round(cur[id].hp - p.hp);
+              nextSplatters.set(id, { value: healed, variant: 'heal' });
+            }
           }
         }
         setFlashIds(fl);
+        setInkSplatters(nextSplatters);
         setAnim({ ...anim, revealed: anim.revealed + 1 });
       },
       anim.revealed === 0 ? 240 : 540
@@ -329,6 +359,14 @@ export const Page = () => {
     );
     return () => clearTimeout(t);
   }, [state?.outcome, anim, expResults]);
+
+  // 勝利時に gold InkSplatter を一時表示（Phase 2）。早期リターン前に置く必要あり。
+  useEffect(() => {
+    if (state?.outcome !== 'win' || anim) return;
+    setShowVictoryGold(true);
+    const t = setTimeout(() => setShowVictoryGold(false), 500);
+    return () => clearTimeout(t);
+  }, [state?.outcome, anim]);
 
   // 戦闘終了 SE（outcome が確定し、anim が終わったタイミングで1回鳴らす）。
   const prevOutcomeRef = useRef<string | null>(null);
@@ -853,6 +891,30 @@ export const Page = () => {
           }
         }}
       >
+        {/* InkSplatter — 被弾/回復時に重ね描画（Phase 2） */}
+        {inkSplatters.has(a.id) &&
+          (() => {
+            const splat = inkSplatters.get(a.id)!;
+            return (
+              <div
+                className={styles.inkOverlay}
+                aria-hidden="true"
+              >
+                <InkSplatter
+                  value={splat.value}
+                  variant={splat.variant}
+                  size={64}
+                  onDone={() =>
+                    setInkSplatters((prev) => {
+                      const next = new Map(prev);
+                      next.delete(a.id);
+                      return next;
+                    })
+                  }
+                />
+              </div>
+            );
+          })()}
         {/* 職業バッジ（右上に固定） */}
         {!a.isSummon ? <span className={styles.jobBadge}>{classInitialOf(a)}</span> : null}
         {/* 立ち絵 + 名前 + 作戦短縮（横並び） */}
@@ -932,6 +994,30 @@ export const Page = () => {
               disabled={e.isDown || !!anim || isAllyTargeting}
               onClick={() => setTargetId(e.id)}
             >
+              {/* InkSplatter — 敵への命中時（Phase 2） */}
+              {inkSplatters.has(e.id) &&
+                (() => {
+                  const splat = inkSplatters.get(e.id)!;
+                  return (
+                    <div
+                      className={styles.inkOverlay}
+                      aria-hidden="true"
+                    >
+                      <InkSplatter
+                        value={splat.value}
+                        variant={splat.variant}
+                        size={56}
+                        onDone={() =>
+                          setInkSplatters((prev) => {
+                            const next = new Map(prev);
+                            next.delete(e.id);
+                            return next;
+                          })
+                        }
+                      />
+                    </div>
+                  );
+                })()}
               <span className={styles.enemyName}>
                 <span className={styles.enemyNameText}>{e.name}</span>
                 <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
@@ -1018,6 +1104,19 @@ export const Page = () => {
                   ? '逃走した'
                   : '全滅...'}
             </div>
+            {/* 勝利時 gold InkSplatter（Phase 2） */}
+            {showVictoryGold ? (
+              <div
+                className={styles.victoryGold}
+                aria-hidden="true"
+              >
+                <InkSplatter
+                  value={`${rewards.gold}G`}
+                  variant="gold"
+                  size={72}
+                />
+              </div>
+            ) : null}
             {state.outcome === 'win' ? (
               <>
                 <div className={styles.resultBody}>
@@ -1560,6 +1659,17 @@ export const Page = () => {
             return (
               <div className={styles.dialogOverlay}>
                 <div className={styles.dialog}>
+                  {/* レベルアップ gold InkSplatter（Phase 2） */}
+                  <div
+                    className={styles.levelUpGold}
+                    aria-hidden="true"
+                  >
+                    <InkSplatter
+                      value={`Lv${r.toLevel}`}
+                      variant="gold"
+                      size={72}
+                    />
+                  </div>
                   <div className={styles.dialogTitle}>レベルアップ！</div>
                   <div className={styles.dialogName}>
                     {r.name} は Lv{r.fromLevel} → <strong>Lv{r.toLevel}</strong> になった！

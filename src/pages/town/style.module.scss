@@ -145,3 +145,15 @@
   font-size: 14px;
   cursor: pointer;
 }
+
+// ダイブ開始 封蝋スタンプオーバーレイ（Phase 2）
+.sealOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+  background-color: rgba(33, 36, 27, 0.25);
+}

@@ -926,3 +926,39 @@
   border: 0.75px solid var.$ink-faint;
   cursor: pointer;
 }
+
+// ==========================================================
+// InkSplatter オーバーレイ（Phase 2）
+// ==========================================================
+
+// 敵カード・味方カード上に絶対配置で重ねる
+.enemy,
+.card {
+  position: relative;
+  overflow: visible;
+}
+
+.inkOverlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+// 勝利リザルトの gold InkSplatter
+.victoryGold {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+// レベルアップダイアログの gold InkSplatter
+.levelUpGold {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+  pointer-events: none;
+}

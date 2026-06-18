@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ARMOR_TYPE_LABEL, EQUIP_SLOT_LABEL, WEAPON_TYPE_LABEL } from '@/data/equipLabels';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
@@ -77,6 +78,8 @@ export const Page = () => {
   const [filter, setFilter] = useState<ShopCat | 'all'>('all');
   const [sort, setSort] = useState<SortKey>('priceAsc');
   const [equipDetail, setEquipDetail] = useState<EquipDetail | null>(null);
+  // 購入確定演出（Phase 2）: damage（墨色）variant の InkSplatter + チェックマーク。
+  const [buyConfirmed, setBuyConfirmed] = useState(false);
 
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
@@ -187,6 +190,8 @@ export const Page = () => {
     play('coin');
     if (pending.kind === 'buy') {
       void applyAndPersist((s) => buyMany(s, pending.id, pendingQty));
+      // 購入確定演出（Phase 2）: damage（墨インク）InkSplatter
+      setBuyConfirmed(true);
     } else if (pending.kind === 'sellItem') {
       void applyAndPersist((s) => sell(s, pending.itemId, pendingQty, pending.grade));
     } else {
@@ -575,6 +580,21 @@ export const Page = () => {
 
       {/* 装備詳細モーダル（#31）。 */}
       {equipDetail ? renderEquipDetail() : null}
+
+      {/* 購入確定 InkSplatter（Phase 2）: 墨色インク跡 + チェックマーク */}
+      {buyConfirmed ? (
+        <div
+          className={styles.buyConfirmedFx}
+          aria-hidden="true"
+        >
+          <InkSplatter
+            value="✓"
+            variant="damage"
+            size={72}
+            onDone={() => setBuyConfirmed(false)}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };
