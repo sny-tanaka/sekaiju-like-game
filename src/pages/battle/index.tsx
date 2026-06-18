@@ -174,9 +174,14 @@ type UiMode = { kind: 'global' } | { kind: 'individual' } | { kind: 'strategy' }
 /** 逐次再生の状態（issue #18）。base=ターン開始時HP、revealed=表示済みログ行数。 */
 type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: number };
 
+export interface BattlePageProps {
+  /** Storybook 専用: 初期 BattleState の log を擬似的に埋める。本番経路では未使用。 */
+  __storyMockLogPreview?: string[];
+}
+
 // 戦闘（[03]）。一括入力型ターン制。本家に倣い、味方は前衛/後衛の2段で表示し、
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
-export const Page = () => {
+export const Page = ({ __storyMockLogPreview }: BattlePageProps) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist, applySave } = useGameState();
   const play = useSfx();
@@ -243,6 +248,16 @@ export const Page = () => {
     const isFoe = state.enemies.some((e) => e.enemyId && ENEMIES[e.enemyId]?.kind === 'foe');
     setBattleVariant(isBoss ? 'boss' : isFoe ? 'foe' : 'battle');
   }, [state, setBattleVariant]);
+
+  // Storybook 専用: BattleState 初期化後に log を擬似的に埋める（本番では未使用）。
+  useEffect(() => {
+    if (!state || !__storyMockLogPreview || state.log.length > 0) return;
+    const snap = snapshotOf(state);
+    setState({
+      ...state,
+      log: __storyMockLogPreview.map((text) => ({ text, snapshot: snap })),
+    });
+  }, [state, __storyMockLogPreview]);
   useEffect(() => () => setBattleVariant(null), [setBattleVariant]);
 
   // エンカウント演出（issue #18）: 突入直後の暗転を一定時間で晴らす。
@@ -332,7 +347,7 @@ export const Page = () => {
         setInkSplatters(nextSplatters);
         setAnim({ ...anim, revealed: anim.revealed + 1 });
       },
-      anim.revealed === 0 ? 240 : 540
+      anim.revealed === 0 ? 380 : 900
     );
     return () => clearTimeout(t);
   }, [state, anim]);
@@ -1082,6 +1097,38 @@ export const Page = () => {
         )}
       </div>
 
+      {/* 戦闘ログ（インライン 3 行プレビュー / キャラ下・コマンド上）。
+          タップで全履歴オーバーレイ。再生中は revealed 行までを順に表示する。 */}
+      <button
+        type="button"
+        className={styles.log}
+        onClick={() => setLogOpen(true)}
+        aria-label="戦闘ログの全履歴を見る"
+      >
+        <div className={styles.logHeader}>
+          <span>戦闘ログ</span>
+          <span className={styles.logHeaderHint}>タップで全履歴</span>
+        </div>
+        <div className={styles.logBody}>
+          {(() => {
+            const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
+            if (visible.length === 0) {
+              return (
+                <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
+              );
+            }
+            return visible.slice(-3).map((l, i, arr) => (
+              <div
+                key={visible.length - arr.length + i}
+                className={`${styles.logLine} ${anim && i === arr.length - 1 ? styles.logLineNew : ''}`}
+              >
+                {l.text}
+              </div>
+            ));
+          })()}
+        </div>
+      </button>
+
       {/* コマンド入力 / 実行 / 結果（再生中は再生コントロールのみ） */}
       {anim ? (
         <div className={styles.playback}>
@@ -1592,39 +1639,6 @@ export const Page = () => {
           )}
         </div>
       )}
-
-      {/* 戦闘ログ（インライン 3 行プレビュー）。タップで全履歴オーバーレイ。
-          再生中は revealed 行までを順に表示する。 */}
-      <button
-        type="button"
-        className={styles.log}
-        onClick={() => setLogOpen(true)}
-        aria-label="戦闘ログの全履歴を見る"
-      >
-        <div className={styles.logHeader}>
-          <span>戦闘ログ</span>
-          <span className={styles.logHeaderHint}>タップで全履歴</span>
-        </div>
-        <div className={styles.logBody}>
-          {(() => {
-            const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-            if (visible.length === 0) {
-              return (
-                <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
-              );
-            }
-            // 最新 3 行のみインライン表示
-            return visible.slice(-3).map((l, i, arr) => (
-              <div
-                key={visible.length - arr.length + i}
-                className={`${styles.logLine} ${anim && i === arr.length - 1 ? styles.logLineNew : ''}`}
-              >
-                {l.text}
-              </div>
-            ));
-          })()}
-        </div>
-      </button>
 
       {/* 戦闘ログの全履歴オーバーレイ */}
       {logOpen ? (
