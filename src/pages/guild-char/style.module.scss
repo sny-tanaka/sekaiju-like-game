@@ -19,6 +19,16 @@
   margin-bottom: 12px;
   padding-bottom: 12px;
   border-bottom: 0.75px solid var.$rule;
+  flex-shrink: 0;
+}
+
+// メインコンテンツ（スクロール領域）
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .headPortrait {
@@ -331,6 +341,7 @@
 }
 
 .foot {
+  flex-shrink: 0;
   margin-top: 4px;
   padding-top: 12px;
   border-top: 0.75px solid var.$rule;
