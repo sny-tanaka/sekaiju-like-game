@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { SkillTree } from '@/components/common/SkillTree/SkillTree';
 import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
@@ -79,10 +80,18 @@ export const Page = ({ id }: { id: string }) => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
-        <h1 className={styles.title}>{char.name}</h1>
-        <span className={styles.sub}>
-          {RACES[char.raceId]?.name} / {CLASSES[char.classId]?.name} / Lv{char.level}
-        </span>
+        <CharacterPortrait
+          raceId={char.raceId}
+          classId={char.classId}
+          size={56}
+          className={styles.headPortrait}
+        />
+        <div className={styles.headText}>
+          <h1 className={styles.title}>{char.name}</h1>
+          <span className={styles.sub}>
+            {RACES[char.raceId]?.name} / {CLASSES[char.classId]?.name} / Lv{char.level}
+          </span>
+        </div>
       </header>
 
       {/* ステータス */}

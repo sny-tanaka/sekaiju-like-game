@@ -1,0 +1,8 @@
+.portrait {
+  display: inline-block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges; /* Firefox */
+  vertical-align: middle;
+  flex-shrink: 0;
+  height: auto;
+}
