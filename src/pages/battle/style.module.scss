@@ -47,8 +47,7 @@
 }
 
 .targeted {
-  border-color: var.$vermilion;
-  border-width: 1px;
+  border: 0.75px solid var.$vermilion;
 }
 
 .enemyName {

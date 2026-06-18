@@ -52,38 +52,40 @@
   background-color: var.$gray;
 }
 
-.chipLabel {
-  font-size: 10px;
-  opacity: 0.7;
-}
-
 .chipRank {
   font-size: 16px;
   line-height: 1.2;
 }
 
-// ランク別の色
+// ランク別の色（写本パレット正規化）
 .rank_S {
-  background-color: #ffd54f;
-  color: #5d4037;
+  background-color: var.$illumination-gold; // $illumination-gold
+  color: var.$parchment;
 }
 
 .rank_A {
-  background-color: #ef9a9a;
-  color: #b71c1c;
+  background-color: var.$verdant; // $verdant
+  color: var.$parchment;
 }
 
 .rank_B {
-  background-color: #a5d6a7;
-  color: #1b5e20;
+  background-color: rgba(63, 107, 74, 0.3); // $verdant 30% alpha
+  color: var.$ink;
 }
 
 .rank_C {
-  background-color: #90caf9;
-  color: #0d47a1;
+  background-color: var.$parchment-edge;
+  color: var.$ink-faint;
 }
 
 .rank_D {
-  background-color: #e0e0e0;
-  color: #424242;
+  background-color: var.$parchment-card;
+  color: var.$ink-faint;
+}
+
+// ステ別ラベル文字（固有色廃止 — 一律 Caption 11px $ink-faint）
+.chipLabel {
+  font-size: 11px;
+  color: var.$ink-faint;
+  opacity: 1;
 }
