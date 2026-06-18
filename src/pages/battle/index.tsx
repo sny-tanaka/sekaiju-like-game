@@ -211,8 +211,10 @@ export const Page = () => {
   const [levelQueue, setLevelQueue] = useState<LevelUpResult[]>([]);
   // 経験値バーのアニメーションが完了したか（issue #52: バーが伸び切ってからレベルアップ）。
   const [expDone, setExpDone] = useState(false);
-  // ログ拡大表示（既定は通常フロー、タップでフローティングパネル化）
-  const [logExpanded, setLogExpanded] = useState(false);
+  // 戦闘ログの bottom-sheet 高さ（px）。ハンドルをドラッグして高さを変えられる。
+  // 既定はハンドルのみ見える 54px。スナップは [54, 240, window.innerHeight * 0.85]。
+  const [logHeight, setLogHeight] = useState(54);
+  const logDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -849,29 +851,30 @@ export const Page = () => {
       >
         {/* 職業バッジ（右上に固定） */}
         {!a.isSummon ? <span className={styles.jobBadge}>{classNameOf(a)}</span> : null}
-        {/* 立ち絵（カード上部いっぱい） */}
-        {!a.isSummon &&
-          (() => {
-            const char = save?.guild.members.find((m) => m.id === a.id);
-            return char ? (
-              <CharacterPortrait
-                raceId={char.raceId}
-                classId={char.classId}
-                size={36}
-                className={styles.cardPortrait}
-              />
-            ) : null;
-          })()}
-        {/* 名前 + 作戦短縮（立ち絵下） */}
-        <div className={styles.cardNameRow}>
-          <span className={styles.cardName}>
-            <span className={styles.cardNameText}>{a.name}</span>
-            <span className={styles.cardMarks}>
-              {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
-              {ailmentMark(a)}
+        {/* 立ち絵 + 名前 + 作戦短縮（横並び） */}
+        <div className={styles.cardHeader}>
+          {!a.isSummon &&
+            (() => {
+              const char = save?.guild.members.find((m) => m.id === a.id);
+              return char ? (
+                <CharacterPortrait
+                  raceId={char.raceId}
+                  classId={char.classId}
+                  size={36}
+                  className={styles.cardPortrait}
+                />
+              ) : null;
+            })()}
+          <div className={styles.cardHeaderText}>
+            <span className={styles.cardName}>
+              <span className={styles.cardNameText}>{a.name}</span>
+              <span className={styles.cardMarks}>
+                {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
+                {ailmentMark(a)}
+              </span>
             </span>
-          </span>
-          <span className={styles.cardStrategy}>{strategyShortLabelOf(a)}</span>
+            <span className={styles.cardStrategy}>{strategyShortLabelOf(a)}</span>
+          </div>
         </div>
         <StatBar
           value={d.hp}
@@ -1476,25 +1479,56 @@ export const Page = () => {
         </div>
       )}
 
-      {/* ログ（既定は下部の通常フロー / タップでフローティング拡大）。
+      {/* 戦闘ログ（下から引っ張り上げる bottom sheet）。
+          墨色ハンドルをドラッグして高さを変えられる。タップで 3 段スナップを巡回。
           再生中は revealed 行までを順に表示する。 */}
-      {logExpanded ? (
+      <div
+        className={styles.log}
+        style={{ height: `${logHeight}px` }}
+      >
         <div
-          className={styles.logBackdrop}
-          onClick={() => setLogExpanded(false)}
-          aria-hidden
-        />
-      ) : null}
-      <div className={`${styles.log} ${logExpanded ? styles.logExpanded : ''}`}>
-        <button
-          type="button"
-          className={styles.logHeader}
-          onClick={() => setLogExpanded((v) => !v)}
-          aria-label={logExpanded ? '戦闘ログを閉じる' : '戦闘ログを広げる'}
+          className={styles.logHandle}
+          role="slider"
+          aria-label="戦闘ログの高さ"
+          aria-valuenow={Math.round(logHeight)}
+          aria-valuemin={54}
+          aria-valuemax={Math.round(window.innerHeight * 0.92)}
+          tabIndex={0}
+          onPointerDown={(e) => {
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+            logDragRef.current = { startY: e.clientY, startHeight: logHeight };
+          }}
+          onPointerMove={(e) => {
+            const drag = logDragRef.current;
+            if (!drag) return;
+            const dy = drag.startY - e.clientY; // 上方向で正
+            const next = Math.max(54, Math.min(window.innerHeight * 0.92, drag.startHeight + dy));
+            setLogHeight(next);
+          }}
+          onPointerUp={(e) => {
+            const drag = logDragRef.current;
+            if (!drag) return;
+            logDragRef.current = null;
+            const moved = Math.abs(e.clientY - drag.startY);
+            // ドラッグでほぼ動いていなければタップ扱い: スナップ巡回
+            const snaps = [54, 240, Math.round(window.innerHeight * 0.85)];
+            if (moved < 6) {
+              const idx = snaps.findIndex((s) => Math.abs(s - logHeight) <= 8);
+              setLogHeight(snaps[(idx + 1) % snaps.length]);
+            } else {
+              const nearest = snaps.reduce((b, s) =>
+                Math.abs(s - logHeight) < Math.abs(b - logHeight) ? s : b
+              );
+              setLogHeight(nearest);
+            }
+          }}
         >
-          <span>戦闘ログ</span>
-          <span className={styles.logHeaderIcon}>{logExpanded ? '▼' : '▲'}</span>
-        </button>
+          <span
+            className={styles.logHandleBar}
+            aria-hidden
+          />
+          <span className={styles.logHandleLabel}>戦闘ログ</span>
+        </div>
         <div className={styles.logBody}>
           {(() => {
             const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
