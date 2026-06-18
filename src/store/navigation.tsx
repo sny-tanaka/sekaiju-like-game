@@ -23,8 +23,14 @@ interface NavigationContextValue {
 
 const NavigationContext = createContext<NavigationContextValue | null>(null);
 
-export const NavigationProvider = ({ children }: { children: ReactNode }) => {
-  const [screen, setScreen] = useState<Screen>({ name: 'title' });
+export const NavigationProvider = ({
+  children,
+  initialScreen,
+}: {
+  children: ReactNode;
+  initialScreen?: Screen;
+}) => {
+  const [screen, setScreen] = useState<Screen>(initialScreen ?? { name: 'title' });
 
   const navigate = useCallback((next: Screen) => {
     setScreen(next);

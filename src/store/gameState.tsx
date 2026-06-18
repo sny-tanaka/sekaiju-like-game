@@ -64,8 +64,17 @@ function useStateRef<T>(value: T): RefObject<T> {
   return ref;
 }
 
-export function GameStateProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+export function GameStateProvider({
+  children,
+  initialSave,
+}: {
+  children: ReactNode;
+  initialSave?: SaveData;
+}) {
+  const [state, dispatch] = useReducer(
+    reducer,
+    initialSave ? { save: initialSave, saving: false } : initialState
+  );
   const stateRef = useStateRef(state);
 
   const startNewGame = useCallback(async (guildName: string) => {
