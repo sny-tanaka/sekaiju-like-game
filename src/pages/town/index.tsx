@@ -56,38 +56,45 @@ export const Page = () => {
 
   return (
     <div className={styles.layout}>
+      {/* Step 1: ヘッダー刷新 */}
       <header className={styles.head}>
-        <p className={styles.chapterMark}>❦ 拠点</p>
-        <div className={styles.guildName}>{guild.name}</div>
+        <div className={styles.headTop}>
+          <div className={styles.headTitleBlock}>
+            <p className={styles.chapterMark}>❦ 拠点</p>
+            <h1 className={styles.guildName}>{guild.name}</h1>
+          </div>
+        </div>
         <dl className={styles.stats}>
-          <div>
+          <div className={styles.statGold}>
             <dt>所持金</dt>
-            <dd>{guild.gold} G</dd>
+            <dd>◇ {guild.gold.toLocaleString()} G</dd>
           </div>
           {towerState.record.deepestReached > 0 && (
-            <div>
-              <dt>最高到達</dt>
+            <div className={styles.statDepth}>
+              <dt>最高</dt>
               <dd>{towerState.record.deepestReached}F</dd>
             </div>
           )}
-          <div>
+          <div className={hasMembers ? styles.statMembers : styles.statMembersWarn}>
             <dt>団員</dt>
-            <dd>{guild.members.length}人</dd>
+            <dd>{guild.members.length} 人</dd>
           </div>
         </dl>
       </header>
 
+      {/* Step 2: ヒント文（条件カード） */}
       {!hasMembers && (
-        <p className={styles.hint}>
+        <div className={`${styles.hint} ${styles.hintGold}`}>
           まずは「ギルド管理」で冒険者を作成してください。団員がいないとダイブできません。
-        </p>
+        </div>
       )}
       {hasMembers && diveState && (
-        <p className={styles.hint}>
+        <div className={`${styles.hint} ${styles.hintBlue}`}>
           潜行中のため、ダイブ再開と「タイトルへ戻る」以外は利用できません。
-        </p>
+        </div>
       )}
 
+      {/* Step 3: メニュー（MenuButton の縦リスト） */}
       <main className={styles.menu}>
         <MenuButton
           label={diveState ? '潜行を再開' : 'ダイブ開始'}
@@ -142,6 +149,7 @@ export const Page = () => {
         />
       </main>
 
+      {/* Step 4: フッター */}
       <footer className={styles.foot}>
         <button
           type="button"
@@ -152,26 +160,39 @@ export const Page = () => {
         </button>
       </footer>
 
+      {/* Step 5: ワープモーダル（bottom-sheet） */}
       {warpOpen ? (
         <div
           className={styles.warpOverlay}
           onClick={() => setWarpOpen(false)}
         >
           <div
-            className={styles.warpPanel}
+            className={styles.warpSheet}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="ワープ先を選択"
           >
-            <div className={styles.warpTitle}>ワープ先を選択</div>
-            {checkpoints.map((d) => (
-              <button
-                type="button"
-                key={d}
-                className={styles.warpBtn}
-                onClick={() => void handleWarp(d)}
-              >
-                第 {d} 階へ
-              </button>
-            ))}
+            <div
+              className={styles.warpHandle}
+              aria-hidden
+            />
+            <div className={styles.warpHead}>
+              <span className={styles.warpTitle}>ワープ先を選択</span>
+              <span className={styles.warpCount}>解放: {checkpoints.length} 地点</span>
+            </div>
+            <div className={styles.warpList}>
+              {checkpoints.map((d) => (
+                <button
+                  type="button"
+                  key={d}
+                  className={styles.warpItem}
+                  onClick={() => void handleWarp(d)}
+                >
+                  <span className={styles.warpDepth}>{d}F</span>
+                  <span className={styles.warpItemLabel}>第 {d} 階へ</span>
+                </button>
+              ))}
+            </div>
             <button
               type="button"
               className={styles.warpClose}
@@ -186,7 +207,7 @@ export const Page = () => {
         </div>
       ) : null}
 
-      {/* ダイブ開始 封蝋スタンプ（Phase 2） */}
+      {/* Step 6: ダイブ開始 封蝋スタンプ（Phase 2） */}
       {sealActive ? (
         <div
           className={styles.sealOverlay}

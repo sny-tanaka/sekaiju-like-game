@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Page } from './index';
 
 import { withGameContext } from '@/__stories__/decorators';
-import { mockEmpty, mockMidDive, mockWithParty } from '@/__stories__/mockSaves';
+import { mockEmpty, mockMidDive, mockPostBoss, mockWithParty } from '@/__stories__/mockSaves';
 
 const meta = {
   title: 'Pages/Town',
@@ -29,4 +29,9 @@ export const WithParty: Story = {
 /** ダイブ中断状態（潜行中ヒント・再開ボタン表示） */
 export const MidDive: Story = {
   decorators: [withGameContext(mockMidDive, { name: 'town' })],
+};
+
+/** ワープ解放後（チェックポイント複数解放） */
+export const PostBoss: Story = {
+  decorators: [withGameContext(mockPostBoss, { name: 'town' })],
 };

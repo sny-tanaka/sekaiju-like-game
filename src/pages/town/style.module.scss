@@ -1,157 +1,270 @@
-@use 'variables' as var;
+// town 画面 — 黒曜 OBSIDIAN MINIMAL テーマ
+// @use 'variables' は削除。var(--*) のみ参照。
 
 .layout {
+  position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
+  padding: 16px 18px max(16px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  color: var.$ink;
-  background-color: var.$parchment;
+  background: var(--bg-page-gradient);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  gap: 12px;
 }
 
+// ---- ヘッダー ----
 .head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   flex-shrink: 0;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 0.75px solid var.$rule;
+  padding: 14px 16px 14px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #1a1f2b, #13151c);
+  border: 1px solid var(--rule-gold);
+}
+
+.headTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.headTitleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .chapterMark {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: var.$ink-faint;
-  letter-spacing: 0.08em;
-  margin-bottom: 4px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--text-blue);
+  margin: 0;
 }
 
 .guildName {
-  font-size: 24px;
-  font-weight: 900;
-  color: var.$ink;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(17px, 5.2vw, 19px);
+  letter-spacing: 0.04em;
+  color: var(--text-strong);
 }
 
+// ---- 統計 dl ----
 .stats {
   display: flex;
   gap: 16px;
-  margin: 8px 0 0;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
 
-  div {
+  > div {
     display: flex;
-    flex-direction: column;
+    gap: 6px;
+    align-items: baseline;
   }
 
   dt {
-    font-size: 11px;
-    color: var.$ink-faint;
-    letter-spacing: 0.04em;
+    font-family: var(--font-body);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--text-faint);
   }
 
   dd {
     margin: 0;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 16px;
-    font-weight: 700;
-    color: var.$ink;
+    color: var(--text-faint);
   }
 }
 
-.hint {
-  margin: 0 0 12px;
-  padding: 8px 12px;
-  border: 0.75px solid var.$illumination-gold-soft;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var.$ink-faint;
+.statGold {
+  dd {
+    color: var(--gold);
+  }
 }
 
+.statDepth {
+  dd {
+    color: var(--text-soft);
+  }
+}
+
+.statMembers {
+  dd {
+    color: var(--text-soft);
+  }
+}
+
+.statMembersWarn {
+  dd {
+    color: var(--danger-text);
+  }
+}
+
+// ---- ヒントカード ----
+.hint {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.hintGold {
+  background: var(--gold-tint);
+  border: 1px solid var(--rule-gold-strong);
+  color: var(--text-strong);
+  animation: obsidian-glowPulse 3.5s ease-in-out infinite;
+}
+
+.hintBlue {
+  background: var(--info-blue-tint);
+  border: 1px solid var(--info-blue-rule);
+  color: var(--info-blue-text);
+}
+
+// ---- メニュー（縦リスト）----
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  flex: 1;
+  gap: 10px;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
 }
 
+// ---- フッター ----
 .foot {
   flex-shrink: 0;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 0.75px solid var.$rule;
+  display: flex;
+  flex-direction: column;
 }
 
 .exit {
   width: 100%;
-  min-height: 44px;
-  border: 0.75px solid var.$vermilion;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$vermilion;
-  font-size: 14px;
+  height: clamp(44px, 12vw, 50px);
+  border-radius: 3px;
+  border: 1px solid rgba(212, 103, 79, 0.45);
+  background: transparent;
+  color: var(--danger-text);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  font-family: var(--font-body);
   cursor: pointer;
 }
 
-// ---- ワープ（10層チェックポイント） ----
+// ---- ワープ bottom-sheet ----
 .warpOverlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(33, 36, 27, 0.45);
+  background: var(--bg-overlay);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 24px;
-  z-index: 20;
+  z-index: 50;
 }
 
-.warpPanel {
+.warpSheet {
   width: 100%;
-  max-width: 360px;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 18px;
-  border-radius: 4px;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
-  box-shadow: 0 4px 24px var.$shadow-ink;
+  gap: 14px;
+  padding: 14px 22px max(24px, env(safe-area-inset-bottom, 0px));
+  background: var(--surface-panel);
+  border-top: 1px solid var(--rule-gold);
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.5);
+  animation: obsidian-sheetRise 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.warpHandle {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.warpHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 }
 
 .warpTitle {
-  font-size: 16px;
-  font-weight: 800;
-  color: var.$ink;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
 }
 
-.warpBtn {
-  min-height: 48px;
-  border: 0.75px solid var.$verdant;
-  border-radius: 0;
-  background-color: var.$parchment;
-  color: var.$verdant;
-  font-size: 16px;
-  font-weight: 700;
+.warpCount {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.warpList {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-height: 50dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.warpItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: var(--bg-mid);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  font-size: 13px;
   cursor: pointer;
+  text-align: left;
+}
+
+.warpDepth {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 44px;
+}
+
+.warpItemLabel {
+  flex: 1;
+  color: var(--text-soft);
 }
 
 .warpClose {
-  min-height: 40px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 14px;
+  width: 100%;
+  height: 50px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 13px;
+  letter-spacing: 0.16em;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
-// ダイブ開始 封蝋スタンプオーバーレイ（Phase 2）
+// ---- ダイブ開始 封蝋スタンプオーバーレイ ----
 .sealOverlay {
   position: fixed;
   inset: 0;
@@ -160,5 +273,31 @@
   justify-content: center;
   z-index: 100;
   pointer-events: none;
-  background-color: rgba(33, 36, 27, 0.25);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(138, 47, 42, 0.22),
+    rgba(7, 8, 9, 0.6) 65%,
+    rgba(7, 8, 9, 0.9) 100%
+  );
+}
+
+// ---- 短画面対応 ----
+@media (max-height: 720px) {
+  .layout {
+    gap: 8px;
+    padding-top: 12px;
+  }
+
+  .head {
+    padding: 10px 14px 12px;
+    gap: 6px;
+  }
+
+  .stats {
+    gap: 12px;
+  }
+
+  .menu {
+    gap: 8px;
+  }
 }
