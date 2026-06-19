@@ -18,7 +18,7 @@
   flex-shrink: 0;
   padding: 18px 22px 14px;
   background: linear-gradient(180deg, #1a1f2b, #13151c);
-  border-bottom: 1px solid var(--rule-gold);
+  border-bottom: 1px solid rgba(201, 168, 106, 0.16);
 }
 
 .headTop {
@@ -54,7 +54,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid var(--rule-gold-strong);
+  border: 1px solid rgba(201, 168, 106, 0.4);
   background: transparent;
   color: var(--gold);
   font-size: 14px;
@@ -89,8 +89,8 @@
 
 .hintGold {
   background: var(--gold-tint);
-  border: 1px solid var(--rule-gold-strong);
-  color: var(--text-strong);
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  color: #d8c79a;
   animation: obsidian-glowPulse 3.5s ease-in-out infinite;
 }
 
@@ -99,6 +99,7 @@
   border: 1px solid var(--info-blue-rule);
   color: var(--info-blue-text);
   font-size: 11px;
+  line-height: 1.6;
 }
 
 // ---- メニュー（2x2 grid + 大カード） ----
@@ -134,11 +135,14 @@
   opacity: 0.55;
   cursor: not-allowed;
   animation: none;
+  background: #101218;
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
-.dive[disabled] .diveDesc {
-  color: var(--danger-text);
-}
+.dive[disabled] .diveBadge { color: #7c7a74; }
+.dive[disabled] .diveTitle { color: #7c7a74; }
+.dive[disabled] .diveDesc  { color: #e0917f; }
+.dive[disabled] .diveDecor { color: rgba(255, 255, 255, 0.05); }
 
 .diveResume {
   background: linear-gradient(110deg, #203c2e, #12161f 72%);
@@ -147,6 +151,10 @@
 
 .diveResume .diveBadge {
   color: #8fd0a0;
+}
+
+.diveResume .diveDesc {
+  color: #9ed8b4;
 }
 
 .diveDecor {
@@ -176,7 +184,7 @@
 .diveDesc {
   font-size: 11px;
   color: var(--text-mute);
-  margin-top: 3px;
+  margin-top: 6px;
 }
 
 // ---- 2x2 タイル ----
@@ -201,8 +209,8 @@
 }
 
 .tile[disabled] .tileIcon  { filter: grayscale(1); }
-.tile[disabled] .tileLabel { color: var(--text-mute); }
-.tile[disabled] .tileDesc  { color: var(--text-quote); font-size: 10px; }
+.tile[disabled] .tileLabel { color: #7c7a74; }
+.tile[disabled] .tileDesc  { color: #5d5a52; font-size: 10px; }
 
 .tileIcon { font-size: 26px; }
 
@@ -215,12 +223,12 @@
 .tileLabel {
   font-family: var(--font-display);
   font-size: 16px;
-  color: var(--text-strong);
+  color: #e8e6e0;
 }
 
 .tileDesc {
   font-size: 11px;
-  color: var(--text-faint);
+  color: #7c7a74;
 }
 
 // ---- 団員 0 時のギルド管理ガイドカード ----
@@ -321,7 +329,7 @@
   max-width: 560px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   padding: 14px 22px max(24px, env(safe-area-inset-bottom, 0px));
   background: var(--surface-panel);
   border-top: 1px solid var(--rule-gold);
@@ -378,6 +386,14 @@
   cursor: pointer;
   text-align: left;
 }
+
+.sheetItemHilight {
+  background: rgba(201, 168, 106, 0.1);
+  border-color: rgba(201, 168, 106, 0.5);
+}
+
+.sheetItemHilight .sheetDepth { color: var(--gold); }
+.sheetItemHilight .sheetItemLabel { color: #e8e6e0; }
 
 .sheetDepth {
   font-family: var(--font-mono);
@@ -489,7 +505,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.2em;
-  color: var(--text-quote);
+  color: #5d5a52;
 }
 
 // ---- 短画面対応 ----

@@ -73,6 +73,8 @@ export const Page = () => {
   // モック準拠表示: 1F は「最初から潜る」、それ以外は「第 N 帯」
   const floorLabel = (d: number) =>
     d === 1 ? '第1階から（最初から潜る）' : `第 ${Math.ceil(d / 10)} 帯`;
+  // 最深チェックポイント（1F 以外で最大）: bottom-sheet で金箔ハイライトする
+  const deepestSheetFloor = sheetFloors.length > 1 ? sheetFloors[sheetFloors.length - 1] : null;
 
   // 自動保存表示用 HH:MM（save.savedAt が 0 の場合は時刻無し）
   const autosaveLabel = (() => {
@@ -107,9 +109,10 @@ export const Page = () => {
         </div>
         <div className={styles.stats}>
           <span className={styles.statGold}>◇ {guild.gold.toLocaleString()} G</span>
-          {towerState.record.deepestReached > 0 && (
-            <span className={styles.statFaint}>最高 {towerState.record.deepestReached}F</span>
-          )}
+          <span className={styles.statFaint}>
+            最高{' '}
+            {towerState.record.deepestReached > 0 ? `${towerState.record.deepestReached}F` : '−'}
+          </span>
           <span className={hasMembers ? styles.statFaint : styles.statWarn}>
             団員 {guild.members.length} 人
           </span>
@@ -297,17 +300,24 @@ export const Page = () => {
               <span className={styles.sheetCount}>解放: {sheetFloors.length} 地点</span>
             </div>
             <div className={styles.sheetList}>
-              {sheetFloors.map((d) => (
-                <button
-                  type="button"
-                  key={d}
-                  className={styles.sheetItem}
-                  onClick={() => void handleSelectFloor(d)}
-                >
-                  <span className={styles.sheetDepth}>{d}F</span>
-                  <span className={styles.sheetItemLabel}>{floorLabel(d)}</span>
-                </button>
-              ))}
+              {sheetFloors.map((d) => {
+                const isDeepest = d === deepestSheetFloor && d !== 1;
+                return (
+                  <button
+                    type="button"
+                    key={d}
+                    className={`${styles.sheetItem} ${isDeepest ? styles.sheetItemHilight : ''}`}
+                    onClick={() => void handleSelectFloor(d)}
+                  >
+                    <span className={styles.sheetDepth}>{d}F</span>
+                    <span className={styles.sheetItemLabel}>
+                      {isDeepest
+                        ? `第 ${Math.ceil(d / 10)} 帯・最深チェックポイント`
+                        : floorLabel(d)}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             <button
               type="button"
