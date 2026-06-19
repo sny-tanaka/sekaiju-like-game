@@ -1,5 +1,4 @@
 import { type Meta, type StoryObj } from '@storybook/react-vite';
-import { fn } from 'storybook/test';
 
 import { SaveCard } from './SaveCard';
 
@@ -7,9 +6,6 @@ type T = typeof SaveCard;
 
 export default {
   component: SaveCard,
-  args: {
-    onContinue: fn(),
-  },
 } satisfies Meta<T>;
 
 // 進行中のセーブ
@@ -21,6 +17,7 @@ export const InProgress: StoryObj<T> = {
       memberCount: 5,
       savedAt: Date.now(),
     },
+    partyPreview: [],
   },
 };
 
@@ -33,6 +30,7 @@ export const FreshStart: StoryObj<T> = {
       memberCount: 0,
       savedAt: Date.now(),
     },
+    partyPreview: [],
   },
 };
 

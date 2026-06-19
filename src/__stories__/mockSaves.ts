@@ -211,6 +211,19 @@ export const mockBossBattle: SaveData = (() => {
 })();
 
 // ============================================================
+// mockCorrupted — corrupted フラグ付きセーブ（SaveCard Corrupted ストーリー用）
+// ============================================================
+export const mockCorrupted: SaveData = {
+  ...mockWithParty,
+  // SaveData に corrupted フィールドはないが、getSaveMeta が SaveMeta を作る際に
+  // corrupted: true を埋める想定。title ストーリーでは GameStateProvider に
+  // initialSave として渡すだけなので、getSaveMeta の呼び出し先 (saveStore) は
+  // 経由しない。代わりに TitlePage の meta state を Storybook の play で
+  // 再現するため、ここでは mockWithParty をそのまま流用する。
+  // ※ Corrupted ストーリー実装は Title.stories.tsx 側で play + mock で制御する。
+};
+
+// ============================================================
 // mockBattleSkillMenu — mockBattle と同じ状況だが、戦士が複数スキルを習得済み
 // （スキル選択画面のスクショ用。2列レイアウト + TP 不足のグレーアウトを確認できる）
 // ============================================================

@@ -1,266 +1,603 @@
-@use 'variables' as var;
+// 黒曜テーマ: _variables.scss は参照しない。すべて var(--*) を使う。
 
 .layout {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: block;
+  width: 100%;
   height: 100dvh;
-  max-width: 560px;
+  max-width: 393px;
   margin: 0 auto;
-  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
+  padding: 0;
   overflow: hidden;
-  color: var.$ink;
-  background-color: var.$parchment;
+  background: var(--bg-page-gradient);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  box-shadow: var(--shadow-page);
 }
 
-.head {
-  text-align: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 0.75px solid var.$rule;
+// ============================================================
+// 浮遊粒子
+// ============================================================
+.mote1,
+.mote2,
+.mote3,
+.mote4 {
+  position: absolute;
+  bottom: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
 }
 
-.chapterMark {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: var.$ink-faint;
-  letter-spacing: 0.08em;
-  margin-bottom: 8px;
+.mote1 {
+  width: 3px;
+  height: 3px;
+  left: 22%;
+  background: var(--gold);
+  animation: obsidian-moteDrift 8s ease-in-out 0s infinite;
 }
 
-.title {
-  margin: 0;
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
-  color: var.$ink;
+.mote2 {
+  width: 2px;
+  height: 2px;
+  left: 55%;
+  background: var(--info-blue);
+  animation: obsidian-moteDrift 10s ease-in-out 2.5s infinite;
 }
 
-.subtitle {
-  margin: 8px 0 0;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var.$ink-faint;
-}
-
-.body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-  display: flex;
-  flex-direction: column;
-}
-
-.menu {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-  flex: 1;
-}
-
-.menuQuote {
-  font-size: 11px;
-  color: var.$ink-faint;
-  letter-spacing: 0.04em;
-  text-align: center;
-  line-height: 1.6;
-  font-style: italic;
-  margin-bottom: 4px;
-}
-
-.menuDivider {
+.mote3 {
+  width: 4px;
   height: 4px;
-  background-color: var.$illumination-gold;
-  border: none;
-  margin: 4px 0 0;
+  left: 75%;
+  background: var(--gold);
+  animation: obsidian-moteDrift 7s ease-in-out 1.2s infinite;
 }
 
-.loading {
+.mote4 {
+  width: 2px;
+  height: 2px;
+  left: 38%;
+  background: var(--info-blue);
+  animation: obsidian-moteDrift 9s ease-in-out 4s infinite;
+}
+
+// ============================================================
+// 章マーク / ギアボタン
+// ============================================================
+.chapterMark {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  margin: 0;
   text-align: center;
-  color: var.$ink-faint;
-}
-
-.warn {
-  margin: 0;
+  font-family: var(--font-display);
   font-size: 13px;
-  color: var.$vermilion;
-  line-height: 1.6;
+  letter-spacing: 0.4em;
+  color: var(--text-blue);
+  z-index: 2;
 }
 
-.danger {
-  min-height: 48px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$vermilion;
-  color: var.$parchment;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.5;
-  }
-}
-
-.dialog {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px 16px;
-  border-radius: 4px;
-  background-color: var.$parchment-card;
-  border: 0.75px solid var.$rule;
-  box-shadow: 0 2px 8px var.$shadow-ink;
-}
-
-.dialogTitle {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var.$ink;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 13px;
-  color: var.$ink;
-
-  input {
-    min-height: 44px;
-    padding: 0 12px;
-    border: 0.75px solid var.$rule;
-    border-radius: 0;
-    font-size: 16px;
-    background-color: var.$parchment;
-    color: var.$ink;
-  }
-}
-
-.note {
-  margin: 0;
-  font-size: 11px;
-  color: var.$ink-faint;
-}
-
-.dialogActions {
-  display: flex;
-  gap: 8px;
-
-  // 行内では「はじめる」「データを消して始める」を主、「もどる」を副として等分しない
-  .primary,
-  .danger {
-    flex: 1;
-  }
-}
-
-.primary {
-  min-height: 48px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.5;
-  }
-}
-
-.sub {
-  min-height: 48px;
-  padding: 0 18px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.foot {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-  padding-top: 12px;
-  border-top: 0.75px solid var.$rule;
-}
-
-.version {
-  font-size: 11px;
-  color: var.$ink-faint;
-  opacity: 0.6;
-}
-
-.updateBtn {
-  min-height: 36px;
-  padding: 0 16px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 13px;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
-}
-
-/* ギアボタン（右上固定）*/
 .gearBtn {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 0;
-  background: rgba(33, 36, 27, 0.08);
-  font-size: 22px;
-  cursor: pointer;
+  top: 22px;
+  right: 22px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-gold);
+  background: transparent;
+  color: var(--gold);
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var.$ink;
+  cursor: pointer;
+  z-index: 2;
 
   &:active {
     opacity: 0.7;
   }
 }
 
-/* サウンド設定モーダル */
-.soundOverlay {
+// ============================================================
+// 樹エンブレム
+// ============================================================
+.emblem {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 154px;
+  height: 154px;
+  z-index: 2;
+}
+
+.emblemDim {
+  opacity: 0.6;
+}
+
+.emblemRingOuter {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--rule-gold);
+  animation: obsidian-glowPulse 5s ease-in-out infinite;
+}
+
+.emblemRingInner {
+  position: absolute;
+  inset: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-gold-strong);
+}
+
+.emblemKanji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 62px;
+  color: var(--gold);
+  text-shadow: 0 0 24px var(--gold-glow);
+  animation: obsidian-breathe 6s ease-in-out infinite;
+}
+
+// ============================================================
+// 大タイトル / サブタイトル / 引用
+// ============================================================
+.title {
+  position: absolute;
+  top: 268px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 44px;
+  letter-spacing: 0.06em;
+  color: var(--text-strong);
+  text-shadow: 0 2px 30px var(--gold-glow);
+  z-index: 2;
+}
+
+.subtitle {
+  position: absolute;
+  top: 322px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.42em;
+  color: var(--text-faint);
+  z-index: 2;
+}
+
+.quote {
+  position: absolute;
+  top: 360px;
+  left: 38px;
+  right: 38px;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-quote);
+  white-space: pre-line;
+  z-index: 2;
+}
+
+// ============================================================
+// SaveCard エリア / NoSave / プレースホルダ
+// ============================================================
+.saveCardArea {
+  position: absolute;
+  left: 34px;
+  right: 34px;
+  top: 438px;
+  z-index: 2;
+}
+
+.placeholderCard {
+  position: absolute;
+  left: 34px;
+  right: 34px;
+  top: 438px;
+  font-size: 13px;
+  color: var(--text-faint);
+  z-index: 2;
+}
+
+.noSaveCard {
+  position: absolute;
+  left: 34px;
+  right: 34px;
+  top: 438px;
+  border: 1px dashed var(--rule-gold);
+  background: var(--surface-elev);
+  border-radius: 4px;
+  padding: 18px;
+  text-align: center;
+  z-index: 2;
+}
+
+.noSaveText {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text-mute);
+  font-family: var(--font-body);
+}
+
+.noSaveNote {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.6;
+}
+
+// ============================================================
+// アクションボタン群（menu モード）
+// ============================================================
+.actions {
+  position: absolute;
+  left: 34px;
+  right: 34px;
+  bottom: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 2;
+}
+
+.primary {
+  width: 100%;
+  height: 56px;
+  border-radius: 3px;
+  border: none;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: var(--bg-mid);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.16em;
+  box-shadow: 0 6px 20px var(--gold-glow);
+  cursor: pointer;
+  transition: opacity 0.14s;
+
+  &:disabled {
+    background: var(--surface-elev);
+    color: var(--text-mute);
+    box-shadow: none;
+    cursor: default;
+  }
+
+  &:not(:disabled):active {
+    opacity: 0.85;
+  }
+}
+
+.sub {
+  width: 100%;
+  height: 52px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  transition: opacity 0.14s;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &:not(:disabled):active {
+    opacity: 0.7;
+  }
+}
+
+.danger {
+  width: 100%;
+  height: 52px;
+  border-radius: 3px;
+  border: none;
+  background: var(--danger);
+  color: #fbeae6;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+// ============================================================
+// フッタ
+// ============================================================
+.foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+}
+
+.version {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-mute);
+  opacity: 0.6;
+}
+
+.updateBtn {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--rule-base);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-mute);
+  font-family: var(--font-body);
+  font-size: 11px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+// ============================================================
+// guildNameInput（ritual モード）
+// ============================================================
+.ritual {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+.ritualHead {
+  position: absolute;
+  top: 150px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: 0.1em;
+  color: var(--text-strong);
+}
+
+.ritualSub {
+  position: absolute;
+  top: 196px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--text-faint);
+}
+
+.inputWrap {
+  position: absolute;
+  top: 264px;
+  left: 34px;
+  right: 34px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface-elev);
+  border: 1px solid var(--rule-gold-strong);
+  border-radius: 4px;
+  padding: 0 14px;
+  height: 52px;
+}
+
+.ritualInput {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  outline: none;
+
+  &::placeholder {
+    color: var(--text-faint);
+  }
+}
+
+.cursor {
+  width: 2px;
+  height: 28px;
+  background: var(--gold);
+  animation: obsidian-warnBlink 1s steps(1) infinite;
+  flex-shrink: 0;
+}
+
+.inputMeta {
+  position: absolute;
+  top: 324px;
+  left: 34px;
+  right: 34px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.ritual .actions {
+  bottom: 54px;
+}
+
+// ============================================================
+// モーダル（confirm / sound）
+// ============================================================
+.modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(33, 36, 27, 0.5);
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
 }
 
-.soundPanel {
-  background: var.$parchment-card;
-  border: 0.75px solid var.$rule;
-  border-radius: 4px;
-  padding: 24px 20px 16px;
-  width: min(360px, 90vw);
+.modalPanel {
+  width: min(360px, calc(100% - 56px));
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 6px;
+  padding: 24px 22px;
+  box-shadow: var(--shadow-modal);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 4px 24px var.$shadow-ink;
+}
+
+.modalTitle {
+  font-family: var(--font-display);
+  font-size: 20px;
+  text-align: center;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.modalWarn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.8;
+  background: var(--danger-tint);
+  border-left: 2px solid var(--danger-glow);
+  padding: 12px 14px;
+  border-radius: 0 3px 3px 0;
+}
+
+.modalWarnAccent {
+  color: var(--danger-text);
+}
+
+.modalActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
+}
+
+.modalCloseBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.modalClose {
+  width: 100%;
+  height: 44px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+// ============================================================
+// @media: 短画面対応
+// ============================================================
+@media (max-height: 720px) {
+  .title {
+    top: 230px;
+    font-size: 38px;
+  }
+
+  .subtitle {
+    top: 278px;
+  }
+
+  .quote {
+    top: 314px;
+    font-size: 11px;
+  }
+
+  .saveCardArea,
+  .noSaveCard,
+  .placeholderCard {
+    top: 390px;
+  }
+
+  .actions {
+    bottom: 72px;
+  }
+
+  .emblem {
+    top: 64px;
+    width: 130px;
+    height: 130px;
+  }
+
+  .emblemKanji {
+    font-size: 52px;
+  }
 }
