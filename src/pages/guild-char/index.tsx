@@ -11,6 +11,7 @@ import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
 import { RACES } from '@/data/races';
+import { SKILLS } from '@/data/skills';
 import { TITLES } from '@/data/titles';
 import {
   acquireTitle,
@@ -145,7 +146,7 @@ export const Page = ({ id }: { id: string }) => {
       <main className={styles.body}>
         {/* 能力値 */}
         <section>
-          <p className={styles.sectionTitle}>ステータス</p>
+          <p className={styles.sectionTitle}>能力値</p>
           <dl className={styles.statsGrid}>
             {STAT_ROWS.map((r) => (
               <div
@@ -300,7 +301,7 @@ export const Page = ({ id }: { id: string }) => {
         {/* スキル */}
         <section>
           <div className={styles.skillHead}>
-            <span className={styles.skillTitle}>スキル ・ {CLASSES[char.classId]?.name}</span>
+            <span className={styles.skillTitle}>スキル ・ {char.name}</span>
             <span className={styles.spTag}>SP {sp}</span>
           </div>
 
@@ -366,7 +367,9 @@ export const Page = ({ id }: { id: string }) => {
                     key={s.skillId}
                     className={styles.learnedItem}
                   >
-                    <span className={styles.learnedName}>{s.skillId.replace(/^skill_/, '')}</span>
+                    <span className={styles.learnedName}>
+                      {SKILLS[s.skillId]?.name ?? s.skillId.replace(/^skill_/, '')}
+                    </span>
                     <span className={styles.learnedSub}>Lv{lv}</span>
                   </li>
                 );
@@ -425,7 +428,7 @@ export const Page = ({ id }: { id: string }) => {
           className={styles.back}
           onClick={() => navigate({ name: 'guild' })}
         >
-          もどる
+          一覧へ戻る
         </button>
       </footer>
 

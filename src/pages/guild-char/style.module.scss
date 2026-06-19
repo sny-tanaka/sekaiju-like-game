@@ -88,10 +88,9 @@
 .sectionTitle {
   font-size: 11px;
   letter-spacing: 0.16em;
-  color: var(--text-faint);
+  color: var(--gold);
   font-weight: 700;
   margin: 0 0 10px;
-  text-transform: uppercase;
 }
 
 // ---- 能力値グリッド（4列） ----
@@ -398,19 +397,17 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 6px;
 }
 
 .learnedItem {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--rule-soft);
-
-  &:last-child {
-    border-bottom: none;
-  }
+  padding: 7px 10px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
 }
 
 .learnedName {
