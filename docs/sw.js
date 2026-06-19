@@ -31,19 +31,19 @@ define(['./workbox-1ef09536'], function (e) {
   }),
     e.precacheAndRoute(
       [
-        { url: 'index.html', revision: '50549d51938f8aceeded69d76b5a2f04' },
+        { url: 'index.html', revision: '830fa8c67ada390e914491485497de0e' },
         { url: 'icon-512.png', revision: 'aea6735f0e3902695c58dbca460dc603' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
-        { url: 'sprites/items/item_tp_herb_mid.png', revision: 'c2f75553093c8f9eeb9fae43f8f57423' },
-        { url: 'sprites/items/item_tp_herb_hi.png', revision: '8863137d400507d9b06439e7616caed9' },
-        { url: 'sprites/items/item_tp_herb.png', revision: 'd2fb586449c06b23e9eacc9534b92cfd' },
+        { url: 'sprites/items/item_tp_herb_mid.png', revision: '76468e72d757f8c8ef63356b204076ef' },
+        { url: 'sprites/items/item_tp_herb_hi.png', revision: '978ddcdb18199e0ea5a8f793c4736110' },
+        { url: 'sprites/items/item_tp_herb.png', revision: '0c98850d8e214b9f301086f4f8578d6e' },
         { url: 'sprites/items/item_slime_jelly.png', revision: 'dd91ecaf96654fd72367ee542234d06e' },
         {
           url: 'sprites/items/item_return_thread.png',
           revision: 'd725e683a3bed204baef4c443ef17a3c',
         },
-        { url: 'sprites/items/item_rat_tail.png', revision: 'ea929ff33c94277566daa8d08a863304' },
+        { url: 'sprites/items/item_rat_tail.png', revision: '1148e5be68290859ef40dfab2dd34aa7' },
         { url: 'sprites/items/item_potion.png', revision: 'a3de5783ff32b0d6703f0bd3098e5723' },
         { url: 'sprites/items/item_ore.png', revision: 'd8d817ddd7acfd773e9539aededf1a74' },
         { url: 'sprites/items/item_medic_herb.png', revision: '7ffdec6e28f843174dfc725b09d73dab' },
@@ -53,7 +53,7 @@ define(['./workbox-1ef09536'], function (e) {
         },
         {
           url: 'sprites/items/item_mat_t4_steel_gear.png',
-          revision: 'd178a4002827f015fc7d264743b1aae5',
+          revision: 'c0e7b1003fd0c07d328b0f9ae4eec3c5',
         },
         {
           url: 'sprites/items/item_mat_t4_spectral_ash.png',
@@ -89,15 +89,15 @@ define(['./workbox-1ef09536'], function (e) {
         },
         {
           url: 'sprites/items/item_mat_t3_sovereign_horn.png',
-          revision: '55c8d37930536b74d4dfb0b76833d051',
+          revision: '6bd3628977298784032a1bf16943e177',
         },
         {
           url: 'sprites/items/item_mat_t3_charged_hide.png',
-          revision: '70e88c912de859f96f02a61a80373cc8',
+          revision: '75807739f16b405371323f80949fc2bd',
         },
         {
           url: 'sprites/items/item_mat_t2_monarch_diadem.png',
-          revision: 'cfe2db15e312be1f57b285fa77a12d26',
+          revision: '7bdea0924b1b8f1abb77d39428889185',
         },
         {
           url: 'sprites/items/item_mat_t2_ice_crystal.png',
@@ -105,7 +105,7 @@ define(['./workbox-1ef09536'], function (e) {
         },
         {
           url: 'sprites/items/item_mat_t2_frost_pelt.png',
-          revision: '845ca745ad7fd7732c0d78d98df2c718',
+          revision: '75807739f16b405371323f80949fc2bd',
         },
         {
           url: 'sprites/items/item_mat_t2_chill_core.png',
@@ -125,11 +125,11 @@ define(['./workbox-1ef09536'], function (e) {
         },
         {
           url: 'sprites/items/item_mat_t1_lord_pelt.png',
-          revision: '8b6ac4f1d9086cfa3d9d6b176f0886c7',
+          revision: 'ceccc53d99ebf167417bb6cb9bdcdd0f',
         },
         {
           url: 'sprites/items/item_mat_t1_drake_horn.png',
-          revision: '33f009e1519f4c8cfbd74ff30f37fcf9',
+          revision: 'cb73d9b916002a038ab43eaae023dbc6',
         },
         {
           url: 'sprites/items/item_mat_t1_coarse_hide.png',
@@ -141,7 +141,7 @@ define(['./workbox-1ef09536'], function (e) {
         },
         {
           url: 'sprites/items/item_mat_t0_soft_pelt.png',
-          revision: '7150def8082973eed9581cbed05bd34d',
+          revision: '75807739f16b405371323f80949fc2bd',
         },
         {
           url: 'sprites/items/item_mat_t0_great_antler.png',
@@ -155,7 +155,7 @@ define(['./workbox-1ef09536'], function (e) {
           url: 'sprites/items/item_mat_t0_chitin_plate.png',
           revision: 'f6809916b591b1bc8e639bbb4403a842',
         },
-        { url: 'sprites/items/item_lumber.png', revision: '4855232aca684552eb2136fc5a9b0212' },
+        { url: 'sprites/items/item_lumber.png', revision: 'b3313b5624bd43420baf60537f6e5065' },
         { url: 'sprites/items/item_hi_potion.png', revision: '6dee37d5726a305a8348f0c1211df77b' },
         { url: 'sprites/items/item_golem_core.png', revision: '4b8afb393ef3dff9db95bcf5693ee7e7' },
         { url: 'sprites/items/item_food_nuts.png', revision: 'c85bddd83558e28a59e9ec38c5809156' },
@@ -177,10 +177,10 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'sprites/items/equip_t5_sword.png', revision: '82a0901664b5103754079c74a9276d6c' },
         { url: 'sprites/items/equip_t5_staff.png', revision: '115fcded9324f4cbe4e101f3841b4870' },
         { url: 'sprites/items/equip_t5_spear.png', revision: '08afd27829f5040c1214012a34702774' },
-        { url: 'sprites/items/equip_t5_light.png', revision: 'f1836dbf61e3d83e1d7c76fed9200e7d' },
-        { url: 'sprites/items/equip_t5_heavy.png', revision: '5475624fbfb4e1ec42325b10dc49098d' },
-        { url: 'sprites/items/equip_t5_fist.png', revision: '91ba136ad02ca0fcced93de6e9e21d53' },
-        { url: 'sprites/items/equip_t5_clothes.png', revision: '92df6ceff19480ad2626d0aebf228e18' },
+        { url: 'sprites/items/equip_t5_light.png', revision: 'c1b83a8c4a2a73a073d0680870a6e276' },
+        { url: 'sprites/items/equip_t5_heavy.png', revision: 'f1836dbf61e3d83e1d7c76fed9200e7d' },
+        { url: 'sprites/items/equip_t5_fist.png', revision: '175d0994b05d3b458874080833fe5ae7' },
+        { url: 'sprites/items/equip_t5_clothes.png', revision: 'f576ea3237874f3c135e767b44a86273' },
         { url: 'sprites/items/equip_t5_bow.png', revision: '929fb6262beb425434c6f395efdc1cda' },
         { url: 'sprites/items/equip_t5_axe.png', revision: '3ec0a940b803edbe1edb41abc1b4f44d' },
         {
@@ -190,10 +190,10 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'sprites/items/equip_t4_sword.png', revision: 'cfc0f264c733060777b297604bce0bb0' },
         { url: 'sprites/items/equip_t4_staff.png', revision: '115fcded9324f4cbe4e101f3841b4870' },
         { url: 'sprites/items/equip_t4_spear.png', revision: '08afd27829f5040c1214012a34702774' },
-        { url: 'sprites/items/equip_t4_light.png', revision: '79c345ae5b212a19945efc1df47bbfb0' },
-        { url: 'sprites/items/equip_t4_heavy.png', revision: '57a4b42510a2fb769b8756349c2d9b52' },
-        { url: 'sprites/items/equip_t4_fist.png', revision: '91ba136ad02ca0fcced93de6e9e21d53' },
-        { url: 'sprites/items/equip_t4_clothes.png', revision: '92df6ceff19480ad2626d0aebf228e18' },
+        { url: 'sprites/items/equip_t4_light.png', revision: 'c1b83a8c4a2a73a073d0680870a6e276' },
+        { url: 'sprites/items/equip_t4_heavy.png', revision: '79c345ae5b212a19945efc1df47bbfb0' },
+        { url: 'sprites/items/equip_t4_fist.png', revision: 'f7bcd4fd7c179bfbe58e8d1581c227bb' },
+        { url: 'sprites/items/equip_t4_clothes.png', revision: 'f576ea3237874f3c135e767b44a86273' },
         { url: 'sprites/items/equip_t4_bow.png', revision: '929fb6262beb425434c6f395efdc1cda' },
         { url: 'sprites/items/equip_t4_axe.png', revision: '3ec0a940b803edbe1edb41abc1b4f44d' },
         {
@@ -203,10 +203,10 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'sprites/items/equip_t3_sword.png', revision: '46dc5257f8d4d4df0b3dd63d786f0054' },
         { url: 'sprites/items/equip_t3_staff.png', revision: '115fcded9324f4cbe4e101f3841b4870' },
         { url: 'sprites/items/equip_t3_spear.png', revision: '08afd27829f5040c1214012a34702774' },
-        { url: 'sprites/items/equip_t3_light.png', revision: '6498deff1bedc6fc1f6ea40d8b0017c5' },
-        { url: 'sprites/items/equip_t3_heavy.png', revision: '1bfcef0f4dc4fc994ac4ac660f6c8bda' },
-        { url: 'sprites/items/equip_t3_fist.png', revision: '91ba136ad02ca0fcced93de6e9e21d53' },
-        { url: 'sprites/items/equip_t3_clothes.png', revision: '92df6ceff19480ad2626d0aebf228e18' },
+        { url: 'sprites/items/equip_t3_light.png', revision: 'c1b83a8c4a2a73a073d0680870a6e276' },
+        { url: 'sprites/items/equip_t3_heavy.png', revision: '6498deff1bedc6fc1f6ea40d8b0017c5' },
+        { url: 'sprites/items/equip_t3_fist.png', revision: '9fcc0927726cabd0e3f59fe622731e6f' },
+        { url: 'sprites/items/equip_t3_clothes.png', revision: 'f576ea3237874f3c135e767b44a86273' },
         { url: 'sprites/items/equip_t3_bow.png', revision: '929fb6262beb425434c6f395efdc1cda' },
         { url: 'sprites/items/equip_t3_axe.png', revision: '3ec0a940b803edbe1edb41abc1b4f44d' },
         {
@@ -216,10 +216,10 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'sprites/items/equip_t2_sword.png', revision: 'd94b8e83628e93b6065f004dda6a1c65' },
         { url: 'sprites/items/equip_t2_staff.png', revision: '115fcded9324f4cbe4e101f3841b4870' },
         { url: 'sprites/items/equip_t2_spear.png', revision: '08afd27829f5040c1214012a34702774' },
-        { url: 'sprites/items/equip_t2_light.png', revision: '9afc9218a7b1342989404d5215472a17' },
-        { url: 'sprites/items/equip_t2_heavy.png', revision: '4ab651564754b01f2fcf0735e1a7330b' },
-        { url: 'sprites/items/equip_t2_fist.png', revision: '91ba136ad02ca0fcced93de6e9e21d53' },
-        { url: 'sprites/items/equip_t2_clothes.png', revision: '92df6ceff19480ad2626d0aebf228e18' },
+        { url: 'sprites/items/equip_t2_light.png', revision: 'c1b83a8c4a2a73a073d0680870a6e276' },
+        { url: 'sprites/items/equip_t2_heavy.png', revision: '9afc9218a7b1342989404d5215472a17' },
+        { url: 'sprites/items/equip_t2_fist.png', revision: '4ea06298a56a5bfbc0fee8c6e4823cd9' },
+        { url: 'sprites/items/equip_t2_clothes.png', revision: 'f576ea3237874f3c135e767b44a86273' },
         { url: 'sprites/items/equip_t2_bow.png', revision: '929fb6262beb425434c6f395efdc1cda' },
         { url: 'sprites/items/equip_t2_axe.png', revision: '3ec0a940b803edbe1edb41abc1b4f44d' },
         {
@@ -228,7 +228,7 @@ define(['./workbox-1ef09536'], function (e) {
         },
         {
           url: 'sprites/items/equip_slime_shield.png',
-          revision: 'c6069f782917ced7bf133a7e5ce2e42f',
+          revision: '95a2835cdff2902568df1b382b13425d',
         },
         {
           url: 'sprites/items/equip_short_sword.png',
@@ -239,21 +239,21 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'sprites/items/equip_oak_staff.png', revision: '115fcded9324f4cbe4e101f3841b4870' },
         {
           url: 'sprites/items/equip_leather_armor.png',
-          revision: '648aa86c82675d9192c5e3af201860a4',
+          revision: 'c1b83a8c4a2a73a073d0680870a6e276',
         },
         { url: 'sprites/items/equip_iron_spear.png', revision: '08afd27829f5040c1214012a34702774' },
         {
           url: 'sprites/items/equip_iron_knuckle.png',
-          revision: '91ba136ad02ca0fcced93de6e9e21d53',
+          revision: '87703742edd203917fc5830c8bac3226',
         },
         { url: 'sprites/items/equip_iron_armor.png', revision: '95612bbe4eb13ed2db62dc1beefe91f7' },
         {
           url: 'sprites/items/equip_golem_blade.png',
           revision: 'f93b9887f31cae9c9e28f6d7ed7fd839',
         },
-        { url: 'sprites/items/equip_cloth_robe.png', revision: '92df6ceff19480ad2626d0aebf228e18' },
+        { url: 'sprites/items/equip_cloth_robe.png', revision: 'f576ea3237874f3c135e767b44a86273' },
         { url: 'sprites/items/equip_battle_axe.png', revision: '3ec0a940b803edbe1edb41abc1b4f44d' },
-        { url: 'sprites/items/equip_bat_cloak.png', revision: '95a2835cdff2902568df1b382b13425d' },
+        { url: 'sprites/items/equip_bat_cloak.png', revision: 'c1b83a8c4a2a73a073d0680870a6e276' },
         { url: 'sprites/items/equip_amulet.png', revision: '149263bd03a2ef4ed8644f54a9119874' },
         {
           url: 'sprites/enemies/enemy_t4_wraith_lantern.png',
@@ -547,7 +547,7 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'assets/race_garon_class_guardian-Q0SZ35gI.png', revision: null },
         { url: 'assets/race_garon_class_dancer-Mv4Ly2hD.png', revision: null },
         { url: 'assets/index-Db9l_7jr.css', revision: null },
-        { url: 'assets/index-DGu9sjkp.js', revision: null },
+        { url: 'assets/index-BUvtDvHU.js', revision: null },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
         { url: 'icon-512.png', revision: 'aea6735f0e3902695c58dbca460dc603' },
