@@ -211,19 +211,6 @@ export const mockBossBattle: SaveData = (() => {
 })();
 
 // ============================================================
-// mockCorrupted — corrupted フラグ付きセーブ（SaveCard Corrupted ストーリー用）
-// ============================================================
-export const mockCorrupted: SaveData = {
-  ...mockWithParty,
-  // SaveData に corrupted フィールドはないが、getSaveMeta が SaveMeta を作る際に
-  // corrupted: true を埋める想定。title ストーリーでは GameStateProvider に
-  // initialSave として渡すだけなので、getSaveMeta の呼び出し先 (saveStore) は
-  // 経由しない。代わりに TitlePage の meta state を Storybook の play で
-  // 再現するため、ここでは mockWithParty をそのまま流用する。
-  // ※ Corrupted ストーリー実装は Title.stories.tsx 側で play + mock で制御する。
-};
-
-// ============================================================
 // mockBattleSkillMenu — mockBattle と同じ状況だが、戦士が複数スキルを習得済み
 // （スキル選択画面のスクショ用。2列レイアウト + TP 不足のグレーアウトを確認できる）
 // ============================================================
@@ -250,42 +237,57 @@ export const mockBattleSkillMenu: SaveData = {
 };
 
 // ============================================================
-// mockGuildCharWithTitle — 称号スキルツリー確認用
-// mockPostBoss ベース + deepestReached: 20 + 先頭メンバー (warrior) に titleId セット
+// mockGuildCharWithTitle — 戦士が称号（title_berserker）を習得済みの状態
+// GuildChar の WithTitleSkillTab ストーリー用
 // ============================================================
-export const mockGuildCharWithTitle: SaveData = (() => {
-  const firstId = mockPostBoss.guild.members[0]?.id ?? '';
-  return {
-    ...mockPostBoss,
-    towerState: {
-      ...mockPostBoss.towerState,
-      record: {
-        ...mockPostBoss.towerState.record,
-        deepestReached: 20,
-      },
+export const mockGuildCharWithTitle: SaveData = {
+  ...mockWithParty,
+  towerState: {
+    ...mockWithParty.towerState,
+    record: {
+      ...mockWithParty.towerState.record,
+      deepestReached: 20, // UNLOCK.TITLE_DEPTH 以上
     },
-    guild: {
-      ...mockPostBoss.guild,
-      members: mockPostBoss.guild.members.map((m) =>
-        m.id === firstId ? { ...m, titleId: 'title_berserker' } : m
-      ),
-    },
-  };
-})();
+  },
+  guild: {
+    ...mockWithParty.guild,
+    members: mockWithParty.guild.members.map((m) =>
+      m.id === 'char_mock_warrior'
+        ? {
+            ...m,
+            level: 15,
+            titleId: 'title_berserker',
+            learnedSkills: {
+              ...m.learnedSkills,
+              skill_power_slash: 1,
+              skill_cleave: 1,
+            },
+          }
+        : m
+    ),
+  },
+};
 
 // ============================================================
-// mockGuildCharRebirthReady — 転生フォーム確認用
-// mockWithParty ベース + 先頭メンバーを Lv100 に設定
+// mockGuildCharLv100 — 戦士が Lv100（転生可能）状態
+// GuildChar の ReincarnateOpen ストーリー用
 // ============================================================
-export const mockGuildCharRebirthReady: SaveData = (() => {
-  const firstId = mockWithParty.guild.members[0]?.id ?? '';
-  return {
-    ...mockWithParty,
-    guild: {
-      ...mockWithParty.guild,
-      members: mockWithParty.guild.members.map((m) =>
-        m.id === firstId ? { ...m, level: 100 } : m
-      ),
-    },
-  };
-})();
+export const mockGuildCharLv100: SaveData = {
+  ...mockWithParty,
+  guild: {
+    ...mockWithParty.guild,
+    members: mockWithParty.guild.members.map((m) =>
+      m.id === 'char_mock_warrior'
+        ? {
+            ...m,
+            level: 100,
+            rebirthBonus: {
+              count: 0,
+              stats: { hp: 0, tp: 0, str: 0, vit: 0, agi: 0, int: 0, mnd: 0, luc: 0 },
+              bonusSp: 0,
+            },
+          }
+        : m
+    ),
+  },
+};
