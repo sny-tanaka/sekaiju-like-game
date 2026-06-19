@@ -181,11 +181,18 @@ export interface BattlePageProps {
   __storyMockLogPreview?: string[];
   /** Storybook 専用: マウント後にスキル選択画面を直接開く。本番経路では未使用。 */
   __storyMockOpenSkillMenu?: boolean;
+  /** Storybook 専用: rollEncounter / pendingFoeBattle の代わりに固定の敵 ID 列で開始する。
+   *  「最大表示領域」ストーリー（敵スプライト多数）用。本番経路では未使用。 */
+  __storyMockEnemyIds?: EnemyId[];
 }
 
 // 戦闘（[03]）。一括入力型ターン制。本家に倣い、味方は前衛/後衛の2段で表示し、
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
-export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: BattlePageProps) => {
+export const Page = ({
+  __storyMockLogPreview,
+  __storyMockOpenSkillMenu,
+  __storyMockEnemyIds,
+}: BattlePageProps) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist, applySave } = useGameState();
   const play = useSfx();
@@ -237,13 +244,18 @@ export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: Battle
     const seed =
       (save.masterSeed ^ (depth * 2654435761) ^ (save.towerState.record.totalDives * 40503)) >>> 0;
     rngRef.current = createRng(seed);
+    // Storybook 専用: 固定の敵 ID 列で開始（rollEncounter / pendingFoeBattle を bypass）。
+    if (__storyMockEnemyIds && __storyMockEnemyIds.length > 0) {
+      setState(startBattle(save, __storyMockEnemyIds));
+      return;
+    }
     const pending = save.diveState.pendingFoeBattle;
     if (pending) {
       setState(startBattle(save, [pending.enemyId], pending.firstStrike));
     } else {
       setState(startBattle(save, rollEncounter(depth, rngRef.current)));
     }
-  }, [save, state]);
+  }, [save, state, __storyMockEnemyIds]);
 
   // 敵種別に応じて戦闘BGMを切替（boss > foe > 通常battle）。/battle 離脱時に解除。
   useEffect(() => {
@@ -1009,159 +1021,163 @@ export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: Battle
     <div className={styles.layout}>
       {/* 章マーカー */}
       <p className={styles.chapterMark}>❦ 戦闘</p>
-      {/* 敵 */}
-      <div className={styles.enemies}>
-        {state.enemies.map((e) => {
-          const d = dispOf(e);
-          const isTargeted = targetId === e.id;
-          const masterEnemyId = e.enemyId as EnemyId | undefined;
-          const master = masterEnemyId ? ENEMIES[masterEnemyId] : undefined;
-          const isLarge = master?.kind === 'boss' || master?.kind === 'foe';
-          return (
-            <button
-              type="button"
-              key={e.id}
-              className={`${styles.enemy} ${d.isDown ? styles.down : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
-              disabled={e.isDown || !!anim || isAllyTargeting}
-              onClick={() => setTargetId(e.id)}
-            >
-              {/* InkSplatter — 敵への命中時（Phase 2） */}
-              {inkSplatters.has(e.id) &&
-                (() => {
-                  const splat = inkSplatters.get(e.id)!;
-                  return (
-                    <div
-                      className={styles.inkOverlay}
-                      aria-hidden="true"
-                    >
-                      <InkSplatter
-                        value={splat.value}
-                        variant={splat.variant}
-                        size={56}
-                        onDone={() =>
-                          setInkSplatters((prev) => {
-                            const next = new Map(prev);
-                            next.delete(e.id);
-                            return next;
-                          })
-                        }
-                      />
-                    </div>
-                  );
-                })()}
-              {isLarge ? (
-                <>
-                  <EnemySprite
-                    enemyId={masterEnemyId ?? (e.enemyId as EnemyId)}
-                    size="md"
-                    className={styles.enemySprite}
-                  />
-                  <span className={styles.enemyName}>
+      {/* 戦場（敵 + 召喚 + 味方 + ログ）。上部はこの内側でのみ縦に溢れ、コマンド
+          エリア（下端）の表示領域を圧迫しない。極端ケースは内部スクロールで吸収。 */}
+      <div className={styles.battlefield}>
+        {/* 敵 */}
+        <div className={styles.enemies}>
+          {state.enemies.map((e) => {
+            const d = dispOf(e);
+            const isTargeted = targetId === e.id;
+            const masterEnemyId = e.enemyId as EnemyId | undefined;
+            const master = masterEnemyId ? ENEMIES[masterEnemyId] : undefined;
+            const isLarge = master?.kind === 'boss' || master?.kind === 'foe';
+            return (
+              <button
+                type="button"
+                key={e.id}
+                className={`${styles.enemy} ${d.isDown ? styles.down : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
+                disabled={e.isDown || !!anim || isAllyTargeting}
+                onClick={() => setTargetId(e.id)}
+              >
+                {/* InkSplatter — 敵への命中時（Phase 2） */}
+                {inkSplatters.has(e.id) &&
+                  (() => {
+                    const splat = inkSplatters.get(e.id)!;
+                    return (
+                      <div
+                        className={styles.inkOverlay}
+                        aria-hidden="true"
+                      >
+                        <InkSplatter
+                          value={splat.value}
+                          variant={splat.variant}
+                          size={56}
+                          onDone={() =>
+                            setInkSplatters((prev) => {
+                              const next = new Map(prev);
+                              next.delete(e.id);
+                              return next;
+                            })
+                          }
+                        />
+                      </div>
+                    );
+                  })()}
+                {isLarge ? (
+                  <>
+                    <EnemySprite
+                      enemyId={masterEnemyId ?? (e.enemyId as EnemyId)}
+                      size="md"
+                      className={styles.enemySprite}
+                    />
+                    <span className={styles.enemyName}>
+                      <span className={styles.enemyNameText}>{e.name}</span>
+                      <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
+                    </span>
+                  </>
+                ) : (
+                  <span className={styles.enemyHeader}>
+                    <EnemySprite
+                      enemyId={masterEnemyId ?? (e.enemyId as EnemyId)}
+                      size="sm"
+                      className={styles.enemySpriteInline}
+                    />
                     <span className={styles.enemyNameText}>{e.name}</span>
                     <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
                   </span>
-                </>
-              ) : (
-                <span className={styles.enemyHeader}>
-                  <EnemySprite
-                    enemyId={masterEnemyId ?? (e.enemyId as EnemyId)}
-                    size="sm"
-                    className={styles.enemySpriteInline}
-                  />
-                  <span className={styles.enemyNameText}>{e.name}</span>
-                  <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
-                </span>
-              )}
-              <StatBar
-                value={d.hp}
-                max={e.maxHp}
-                color="#B22C2C" // $vermilion
-                showValue={false}
-              />
-              {/* §16: 選択中の敵の耐性コンパクト表示 */}
-              <div className={styles.enemyResist}>
-                {isTargeted && master ? (
-                  <ResistBadges
-                    elementResist={master.resist}
-                    ailmentResist={
-                      masterEnemyId ? resolveEnemyAilmentResist(masterEnemyId) : undefined
-                    }
-                    compact
-                  />
-                ) : null}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 召喚体（最前列）。生存中のみ表示。 */}
-      {state.summons.length > 0 ? (
-        <div className={styles.summons}>
-          {state.summons.map((s) => {
-            const d = dispOf(s);
-            return (
-              <div
-                key={s.id}
-                className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''}`}
-              >
-                <span className={styles.summonName}>🐾 {s.name}</span>
+                )}
                 <StatBar
                   value={d.hp}
-                  max={s.maxHp}
-                  color="#5A4F36" // $ink-faint
+                  max={e.maxHp}
+                  color="#B22C2C" // $vermilion
                   showValue={false}
                 />
-                <span className={styles.summonHp}>HP {Math.max(0, d.hp)}</span>
-              </div>
+                {/* §16: 選択中の敵の耐性コンパクト表示 */}
+                <div className={styles.enemyResist}>
+                  {isTargeted && master ? (
+                    <ResistBadges
+                      elementResist={master.resist}
+                      ailmentResist={
+                        masterEnemyId ? resolveEnemyAilmentResist(masterEnemyId) : undefined
+                      }
+                      compact
+                    />
+                  ) : null}
+                </div>
+              </button>
             );
           })}
         </div>
-      ) : null}
 
-      {/* 味方: 前衛/後衛の2段 */}
-      <div className={styles.party}>
-        <div className={styles.rowTag}>前衛</div>
-        <div className={styles.cardRow}>{front.map(renderCard)}</div>
-        {back.length > 0 && (
-          <>
-            <div className={styles.rowTag}>後衛（近接ダメージ -30%）</div>
-            <div className={styles.cardRow}>{back.map(renderCard)}</div>
-          </>
-        )}
-      </div>
-
-      {/* 戦闘ログ（インライン 3 行プレビュー / キャラ下・コマンド上）。
-          タップで全履歴オーバーレイ。再生中は revealed 行までを順に表示する。 */}
-      <button
-        type="button"
-        className={styles.log}
-        onClick={() => setLogOpen(true)}
-        aria-label="戦闘ログの全履歴を見る"
-      >
-        <div className={styles.logHeader}>
-          <span>戦闘ログ</span>
-          <span className={styles.logHeaderHint}>タップで全履歴</span>
-        </div>
-        <div className={styles.logBody}>
-          {(() => {
-            const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-            if (visible.length === 0) {
+        {/* 召喚体（最前列）。生存中のみ表示。 */}
+        {state.summons.length > 0 ? (
+          <div className={styles.summons}>
+            {state.summons.map((s) => {
+              const d = dispOf(s);
               return (
-                <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
+                <div
+                  key={s.id}
+                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''}`}
+                >
+                  <span className={styles.summonName}>🐾 {s.name}</span>
+                  <StatBar
+                    value={d.hp}
+                    max={s.maxHp}
+                    color="#5A4F36" // $ink-faint
+                    showValue={false}
+                  />
+                  <span className={styles.summonHp}>HP {Math.max(0, d.hp)}</span>
+                </div>
               );
-            }
-            return visible.slice(-3).map((l, i, arr) => (
-              <div
-                key={visible.length - arr.length + i}
-                className={`${styles.logLine} ${anim && i === arr.length - 1 ? styles.logLineNew : ''}`}
-              >
-                {l.text}
-              </div>
-            ));
-          })()}
+            })}
+          </div>
+        ) : null}
+
+        {/* 味方: 前衛/後衛の2段 */}
+        <div className={styles.party}>
+          <div className={styles.rowTag}>前衛</div>
+          <div className={styles.cardRow}>{front.map(renderCard)}</div>
+          {back.length > 0 && (
+            <>
+              <div className={styles.rowTag}>後衛（近接ダメージ -30%）</div>
+              <div className={styles.cardRow}>{back.map(renderCard)}</div>
+            </>
+          )}
         </div>
-      </button>
+
+        {/* 戦闘ログ（インライン 3 行プレビュー / キャラ下・コマンド上）。
+          タップで全履歴オーバーレイ。再生中は revealed 行までを順に表示する。 */}
+        <button
+          type="button"
+          className={styles.log}
+          onClick={() => setLogOpen(true)}
+          aria-label="戦闘ログの全履歴を見る"
+        >
+          <div className={styles.logHeader}>
+            <span>戦闘ログ</span>
+            <span className={styles.logHeaderHint}>タップで全履歴</span>
+          </div>
+          <div className={styles.logBody}>
+            {(() => {
+              const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
+              if (visible.length === 0) {
+                return (
+                  <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
+                );
+              }
+              return visible.slice(-3).map((l, i, arr) => (
+                <div
+                  key={visible.length - arr.length + i}
+                  className={`${styles.logLine} ${anim && i === arr.length - 1 ? styles.logLineNew : ''}`}
+                >
+                  {l.text}
+                </div>
+              ));
+            })()}
+          </div>
+        </button>
+      </div>
 
       {/* コマンド入力 / 実行 / 結果（再生中は再生コントロールのみ） */}
       {anim ? (
