@@ -2,6 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { Page } from './index';
 
+import { withGameContext } from '@/__stories__/decorators';
+import { mockEmpty, mockWithParty } from '@/__stories__/mockSaves';
+
 const meta = {
   title: 'Pages/NotFound',
   component: Page,
@@ -11,5 +14,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** 不正遷移時の 404 フォールバック */
-export const Default: Story = {};
+/** セーブ無し → 「タイトルへ戻る」 */
+export const Default: Story = {
+  decorators: [withGameContext(mockEmpty)],
+};
+
+/** セーブ有り → 「拠点へ戻る」 */
+export const FromTown: Story = {
+  decorators: [withGameContext(mockWithParty)],
+};

@@ -16,7 +16,7 @@
   color: var(--text-base);
   font-family: var(--font-body);
   text-align: center;
-  gap: 24px;
+  gap: 0; // v3: gap 廃止（個別 margin で制御）
 }
 
 .head {
@@ -30,7 +30,7 @@
   font-family: var(--font-display);
   font-size: 13px;
   letter-spacing: 0.36em;
-  color: var(--text-blue);
+  color: #5b6475; // v3: #7d8aa0 → #5b6475 (モック準拠)
 }
 
 .body {
@@ -40,24 +40,25 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 0; // v3: gap 廃止（個別 margin で制御）
 }
 
 .emblem {
   position: relative;
-  width: clamp(96px, 28vw, 120px);
+  width: 120px; // v3: clamp 廃止 → 固定 120px
+  height: 120px;
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px; // モック準拠 (34px 余白を gap 18 + 16 で表現)
+  margin-bottom: 34px; // v3: 16px → 34px（モック準拠、gap 廃止と整合）
 }
 
 .emblemRing {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1px solid var(--rule-gold);
+  border: 1px solid rgba(201, 168, 106, 0.25); // v3: var(--rule-gold)(0.3) → 0.25
   animation: obsidian-glowPulse 5s ease-in-out infinite;
 }
 
@@ -65,25 +66,24 @@
   position: relative;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(48px, 16vw, 64px);
-  color: var(--gold);
-  opacity: 0.55;
+  font-size: 64px; // v3: clamp 廃止 → 固定 64px
+  color: rgba(201, 168, 106, 0.55); // v3: opacity 二重化を rgba 1本に統合
   line-height: 1;
 }
 
 .code {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(22px, 7vw, 26px);
+  font-size: 26px; // v3: clamp 廃止 → 固定 26px
   letter-spacing: 0.1em;
-  color: var(--text-strong);
+  color: #e8e6e0; // v3: var(--text-strong)(#f2ede1) → #e8e6e0
 }
 
 .message {
-  margin: 0;
-  font-size: clamp(13px, 3.6vw, 14px);
+  margin: 14px 0 36px 0; // v3: 0 → 14px 0 36px 0（モック準拠、gap 廃止と整合）
+  font-size: 14px; // v3: clamp 廃止 → 固定 14px
   line-height: 1.8;
-  color: var(--text-faint);
+  color: var(--text-faint); // #8c8a84（モックと一致）
 }
 
 .foot {
@@ -93,7 +93,7 @@
 }
 
 .back {
-  width: clamp(180px, 56vw, 220px);
+  width: 200px; // v3: clamp 廃止 → 固定 200px
   height: 50px;
   border-radius: 3px;
   border: 1px solid var(--rule-gold-strong);
@@ -103,7 +103,7 @@
   font-size: 15px;
   letter-spacing: 0.2em;
   cursor: pointer;
-  transition: background var(--motion-quick, 140ms cubic-bezier(.4, 0, .2, 1));
+  transition: background var(--motion-quick, 140ms cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .back:hover {
@@ -114,8 +114,11 @@
   background: rgba(201, 168, 106, 0.24);
 }
 
+// v3: gap 廃止に合わせて再構成
 @media (max-height: 720px) {
-  .layout { gap: 16px; padding-top: 24px; }
-  .body { gap: 12px; }
-  .emblem { margin-bottom: 8px; }
+  .layout { padding-top: 24px; }
+  .emblem { width: 96px; height: 96px; margin-bottom: 18px; }
+  .emblemMark { font-size: 48px; }
+  .code { font-size: 22px; }
+  .message { margin: 10px 0 22px 0; }
 }
