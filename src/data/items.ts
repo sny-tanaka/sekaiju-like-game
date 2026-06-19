@@ -8,7 +8,7 @@ import type { ItemId, ItemMaster } from '@/domain/types';
 export const ITEMS: Record<ItemId, ItemMaster> = {
   item_potion: {
     id: 'item_potion',
-    name: 'やくそう',
+    name: 'きずぐすり',
     description: 'HP を 30 回復する。',
     category: 'consumable',
     buyPrice: 30,
@@ -18,7 +18,7 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
   },
   item_hi_potion: {
     id: 'item_hi_potion',
-    name: 'よいやくそう',
+    name: 'いいきずぐすり',
     description: 'HP を 80 回復する。',
     category: 'consumable',
     buyPrice: 90,
