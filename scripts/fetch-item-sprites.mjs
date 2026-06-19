@@ -55,26 +55,26 @@ const SPRITE_MAP = {
   equip_t5_staff: 'tsue',
 
   // ---- 防具 ----
-  // heavy (tier 別色違い)
-  equip_iron_armor: 'armor_iron',
-  equip_slime_shield: 'armor_red',
-  equip_t2_heavy: 'armor_blue',
-  equip_t3_heavy: 'armor_green',
-  equip_t4_heavy: 'armor_red_02',
-  equip_t5_heavy: 'armor_blue_02',
-  // light (tier 別)
-  equip_leather_armor: 'shield_buckler_wood',
-  equip_bat_cloak: 'shield_buckler_iron',
-  equip_t2_light: 'armor_koshiate_iron',
-  equip_t3_light: 'armor_koshiate_red',
-  equip_t4_light: 'armor_koshiate_blue',
-  equip_t5_light: 'armor_koshiate_green',
-  // clothes (一律)
-  equip_cloth_robe: 'character_madoshi_01_purple',
-  equip_t2_clothes: 'character_madoshi_01_purple',
-  equip_t3_clothes: 'character_madoshi_01_purple',
-  equip_t4_clothes: 'character_madoshi_01_purple',
-  equip_t5_clothes: 'character_madoshi_01_purple',
+  // heavy (tier 別色違い) ← v4: 旧 light(koshiate/buckler)に移動
+  equip_iron_armor: 'shield_buckler_wood',
+  equip_slime_shield: 'shield_buckler_iron',
+  equip_t2_heavy: 'armor_koshiate_iron',
+  equip_t3_heavy: 'armor_koshiate_red',
+  equip_t4_heavy: 'armor_koshiate_blue',
+  equip_t5_heavy: 'armor_koshiate_green',
+  // light (tier 別) ← v4: 兵士甲冑キャラ絵に置換
+  equip_leather_armor: 'character_heishi_armor_01_01_red',
+  equip_bat_cloak: 'character_heishi_armor_01_01_blue',
+  equip_t2_light: 'character_heishi_armor_01_01_green',
+  equip_t3_light: 'character_heishi_armor_02_01_red',
+  equip_t4_light: 'character_heishi_armor_02_01_blue',
+  equip_t5_light: 'character_heishi_armor_02_01_green',
+  // clothes (tier 別) ← v4: 神父/僧侶/魔道士/魔法使いバリエーション
+  equip_cloth_robe: 'character_shinpu_green',
+  equip_t2_clothes: 'character_soryo_purple',
+  equip_t3_clothes: 'character_madoshi_01_black',
+  equip_t4_clothes: 'character_mahotsukai_01_purple',
+  equip_t5_clothes: 'character_mahotsukai_02_black',
   // accessory (tier 進化)
   equip_amulet: 'ring_bronze',
   equip_t2_accessory: 'ring_silver',
@@ -85,21 +85,21 @@ const SPRITE_MAP = {
   // ---- 消耗品 ----
   item_potion: 'portion_01_green',
   item_hi_potion: 'portion_01_red',
-  item_tp_herb: 'portion_02_purple_01',
-  item_tp_herb_mid: 'portion_02_purple_02',
-  item_tp_herb_hi: 'portion_02_pink',
+  item_tp_herb: 'kaede_green',
+  item_tp_herb_mid: 'kaede_orange',
+  item_tp_herb_hi: 'kaede_red',
   item_return_thread: 'portion_02_lightblue_01',
 
   // ---- 売却素材（モンスタードロップ） ----
   item_slime_jelly: 'character_monster_slime_green',
-  item_rat_tail: 'nezumi_brown',
+  item_rat_tail: 'nezumi_albino',
   item_bat_wing: 'cutlery_knife',
   item_golem_core: 'crystal_sphere_blue',
 
   // ---- 採集素材 ----
   item_ore: 'koseki_iron',
   item_medic_herb: 'prune_leaf',
-  item_lumber: 'matsubokkuri',
+  item_lumber: 'ki_kareki',
 
   // ---- 食材（生） ----
   item_food_fish: 'sakana_shiromi',
@@ -113,7 +113,7 @@ const SPRITE_MAP = {
 
   // ---- tier 別ドロップ素材 ----
   // tier 0
-  item_mat_t0_soft_pelt: 'usagi_brown',
+  item_mat_t0_soft_pelt: 'usagi_albino',
   item_mat_t0_spore_cap: 'character_monster_kinoko_green',
   item_mat_t0_faint_ember: 'crystal_red',
   item_mat_t0_great_antler: 'shika_tsuno',
@@ -123,25 +123,25 @@ const SPRITE_MAP = {
   item_mat_t1_stone_scale: 'iwa_koseki_yellow',
   item_mat_t1_sharp_feather: 'hane_white',
   item_mat_t1_ogre_fang: 'hone',
-  item_mat_t1_drake_horn: 'crystal_red',
-  item_mat_t1_lord_pelt: 'koseki_yellow',
+  item_mat_t1_drake_horn: 'crown_02_bronze_red',
+  item_mat_t1_lord_pelt: 'saru_nihonzaru',
   // tier 2
-  item_mat_t2_frost_pelt: 'usagi_white',
+  item_mat_t2_frost_pelt: 'kuma_shirokuma',
   item_mat_t2_ice_crystal: 'crystal_lightblue',
   item_mat_t2_chill_core: 'crystal_sphere_lightblue',
-  item_mat_t2_monarch_diadem: 'jewelry_emerald_lightblue',
+  item_mat_t2_monarch_diadem: 'crown_02_silver_blue',
   // tier 3
-  item_mat_t3_charged_hide: 'koseki_purple',
+  item_mat_t3_charged_hide: 'okami_gray',
   item_mat_t3_storm_feather: 'hane_yellow',
   item_mat_t3_thunder_carapace: 'crystal_yellow',
-  item_mat_t3_sovereign_horn: 'crystal_sphere_yellow',
+  item_mat_t3_sovereign_horn: 'crown_02_gold_blue',
   // tier 4
   item_mat_t4_rotflesh: 'hone',
   item_mat_t4_grave_dust: 'koseki_white',
   item_mat_t4_cursed_marrow: 'crystal_purple',
   item_mat_t4_toxic_scale: 'crystal_yellowgreen',
   item_mat_t4_spectral_ash: 'crystal_white',
-  item_mat_t4_steel_gear: 'koseki_silver',
+  item_mat_t4_steel_gear: 'ring_silver',
   item_mat_t4_corroded_plate: 'vikinghelmet_iron',
   item_mat_t4_sovereign_crown: 'vikinghelmet_red',
 };

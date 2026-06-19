@@ -1,5 +1,6 @@
 import styles from './style.module.scss';
 
+import { EQUIPMENT } from '@/data/equipment';
 import type { ItemId } from '@/domain/types';
 import { itemSpriteUrl } from '@/sprites/itemSpriteUrl';
 
@@ -7,9 +8,22 @@ import { itemSpriteUrl } from '@/sprites/itemSpriteUrl';
 // アイテム/装備スプライト表示コンポーネント。
 // size で表示サイズ、silhouette でシルエット化を制御する。
 // equip_* / item_* のどちらの ItemId も扱える。
+//
+// 剣以外の武器（slot=weapon, weaponType!=sword）は、tier 別に CSS hue-rotate を
+// inline style で付与して色違いを表現する。剣は tier 別色違い画像があるため除外。
 // ============================================================================
 
 type Size = 'sm' | 'md' | 'lg'; // sm: ~24px, md: ~48px, lg: ~96px
+
+// T0〜T5 の色相シフト（deg）。T0 はシフトなし。
+const TIER_HUE_SHIFTS: readonly number[] = [0, 40, 100, 180, 240, 290];
+
+function getHueShift(itemId: ItemId): number {
+  const eq = EQUIPMENT[itemId as keyof typeof EQUIPMENT];
+  if (!eq || eq.slot !== 'weapon') return 0;
+  if (eq.weaponType === 'sword') return 0;
+  return TIER_HUE_SHIFTS[eq.tier] ?? 0;
+}
 
 type Props = {
   itemId: ItemId; // equip_* or item_*
@@ -21,6 +35,13 @@ type Props = {
 
 export const ItemSprite = ({ itemId, size = 'sm', silhouette = false, alt, className }: Props) => {
   const resolvedAlt = alt ?? '';
+  const hueShift = getHueShift(itemId);
+
+  // silhouette と hue-rotate を合成。silhouette は CSS クラスで brightness/contrast を当てるが
+  // filter プロパティは上書きになるため、inline style と CSS クラスを両立させる。
+  // silhouette=true のときは hue-rotate を無効化（シルエット表示では色は不要）。
+  const filterStyle =
+    !silhouette && hueShift !== 0 ? { filter: `hue-rotate(${hueShift}deg)` } : undefined;
 
   return (
     <span className={`${styles.wrap} ${className ?? ''}`}>
@@ -28,6 +49,7 @@ export const ItemSprite = ({ itemId, size = 'sm', silhouette = false, alt, class
         src={itemSpriteUrl(itemId)}
         alt={resolvedAlt}
         className={`${styles.img} ${styles[size]} ${silhouette ? styles.silhouette : ''}`}
+        style={filterStyle}
       />
     </span>
   );
