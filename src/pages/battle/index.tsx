@@ -26,6 +26,7 @@ import {
   startBattle,
 } from '@/domain/battle';
 import type { LevelUpResult } from '@/domain/battle';
+import { previewTurnOrder } from '@/domain/combat';
 import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
 import { itemCount } from '@/domain/inventory';
@@ -537,6 +538,15 @@ export const Page = ({
   const aliveEnemies = useMemo(() => state?.enemies.filter((e) => !e.isDown) ?? [], [state]);
   const aliveAllies = useMemo(() => state?.allies.filter((a) => !a.isDown) ?? [], [state]);
 
+  // 行動順帯: ターン番号・戦闘員リストが変わるたびに ephemeral rng で再計算する。
+  // rngRef（本戦闘用）とは別系統なので既存の rng 消費に影響しない。
+  const turnOrder = useMemo(() => {
+    if (!state) return [];
+    const ephemeralRng = createRng((state.turn * 0x9e3779b9) >>> 0);
+    return previewTurnOrder(state, ephemeralRng);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.turn, state?.allies, state?.enemies, state?.summons]);
+
   // 既定ターゲット（最初の生存敵）
   useEffect(() => {
     if (aliveEnemies.length > 0 && !aliveEnemies.some((e) => e.id === targetId)) {
@@ -1017,10 +1027,53 @@ export const Page = ({
   const front = state.allies.filter((a) => a.row === 'front');
   const back = state.allies.filter((a) => a.row === 'back');
 
+  const depth = save.diveState.depth;
+
   return (
     <div className={styles.layout}>
-      {/* 章マーカー */}
-      <p className={styles.chapterMark}>❦ 戦闘</p>
+      {/* ヘッダ: 章マーカー + 行動順帯 + ログプレビューヘッダ */}
+      <div className={styles.header}>
+        {/* 章マーカー */}
+        <p className={styles.chapterMark}>❦ 戦闘 ・ F{depth}</p>
+        {/* 行動順帯（モック §4） */}
+        {turnOrder.length > 0 && (
+          <div className={styles.turnOrderBar}>
+            <span className={styles.turnOrderLabel}>順</span>
+            <div className={styles.turnOrderList}>
+              {turnOrder.slice(0, 8).map((c, i) => {
+                const member =
+                  c.side === 'ally' ? save.guild.members.find((m) => m.id === c.id) : null;
+                return (
+                  <div
+                    key={c.id}
+                    className={[
+                      styles.turnOrderCell,
+                      i === 0 ? styles.turnOrderCellActive : '',
+                      c.side === 'enemy' ? styles.turnOrderCellEnemy : '',
+                    ].join(' ')}
+                  >
+                    {member ? (
+                      <CharacterPortrait
+                        raceId={member.raceId}
+                        classId={member.classId}
+                        size={24}
+                      />
+                    ) : c.enemyId ? (
+                      <EnemySprite
+                        enemyId={c.enemyId as EnemyId}
+                        size="sm"
+                      />
+                    ) : (
+                      <span className={styles.turnOrderCellGlyph}>✦</span>
+                    )}
+                  </div>
+                );
+              })}
+              {turnOrder.length > 8 && <span className={styles.turnOrderEllipsis}>…</span>}
+            </div>
+          </div>
+        )}
+      </div>
       {/* 戦場（敵 + 召喚 + 味方 + ログ）。上部はこの内側でのみ縦に溢れ、コマンド
           エリア（下端）の表示領域を圧迫しない。極端ケースは内部スクロールで吸収。 */}
       <div className={styles.battlefield}>

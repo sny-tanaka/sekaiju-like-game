@@ -18,18 +18,91 @@
   font-family: var(--font-body);
 }
 
+// ---- ヘッダ（章マーカー + 行動順帯を内包）----
+.header {
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(20, 16, 18, 0.96), rgba(11, 12, 16, 0.35));
+  border-bottom: 1px solid var(--rule-soft);
+  padding: 10px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
 // ---- 章マーカー ----
 .chapterMark {
-  flex-shrink: 0;
   margin: 0;
-  padding: 10px 14px 8px;
+  padding: 0;
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 500;
   color: var(--gold);
   letter-spacing: 0.3em;
-  background: linear-gradient(180deg, rgba(20, 16, 18, 0.96), rgba(11, 12, 16, 0.35));
-  border-bottom: 1px solid var(--rule-soft);
+  background: none;
+  border-bottom: none;
+}
+
+// ---- 行動順帯 ----
+.turnOrderBar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.turnOrderLabel {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+  flex: none;
+}
+
+.turnOrderList {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1;
+  align-items: center;
+}
+
+.turnOrderList::-webkit-scrollbar {
+  display: none;
+}
+
+.turnOrderCell {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--rule-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--surface-panel);
+}
+
+.turnOrderCellActive {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 8px rgba(201, 168, 106, 0.4);
+}
+
+.turnOrderCellEnemy {
+  border-color: rgba(212, 103, 79, 0.6);
+}
+
+.turnOrderCellGlyph {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.turnOrderEllipsis {
+  font-size: 10px;
+  color: var(--text-quote);
+  flex-shrink: 0;
 }
 
 // ---- 戦場（敵 + 召喚 + 味方 + ログ）----
