@@ -1,23 +1,36 @@
 // 黒曜テーマ: _variables.scss は参照しない。すべて var(--*) を使う。
+// レイアウトは flex column — 絶対配置でコンテンツ座標を書かない（装飾のみ例外）
 
+// ============================================================
+// ルートレイアウト（flex column, 100dvh に収める）
+// ============================================================
 .layout {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100dvh;
   max-width: 393px;
   margin: 0 auto;
-  padding: 0;
+  padding: 14px 22px max(14px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
   background: var(--bg-page-gradient);
   color: var(--text-base);
   font-family: var(--font-body);
   box-shadow: var(--shadow-page);
+  gap: 12px;
 }
 
 // ============================================================
-// 浮遊粒子
+// 浮遊粒子（装飾のみ → 絶対配置レイヤー）
 // ============================================================
+.moteLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .mote1,
 .mote2,
 .mote3,
@@ -25,8 +38,6 @@
   position: absolute;
   bottom: 0;
   border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
 }
 
 .mote1 {
@@ -62,26 +73,31 @@
 }
 
 // ============================================================
-// 章マーク / ギアボタン
+// ヘッダー：章マーク + ⚙ボタン（flex item）
 // ============================================================
+.head {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 8px;
+  z-index: 1;
+}
+
 .chapterMark {
-  position: absolute;
-  top: 30px;
-  left: 0;
-  right: 0;
   margin: 0;
   text-align: center;
   font-family: var(--font-display);
   font-size: 13px;
   letter-spacing: 0.4em;
   color: var(--text-blue);
-  z-index: 2;
 }
 
 .gearBtn {
   position: absolute;
-  top: 22px;
-  right: 22px;
+  right: 0;
+  top: 4px;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -93,7 +109,6 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 2;
 
   &:active {
     opacity: 0.7;
@@ -101,16 +116,21 @@
 }
 
 // ============================================================
-// 樹エンブレム
+// ヒーロー：エンブレム / タイトル / サブタイトル / 引用（flex item）
 // ============================================================
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
 .emblem {
-  position: absolute;
-  top: 90px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 154px;
-  height: 154px;
-  z-index: 2;
+  width: clamp(110px, 38vw, 154px);
+  aspect-ratio: 1 / 1;
+  position: relative;
 }
 
 .emblemDim {
@@ -127,7 +147,7 @@
 
 .emblemRingInner {
   position: absolute;
-  inset: 26px;
+  inset: 18%;
   border-radius: 50%;
   border: 1px solid var(--rule-gold-strong);
 }
@@ -140,97 +160,77 @@
   justify-content: center;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 62px;
+  font-size: clamp(46px, 16vw, 62px);
   color: var(--gold);
   text-shadow: 0 0 24px var(--gold-glow);
   animation: obsidian-breathe 6s ease-in-out infinite;
 }
 
-// ============================================================
-// 大タイトル / サブタイトル / 引用
-// ============================================================
 .title {
-  position: absolute;
-  top: 268px;
-  left: 0;
-  right: 0;
   margin: 0;
   text-align: center;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 44px;
+  font-size: clamp(34px, 11vw, 44px);
   letter-spacing: 0.06em;
   color: var(--text-strong);
   text-shadow: 0 2px 30px var(--gold-glow);
-  z-index: 2;
+  line-height: 1.1;
 }
 
 .subtitle {
-  position: absolute;
-  top: 322px;
-  left: 0;
-  right: 0;
   margin: 0;
   text-align: center;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: clamp(11px, 3vw, 13px);
   letter-spacing: 0.42em;
   color: var(--text-faint);
-  z-index: 2;
 }
 
 .quote {
-  position: absolute;
-  top: 360px;
-  left: 38px;
-  right: 38px;
   margin: 0;
   text-align: center;
   font-family: var(--font-display);
   font-style: italic;
-  font-size: 12px;
+  font-size: clamp(11px, 3.2vw, 12px);
   line-height: 1.7;
   color: var(--text-quote);
   white-space: pre-line;
-  z-index: 2;
+  max-width: 280px;
 }
 
 // ============================================================
-// SaveCard エリア / NoSave / プレースホルダ
+// メタエリア：SaveCard / NoSave / Corrupted（flex: 1 で空き吸収）
 // ============================================================
-.saveCardArea {
-  position: absolute;
-  left: 34px;
-  right: 34px;
-  top: 438px;
-  z-index: 2;
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  z-index: 1;
 }
 
 .placeholderCard {
-  position: absolute;
-  left: 34px;
-  right: 34px;
-  top: 438px;
+  width: 100%;
   font-size: 13px;
   color: var(--text-faint);
-  z-index: 2;
 }
 
 .noSaveCard {
-  position: absolute;
-  left: 34px;
-  right: 34px;
-  top: 438px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
   border: 1px dashed var(--rule-gold);
   background: var(--surface-elev);
   border-radius: 4px;
-  padding: 18px;
   text-align: center;
-  z-index: 2;
+  width: 100%;
 }
 
 .noSaveText {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 13px;
   color: var(--text-mute);
   font-family: var(--font-body);
@@ -244,22 +244,19 @@
 }
 
 // ============================================================
-// アクションボタン群（menu モード）
+// アクションボタン群（flex item）
 // ============================================================
 .actions {
-  position: absolute;
-  left: 34px;
-  right: 34px;
-  bottom: 90px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  z-index: 2;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 1;
 }
 
 .primary {
   width: 100%;
-  height: 56px;
+  height: clamp(48px, 13vw, 56px);
   border-radius: 3px;
   border: none;
   background: linear-gradient(180deg, var(--gold), var(--gold-deep));
@@ -286,7 +283,7 @@
 
 .sub {
   width: 100%;
-  height: 52px;
+  height: clamp(44px, 12vw, 52px);
   border-radius: 3px;
   border: 1px solid var(--rule-base);
   background: rgba(255, 255, 255, 0.03);
@@ -332,19 +329,17 @@
 }
 
 // ============================================================
-// フッタ
+// フッタ（flex item）
 // ============================================================
 .foot {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: max(16px, env(safe-area-inset-bottom, 0px));
-  text-align: center;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
-  z-index: 2;
+  justify-content: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-top: 4px;
+  z-index: 1;
 }
 
 .version {
@@ -375,19 +370,17 @@
 // guildNameInput（ritual モード）
 // ============================================================
 .ritual {
-  position: absolute;
-  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 2;
+  justify-content: center;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  z-index: 1;
 }
 
 .ritualHead {
-  position: absolute;
-  top: 150px;
-  left: 0;
-  right: 0;
   margin: 0;
   text-align: center;
   font-family: var(--font-display);
@@ -398,10 +391,6 @@
 }
 
 .ritualSub {
-  position: absolute;
-  top: 196px;
-  left: 0;
-  right: 0;
   margin: 0;
   text-align: center;
   font-family: var(--font-body);
@@ -411,13 +400,9 @@
 }
 
 .inputWrap {
-  position: absolute;
-  top: 264px;
-  left: 34px;
-  right: 34px;
   display: flex;
   align-items: center;
-  gap: 0;
+  width: 100%;
   background: var(--surface-elev);
   border: 1px solid var(--rule-gold-strong);
   border-radius: 4px;
@@ -450,19 +435,12 @@
 }
 
 .inputMeta {
-  position: absolute;
-  top: 324px;
-  left: 34px;
-  right: 34px;
   display: flex;
   justify-content: space-between;
+  width: 100%;
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-faint);
-}
-
-.ritual .actions {
-  bottom: 54px;
 }
 
 // ============================================================
@@ -564,40 +542,23 @@
 }
 
 // ============================================================
-// @media: 短画面対応
+// @media: 短画面対応（dvh が小さい画面でギャップとフォントを詰める）
 // ============================================================
 @media (max-height: 720px) {
-  .title {
-    top: 230px;
-    font-size: 38px;
+  .layout {
+    gap: 8px;
   }
 
-  .subtitle {
-    top: 278px;
+  .hero {
+    gap: 6px;
   }
 
   .quote {
-    top: 314px;
-    font-size: 11px;
-  }
-
-  .saveCardArea,
-  .noSaveCard,
-  .placeholderCard {
-    top: 390px;
-  }
-
-  .actions {
-    bottom: 72px;
-  }
-
-  .emblem {
-    top: 64px;
-    width: 130px;
-    height: 130px;
-  }
-
-  .emblemKanji {
-    font-size: 52px;
+    max-width: 240px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
   }
 }

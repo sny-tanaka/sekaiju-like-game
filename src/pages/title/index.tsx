@@ -77,80 +77,74 @@ export const Page = () => {
 
   return (
     <div className={styles.layout}>
-      {/* 背景の浮遊粒子 */}
+      {/* 背景の浮遊粒子（装飾のみ、絶対配置可） */}
       <div
-        className={styles.mote1}
+        className={styles.moteLayer}
         aria-hidden
-      />
-      <div
-        className={styles.mote2}
-        aria-hidden
-      />
-      <div
-        className={styles.mote3}
-        aria-hidden
-      />
-      <div
-        className={styles.mote4}
-        aria-hidden
-      />
-
-      {/* 章マーク（モードで切替）と⚙ */}
-      <p className={styles.chapterMark}>❦ {mode === 'guildName' ? '結成の儀' : '同見の書'}</p>
-      <button
-        type="button"
-        className={styles.gearBtn}
-        aria-label="サウンド設定"
-        onClick={() => {
-          play('cursor');
-          setSoundOpen(true);
-        }}
       >
-        ⚙
-      </button>
+        <div className={styles.mote1} />
+        <div className={styles.mote2} />
+        <div className={styles.mote3} />
+        <div className={styles.mote4} />
+      </div>
 
       {mode === 'menu' ? (
         <>
-          {/* 樹エンブレム */}
-          <div
-            className={`${styles.emblem} ${meta?.corrupted ? styles.emblemDim : ''}`}
-            aria-hidden
-          >
-            <span className={styles.emblemRingOuter} />
-            <span className={styles.emblemRingInner} />
-            <span className={styles.emblemKanji}>樹</span>
-          </div>
+          {/* ヘッダー：章マーク + ⚙ */}
+          <header className={styles.head}>
+            <p className={styles.chapterMark}>❦ 同見の書</p>
+            <button
+              type="button"
+              className={styles.gearBtn}
+              aria-label="サウンド設定"
+              onClick={() => {
+                play('cursor');
+                setSoundOpen(true);
+              }}
+            >
+              ⚙
+            </button>
+          </header>
 
-          <h1 className={styles.title}>世界樹ライク</h1>
-          <p className={styles.subtitle}>無限タワー探索 RPG</p>
-          <p className={styles.quote}>
-            {meta?.corrupted
-              ? '「失われた頁は、新しき頁の余白となる。」'
-              : hasValidSave
-                ? '「樹は記憶し、塔は試す。\n登りし者の名を、いずれ頂が呼ぶ。」'
-                : '「はじまりの一歩は、いつも誰かの名づけから。」'}
-          </p>
-
-          {/* SaveCard / NoSave / Corrupted の 3 状態 */}
-          {loading ? (
-            <div className={styles.placeholderCard}>読み込み中...</div>
-          ) : meta?.corrupted ? (
-            <div className={styles.saveCardArea}>
-              <SaveCard meta={meta} />
+          {/* ヒーロー：エンブレム / タイトル / サブタイトル / 引用 */}
+          <section className={styles.hero}>
+            <div
+              className={`${styles.emblem} ${meta?.corrupted ? styles.emblemDim : ''}`}
+              aria-hidden
+            >
+              <span className={styles.emblemRingOuter} />
+              <span className={styles.emblemRingInner} />
+              <span className={styles.emblemKanji}>樹</span>
             </div>
-          ) : meta ? (
-            <div className={styles.saveCardArea}>
+            <h1 className={styles.title}>世界樹ライク</h1>
+            <p className={styles.subtitle}>無限タワー探索 RPG</p>
+            <p className={styles.quote}>
+              {meta?.corrupted
+                ? '「失われた頁は、新しき頁の余白となる。」'
+                : hasValidSave
+                  ? '「樹は記憶し、塔は試す。\n登りし者の名を、いずれ頂が呼ぶ。」'
+                  : '「はじまりの一歩は、いつも誰かの名づけから。」'}
+            </p>
+          </section>
+
+          {/* メタ：SaveCard / NoSave / Corrupted の 3 状態（flex: 1 で空き吸収） */}
+          <section className={styles.meta}>
+            {loading ? (
+              <div className={styles.placeholderCard}>読み込み中...</div>
+            ) : meta?.corrupted ? (
+              <SaveCard meta={meta} />
+            ) : meta ? (
               <SaveCard
                 meta={meta}
                 partyPreview={partyPreview}
               />
-            </div>
-          ) : (
-            <div className={styles.noSaveCard}>
-              <p className={styles.noSaveText}>セーブデータはありません</p>
-              <p className={styles.noSaveNote}>新しい隊商を結成して塔へ挑みましょう。</p>
-            </div>
-          )}
+            ) : (
+              <div className={styles.noSaveCard}>
+                <p className={styles.noSaveText}>セーブデータはありません</p>
+                <p className={styles.noSaveNote}>新しい隊商を結成して塔へ挑みましょう。</p>
+              </div>
+            )}
+          </section>
 
           {/* アクションボタン群 */}
           <div className={styles.actions}>
@@ -173,7 +167,7 @@ export const Page = () => {
           </div>
 
           {/* 控えめなフッタ */}
-          <div className={styles.foot}>
+          <footer className={styles.foot}>
             <span className={styles.version}>v{__APP_VERSION__}</span>
             <button
               type="button"
@@ -186,31 +180,52 @@ export const Page = () => {
             >
               {isChecking ? '確認中…' : '更新を確認'}
             </button>
-          </div>
+          </footer>
         </>
       ) : mode === 'guildName' ? (
-        <div className={styles.ritual}>
-          <h2 className={styles.ritualHead}>ギルドの名を</h2>
-          <p className={styles.ritualSub}>塔へ挑む隊商に名を与えよ</p>
-          <div className={styles.inputWrap}>
-            <input
-              type="text"
-              className={styles.ritualInput}
-              value={guildName}
-              maxLength={16}
-              placeholder="ななしのギルド"
-              onChange={(e) => setGuildName(e.target.value)}
-              autoFocus
-            />
-            <span
-              className={styles.cursor}
-              aria-hidden
-            />
-          </div>
-          <div className={styles.inputMeta}>
-            <span>初期値: ななしのギルド</span>
-            <span>{guildName.length} / 16</span>
-          </div>
+        <>
+          {/* ヘッダー：章マーク（結成の儀）+ ⚙ */}
+          <header className={styles.head}>
+            <p className={styles.chapterMark}>❦ 結成の儀</p>
+            <button
+              type="button"
+              className={styles.gearBtn}
+              aria-label="サウンド設定"
+              onClick={() => {
+                play('cursor');
+                setSoundOpen(true);
+              }}
+            >
+              ⚙
+            </button>
+          </header>
+
+          {/* ギルド名入力（flex: 1 で中央寄せ） */}
+          <section className={styles.ritual}>
+            <h2 className={styles.ritualHead}>ギルドの名を</h2>
+            <p className={styles.ritualSub}>塔へ挑む隊商に名を与えよ</p>
+            <div className={styles.inputWrap}>
+              <input
+                type="text"
+                className={styles.ritualInput}
+                value={guildName}
+                maxLength={16}
+                placeholder="ななしのギルド"
+                onChange={(e) => setGuildName(e.target.value)}
+                autoFocus
+              />
+              <span
+                className={styles.cursor}
+                aria-hidden
+              />
+            </div>
+            <div className={styles.inputMeta}>
+              <span>初期値: ななしのギルド</span>
+              <span>{guildName.length} / 16</span>
+            </div>
+          </section>
+
+          {/* アクションボタン群 */}
           <div className={styles.actions}>
             <button
               type="button"
@@ -229,7 +244,7 @@ export const Page = () => {
               もどる
             </button>
           </div>
-        </div>
+        </>
       ) : (
         // mode === 'confirm'
         <div className={styles.modalBackdrop}>
