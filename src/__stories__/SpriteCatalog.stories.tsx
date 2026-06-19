@@ -140,6 +140,7 @@ function buildEnemySections(): CatalogSection[] {
 export const Enemies: Story = {
   args: {
     sections: buildEnemySections(),
+    showReviewControls: true,
   },
 };
 
@@ -202,6 +203,7 @@ function buildItemSections(): CatalogSection[] {
 export const Items: Story = {
   args: {
     sections: buildItemSections(),
+    showReviewControls: true,
   },
 };
 
@@ -275,6 +277,7 @@ function buildEquipmentSections(): CatalogSection[] {
 export const Equipment: Story = {
   args: {
     sections: buildEquipmentSections(),
+    showReviewControls: true,
   },
 };
 
@@ -315,5 +318,6 @@ function buildCharacterSections(): CatalogSection[] {
 export const Characters: Story = {
   args: {
     sections: buildCharacterSections(),
+    showReviewControls: true,
   },
 };
