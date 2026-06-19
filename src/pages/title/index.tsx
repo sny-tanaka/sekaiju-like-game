@@ -164,7 +164,7 @@ export const Page = () => {
             </button>
             <button
               type="button"
-              className={styles.sub}
+              className={hasValidSave ? styles.sub : styles.primary}
               disabled={busy}
               onClick={handleNewGameStart}
             >
