@@ -82,8 +82,8 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
   },
   item_bat_wing: {
     id: 'item_bat_wing',
-    name: 'コウモリの翼',
-    description: 'どうくつコウモリの素材。売ると新しい装備が並ぶことがある。',
+    name: 'もりゴブリンの小刀',
+    description: 'もりゴブリンが携えていた粗末な獣骨の刃。売ると新しい装備が並ぶことがある。',
     category: 'material',
     buyPrice: 0,
   },
@@ -208,7 +208,7 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
   item_mat_t0_chitin_plate: {
     id: 'item_mat_t0_chitin_plate',
     name: '硬い甲殻板',
-    description: '洞窟の蟲の素材。売ると新しい装備が並ぶことがある。',
+    description: 'どくスライムの外殻素材。売ると新しい装備が並ぶことがある。',
     category: 'material',
     buyPrice: 0,
   },

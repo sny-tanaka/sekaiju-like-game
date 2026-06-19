@@ -20,3 +20,18 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   decorators: [withGameContext(mockPostBoss, { name: 'codex' })],
 };
+
+/** 図鑑タブを開いた状態（モンスター一覧の初期表示確認用） */
+export const CodexTab: Story = {
+  decorators: [withGameContext(mockPostBoss, { name: 'codex' })],
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    const buttons = canvasElement.querySelectorAll<HTMLElement>('button[class*="tab"]');
+    // 「図鑑」ラベルを持つタブボタンを探してクリック
+    for (const b of buttons) {
+      if (b.textContent?.trim() === '図鑑') {
+        b.click();
+        break;
+      }
+    }
+  },
+};
