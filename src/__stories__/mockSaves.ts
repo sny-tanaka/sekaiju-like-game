@@ -248,3 +248,44 @@ export const mockBattleSkillMenu: SaveData = {
     ),
   },
 };
+
+// ============================================================
+// mockGuildCharWithTitle — 称号スキルツリー確認用
+// mockPostBoss ベース + deepestReached: 20 + 先頭メンバー (warrior) に titleId セット
+// ============================================================
+export const mockGuildCharWithTitle: SaveData = (() => {
+  const firstId = mockPostBoss.guild.members[0]?.id ?? '';
+  return {
+    ...mockPostBoss,
+    towerState: {
+      ...mockPostBoss.towerState,
+      record: {
+        ...mockPostBoss.towerState.record,
+        deepestReached: 20,
+      },
+    },
+    guild: {
+      ...mockPostBoss.guild,
+      members: mockPostBoss.guild.members.map((m) =>
+        m.id === firstId ? { ...m, titleId: 'title_berserker' } : m
+      ),
+    },
+  };
+})();
+
+// ============================================================
+// mockGuildCharRebirthReady — 転生フォーム確認用
+// mockWithParty ベース + 先頭メンバーを Lv100 に設定
+// ============================================================
+export const mockGuildCharRebirthReady: SaveData = (() => {
+  const firstId = mockWithParty.guild.members[0]?.id ?? '';
+  return {
+    ...mockWithParty,
+    guild: {
+      ...mockWithParty.guild,
+      members: mockWithParty.guild.members.map((m) =>
+        m.id === firstId ? { ...m, level: 100 } : m
+      ),
+    },
+  };
+})();

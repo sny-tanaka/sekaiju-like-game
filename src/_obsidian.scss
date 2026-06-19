@@ -125,3 +125,21 @@ $obsidian-info-blue: #a9c3d8;
   @keyframes obsidian-warnBlink { 0%, 100% { opacity: 1; } }
   @keyframes obsidian-sealStamp { 0%, 100% { transform: translate(-50%, -50%); opacity: 1; } }
 }
+
+// ==========================================================
+// town 画面追加トークン
+// ==========================================================
+:root {
+  --info-blue-tint: rgba(111, 159, 216, 0.08);
+  --info-blue-rule: rgba(111, 159, 216, 0.30);
+  --info-blue-text: #9cc2ec;
+}
+
+@keyframes obsidian-sheetRise {
+  0%   { transform: translateY(20%); opacity: 0; }
+  100% { transform: translateY(0);   opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-sheetRise { 0%, 100% { transform: none; opacity: 1; } }
+}
