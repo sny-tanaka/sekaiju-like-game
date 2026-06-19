@@ -1,40 +1,44 @@
-@use 'variables' as var;
+@use 'obsidian';
 
+// ==========================================================
+// battle — 黒曜 OBSIDIAN MINIMAL テーマ
+// ==========================================================
+
+// ---- ルートレイアウト ----
 .layout {
   display: flex;
   flex-direction: column;
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  // safe-area が無い端末でも最低 20px を確保して見切れを防ぐ。
-  padding: 12px 12px max(20px, env(safe-area-inset-bottom, 0px));
-  color: var.$ink;
+  padding: 0 0 max(12px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  background-color: var.$parchment;
+  background: var(--bg-deep);
+  color: var(--text-base);
+  font-family: var(--font-body);
 }
 
-// 章マーカー
+// ---- 章マーカー ----
 .chapterMark {
   flex-shrink: 0;
-  margin: 0 0 4px;
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 11px;
+  margin: 0;
+  padding: 10px 14px 8px;
+  font-family: var(--font-display);
+  font-size: 12px;
   font-weight: 500;
-  color: var.$ink-faint;
-  letter-spacing: 0.08em;
+  color: var(--gold);
+  letter-spacing: 0.3em;
+  background: linear-gradient(180deg, rgba(20, 16, 18, 0.96), rgba(11, 12, 16, 0.35));
+  border-bottom: 1px solid var(--rule-soft);
 }
 
-// ---- 戦場（敵 + 召喚 + 味方 + ログ）を内包するスクロール領域 ----
-// 通常ケースでは内部スクロール不要。極端な構成（多数の敵 + フルパーティ + 召喚体）
-// の場合のみ縦に溢れて内部スクロールする。コマンドエリアは常に画面下端に残る。
+// ---- 戦場（敵 + 召喚 + 味方 + ログ）----
+// flex-shrink: 0 にして、コマンドエリア（flex:1）が空きを吸収する
 .battlefield {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 // ---- 敵 ----
@@ -43,36 +47,57 @@
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  margin-bottom: 8px;
+  align-items: flex-end;
+  padding: 10px 10px 8px;
   flex-shrink: 0;
+  background: radial-gradient(95% 85% at 50% 16%, #241b22, var(--bg-deep) 78%);
 }
 
 .enemy {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 120px;
-  flex: 1;
-  max-width: 200px;
-  padding: 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  box-shadow: 0 1px 3px var.$shadow-ink;
+  width: clamp(58px, 18vw, 120px);
+  padding: 6px 6px 8px;
+  background: transparent;
+  border: none;
   cursor: pointer;
+  text-align: center;
+  border-radius: 5px;
+  overflow: visible;
 }
 
-.targeted {
-  border: 0.75px solid var.$vermilion;
+.enemy::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  pointer-events: none;
+  transition: border-color var(--motion-quick);
 }
 
-// 敵スプライト画像（enemyName の直上に縦積み）— boss/FOE 用
+.targeted::before {
+  border-color: var(--rule-gold-strong);
+}
+
+.enemy:active::before {
+  border-color: var(--gold);
+}
+
+// boss / foe 用の md スプライト — 幅を広げる
+.enemyLarge {
+  width: clamp(96px, 28vw, 140px);
+}
+
+// boss/foe 用スプライト（縦積み）
 .enemySprite {
   display: block;
   margin: 0 auto 4px;
 }
 
-// 雑魚用：スプライト(sm) + 名前を横並び
+// 雑魚用：スプライト + 名前を横並び
 .enemyHeader {
   display: flex;
   align-items: center;
@@ -89,9 +114,9 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var.$ink;
+  font-size: 10px;
+  color: var(--text-base);
+  justify-content: center;
 }
 
 .enemyNameText {
@@ -104,83 +129,335 @@
 
 .enemyMarks {
   flex-shrink: 0;
+  font-size: 9px;
   white-space: nowrap;
 }
 
-// §16: 選択中の敵の耐性コンパクト表示
-// 選択中の敵だけが 36px を確保（耐性バッジ 1〜2 行）。非選択時は 0 に詰めて、
-// 小型端末で縦方向に無駄な余白を作らない。flex-wrap の各行は align-items:stretch で
-// 並ぶため、行内では選択敵の高さに揃う（小さく見えるカードは出ない）。
+// 選択中の敵の耐性コンパクト表示
 .enemyResist {
   margin-top: 4px;
   text-align: left;
 }
+
 .targeted .enemyResist {
   min-height: 36px;
 }
 
 .down {
-  opacity: 0.4;
+  opacity: 0.35;
+  filter: grayscale(1);
 }
 
-// ---- 戦闘ログ（インライン 3 行 + タップで全履歴オーバーレイ）----
-// 画面下端の通常フローに常時 3 行表示。タップでフル履歴の overlay を開く。
-.log {
-  margin-top: 8px;
+// 被弾点滅
+.flash {
+  animation: obsidian-cardFlash 0.42s ease-out;
+}
+
+// ---- 召喚体 ----
+.summons {
+  display: flex;
+  gap: 6px;
+  padding: 0 14px 6px;
+  background: var(--bg-deep);
+  flex-shrink: 0;
+}
+
+.summon {
+  flex: 1;
+  background: rgba(63, 138, 92, 0.06);
+  border: 1px solid rgba(63, 138, 92, 0.25);
+  border-radius: 3px;
+  padding: 5px 7px;
   display: flex;
   flex-direction: column;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
+  gap: 4px;
+}
+
+.summonName {
+  font-size: 10px;
+  color: var(--text-base);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summonHp {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--success);
+  font-variant-numeric: tabular-nums;
+}
+
+// ---- 味方（前衛/後衛 2 段） ----
+.party {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 14px 8px;
+  background: var(--bg-mid);
+  border-top: 1px solid var(--rule-soft);
   flex-shrink: 0;
+}
+
+.rowTag {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  margin: 0;
+  padding: 0;
+}
+
+// 後衛ラベルだけ青に
+.party > .rowTag:nth-of-type(2) {
+  color: var(--info-blue);
+}
+
+.cardRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.card {
+  // 人数によらず「3列基準」の同じ幅
+  flex: 0 0 calc((100% - 12px) / 3);
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 5px 4px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  text-align: left;
   cursor: pointer;
+  overflow: visible;
+}
+
+// アクティブ（選択中）キャラ
+.cardActive {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold-glow);
+}
+
+// 味方対象選択中: タップ可能
+.allySelectable {
+  border-color: var(--info-blue);
+  border-style: dashed;
+  cursor: pointer;
+}
+
+// 味方対象選択中: 選択された対象
+.allyTargeted {
+  border-color: var(--info-blue);
+  border-style: solid;
+  box-shadow: 0 0 0 2px rgba(169, 195, 216, 0.25);
+}
+
+// コマンド確定済みカード
+.cardDecided {
+  background: rgba(201, 168, 106, 0.04);
+}
+
+// 職業バッジ（左上に固定）
+.jobBadge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  background: var(--gold);
+  color: var(--bg-mid);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  border-radius: 2px;
+  padding: 1px 4px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+// 立ち絵ヘッダ
+.cardHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.cardPortrait {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  object-fit: cover;
+  object-position: center bottom;
+  border-radius: 2px;
+  background: var(--bg-deep);
+  overflow: hidden;
+}
+
+.cardHeaderText {
+  flex: 1;
+  min-width: 0;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cardName {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-strong);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.cardNameText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardMarks {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 9px;
+}
+
+.uni {
+  color: var(--gold);
+}
+
+// 職業名（未使用だが既存 JSX 参照があるため残す）
+.cardJob {
+  display: none;
+}
+
+// 作戦短縮ラベル
+.cardStrategy {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--bg-mid);
+  background: var(--gold-bright);
+  border-radius: 2px;
+  padding: 0 3px;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: fit-content;
+}
+
+.cardNums {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+// ユニオンゲージ行
+.gaugeRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.gaugeLabel {
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cardCmd {
+  margin-top: 2px;
+  font-size: 8px;
+  color: var(--gold);
+  min-height: 9px;
+  font-weight: 700;
+}
+
+// ---- 戦闘ログ（インライン プレビュー）----
+.log {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--rule-soft);
+  border-left: 2px solid var(--gold);
+  background: var(--bg-mid);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-mute);
+  cursor: pointer;
+  border-radius: 0;
 }
 
 .logHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 3px 10px;
-  background-color: var.$ink;
-  color: var.$parchment;
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  align-items: center;
+  padding: 4px 10px 3px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  color: var(--gold);
+  letter-spacing: 0.14em;
   flex-shrink: 0;
 }
 
 .logHeaderHint {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  opacity: 0.7;
+  color: var(--text-faint);
+  letter-spacing: 0;
+  font-family: var(--font-mono);
 }
 
-// インライン表示の 3 行プレビュー（最新を下に表示。古いものは見えない）
+// インライン 3 行プレビュー
 .logBody {
-  padding: 6px 10px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var.$ink;
-  // 3 行ぶんの高さに固定。溢れた古い行は非表示。
-  height: calc(12px * 1.5 * 3 + 12px);
+  padding: 4px 10px 6px;
+  height: calc(10px * 1.5 * 3 + 10px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  gap: 2px;
 }
 
 .logLine {
+  color: var(--text-mute);
   white-space: pre-wrap;
 }
 
-// ---- 戦闘ログのオーバーレイ（全履歴）----
+.logLineNew {
+  color: var(--text-base);
+  animation: obsidian-logFadeIn 0.32s ease-out;
+}
+
+// ---- ログ全履歴オーバーレイ ----
 .logOverlayBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 30;
-  background-color: rgba(33, 36, 27, 0.45);
+  z-index: 50;
+  background: rgba(6, 7, 10, 0.93);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -194,9 +471,10 @@
   max-height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: var.$parchment-card;
-  border: 0.75px solid var.$ink;
-  box-shadow: 0 6px 32px rgba(33, 36, 27, 0.45);
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 4px;
+  box-shadow: var(--shadow-modal);
   cursor: default;
 }
 
@@ -204,24 +482,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  background-color: var.$ink;
-  color: var.$parchment;
-  font-family: 'Kaisei Tokumin', serif;
+  padding: 8px 14px;
+  font-family: var(--font-display);
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--rule-soft);
   flex-shrink: 0;
 }
 
 .logOverlayClose {
   border: none;
   background: transparent;
-  color: var.$parchment;
+  color: var(--text-mute);
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
   padding: 4px 6px;
+
+  &:active {
+    color: var(--text-strong);
+  }
 }
 
 .logOverlayBody {
@@ -231,270 +512,28 @@
   overscroll-behavior: contain;
   touch-action: pan-y;
   padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var.$ink;
-  display: flex;
-  flex-direction: column;
-}
-
-// ---- 味方（2段グリッド） ----
-.party {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 8px;
-  flex-shrink: 0;
-}
-
-.rowTag {
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 800;
-  color: var.$ink-faint;
-}
-
-.cardRow {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.card {
-  // 人数に依らず常に「3列基準」の同じ幅にする（少人数の行でも拡大しない）
-  flex: 0 0 calc((100% - 12px) / 3);
-  min-width: 0;
-  position: relative; // 職業バッジを右上に配置するため
+  line-height: 2;
+  color: var(--text-mute);
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 5px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  box-shadow: 0 1px 3px var.$shadow-ink;
-  text-align: left;
-  cursor: pointer;
 }
 
-// 右上に固定する職業バッジ（カードのトレーディングカード化）
-// 9 職業の頭文字 1 文字（戦/守/魔/狩/薬/剣/拳/呪/降）を載せる。
-.jobBadge {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  background-color: var.$ink;
-  color: var.$parchment;
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.cardActive {
-  border-color: var.$verdant;
-  border-width: 1px;
-  box-shadow: 0 0 0 2px rgba(63, 107, 74, 0.35);
-}
-
-// 味方対象選択中: タップ可能な味方カード
-.allySelectable {
-  border-color: var.$verdant-dark;
-  border-style: dashed;
-  cursor: pointer;
-}
-
-// 味方対象選択中: 現在選択されている対象
-.allyTargeted {
-  border-color: var.$verdant-dark;
-  border-style: solid;
-  border-width: 1px;
-  box-shadow: 0 0 0 2px rgba(42, 74, 51, 0.4);
-  background-color: var.$parchment;
-}
-
-.cardDecided {
-  background-color: var.$parchment;
-}
-
-// 立ち絵ヘッダ（左に立ち絵、右に名前・作戦短縮）
-.cardHeader {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-}
-
-.cardHeaderText {
-  flex: 1;
-  min-width: 0;
-  // 右上の職業バッジ（16px）の逃げ。バッジが overlap しないよう右だけ余白を確保。
-  padding-right: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-// 立ち絵は 87×87 の足元アンカー済 PNG を cover で表示し、上の透過余白を切り落とす。
-.cardPortrait {
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  object-fit: cover;
-  object-position: center bottom;
-}
-
-.cardName {
-  font-size: 12px;
-  font-weight: 700;
-  color: var.$ink;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.15;
-}
-
-.cardNameText {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cardMarks {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.uni {
-  color: var.$illumination-gold;
-}
-
-// 味方の職業名（職業はバッジ化して右上に固定したのでここでは未使用）
-.cardJob {
-  display: none;
-}
-
-// ユニオンゲージ（issue #18）
-.gaugeRow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.gaugeLabel {
-  font-size: 9px;
-  font-weight: 700;
-  color: var.$illumination-gold;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-// 被弾カードの点滅（issue #18）— 赤値を $vermilion に
-.flash {
-  animation: cardFlash 0.42s ease-out;
-}
-
-@keyframes cardFlash {
-  0% {
-    background-color: rgba(178, 44, 44, 0.22);
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(-3px);
-  }
-  40% {
-    transform: translateX(3px);
-  }
-  60% {
-    transform: translateX(-2px);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-
-// ---- 召喚体（最前列） ----
-.summons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.summon {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 6px 8px;
-  border: 0.75px dashed var.$ink-faint;
-  border-radius: 0;
-  background-color: var.$parchment;
-}
-
-.summonName {
-  font-size: 12px;
-  font-weight: 700;
-  color: var.$ink;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.summonHp {
-  font-size: 10px;
-  color: var.$ink-faint;
-  font-variant-numeric: tabular-nums;
-}
-
-.cardNums {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: var.$ink-faint;
-  font-variant-numeric: tabular-nums;
-}
-
-.cardCmd {
-  font-size: 11px;
-  font-weight: 700;
-  color: var.$verdant;
-}
-
-.empty {
-  font-size: 12px;
-  color: var.$ink-faint;
-  // skillList が2列グリッドのとき、全幅をまたぐ
-  grid-column: 1 / -1;
-}
-
-// ---- コマンド入力 ----
-// 上部 .battlefield 領域は別途 flex: 1 で吸収するため、コマンドエリアは「内容ぶんだけ
-// 高さを使う」固定領域として扱う（flex: 0 1 auto）。スキル一覧などで縦に長くなった
-// ときだけ max-height: 50% に頭打ちさせ、内部スクロールに切り替える。これにより
-// 「敵カードが高くなるとコマンドの下端が画面外に押し出される」事故を防ぐ。
+// ---- コマンドエリア ----
+// flex: 1 1 auto で空きを吸収。上部 battlefield が flex-shrink: 0。
 .command {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: 50dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  background: linear-gradient(180deg, rgba(11, 12, 16, 0), var(--surface-panel) 28%);
 }
 
 // スキル選択（2列グリッド）
@@ -502,28 +541,30 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
+  overflow-y: auto;
+  max-height: 200px;
 }
 
 .skillBtn {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 8px 10px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
+  padding: 7px 8px;
+  background: var(--surface-elev);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  color: var(--text-base);
   text-align: left;
   cursor: pointer;
-  color: var.$ink;
 }
 
-// TP 不足スキル: グレーアウト表示（完全非表示にはしない）
+// TP 不足スキル
 .skillBtnDisabled {
-  opacity: 0.4;
+  opacity: 0.5;
   cursor: not-allowed;
 
   .tp {
-    color: var.$vermilion;
+    color: var(--danger-text);
   }
 }
 
@@ -535,63 +576,80 @@
 }
 
 .skillName {
-  font-size: 13px;
-  font-weight: 700;
-  color: var.$ink;
-}
-
-.skillDesc {
-  font-size: 12px;
-  color: var.$ink-faint;
-  line-height: 1.4;
-}
-
-// スキルの威力・属性・対象サマリ（issue #18）
-.skillSummary {
   font-size: 11px;
   font-weight: 700;
-  color: var.$verdant-dark;
-  line-height: 1.35;
-  // 2行を超えたら省略
+  color: var(--text-strong);
+}
+
+.skillSummary {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--info-blue);
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
+.skillDesc {
+  font-size: 9px;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+.tp {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--info-blue);
+}
+
+.empty {
+  font-size: 11px;
+  color: var(--text-faint);
+  grid-column: 1 / -1;
+  padding: 8px;
+  text-align: center;
+}
+
+// ---- 対象選択 ----
 .target {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 8px 10px;
+  border: 1px dashed var(--rule-gold);
+  border-radius: 4px;
+  color: var(--text-soft);
   font-size: 12px;
-  color: var.$ink-faint;
+}
+
+.targetAlly {
+  border-color: var(--info-blue);
+  color: var(--info-blue);
+  font-weight: 700;
 }
 
 .targetMark {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 11px;
-  color: var.$ink-faint;
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  display: block;
+  margin-bottom: 3px;
 }
 
 .targetName {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-size: 13px;
   font-weight: 700;
-  color: var.$ink;
+  color: var(--text-strong);
 }
 
 .targetHint {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var.$ink-faint;
-}
-
-// 味方対象選択モード時の対象表示
-.targetAlly {
-  color: var.$verdant-dark;
-  font-weight: 700;
-  opacity: 1;
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-left: 4px;
 }
 
 // ---- ユニオン ----
@@ -599,13 +657,12 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 6px 10px;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  border: 0.75px solid var.$illumination-gold-soft;
-  font-size: 13px;
-  font-weight: 700;
-  color: var.$illumination-gold;
+  padding: 7px 10px;
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  background: var(--gold-tint);
+  font-size: 12px;
+  color: var(--gold);
 }
 
 .unionBannerHead {
@@ -613,83 +670,85 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  font-weight: 700;
 }
 
 .unionBannerDesc {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var.$ink-faint;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-mute);
 }
 
-// 発動可能なユニオンの効果説明（コマンドメニュー上部。issue #18）
 .unionInfo {
   padding: 6px 10px;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  border: 0.75px dashed var.$illumination-gold-soft;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var.$illumination-gold;
+  border: 1px dashed var(--rule-gold);
+  border-radius: 3px;
+  background: var(--gold-tint);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gold);
 }
 
 .unionCancel {
   padding: 2px 10px;
-  border: 0.75px solid var.$illumination-gold-soft;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$illumination-gold;
-  font-size: 12px;
+  border: 1px solid var(--rule-gold);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--gold);
+  font-size: 11px;
   cursor: pointer;
 }
 
 .unionHint {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  color: var.$illumination-gold;
-  // skillList が2列グリッドのとき、全幅をまたぐ
+  color: var(--gold);
   grid-column: 1 / -1;
+  line-height: 1.5;
 }
 
-// 味方対象選択フェーズのヒント
+.unionBtn {
+  border-color: var(--rule-gold) !important;
+  background: var(--gold-tint) !important;
+  color: var(--gold) !important;
+}
+
+// 味方対象選択フェーズ ヒント
 .allyTargetHint {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: var.$verdant-dark;
+  color: var(--info-blue);
   padding: 6px 10px;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  border: 0.75px solid var.$verdant;
-  line-height: 1.45;
-  // skillList が2列グリッドのとき、全幅をまたぐ
+  border: 1px solid rgba(169, 195, 216, 0.35);
+  border-radius: 3px;
+  background: rgba(169, 195, 216, 0.06);
+  line-height: 1.5;
   grid-column: 1 / -1;
 }
 
 .allyTargetSub {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 400;
-  color: var.$verdant-dark;
+  color: var(--info-blue);
   opacity: 0.8;
 }
 
-// 味方対象リストで選択されているボタン
 .allyTargetSelected {
-  border-color: var.$verdant-dark;
-  background-color: var.$parchment;
+  border-color: var(--info-blue) !important;
+  background: rgba(169, 195, 216, 0.1) !important;
 }
 
-.unionBtn {
-  color: var.$illumination-gold;
-  border-color: var.$illumination-gold-soft;
-  background-color: var.$parchment-card;
-}
-
+// ---- コマンド見出し ----
 .cmdHead {
-  font-size: 14px;
-  font-weight: 800;
-  color: var.$ink;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  margin: 0 0 4px;
 }
 
+// ---- global メニュー（たたかう/さくせん/にげる）----
 .menu {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -701,332 +760,81 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 52px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 16px;
+  min-height: 48px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  background: var(--surface-elev);
+  color: var(--text-base);
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  font-family: var(--font-body);
+
+  // 1列目（たたかう）はゴールドで強調
+  &:first-child {
+    background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+    color: var(--bg-mid);
+    border-color: transparent;
+    grid-column: 1 / -1;
+  }
 
   &:disabled {
     opacity: 0.4;
   }
 }
 
-.tp {
-  font-size: 11px;
-  font-weight: 400;
-  color: var.$ink-faint;
-}
-
+// もどるボタン
 .menuBack {
-  // skillList が2列グリッドのとき、全幅をまたぐ
   grid-column: 1 / -1;
-  min-height: 40px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 14px;
+  min-height: 36px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 12px;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
+// 個別実行行（やり直す + 実行）
 .execRow {
   display: flex;
   gap: 8px;
 }
 
 .redo {
-  min-height: 56px;
-  padding: 0 18px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 15px;
+  min-height: 50px;
+  padding: 0 16px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 13px;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
+// プライマリ実行ボタン
 .primary {
   flex: 1;
-  min-height: 56px;
+  min-height: 50px;
   border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 18px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: var(--bg-mid);
+  font-size: 16px;
   font-weight: 800;
+  letter-spacing: 0.1em;
   cursor: pointer;
+  font-family: var(--font-body);
+  margin-top: auto;
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
   }
 }
 
-// ---- 結果 ----
-.resultOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background-color: rgba(33, 36, 27, 0.45);
-}
-
-.result {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 360px;
-  max-height: calc(100% - 32px);
-  overflow-y: auto;
-  padding: 16px;
-  border-radius: 4px;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
-  box-shadow: 0 2px 8px var.$shadow-ink;
-}
-
-.resultTitle {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: var.$ink;
-}
-
-.resultBody {
-  font-size: 14px;
-  color: var.$ink;
-}
-
-// ---- リザルトの経験値バー（issue #18） ----
-.expList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  margin: 6px 0 2px;
-}
-
-.expRow {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.expName {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 700;
-  color: var.$ink;
-}
-
-.expNameText {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.expLv {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: var.$ink-faint;
-}
-
-.expUp {
-  color: var.$illumination-gold;
-  font-weight: 800;
-}
-
-.expNum {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: var.$ink-faint;
-  font-variant-numeric: tabular-nums;
-}
-
-// ---- 行動の逐次再生（issue #18） ----
-.playback {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 0;
-  background-color: rgba(33, 36, 27, 0.06);
-  flex-shrink: 0;
-}
-
-.playbackHint {
-  font-size: 13px;
-  font-weight: 700;
-  color: var.$ink-faint;
-}
-
-.skip {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-// 直近に開いたログ行をフェードインで強調
-.logLineNew {
-  animation: logFadeIn 0.32s ease-out;
-  font-weight: 700;
-}
-
-@keyframes logFadeIn {
-  from {
-    opacity: 0.2;
-    transform: translateY(3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// ---- レベルアップダイアログ（issue #18） ----
-.dialogOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background-color: rgba(33, 36, 27, 0.45);
-}
-
-.dialog {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 360px;
-  padding: 22px 18px;
-  border-radius: 4px;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
-  box-shadow: 0 6px 24px var.$shadow-ink;
-  animation: dialogPop 0.28s ease-out;
-}
-
-@keyframes dialogPop {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.dialogTitle {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var.$illumination-gold;
-}
-
-.dialogName {
-  font-size: 15px;
-  text-align: center;
-  color: var.$ink;
-}
-
-.dialogStats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 8px;
-  justify-content: center;
-}
-
-.dialogStat {
-  font-size: 13px;
-  font-weight: 700;
-  color: var.$verdant-dark;
-  padding: 2px 8px;
-  border-radius: 0;
-  background-color: var.$parchment;
-  border: 0.75px solid var.$verdant;
-}
-
-// ---- エンカウント/戦闘終了の暗転エフェクト（issue #18） ----
-.fxIntro {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  pointer-events: none;
-  background-color: var.$vermilion;
-  animation: encounterFlash 0.7s ease-out forwards;
-}
-
-@keyframes encounterFlash {
-  0% {
-    opacity: 0;
-  }
-  25% {
-    opacity: 0.7;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-.fxOutro {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  pointer-events: none;
-  background-color: var.$ink;
-  animation: fadeToBlack 0.46s ease-in forwards;
-}
-
-.fxLose {
-  background-color: var.$vermilion-dark;
-}
-
-@keyframes fadeToBlack {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-// ---- 作戦（issue #61） ----
-
-// キャラカード内の作戦短縮ラベル（名前の下に金箔色の添え書き）
-.cardStrategy {
-  font-size: 9px;
-  font-weight: 700;
-  color: var.$illumination-gold;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-// 作戦変更UI
+// ---- 作戦変更 UI ----
 .strategyList {
   display: flex;
   flex-direction: column;
@@ -1046,8 +854,9 @@
 }
 
 .strategyAllyName {
-  font-weight: bold;
-  color: var.$ink;
+  font-weight: 700;
+  color: var(--text-strong);
+  font-size: 12px;
 }
 
 .strategyButtons {
@@ -1057,28 +866,246 @@
 }
 
 .strategyOn {
-  background: var.$verdant;
-  color: var.$parchment;
+  background: var(--gold-tint);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 2px;
   padding: 4px 8px;
-  border-radius: 0;
-  border: none;
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .strategyOff {
-  background: var.$ink;
-  color: var.$parchment-edge;
+  background: var(--surface-elev);
+  color: var(--text-mute);
+  border: 1px solid var(--rule-soft);
+  border-radius: 2px;
   padding: 4px 8px;
-  border-radius: 0;
-  border: 0.75px solid var.$ink-faint;
+  font-size: 11px;
   cursor: pointer;
 }
 
+// ---- 逐次再生（スキップ）----
+.playback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid var(--rule-soft);
+  flex-shrink: 0;
+}
+
+.playbackHint {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-mute);
+}
+
+.skip {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+// ---- リザルトオーバーレイ ----
+.resultOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(6, 7, 10, 0.96);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.result {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resultTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--gold);
+  text-align: center;
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 20px var(--gold-glow);
+}
+
+.resultBody {
+  color: var(--text-base);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+// EXP バーリスト
+.expList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0;
+}
+
+.expRow {
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 4px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.expName {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+.expNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expLv {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.expUp {
+  color: var(--success);
+  font-weight: 800;
+  margin-left: 4px;
+}
+
+.expNum {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+// 勝利ゴールド表示
+.victoryGold {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+// ---- レベルアップダイアログ ----
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 7, 10, 0.72);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  padding: 22px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--rule-gold);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-modal);
+  animation: obsidian-dialogPop 0.28s ease-out;
+}
+
+.levelUpGold {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.dialogTitle {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 0 0 16px var(--gold-glow);
+}
+
+.dialogName {
+  font-size: 14px;
+  text-align: center;
+  color: var(--text-base);
+  line-height: 1.6;
+}
+
+.dialogStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  justify-content: center;
+}
+
+.dialogStat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: rgba(63, 138, 92, 0.12);
+  border: 1px solid rgba(63, 138, 92, 0.3);
+}
+
+// ---- エンカウント / 戦闘終了 エフェクト ----
+.fxIntro {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background-color: var(--danger);
+  animation: obsidian-encounterFlash 0.7s ease-out forwards;
+}
+
+.fxOutro {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background-color: var(--bg-deep);
+  animation: obsidian-fadeToBlack 0.46s ease-in forwards;
+}
+
+.fxLose {
+  background-color: #1a0608;
+}
+
 // ==========================================================
-// InkSplatter オーバーレイ（Phase 2）
+// InkSplatter オーバーレイ
 // ==========================================================
 
-// 敵カード・味方カード上に絶対配置で重ねる
 .enemy,
 .card {
   position: relative;
@@ -1094,18 +1121,50 @@
   pointer-events: none;
 }
 
-// 勝利リザルトの gold InkSplatter
-.victoryGold {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 4px;
-  pointer-events: none;
-}
+// ==========================================================
+// 短画面対応（iPhone SE など dvh ≤ 667px）
+// ==========================================================
 
-// レベルアップダイアログの gold InkSplatter
-.levelUpGold {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 4px;
-  pointer-events: none;
+@media (max-height: 720px) {
+  .chapterMark {
+    padding: 7px 14px 6px;
+    font-size: 11px;
+  }
+
+  .enemies {
+    padding: 7px 8px 6px;
+    gap: 5px;
+  }
+
+  .enemy {
+    width: clamp(48px, 15vw, 100px);
+  }
+
+  .party {
+    padding: 6px 12px 6px;
+    gap: 4px;
+  }
+
+  .cardRow {
+    gap: 5px;
+  }
+
+  .logBody {
+    height: calc(10px * 1.4 * 2 + 8px);
+  }
+
+  .command {
+    padding: 7px 14px 10px;
+    gap: 6px;
+  }
+
+  .menuBtn {
+    min-height: 42px;
+    font-size: 14px;
+  }
+
+  .primary {
+    min-height: 44px;
+    font-size: 15px;
+  }
 }
