@@ -6,6 +6,7 @@
 import React from 'react';
 
 import styles from './EffectsGallery.module.scss';
+import './EffectsGallery.keyframes.css';
 
 interface EffectDef {
   name: string;
