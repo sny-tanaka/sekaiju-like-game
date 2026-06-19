@@ -23,7 +23,7 @@ const meta = {
   title: 'Dev/SpriteCatalog',
   component: SpriteCatalog,
   parameters: {
-    layout: 'padded',
+    layout: 'fullscreen',
   },
 } satisfies Meta<typeof SpriteCatalog>;
 
