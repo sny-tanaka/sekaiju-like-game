@@ -4,6 +4,15 @@
 > Kenney 素材: https://kenney.nl/assets/tiny-dungeon （CC0 1.0、クレジット不要）
 > ユーザー提供素材: 衣（clothes）用フード付きローブ画像
 
+## v6.2 → v6.3 の変更点
+
+- **軽装 6 個** をユーザー提供画像（huku.png）に差し替え + tier 別 hue-rotate:
+  - ImageMagick で背景グレー (`srgb(131,128,125)`) を透過化（`-fuzz 12%`）
+  - equip_leather_armor / equip_bat_cloak / equip_t2-t5_light に同一ベース PNG 配置
+  - ItemSprite の hue-rotate 適用範囲を `armorType === 'light'` も含めるよう拡張
+  - 武器/衣と同じ `TIER_HUE_SHIFTS = [0, 40, 100, 180, 240, 290]` を流用
+- **未解決は 6 → 0 件** に減少 ✓ 100% カバー達成
+
 ## v6.1 → v6.2 の変更点
 
 - **毛皮 3 個** をユーザー提供画像（kegawa.png、茶/クリームの毛皮）に差し替え + 個別 hue-rotate:
@@ -43,7 +52,7 @@
 
 残り 15 件は DOT ILLUST に単体素材が存在せず、ユーザー調達依頼として据え置き（v6 で衣 5 個が解決し残り 10 件に減少。詳細は「ユーザー調達依頼リスト」参照）
 
-## ユーザー調達依頼リスト（6 件）
+## ~~ユーザー調達依頼リスト~~ (v6.3 で全件解決済み 🎉)
 
 DOT ILLUST にも Kenney にも適切な素材が見つからなかった以下のアイテムは、別の素材ソース（OpenGameArt / pixela / AI 生成等）から調達が必要です。
 

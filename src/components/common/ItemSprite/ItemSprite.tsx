@@ -33,8 +33,9 @@ function getHueShift(itemId: ItemId): number {
       if (eq.weaponType === 'sword' || eq.weaponType === 'fist') return 0; // tier 別色違い画像あり
       return TIER_HUE_SHIFTS[eq.tier] ?? 0;
     }
-    if (eq.slot === 'armor' && eq.armorType === 'clothes') {
-      // 衣（clothes）は同一ベース画像を使い、tier 別に hue-rotate で色違いを表現
+    if (eq.slot === 'armor' && (eq.armorType === 'clothes' || eq.armorType === 'light')) {
+      // 衣（clothes）と軽装（light）はユーザー提供の同一ベース画像を使い、
+      // tier 別に hue-rotate で色違いを表現
       return TIER_HUE_SHIFTS[eq.tier] ?? 0;
     }
   }
