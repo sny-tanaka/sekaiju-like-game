@@ -1,31 +1,36 @@
 // ==========================================================
-// 写本 (Illuminated Codex) カラーパレット
+// 写本 (Illuminated Codex) 互換層 — 黒曜 OBSIDIAN MINIMAL にエイリアス
+// シンボル名はすべて温存し、値だけ黒曜トークンへ差し替える。
+// 下流の SCSS (@use 'variables' as var; で $parchment 等を参照)
+// はファイル変更なしで自動的に黒曜パレットになる。
 // ==========================================================
 
-// --- 基本紙色 ---
-$parchment:      #EDE3CC; // 紙の地
-$parchment-edge: #D4C7A8; // 紙の縁
-$parchment-card: #F2E9D2; // カード地
+@use './obsidian' as obs;
 
-// --- 墨 ---
-$ink:       #21241B; // 墨 (本文)
-$ink-faint: #5A4F36; // 墨 (薄)
+// --- 旧紙地 → 黒曜背景 ---
+$parchment:      obs.$obsidian-bg-mid;        // 旧: #EDE3CC → #0e0f13
+$parchment-edge: obs.$obsidian-bg-rise;       // 旧: #D4C7A8 → #1c2230
+$parchment-card: obs.$obsidian-surface-panel; // 旧: #F2E9D2 → #15171f
 
-// --- 製本緑 ---
-$verdant:      #3F6B4A; // 製本緑 (主) — メニュー前進色
-$verdant-dark: #2A4A33; // 製本緑 (濃)
+// --- 旧墨 → 黒曜テキスト ---
+$ink:       obs.$obsidian-text-strong; // 旧: #21241B → #f2ede1
+$ink-faint: obs.$obsidian-text-soft;   // 旧: #5A4F36 → #c2bdb2
 
-// --- 金箔 ---
-$illumination-gold:      #B89255; // 金箔 (重要数値)
-$illumination-gold-soft: #D4B47A; // 金箔 (淡)
+// --- 旧製本緑 → 黒曜ゴールド ---
+$verdant:      obs.$obsidian-gold;      // 旧: #3F6B4A → #c9a86a
+$verdant-dark: obs.$obsidian-gold-deep; // 旧: #2A4A33 → #b08f4f
 
-// --- 封蝋朱 ---
-$vermilion:      #B22C2C; // 封蝋朱 (危険)
-$vermilion-dark: #8A1F1F; // 封蝋朱 (濃)
+// --- 旧金箔 → 黒曜ゴールド ---
+$illumination-gold:      obs.$obsidian-gold;        // 旧: #B89255 → #c9a86a
+$illumination-gold-soft: obs.$obsidian-gold-bright; // 旧: #D4B47A → #e8d099
 
-// --- 罫線・影 ---
-$rule:       rgba(33, 36, 27, 0.9); // 罫線
-$shadow-ink: rgba(33, 36, 27, 0.15); // 影
+// --- 旧封蝋朱 → 黒曜危険色 ---
+$vermilion:      obs.$obsidian-danger; // 旧: #B22C2C → #b23c30
+$vermilion-dark: #8a2520;              // 旧: #8A1F1F → より暗い危険色
+
+// --- 旧罫線・影 → 黒曜ルール ---
+$rule:       rgba(255, 255, 255, 0.14); // 旧: rgba(33,36,27,0.9) → 白系透過
+$shadow-ink: rgba(0, 0, 0, 0.28);       // 旧: rgba(33,36,27,0.15) → 黒影
 
 // --- 意味的エイリアス ---
 $color-success: $verdant;
@@ -37,25 +42,25 @@ $color-info:    $verdant-dark;
 // 旧変数との互換エイリアス（段階的移行中）
 // ==========================================================
 $black:        #000000;
-$white:        $parchment-card; // 白地 → カード地へ
-$gray:         $parchment-edge; // グレー枠 → 紙縁へ
-$primary:      $verdant;        // 青 → 製本緑へ
-$secondary:    $illumination-gold; // シアン → 金箔へ
-$text-dark:    $ink;            // テキスト → 墨へ
-$bg-base:      $parchment;      // 背景 → 紙地へ
-$bg-base-edge: $parchment-edge; // 背景縁 → 紙縁へ
-$shadow-light: $shadow-ink;     // 影 → インク影へ
+$white:        $parchment-card; // 白地 → surface-panel
+$gray:         $parchment-edge; // グレー枠 → bg-rise
+$primary:      $verdant;        // 青 → gold
+$secondary:    $illumination-gold; // シアン → gold
+$text-dark:    $ink;            // テキスト → text-strong
+$bg-base:      $parchment;      // 背景 → bg-mid
+$bg-base-edge: $parchment-edge; // 背景縁 → bg-rise
+$shadow-light: $shadow-ink;     // 影 → 黒影
 
 // ==========================================================
-// FirstPersonView 用の写本ダンジョン色
+// FirstPersonView 用の黒曜ダンジョン色
 // ==========================================================
-$fpv-wall-near:  #3A3528;
-$fpv-wall-mid:   #544A36;
-$fpv-wall-far:   #7A6E4F;
-$fpv-floor-near: #B89255;
-$fpv-floor-far:  #8A6A38;
-$fpv-ceiling:    #2A2520;
-$fpv-shadow:     #1A1612;
+$fpv-wall-near:  obs.$obsidian-bg-mid;        // #0e0f13（最奥壁・最暗）
+$fpv-wall-mid:   obs.$obsidian-surface-panel; // #15171f（中間壁）
+$fpv-wall-far:   obs.$obsidian-bg-rise;       // #1c2230（手前壁・最明）
+$fpv-floor-near: #2a2520;  // 手前床: 暗めの土色相（視認性優先）
+$fpv-floor-far:  #1a1612;  // 奥床: さらに暗い土色相
+$fpv-ceiling:    #050507;  // 天井: ほぼ漆黒
+$fpv-shadow:     #000000;  // 影: 純黒
 
 // ==========================================================
 // responsive

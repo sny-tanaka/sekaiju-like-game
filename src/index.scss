@@ -36,8 +36,10 @@ html,
 body {
   margin: 0;
   padding: 0;
-  // 採用フォント: Noto Sans JP（index.html で読み込み）。未ロード時は system フォントへフォールバック。
+  // 採用フォント: var(--font-body) = 'Zen Kaku Gothic New', 'Noto Sans JP'（_obsidian.scss で定義）。
+  // 未ロード時は Noto Sans JP → system フォントへフォールバック。
   font-family:
+    var(--font-body),
     'Noto Sans JP',
     -apple-system,
     BlinkMacSystemFont,
