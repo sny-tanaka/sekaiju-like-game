@@ -1,0 +1,77 @@
+.root {
+  padding: 16px;
+}
+
+.summary {
+  text-align: right;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px;
+  border: 0.5px solid #ddd;
+  background: #fafafa;
+  border-radius: 4px;
+}
+
+.spriteWrap {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.id {
+  font-size: 10px;
+  color: #888;
+  word-break: break-all;
+  margin-top: 2px;
+}
+
+.badge {
+  font-size: 10px;
+  background: #eee;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.noImage {
+  font-size: 10px;
+  color: #bbb;
+  font-style: italic;
+}
