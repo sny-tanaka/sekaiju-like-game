@@ -1,378 +1,245 @@
-# フェーズ 2：not-found 画面リデザイン（sonnet 用指示書） — 改訂版 v2「モック忠実化」
+# redesign-A — not-found（404 fallback）改訂版 v3 — 差分修正
 
-`dev-docs/redesign-A.md`（特に **§1.5 レイアウト運用ルール**）を **必ず先に読むこと**。
-本ファイルは not-found（404 フォールバック）画面の取り込み手順を網羅した実装指示書。
+`案A v2` モックを v2 実装が大筋取り込んだ後、ユーザーから **「まだデザインと異なる部分がある、しっかりレビューしてください」** との指摘を受けた残差分を埋めるための指示書。
 
-**前回方針からの反転**: 前回は「機能優先」でモック上の文言「拠点へ戻る」を捨てて「戻る」と `history.back()` のままにしていた。今回は **モック忠実度を最優先**。モック準拠で「拠点へ戻る」ラベル + navigation で town に戻る。save が無い場合は title にフォールバック（破損・初回想定）。
-
-絶対配置で `top` / `bottom` を直書きするのは禁止（章マークなどの装飾レイヤのみ例外）。**flex column 一本**で組む。
+- 元モック: `/tmp/sekaiju-design/案A_v2.dc.html` line 1125–1138（`10 not-found` セクション）
+- 現状実装: `src/pages/not-found/index.tsx` + `src/pages/not-found/style.module.scss`
+- 現状スクショ `/tmp/sekaiju-screenshots-current/pages-not-found--default.png` には **Storybook の `Couldn't find story matching 'pages-not-found--default'` エラー** が映っており、実画面は確認できなかった。本書はモック原本の CSS 値と現状 SCSS の数値比較で差分を抽出している（**ストーリーファイル不在の可能性が高い** → §3.G で対応）。
 
 ---
 
 ## 1. 触ってよいファイル / 触ってはいけないファイル
 
-以下 3 ファイルのみ。**他は絶対に変更しない**。
+### 触ってよい
+- `src/pages/not-found/style.module.scss` — §3 で挙げた差分のスタイル調整
+- `src/pages/not-found/index.tsx` — JSX 構造は変えない（章マークの位置調整は SCSS 側で対応）。読み取り専用扱いで OK
+- `src/pages/not-found/NotFound.stories.tsx` — **存在しなければ新規作成**（§3.G）
 
-| 区分 | パス | 操作 |
-| --- | --- | --- |
-| 編集 | `src/pages/not-found/index.tsx` | 構造を黒曜テーマに合わせて刷新。戻るアクションを `history.back()` から `navigate({ name: 'town' or 'title' })` に変更。ラベルは「拠点へ戻る」 |
-| 編集 | `src/pages/not-found/style.module.scss` | 全面書き直し。`@use 'variables'` を **削除**して `var(--*)` のみ参照 |
-| 編集 | `src/pages/not-found/NotFound.stories.tsx` | 既存ストーリー `Default` をそのまま維持。**新規 import 追加なし**（mock save 不要、`navigate` は decorator 内のスタブで動く） |
+### 触ってはいけない（厳守）
+- `src/_obsidian.scss`（トークン定義）
+- `src/store/**`、`src/domain/**`（ナビゲーション / セーブ状態）
+- `src/__stories__/**`（mock SaveData / decorator）
+- 既存テスト
+- 他ページ
 
-### 触ってはいけないファイル / コンポーネント
-
-- `src/_obsidian.scss` は変更しない（必要トークンは既存で揃っている）。
-- 共通コンポーネント（`InkSplatter` 等）は本画面で使わない。新規 import を増やさない。
-- `src/_variables.scss` および写本テーマ系 SCSS 変数を新規参照しない。
-- 他画面の `index.tsx` / `style.module.scss` には絶対触らない。
-- `__stories__/mockSaves.ts` には触らない。
+---
 
 ## 2. やってはいけないこと
 
-- **`Agent` / `Task` を自分から spawn しない**（孫委譲禁止）。`Edit` / `Write` / `Bash` で自分で実装する。
-- **`src/_obsidian.scss` の値を書き換えない**。
-- **絶対配置を多用しない**。章マークの上端固定は `flex` の最初のアイテムとして組む（モックでは absolute だが、§1.5 ルールで flex column 優先）。
-- **ページ全体に `overflow-y: auto` をかけない**。404 画面は 1 ビューポートで完結する想定。
+- **構造の再設計禁止**。現状の `layout > head + body(emblem + code + message) + foot(back)` を維持する。
+- **絶対配置で組み直さない**。モック原本は章マークを `position:absolute; top:34px;` で配置しているが、redesign-A.md §1.5 のレイアウト運用ルール（絶対配置 + 固定 `top` / `bottom` で組まない）と衝突する。**flex の head として残し、`gap` / `margin` で位置だけ合わせる**。
+- 機能の追加禁止（「タイトルへ戻る」「拠点へ戻る」の出し分けロジックは現状維持）。
+- `index.tsx` の文字列（`❦ 行方知れずの頁`、`404`、お探しのページ文言）変更禁止 — モックの文言と一致しているため。
 
 ---
 
-## 3. モックとの差分一覧（最重要）
+## 3. モックとの差分一覧
 
-参照: `/tmp/sekaiju-design/案A_v2.dc.html` line 1126〜1140。
+モック HTML 原本（line 1131–1136）の CSS 数値と現状 `style.module.scss` を 1 行ずつ突き合わせた結果。**v2 で取り込めていない項目だけ列挙**。
 
-### 3.1 戻るボタンのラベルと遷移先（最重要差分）
+### A. 章マークの色
 
-| 項目 | 現状 | モック | 対応 |
-| --- | --- | --- | --- |
-| ラベル | 「戻る」 | 「拠点へ戻る」 | **「拠点へ戻る」に変更**（モック準拠）。design brief §4.10 は「戻る」を明示しているが、モック忠実化方針に基づき**モック側を採用** |
-| onClick | `history.back()` | （静的モックなので動作なし） | `useNavigation` の `navigate` で **town に遷移**。`save` が `null`（new game 前 / 破損後）の場合は town に行けないので title に遷移 |
+1. **章マークの色がモックより明るい**。
+   - 現状: `.chapterMark { color: var(--text-blue); }` → `#7d8aa0`
+   - モック: `color:#5b6475`（line 1132）。より暗く、青灰寄り。
+   - **修正**: `.chapterMark { color: #5b6475; }` に直書き。
+   - font-size 13px / letter-spacing 0.36em は **一致**（差分なし）。
 
-### 3.2 ヘッダー（章マーク）の配置
+### B. レイアウト全体のマージン構造
 
-| 項目 | 現状 | モック | 対応 |
-| --- | --- | --- | --- |
-| 配置 | `<header>` を flex item として上端に置く（gap で本体と離す） | `position: absolute; top: 34px; left: 0; right: 0;` で本体の上に被せる | **flex item として上端配置**を継続（§1.5 ルール準拠）。`padding-top: 34px;` で見た目はモックと同等にする |
-| 文字スタイル | font-size 13px / letter-spacing .36em / `--text-blue` | 同じ（`color: #5b6475`、これは `--text-blue` ≒ `#7d8aa0` よりやや暗い） | `--text-blue` のままで OK（厳密一致は要求しない） |
+2. **`layout` の `gap: 24px` が章マーク → エンブレム間の距離を伸ばし、モックの構図と微妙にずれる**。
+   - 現状: `.layout { padding: 34px 40px ...; gap: 24px; }`。章マーク (head) → body の間に 24px の gap が入る。
+   - モック: 章マーク（top:34px の絶対配置）→ エンブレム（中央寄せ）まで「ほぼ全余白」。章マーク直下に決まった距離は無く、body 側で `display:flex;flex-direction:column;align-items:center;justify-content:center` で中央寄せ（line 1131）。
+   - **修正**: `.layout { gap: 0; }` に変更。代わりに `.body` を `flex: 1 1 auto; min-height: 0; align-items: center; justify-content: center; gap: 0;` にし、エンブレム / コード / メッセージ間の距離は **個別 margin** で制御。
 
-### 3.3 中央コンテンツ（？エンブレム + 404 + 説明）
+### C. エンブレム
 
-| 項目 | 現状 | モック | 対応 |
-| --- | --- | --- | --- |
-| ？エンブレム | 120px 円 + 細い金線 + `？`（明朝・薄金・脈動） | 同じ | 現状維持 |
-| `404` 大書き | 明朝 26px / `--text-strong` | 同じ | 現状維持 |
-| 本文 | 「お探しのページは / 見つかりませんでした。」 | 同じ | 文言維持 |
-| 縦間隔 | gap 18px / margin 14px-36px | エンブレム下 34px / 本文下 36px / 本文 line-height 1.8 | gap の値はおおむね現状で問題ない（モック 36px ≒ 現行 18px×2 + α） |
+3. **エンブレム円の border が濃すぎる**。
+   - 現状: `.emblemRing { border: 1px solid var(--rule-gold); }` → 0.3
+   - モック: `border:1px solid rgba(201,168,106,.25)`（line 1133）。
+   - **修正**: `.emblemRing { border: 1px solid rgba(201, 168, 106, 0.25); }`。
 
-### 3.4 ボタンスタイル
+4. **エンブレムサイズが clamp で可変（モックは固定 120px）**。
+   - 現状: `.emblem { width: clamp(96px, 28vw, 120px); }`、`.emblemMark { font-size: clamp(48px, 16vw, 64px); }`
+   - モック: `width:120px;height:120px` / `font-size:64px`（line 1133）。
+   - **モック忠実度を最優先する方針（ユーザー指示）なので 固定 120px / 64px に直書き**。`clamp` を外す。
+     - `.emblem { width: 120px; height: 120px; aspect-ratio: 1 / 1; margin-bottom: 34px; }`
+     - `.emblemMark { font-size: 64px; }`
+   - iPhone SE (375px) で 120px は許容範囲（左右 padding 40px x2 を引いた 295px 以内）。
 
-| 項目 | 現状 | モック | 対応 |
-| --- | --- | --- | --- |
-| サイズ | `clamp(180px, 56vw, 220px) × 50px` | 200px × 50px | モック準拠で 200px 固定でもよいが、小画面で潰れないよう **`clamp(180px, 56vw, 220px)` を維持** |
-| 色 | gold tint background + gold border + gold text | 同じ | 現状維持 |
-| 文字 | letter-spacing .2em | letter-spacing .2em | 現状維持 |
+5. **`emblemMark` の opacity 二重化**。
+   - 現状: `color: var(--gold); opacity: 0.55;`
+   - モック: `color:rgba(201,168,106,.55)`（line 1133）。
+   - 視覚的にはほぼ同じだが、**モック準拠で書き換える**。
+   - **修正**: `.emblemMark { color: rgba(201, 168, 106, 0.55); }` に変更し、`opacity: 0.55` を削除。
 
-### 3.5 背景
+6. **エンブレムからの下マージン**。
+   - 現状: `.emblem { margin-bottom: 16px; }` + 親 `.body { gap: 18px; }` = 合計 34px。
+   - モック: `margin-bottom:34px`（line 1133）+ 親に gap 無し。
+   - 計算結果は **同等**。§B-2 で gap を 0 にする修正と整合させ、`.emblem { margin-bottom: 34px; }` 単独で 34px を確保する。
 
-| 項目 | 現状 | モック | 対応 |
-| --- | --- | --- | --- |
-| 背景 | `radial-gradient(120% 80% at 50% 30%, var(--surface-panel), var(--bg-deep))` | `radial-gradient(120% 80% at 50% 30%, #15171f, #0a0b0e)` | `var(--surface-panel) = #15171f` で一致。`var(--bg-deep) = #090a0d` で `#0a0b0e` とほぼ同じ。現状維持 |
+### D. 「404」見出し
 
-### 3.6 モック上にあるが省略する要素（理由付き）
+7. **`.code` の color が明るすぎる**。
+   - 現状: `color: var(--text-strong);` → `#f2ede1`
+   - モック: `color:#e8e6e0`（line 1134）。
+   - **修正**: `.code { color: #e8e6e0; }` に直書き。
 
-- なし。モック上の要素はすべて実装する（戻るボタンのラベル変更含む）。
+8. **`.code` の font-size が clamp**。
+   - 現状: `font-size: clamp(22px, 7vw, 26px);`
+   - モック: `font-size:26px`（line 1134）。
+   - **修正**: `.code { font-size: 26px; }` に固定。
+
+9. **`.code` の下マージン**（モックは `p` のデフォルト margin が 14px 入る）。
+   - 現状: `.code { margin: 0; }` + 親 gap 18px。
+   - モック: 親 gap 無し、`message` 側 `margin:14px 0 36px`（line 1135）。
+   - **修正**: `.code { margin: 0; }` のまま、`.message` 側で `margin-top: 14px` を持たせる（次項）。
+
+### E. メッセージ本文
+
+10. **メッセージの上下 margin がモックの数値と異なる**（gap で吸収していた）。
+    - 現状: `.message { margin: 0; font-size: clamp(13px, 3.6vw, 14px); line-height: 1.8; color: var(--text-faint); }`
+    - モック: `margin:14px 0 36px;font-size:14px;color:#8c8a84;line-height:1.8`（line 1135）。
+    - **修正**: `.message { margin: 14px 0 36px 0; font-size: 14px; line-height: 1.8; }`
+    - color は `var(--text-faint)` = `#8c8a84` で **一致**（触らない）。
+    - font-size の clamp を外し **14px 固定**。
+
+### F. 戻るボタン
+
+11. **ボタンサイズが clamp（モックは固定 200x50）**。
+    - 現状: `.back { width: clamp(180px, 56vw, 220px); height: 50px; font-size: 15px; letter-spacing: 0.2em; }`
+    - モック: `width:200px;height:50px;font-size:15px;letter-spacing:.2em`（line 1136）。
+    - **修正**: `.back { width: 200px; height: 50px; font-size: 15px; }` に固定。letter-spacing は維持。
+    - `border` / `background` / `color` は一致（`var(--rule-gold-strong)` / `var(--gold-tint)` / `var(--gold)`）。**触らない**。
+
+### G. Storybook ストーリーの欠落
+
+12. **`pages-not-found--default` ストーリーが見つからない**（現状スクショで `Couldn't find story matching` のエラー）。
+    - 原因: `src/pages/not-found/NotFound.stories.tsx` が未作成、または `title` が `Pages/NotFound` ではない可能性。
+    - **修正**: ファイルの有無を確認し、無ければ新規作成:
+      ```tsx
+      import type { Meta, StoryObj } from '@storybook/react';
+      import { Page } from './index';
+      import { withGameContext } from '@/__stories__/decorators';
+      import { mockEmpty, mockWithParty } from '@/__stories__/mockSaves';
+
+      const meta = {
+        title: 'Pages/NotFound',
+        component: Page,
+        parameters: { layout: 'fullscreen' },
+      } satisfies Meta<typeof Page>;
+      export default meta;
+      type Story = StoryObj<typeof meta>;
+
+      /** セーブ無し → 「タイトルへ戻る」 */
+      export const Default: Story = {
+        decorators: [withGameContext(mockEmpty, { name: 'not-found' as never })],
+      };
+
+      /** セーブ有り → 「拠点へ戻る」 */
+      export const FromTown: Story = {
+        decorators: [withGameContext(mockWithParty, { name: 'not-found' as never })],
+      };
+      ```
+    - 既存 `withGameContext` の `initialScreen` 引数の型に `not-found` が含まれない場合は **最小キャスト** (`as never`) で回避し、decorator 本体は触らない。
+    - 既存ストーリーファイルがあって title だけ違うなら title を `Pages/NotFound` に修正する（その場合は他の修正は不要）。
+
+### H. 短画面メディアクエリの整合
+
+13. **`@media (max-height: 720px)` で `gap` を縮める指定が、§B-2 の `gap: 0` 化と矛盾**。
+    - 現状: `@media (max-height: 720px) { .layout { gap: 16px; padding-top: 24px; } .body { gap: 12px; } .emblem { margin-bottom: 8px; } }`
+    - **修正**: 短画面でも個別 margin で詰めるレシピに置き換え:
+      ```scss
+      @media (max-height: 720px) {
+        .layout { padding-top: 24px; }
+        .emblem { width: 96px; height: 96px; margin-bottom: 18px; }
+        .emblemMark { font-size: 48px; }
+        .code { font-size: 22px; }
+        .message { margin: 10px 0 22px 0; }
+      }
+      ```
 
 ---
 
-## 4. ゴール
+## 4. ゴール（Storybook ストーリー一覧）
 
-Storybook の `Pages/NotFound / Default` ストーリーが、モック「案 A 黒曜 OBSIDIAN MINIMAL」の 404 セクション（line 1126〜1140）に忠実に描画される:
-
-- 章マーク `❦ 行方知れずの頁` が上端 ~34px に出る（淡青 / 字間 .36em）。
-- 中央に直径 ~120px の細金線円輪 + 明朝 `？`（薄金 / 脈動）。
-- 円輪下に明朝 `404`。
-- その下に「お探しのページは / 見つかりませんでした。」を 2 行。
-- 下端に金縁ボタン「拠点へ戻る」。
-
-iPhone SE / iPhone 16 のいずれでも要素が画面内に収まり重ならない。`yarn lint`・`yarn test --run`・`yarn tsc -b` が緑。
-ストーリーで「拠点へ戻る」を押したときに **エラーで落ちない**（Storybook 内の navigation はデフォルト no-op で動く想定。`useGameState` の save が null でも `name: 'title'` への遷移分岐で問題なし）。
+| Story id | 期待結果 |
+| --- | --- |
+| `pages-notfound--default` | セーブ無し。「タイトルへ戻る」金箔ボタン。章マーク `❦ 行方知れずの頁` が画面上端寄り (`#5b6475`)。エンブレム 120px、border 0.25 の金。「？」が金茶 0.55。「404」26px `#e8e6e0`。 |
+| `pages-notfound--from-town` | セーブ有り。「拠点へ戻る」金箔ボタン。それ以外は default と同じ。 |
 
 ---
 
-## 5. 実装ステップ
+## 5. 実装ステップ（差分のある部分だけを直す）
 
-### Step 0. 事前読み込み
+サブエージェント（sonnet）に以下を順に実行させる。**自分で Edit/Write/Bash を使って実装すること。さらにサブエージェント（Agent/Task）を spawn しないこと**。
 
-1. `dev-docs/redesign-A.md §1.1〜§1.6`（特に §1.5 レイアウト運用ルール）。
-2. `dev-docs/claude-design-brief.md §4.10`（not-found の機能仕様）。
-3. `/tmp/sekaiju-design/案A_v2.dc.html` line 1126〜1140。
-4. `src/store/gameState.ts` および navigation のフック (`useNavigation` の場所は `src/pages/title/index.tsx` を grep してパスを確認)。
+### Step 1: ストーリーファイルの確認 / 作成（§3.G-12）
+- `ls src/pages/not-found/NotFound.stories.tsx` で有無を確認。
+- 無ければ §3.G-12 のスニペットを書き起こす。
+- 有るが Storybook が認識していない場合は `title: 'Pages/NotFound'` になっているか確認。
+- 型エラーが出たら **最小キャスト**で回避（`as never` 等）。decorator 本体や `mockSaves.ts` には触らない。
 
-### Step 1. `index.tsx` の構造
+### Step 2: `style.module.scss` をピンポイント書き換え
+- `.chapterMark { color: #5b6475; }`（§3.A-1）
+- `.layout` の `gap: 24px;` を **削除**（§3.B-2）。
+- `.body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }`（gap を 0 に）
+- `.emblem` を `width: 120px; height: 120px; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; margin-bottom: 34px; position: relative;` に。clamp 廃止（§3.C-4）
+- `.emblemRing` の border を `1px solid rgba(201, 168, 106, 0.25)`（§3.C-3）
+- `.emblemMark` を `color: rgba(201, 168, 106, 0.55); font-size: 64px;`、`opacity` 削除（§3.C-5）
+- `.code` を `font-size: 26px; color: #e8e6e0; margin: 0; letter-spacing: 0.1em;`（§3.D-7, D-8）
+- `.message` を `margin: 14px 0 36px 0; font-size: 14px; line-height: 1.8;` （color は `var(--text-faint)` 維持、§3.E-10）
+- `.back` を `width: 200px; height: 50px; font-size: 15px;`、letter-spacing 維持（§3.F-11）
+- `@media (max-height: 720px)` を §3.H-13 のレシピで上書き
 
-`history.back()` を捨てて `useNavigation` + `useGameState` を使う。
-
-```tsx
-import styles from './style.module.scss';
-
-import { useGameState } from '@/store/gameState';
-import { useNavigation } from '@/store/navigation';
-
-export const Page = () => {
-  const { navigate } = useNavigation();
-  const { save } = useGameState();
-
-  // セーブが無ければ title に戻し、あれば town に戻す。
-  const handleBack = () => {
-    navigate({ name: save ? 'town' : 'title' });
-  };
-
-  return (
-    <div className={styles.layout}>
-      <header className={styles.head}>
-        <p className={styles.chapterMark}>❦ 行方知れずの頁</p>
-      </header>
-
-      <main className={styles.body}>
-        <div className={styles.emblem} aria-hidden>
-          <span className={styles.emblemRing} />
-          <span className={styles.emblemMark}>？</span>
-        </div>
-        <p className={styles.code}>404</p>
-        <p className={styles.message}>
-          お探しのページは
-          <br />
-          見つかりませんでした。
-        </p>
-      </main>
-
-      <footer className={styles.foot}>
-        <button
-          type="button"
-          className={styles.back}
-          onClick={handleBack}
-        >
-          {save ? '拠点へ戻る' : 'タイトルへ戻る'}
-        </button>
-      </footer>
-    </div>
-  );
-};
-```
-
-ポイント:
-
-- ラベルは save の有無で **「拠点へ戻る」/「タイトルへ戻る」** を切り替える。これでモック準拠 + 機能上の安全性を両立。
-- `aria-hidden` の emblem は装飾。
-- 本文の改行は `<br />` で 2 行構造（モック準拠）。
-- 「？」は **全角 `？`** (U+FF1F)。モック準拠で半角 `?` ではない。
-
-### Step 2. `style.module.scss` の全面置換
-
-`@use 'variables'` は削除。`var(--*)` を直接参照。
-
-```scss
-.layout {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100dvh;
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 34px 40px max(24px, env(safe-area-inset-bottom, 0px));
-  overflow: hidden;
-  background: radial-gradient(
-    120% 80% at 50% 30%,
-    var(--surface-panel),
-    var(--bg-deep)
-  );
-  color: var(--text-base);
-  font-family: var(--font-body);
-  text-align: center;
-  gap: 24px;
-}
-
-.head {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-}
-
-.chapterMark {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 13px;
-  letter-spacing: 0.36em;
-  color: var(--text-blue);
-}
-
-.body {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-}
-
-.emblem {
-  position: relative;
-  width: clamp(96px, 28vw, 120px);
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;   // モック準拠 (34px 余白を gap 18 + 16 で表現)
-}
-
-.emblemRing {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid var(--rule-gold);
-  animation: obsidian-glowPulse 5s ease-in-out infinite;
-}
-
-.emblemMark {
-  position: relative;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(48px, 16vw, 64px);
-  color: var(--gold);
-  opacity: 0.55;
-  line-height: 1;
-}
-
-.code {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(22px, 7vw, 26px);
-  letter-spacing: 0.1em;
-  color: var(--text-strong);
-}
-
-.message {
-  margin: 0;
-  font-size: clamp(13px, 3.6vw, 14px);
-  line-height: 1.8;
-  color: var(--text-faint);
-}
-
-.foot {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-}
-
-.back {
-  width: clamp(180px, 56vw, 220px);
-  height: 50px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-gold-strong);
-  background: var(--gold-tint);
-  color: var(--gold);
-  font-family: var(--font-body);
-  font-size: 15px;
-  letter-spacing: 0.2em;
-  cursor: pointer;
-  transition: background var(--motion-quick, 140ms cubic-bezier(0.4, 0, 0.2, 1));
-}
-
-.back:hover { background: rgba(201, 168, 106, 0.16); }
-.back:active { background: rgba(201, 168, 106, 0.24); }
-
-@media (max-height: 720px) {
-  .layout { gap: 16px; padding-top: 24px; }
-  .body { gap: 12px; }
-  .emblem { margin-bottom: 8px; }
-}
-```
-
-ポイント:
-
-- `padding: 34px 40px ...;` で章マーク上端をモック準拠の 34px 相当に。
-- `.emblem` に `margin-bottom: 16px;` を入れてエンブレム → `404` の間隔をモック準拠（モック 34px ≒ gap 18 + margin 16）。
-- `obsidian-glowPulse` は `_obsidian.scss` に既存。`prefers-reduced-motion: reduce` 時は no-op。
-
-### Step 3. Storybook ストーリー
-
-`src/pages/not-found/NotFound.stories.tsx` は既存のまま（変更不要）。
-
-```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-
-import { Page } from './index';
-
-const meta = {
-  title: 'Pages/NotFound',
-  component: Page,
-  parameters: { layout: 'fullscreen' },
-} satisfies Meta<typeof Page>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Default: Story = {};
-```
-
-**注意**: `useGameState` / `useNavigation` を呼ぶようになったので、`Default` ストーリー実行時にプロバイダーが必要。`.storybook/preview.tsx` でグローバル decorator が既に provider を流している場合は追加対応不要。流していない場合は `withGameContext(null, { name: 'not-found' })` を decorator として追加する。`Default` を実行した時点で grep して確認すること:
-
-```bash
-grep -n "decorators\|GameProvider\|NavigationProvider" /Users/shunyatanaka/work/sekaiju-like-game/.storybook/preview.tsx /Users/shunyatanaka/work/sekaiju-like-game/src/__stories__/decorators.tsx
-```
-
-- グローバル provider 有り → 追加不要。
-- 無し → `withGameContext` を import して decorator に追加（`mockSaves.ts` の preset は使わず、第 1 引数に `null` を渡せるか確認。`null` 不可なら `mockEmpty` を渡してラベルを「拠点へ戻る」表示でテスト）。**注**: ラベル分岐確認のため、無条件 `mockEmpty`（save あり）で実行すれば「拠点へ戻る」が出るので Storybook 上の確認はこれで十分。
-
-### Step 4. 検証
-
-```
-yarn lint
-yarn test --run
-yarn tsc -b
-yarn build   # 成果物 docs/ に影響する変更があるため必ず回す
-```
-
-Storybook 目視確認（`yarn storybook --host 0.0.0.0`）:
-
-- `Pages/NotFound / Default` で章マーク・？円輪・404・本文・「拠点へ戻る」ボタンの 5 要素が縦に整列。
-- iPhone SE 相当（dvh ≒ 559）でもスクロール無しで全部画面内に収まる。
-- `？` の脈動が `prefers-reduced-motion: reduce` で停止する。
-- 「拠点へ戻る」を押下しても **コンソールエラーが出ない**（navigate スタブが no-op で動く）。
-
-### Step 5. コミット
-
-ブランチ `feature/redesign-A-not-found-v2`（既存 `feature/redesign-A-not-found` を切り直してよい）。完了後 1 コミット、push なし。
-
-```
-feat(theme): rewrite not-found layout to match obsidian mock
-
-- swap label/navigation: "戻る" + history.back → "拠点へ戻る" + navigate(town)
-- fallback to title when no save (corrupted / initial)
-- adopt obsidian gradient bg + pulsing ? emblem + 404 display heading
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
-```
+### Step 3: 検証 → コミット → commit SHA をディレクターへ報告
 
 ---
 
-## 9. 追加トークン要求
+## 6. 検証
 
-なし。`obsidian-glowPulse` および `--rule-gold` / `--rule-gold-strong` / `--gold` / `--gold-tint` / `--surface-panel` / `--bg-deep` / `--text-strong` / `--text-blue` / `--text-faint` はすべて既存。
+### 6.1 静的検証（必須・全部緑）
+- `yarn test`
+- `yarn lint`
+- `yarn build`（`tsc -b` + `vite build`）
+
+### 6.2 視覚回帰
+- `yarn storybook --host 0.0.0.0`
+- iPhone 14 (393x852) viewport で `Pages/NotFound` の `Default` / `FromTown` を撮影。
+- モック原本 (`/tmp/sekaiju-design/案A_v2.dc.html` line 1131-1138) と並べて確認:
+  - 章マーク `❦ 行方知れずの頁` が画面上端から 34px 付近、色 `#5b6475` の青灰。
+  - エンブレム 120x120 が画面ほぼ中央、border が薄い金（0.25）、「？」が金茶 0.55。
+  - 「404」が 26px、`#e8e6e0`。
+  - メッセージ 14px、line-height 1.8、`#8c8a84` (= `var(--text-faint)`)。
+  - 戻るボタン 200x50、金箔 tint。
+
+### 6.3 スマホ実機確認
+`yarn dev --host 0.0.0.0` → 存在しない URL（例: 内部状態を `not-found` に強制遷移）で fallback ページを直接開く。
+- iPhone SE 相当の dvh で章マークが切れず、戻るボタンが safe-area 内に収まること。
 
 ---
 
-## 想定 Q&A
+## 7. コミット
 
-- **`useGameState` を呼ぶと Storybook で provider 未設定エラーになる**: `.storybook/preview.tsx` を grep してプロバイダーがあるか確認。無ければ decorator を `Default` に追加（`mockEmpty` を渡して `save` が truthy になる、もしくは `null` を渡してフォールバック分岐を確認）。
-- **「拠点へ戻る」を押しても save が無いと title 行きで違和感**: ラベルを動的に「タイトルへ戻る」に切り替えて違和感を回避（Step 1 の `save ? '拠点へ戻る' : 'タイトルへ戻る'`）。
-- **`history.back()` のままにしたい**: モック忠実化方針で却下。「拠点へ戻る」のラベル + navigation 直接呼出しが正解。
-- **`emblemMark` の `？` を半角にすべき?**: 全角 `？` (U+FF1F) を使う。モック側も全角。
-- **`emblemRing` を二重円輪にしたい**: モックは 1 重。1 重で OK。
-- **`overflow: hidden` のまま中身が画面に入らない**: `clamp()` でフォントサイズと emblem サイズが画面幅に追随。`@media (max-height: 720px)` でさらに gap を詰める。
-- **既存テスト**: `find src/pages/not-found -name '*.test.*'` で確認。存在しない場合は新規作成しない。
+最終コミットメッセージ例:
 
-不明点が出たら止めて報告すること。色味の微調整以外で構造分岐・文言・ロジックから外れてはいけない。
+```
+feat(not-found): redesign-A v3 — モック準拠で 404 ページを微調整
+
+- 章マーク色を #7d8aa0 → #5b6475 に
+- エンブレムを 120px 固定、border 0.3→0.25 に弱める
+- 「？」マークを opacity 二重化から rgba 1 本に整理
+- 「404」を #f2ede1 → #e8e6e0、font-size を 26px 固定
+- メッセージ・戻るボタンのサイズを clamp から固定値に
+- Storybook ストーリーを追加（無かった場合）
+- 短画面メディアクエリを gap 廃止に合わせて再構成
+```
+
+- `yarn build` で `docs/` 更新後、`docs/` と `package.json` のバージョン bump をコミットに含める。
+- **push はしない**。ディレクターが PR 作成時に push する。
+
+---
+
+## 追加トークン要求
+
+`_obsidian.scss` への新規トークンは **不要**。`#5b6475` / `rgba(201,168,106,.25)` / `#e8e6e0` は not-found 固有の数値で、再利用見込みがあれば後フェーズで集約する。
