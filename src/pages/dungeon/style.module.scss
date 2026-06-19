@@ -1,6 +1,9 @@
-// 黒曜 OBSIDIAN MINIMAL テーマ — dungeon 画面
-// @use 'variables' は使わない。すべて var(--*) で参照する。
+// dungeon 画面 — 黒曜 OBSIDIAN MINIMAL v2（モック忠実化）
+// @use 'variables' は使わない。すべて var(--*) で書く。
 
+// ============================================================
+// ルートレイアウト
+// ============================================================
 .layout {
   display: flex;
   flex-direction: column;
@@ -12,233 +15,211 @@
   background: var(--bg-deep);
   color: var(--text-base);
   font-family: var(--font-body);
+  position: relative;
 }
 
-// ===== ヘッダー（FPV 帯を包む） =====
-
+// ============================================================
+// FPV 帯
+// ============================================================
 .head {
-  position: relative;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 .fpvWrap {
   position: relative;
-  width: 100%;
   height: clamp(180px, 28dvh, 232px);
-  background: linear-gradient(180deg, #0d141a, #070b0f);
   overflow: hidden;
-
-  // FirstPersonView を親サイズに追従させる
-  > :first-child {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
 }
 
-// 左上: 深度ラベル（FPV に重ねる）
-.depthWrap {
+// 左上の深度 + テーマ名
+.depthLeft {
   position: absolute;
-  top: 12px;
+  top: 10px;
   left: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  pointer-events: none;
-  z-index: 2;
+  z-index: 1;
 }
 
-.depthChapterMark {
-  font-family: var(--font-display);
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  color: var(--text-blue);
-  line-height: 1;
-}
-
-.depth {
+.depthFloor {
   font-family: var(--font-display);
   font-size: 16px;
   color: var(--text-strong);
-  line-height: 1.3;
+  line-height: 1;
 }
 
-.theme {
-  display: block;
+.depthTheme {
   font-size: 9px;
+  color: #8fae8c;
   letter-spacing: 0.1em;
-  color: var(--info-blue);
   margin-top: 2px;
 }
 
-// 右上: ☰ メニューボタン（FPV に重ねる）
+// ボスゲート予兆（上端中央）
+.bossGateOmen {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: var(--danger-text);
+  letter-spacing: 0.14em;
+  z-index: 1;
+}
+
+// ☰ メニューボタン（右上）
 .menuBtn {
   position: absolute;
   top: 10px;
-  right: 12px;
-  width: 38px;
-  height: 36px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  border-radius: 3px;
+  background: rgba(8, 9, 13, 0.62);
+  color: var(--gold);
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--rule-gold);
-  border-radius: 3px;
-  background: rgba(8, 9, 13, 0.72);
-  color: var(--gold);
-  font-size: 14px;
+  z-index: 1;
   cursor: pointer;
-  z-index: 2;
-  white-space: nowrap;
   padding: 0;
 }
 
-// 下中央: D-pad（FPV に重ねる）
+// D-pad コンテナ（FPV 内 下中央）
 .fpvControls {
   position: absolute;
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 1;
+}
+
+.fpvControlsRow {
+  display: flex;
   align-items: center;
   gap: 9px;
-  z-index: 2;
 }
 
+// 左折・右折（円形）
+.fpvTurnLeft,
+.fpvTurnRight {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  background: rgba(8, 9, 13, 0.62);
+  color: var(--gold);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+// 前進（金箔タイント矩形）
 .fpvForward {
-  width: 62px;
-  height: 50px;
+  width: 52px;
+  height: 44px;
   border-radius: 6px;
-  border: 1px solid var(--rule-gold-strong);
-  background: var(--gold-tint);
+  border: 1px solid rgba(201, 168, 106, 0.6);
+  background: rgba(201, 168, 106, 0.16);
   color: var(--gold);
   font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  &:active {
-    background: rgba(201, 168, 106, 0.18);
-  }
-}
-
-.fpvTurn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--rule-gold);
-  background: rgba(8, 9, 13, 0.72);
-  color: var(--gold);
-  font-size: 16px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:active {
-    background: rgba(8, 9, 13, 0.9);
-  }
+  padding: 0;
 }
 
-// 振り向きボタン（FPV 右上に重ねるが ☰ と被らない位置へ）
+// 振り向き（↻ — グレー角丸矩形）
 .fpvBack {
-  position: absolute;
-  top: 10px;
-  right: 58px; // ☰ (right:12 + width:38 + gap:8) を避ける
-  width: 40px;
-  height: 36px;
-  border-radius: 4px;
-  border: 1px solid var(--rule-base);
-  background: rgba(8, 9, 13, 0.72);
+  width: 42px;
+  height: 38px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(8, 9, 13, 0.62);
   color: var(--text-mute);
-  font-size: 14px;
-  cursor: pointer;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
+  cursor: pointer;
+  padding: 0;
 }
 
-// ===== エンカウント予兆行 =====
-
+// ============================================================
+// エンカウントゲージ帯
+// ============================================================
 .gaugeRow {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 16px;
-  background: var(--bg-mid);
+  gap: 8px;
+  padding: 9px 16px;
+  background: #0a0c10;
   border-bottom: 1px solid var(--rule-soft);
-  flex-shrink: 0;
-  font-size: 10px;
-  color: var(--text-faint);
-  letter-spacing: 0.1em;
 }
 
 .gaugeLabel {
-  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-faint);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
 }
 
-// ===== 中段: マップ + ヒント =====
-
+// ============================================================
+// 可変領域（マップ + アクション）
+// ============================================================
 .mid {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 14px;
+  gap: 10px;
 }
 
+// マップヘッダ
 .mapHead {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: var(--text-faint);
 }
 
 .mapHeadLabel {
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--text-faint);
 }
 
 .mapHeadHint {
-  color: var(--info-blue);
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  color: var(--text-blue);
 }
 
-.mapWrap {
-  background: var(--bg-deep);
+// マップカード
+.mapCard {
+  background: #0a0c10;
   border: 1px solid var(--rule-soft);
   border-radius: 5px;
   padding: 8px;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  flex-shrink: 0;
 }
 
-.paletteHint {
-  margin: 0;
-  font-size: 10px;
-  color: var(--info-blue);
-  text-align: right;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
-}
-
+// 凡例
 .mapLegend {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 14px;
   font-size: 9px;
-  color: var(--text-mute);
-  padding-bottom: 2px;
+  color: var(--text-faint);
+  flex-wrap: wrap;
 }
 
 .legendAlert {
@@ -246,158 +227,250 @@
 }
 
 .legendCalm {
-  color: var(--text-mute);
+  color: #9a7a6a;
 }
 
-// ===== アクション行（階段 / 採集 / 調理 / 通知） =====
-
-.actionRow {
-  flex-shrink: 0;
+// ============================================================
+// アクションカード共通 / ヒント
+// ============================================================
+.tileHint {
+  margin: 0;
+  height: 42px;
+  border-radius: 4px;
+  border: 1px dashed var(--rule-soft);
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 14px 6px;
-}
-
-.stairs {
-  width: 100%;
-  min-height: 50px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: var(--bg-mid);
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.12em;
-  border: none;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.88;
-  }
-}
-
-.action {
-  width: 100%;
-  min-height: 46px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-gold);
-  background: var(--gold-tint);
-  color: var(--gold);
-  font-family: var(--font-body);
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-
-  &:disabled {
-    border-color: var(--rule-base);
-    background: transparent;
-    color: var(--text-mute);
-    cursor: default;
-  }
-
-  &:active:not(:disabled) {
-    background: rgba(201, 168, 106, 0.14);
-  }
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-quote);
+  text-align: center;
+  padding: 0 8px;
 }
 
 .notice {
   margin: 0;
-  padding: 10px 12px;
-  background: var(--surface-elev);
-  border-left: 2px solid var(--gold);
-  border-radius: 0 3px 3px 0;
-  color: var(--text-soft);
   font-size: 12px;
-  line-height: 1.6;
+  color: #9ed8b4;
+  padding: 6px 0;
 }
 
-.tileHint {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px dashed var(--rule-soft);
-  border-radius: 4px;
-  color: var(--text-faint);
-  font-size: 11px;
-  text-align: center;
+// ============================================================
+// 採集カード
+// ============================================================
+.gatherCard {
+  background: #0e131a;
+  border: 1px solid rgba(143, 208, 160, 0.3);
+  border-radius: 5px;
+  padding: 14px;
 }
 
-// ===== 道具 / 調理 / メニュー オーバーレイ =====
-
-.itemOverlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-overlay);
+.gatherHead {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 20px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.itemPanel {
-  width: min(420px, calc(100% - 40px));
-  max-height: min(86vh, calc(100dvh - 64px));
-  overflow-y: auto;
-  background: var(--surface-panel);
-  border: 1px solid var(--rule-gold);
-  border-radius: 6px;
-  padding: 20px 22px;
-  box-shadow: var(--shadow-modal);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  color: var(--text-base);
+.gatherSparkle {
+  font-size: 16px;
+  color: #9ed8b4;
 }
 
-.itemTitle {
-  font-family: var(--font-display);
-  font-size: 18px;
-  color: var(--text-strong);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.menuGold {
-  margin: 0;
-  padding: 8px 12px;
-  background: var(--gold-tint);
-  border: 1px solid var(--rule-gold);
-  border-radius: 3px;
-  color: var(--gold);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  text-align: center;
-}
-
-.menuActions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-}
-
-.menuAction {
-  min-height: 58px;
-  padding: 0 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: 4px;
-  border: 1px solid var(--rule-soft);
-  background: var(--surface-elev);
-  color: var(--text-strong);
-  font-family: var(--font-body);
+.gatherTitle {
   font-size: 13px;
+  color: #9ed8b4;
+  font-weight: 700;
+}
+
+.gatherBtn {
+  width: 100%;
+  height: 40px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #d8a86f, #b8884f);
+  color: #0e0f13;
+  font-weight: 700;
+  font-size: 12px;
+  border: 0;
   cursor: pointer;
 
-  &:active {
-    background: rgba(255, 255, 255, 0.08);
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
   }
 }
 
-.menuSectionLabel {
+// ============================================================
+// 調理カード
+// ============================================================
+.cookCard {
+  background: #0e131a;
+  border: 1px solid rgba(216, 168, 111, 0.3);
+  border-radius: 5px;
+  padding: 14px;
+}
+
+.cookHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cookIcon {
+  font-size: 18px;
+}
+
+.cookTitle {
+  font-size: 13px;
+  color: #e0b07c;
+  font-weight: 700;
+}
+
+.cookDesc {
+  font-size: 11px;
+  color: var(--text-base);
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+
+.cookActions {
+  display: flex;
+  gap: 8px;
+}
+
+.cookCancel,
+.cookPrimary {
+  flex: 1;
+  height: 40px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cookCancel {
+  border: 1px solid var(--rule-base);
+  color: var(--text-mute);
+  background: transparent;
+}
+
+.cookPrimary {
+  background: linear-gradient(180deg, #d8a86f, #b8884f);
+  color: #0e0f13;
+  font-weight: 700;
+  border: 0;
+}
+
+// ============================================================
+// 階段確認カード
+// ============================================================
+.stairsCard {
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 5px;
+  padding: 14px;
+}
+
+.stairsHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.stairsLabel {
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+.stairsSub {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.stairsActions {
+  display: flex;
+  gap: 8px;
+}
+
+.stairsCancel {
+  flex: 1;
+  height: 40px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  color: var(--text-mute);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.stairsPrimary {
+  flex: 1;
+  height: 40px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: #0e0f13;
+  font-weight: 700;
+  border: 0;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+// ============================================================
+// ☰ メニュー（全画面ディム + flex column パネル）
+// ============================================================
+.menuOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 7, 10, 0.78);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.menuPanel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px 18px;
+  overflow-y: auto;
+  gap: 14px;
+}
+
+.menuHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menuTitle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
+}
+
+.menuSub {
+  font-size: 10px;
+  color: #8fae8c;
+  margin-top: 2px;
+}
+
+.menuClose {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--rule-base);
+  border-radius: 50%;
+  color: var(--text-mute);
+  background: transparent;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+// パーティセクション見出し
+.menuPartyLabel {
   margin: 0;
   font-size: 10px;
   letter-spacing: 0.16em;
@@ -405,92 +478,238 @@
   font-weight: 700;
 }
 
+.menuPartyLabelSub {
+  color: var(--text-quote);
+  letter-spacing: 0;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.menuPartyList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+// パーティメンバー行カード
 .menuMember {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  background: var(--surface-elev);
+  background: var(--surface-panel);
   border: 1px solid var(--rule-soft);
   border-radius: 3px;
-  color: var(--text-base);
-  cursor: pointer;
+  padding: 8px 11px;
+  width: 100%;
   text-align: left;
-
-  &:first-of-type {
-    border-color: var(--rule-gold);
-  }
-
-  &:active {
-    background: rgba(255, 255, 255, 0.08);
-  }
+  cursor: pointer;
 }
 
-.menuMemberPortrait {
+.menuMemberLeader {
+  border-color: var(--rule-gold);
+}
+
+.menuMemberPortraitWrap {
   width: 32px;
   height: 32px;
   border-radius: 3px;
-  background: var(--bg-deep);
+  background: #0c0d11;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
 .menuMemberInfo {
   flex: 1;
   min-width: 0;
+}
+
+.menuMemberNameRow {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .menuMemberName {
+  font-size: 12px;
+  color: var(--text-strong);
+}
+
+.menuMemberLv {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-faint);
+}
+
+.menuMemberBars {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.menuMemberBarLabel {
+  font-size: 6px;
+  color: var(--text-faint);
+}
+
+.menuMemberBarTrack {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.menuMemberBarHp {
+  height: 100%;
+  background: #6fb98a;
+  border-radius: 2px;
+}
+
+.menuMemberBarTp {
+  height: 100%;
+  background: #6f9fd8;
+  border-radius: 2px;
+}
+
+.menuMemberBarLow {
+  background: #d8a86f;
+}
+
+.menuMemberArrow {
+  color: var(--gold);
+  font-size: 13px;
+}
+
+// 2x2 アクショングリッド
+.menuActionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.menuActionItem,
+.menuActionSetting,
+.menuActionThread,
+.menuActionMap {
+  height: 58px;
+  border-radius: 4px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-strong);
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  cursor: pointer;
+}
+
+.menuActionItem {
+  background: #1a2030;
+  border-color: var(--rule-gold);
+}
+
+.menuActionThread {
+  border-color: rgba(143, 208, 160, 0.35);
+}
+
+.menuActionSetting:disabled,
+.menuActionMap:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.menuActionIcon {
+  font-size: 20px;
+}
+
+.menuActionLabel {
   font-size: 13px;
   color: var(--text-strong);
 }
 
-.menuMemberJob {
-  font-family: var(--font-mono);
-  font-size: 10px;
+.menuActionMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.menuActionLabelGreen {
+  font-size: 13px;
+  color: #9ed8b4;
+}
+
+.menuActionSubGreen {
+  font-size: 9px;
   color: var(--text-faint);
 }
 
-.menuMemberStat {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-faint);
+// 自動保存表示
+.menuSavedRow {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #5d8a6c;
+  margin-top: auto;
+}
+
+.menuSavedDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5d8a6c;
+  animation: obsidian-glowPulse 2.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+// とじるボタン（大）
+.menuCloseBig {
+  height: 46px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-gold-strong);
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  width: 100%;
+}
+
+// ============================================================
+// キャラ詳細（メニュー内 → キャラ選択後）
+// ============================================================
+.charDetailTitle {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-strong);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .menuSp {
-  color: var(--gold);
-  margin-left: auto;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
+  color: var(--gold);
 }
 
 .menuStats {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 6px 12px;
 }
 
 .menuStat {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-soft);
-  background: var(--bg-deep);
-  border-radius: 2px;
-  padding: 3px 6px;
-  border: 1px solid var(--rule-soft);
+  font-size: 13px;
+  color: var(--text-base);
 }
-
-// ===== スキルツリー タブ =====
 
 .skillTabs {
   display: flex;
@@ -500,172 +719,424 @@
 .skillTab {
   flex: 1;
   min-height: 36px;
+  border: 1px solid var(--rule-base);
   border-radius: 3px;
-  border: 1px solid var(--rule-soft);
   background: transparent;
   color: var(--text-mute);
-  font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
 }
 
 .skillTabOn {
-  border-color: var(--gold);
-  background: var(--gold-tint);
+  background: rgba(201, 168, 106, 0.12);
+  border-color: var(--rule-gold);
   color: var(--gold);
 }
 
-// ===== 道具行 / 調理行 =====
+.charBackBtn {
+  height: 44px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 13px;
+  cursor: pointer;
+  width: 100%;
+}
 
-.itemRow {
+// ============================================================
+// 道具を使う（itemOpen）— 全画面
+// ============================================================
+.itemOverlay {
+  position: absolute;
+  inset: 0;
+  background: #0e0f13;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  background: var(--surface-elev);
-  border: 1px solid var(--rule-soft);
-  border-radius: 3px;
+  z-index: 10;
 }
 
 .itemHeader {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 0;
+  flex-shrink: 0;
+}
+
+.itemHeaderTitle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
+}
+
+.itemHeaderClose {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--rule-base);
+  border-radius: 50%;
+  color: var(--text-mute);
+  background: transparent;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.itemList {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 14px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itemListLabel {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.itemEmpty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-faint);
+}
+
+.itemCard {
+  display: flex;
   align-items: center;
   gap: 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 10px 12px;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
 }
 
-.itemName {
+.itemCardSelected {
+  background: rgba(201, 168, 106, 0.1);
+  border-color: rgba(201, 168, 106, 0.55);
+}
+
+.itemCardMeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-align: left;
+}
+
+.itemCardName {
   font-size: 13px;
   color: var(--text-strong);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
-.itemDesc {
+.itemCardDesc {
   font-size: 10px;
-  color: var(--text-faint);
-  font-weight: 400;
+  color: #8fd0a0;
+  margin-top: 1px;
 }
 
-.itemTargets {
+.itemCardCount {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--gold);
+}
+
+// bottom sheet（対象選択）
+.itemSheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--surface-panel);
+  border-top: 1px solid var(--rule-gold);
+  border-radius: 10px 10px 0 0;
+  padding: 18px 20px 22px;
+  box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
+  gap: 14px;
 }
 
-.itemTarget {
+.itemSheetHandle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  margin: 0 auto;
+}
+
+.itemSheetHead {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  background: var(--bg-deep);
+}
+
+.itemSheetIcon {
+  font-size: 20px;
+}
+
+.itemSheetTitle {
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+.itemSheetSub {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.itemTargetList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+// 対象キャラ行（bottom sheet 内）
+.itemTargetRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1d26;
   border: 1px solid var(--rule-soft);
   border-radius: 3px;
-  color: var(--text-base);
-  font-family: var(--font-body);
-  cursor: pointer;
-  text-align: left;
+  padding: 9px 11px;
+}
 
-  &:active {
-    background: rgba(255, 255, 255, 0.06);
-  }
+.itemTargetRowDisabled {
+  opacity: 0.6;
+}
+
+.itemTargetPortraitWrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 3px;
+  background: #0c0d11;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .itemTargetInfo {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 11px;
 }
 
-.itemHp {
+.itemTargetNameRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemTargetName {
+  font-size: 12px;
+  color: var(--text-strong);
+}
+
+.itemTargetHpNum {
   font-family: var(--font-mono);
+  font-size: 9px;
+  color: #d8a86f;
+}
+
+.itemTargetHpNumFull {
+  color: #9ed8b4;
+}
+
+.itemTargetBarTrack {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.itemTargetBarFill {
+  height: 100%;
+  background: #d8a86f;
+  border-radius: 2px;
+}
+
+.itemTargetBarFillFull {
+  background: #6fb98a;
+}
+
+.itemTargetUseBtn {
   font-size: 10px;
+  color: #9ed8b4;
+  border: 1px solid rgba(143, 208, 160, 0.5);
+  border-radius: 2px;
+  padding: 3px 8px;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.itemTargetUseBtnDim {
+  color: var(--text-mute);
+  border-color: var(--rule-base);
+}
+
+.itemTargetFullText {
+  font-size: 9px;
+  color: #5d5a52;
+  white-space: nowrap;
+}
+
+.itemSheetClose {
+  height: 42px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  color: var(--text-mute);
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+// ============================================================
+// 調理モーダル（cookOpen）— 既存のオーバーレイ形式を維持
+// ============================================================
+.cookOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 7, 10, 0.78);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 11;
+}
+
+.cookPanel {
+  width: 100%;
+  max-width: 560px;
+  max-height: 75%;
+  overflow-y: auto;
+  background: var(--surface-panel);
+  border-radius: 10px 10px 0 0;
+  border-top: 1px solid var(--rule-gold);
+  padding: 18px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.5);
+}
+
+.cookPanelHandle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  margin: 0 auto 4px;
+}
+
+.cookPanelTitle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
+}
+
+.cookRecipeEmpty {
+  margin: 0;
+  font-size: 14px;
   color: var(--text-faint);
 }
 
-.itemUse {
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-gold);
-  background: var(--gold-tint);
-  color: var(--gold);
-  font-family: var(--font-body);
+.cookRecipeRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.cookRecipeName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cookRecipeDesc {
   font-size: 11px;
-  cursor: pointer;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.cookRecipeBtn {
   align-self: flex-start;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: #0e0f13;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
 
   &:disabled {
-    border-color: var(--rule-base);
-    background: transparent;
-    color: var(--text-mute);
+    opacity: 0.45;
     cursor: default;
   }
 }
 
-.itemEmpty {
-  margin: 0;
-  padding: 16px 0;
-  color: var(--text-faint);
-  font-size: 12px;
-  text-align: center;
-}
-
-.itemClose {
-  min-height: 46px;
+.cookPanelClose {
   margin-top: 4px;
-  border: 1px solid var(--rule-gold);
+  min-height: 44px;
+  border: 1px solid var(--rule-base);
   border-radius: 3px;
-  background: var(--gold-tint);
-  color: var(--gold);
-  font-family: var(--font-body);
-  font-size: 13px;
-  letter-spacing: 0.16em;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 14px;
   cursor: pointer;
-
-  &:active {
-    background: rgba(201, 168, 106, 0.14);
-  }
 }
 
-// ===== 確認ダイアログ =====
-
+// ============================================================
+// 消費確認ダイアログ（confim）
+// ============================================================
 .confirmOverlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  background: var(--bg-overlay);
+  z-index: 30;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;
+  padding: 24px;
+  background: rgba(6, 7, 10, 0.72);
 }
 
 .confirmBox {
-  width: min(320px, calc(100% - 48px));
-  background: var(--surface-panel);
-  border: 1px solid var(--rule-gold);
-  border-radius: 6px;
-  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 20px 18px;
+  border-radius: 4px;
+  border: 1px solid var(--rule-base);
+  background: var(--surface-panel);
   box-shadow: var(--shadow-modal);
 }
 
 .confirmText {
-  font-size: 13px;
-  color: var(--text-strong);
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.5;
   text-align: center;
+  color: var(--text-base);
 }
 
 .confirmActions {
@@ -673,44 +1144,24 @@
   gap: 8px;
 }
 
-.confirmCancel {
+.confirmCancel,
+.confirmOk {
   flex: 1;
-  min-height: 42px;
-  border: 1px solid var(--rule-base);
+  min-height: 48px;
+  border: 0;
   border-radius: 3px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirmCancel {
+  border: 1px solid var(--rule-base);
   background: transparent;
   color: var(--text-mute);
-  font-family: var(--font-body);
-  font-size: 13px;
-  cursor: pointer;
 }
 
 .confirmOk {
-  flex: 1;
-  min-height: 42px;
-  border-radius: 3px;
   background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: var(--bg-mid);
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  border: none;
-}
-
-// ===== 短画面対応（iPhone SE: dvh≒559px） =====
-
-@media (max-height: 720px) {
-  .fpvWrap {
-    height: clamp(160px, 26dvh, 200px);
-  }
-
-  .mid {
-    gap: 4px;
-    padding: 8px 14px;
-  }
-
-  .gaugeRow {
-    padding: 5px 14px;
-  }
+  color: #0e0f13;
 }
