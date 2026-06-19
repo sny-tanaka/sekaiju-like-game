@@ -14,6 +14,7 @@ import { ITEMS } from '@/data/items';
 import { RACES } from '@/data/races';
 import { SUMMONS } from '@/data/summons';
 import { UNION_SKILLS } from '@/data/unionSkills';
+import { weaponNormalAttackElement } from '@/data/weaponElement';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { enemyLapForDepth } from '@/domain/encounterTable';
@@ -130,6 +131,10 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
     ailmentResist: race?.ailmentResist,
     // 学習スキルLv（戦闘でスキル威力/消費に反映）
     skillLevels: char.learnedSkills,
+    // 装備武器種から通常攻撃属性を決定（素手・未装備は bash）
+    normalAttackElement: weaponNormalAttackElement(
+      char.equipment.weapon ? EQUIPMENT[char.equipment.weapon.masterId]?.weaponType : undefined
+    ),
   };
 }
 
@@ -157,6 +162,7 @@ function buildEnemy(enemyId: EnemyId, index: number, depth: number): Combatant {
     resist: master.resist,
     // §15: 種別デフォルト＋系統プロファイル＋個別指定でマージした状態異常耐性
     ailmentResist: resolveEnemyAilmentResist(enemyId),
+    normalAttackElement: master.attackElement,
   };
 }
 
@@ -189,6 +195,7 @@ function buildSummon(
     isSummon: true,
     summonKind: kind,
     ownerId,
+    normalAttackElement: m.attackElement,
   };
 }
 
@@ -700,11 +707,7 @@ function applySkillEffect(
 /** 通常攻撃（物理・武器属性 or 素手 bash）。反撃/連携追撃の対象になる（[03 §6.5]）。 */
 function basicAttack(state: BattleState, actor: Combatant, target: Combatant, rng: Rng): void {
   if (target.isDown) return;
-  const element: Element = actor.enemyId
-    ? (ENEMIES[actor.enemyId].attackElement ?? 'bash')
-    : actor.isSummon && actor.summonKind
-      ? (SUMMONS[actor.summonKind]?.attackElement ?? 'bash')
-      : 'bash';
+  const element: Element = actor.normalAttackElement ?? 'bash';
   const r = strikeOnce(state, actor, target, { statBase: 'str', power: 1, element }, rng, {
     actorUnion: 5,
   });

@@ -164,6 +164,8 @@ export interface Combatant {
   ailmentResist?: Partial<Record<AilmentType, number>>;
   /** 味方の学習スキルLv（戦闘でスキル威力/消費に反映。敵は未使用）。戦闘中のみ。 */
   skillLevels?: Record<SkillId, number>;
+  /** 通常攻撃の属性（味方=装備武器/素手, 敵=master.attackElement, 召喚=master.attackElement）。 */
+  normalAttackElement?: Element;
 }
 
 export interface DamageResult {
