@@ -1,5 +1,5 @@
 // DOT ILLUST（https://dot-illust.net/）からアイテム/装備スプライト画像を一括取得するスクリプト。
-// itemId/equipId → 採用スラッグのマッピングに基づき、各 PNG を public/sprites/items/<id>.png へ保存する。
+// itemId/equipId → 採用スラッグのマッピングに基づき、各 PNG を src/assets/items/<id>.png へ保存する。
 // リクエスト間隔は 500ms。既存ファイルはスキップ（冪等）。
 // 非商用利用・クレジット不要（利用規約: https://dot-illust.net/terms/）
 // ⚠ Kenney Tiny Dungeon 由来の 3 個（item_return_thread / item_mat_t4_rotflesh / item_mat_t4_steel_gear）
@@ -10,7 +10,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(here, '../public/sprites/items');
+const OUT_DIR = resolve(here, '../src/assets/items');
 const BASE_URL = 'https://dot-illust.net/wp-content/themes/dotillust/assets/dl';
 
 const SPRITE_MAP = {

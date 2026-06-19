@@ -54,6 +54,9 @@ type Props = {
 };
 
 export const ItemSprite = ({ itemId, size = 'sm', silhouette = false, alt, className }: Props) => {
+  const url = itemSpriteUrl(itemId);
+  if (!url) return null;
+
   const resolvedAlt = alt ?? '';
   const hueShift = getHueShift(itemId);
 
@@ -66,7 +69,7 @@ export const ItemSprite = ({ itemId, size = 'sm', silhouette = false, alt, class
   return (
     <span className={`${styles.wrap} ${className ?? ''}`}>
       <img
-        src={itemSpriteUrl(itemId)}
+        src={url}
         alt={resolvedAlt}
         className={`${styles.img} ${styles[size]} ${silhouette ? styles.silhouette : ''}`}
         style={filterStyle}

@@ -1,5 +1,5 @@
 // DOT ILLUST（https://dot-illust.net/）から敵スプライト画像を一括取得するスクリプト。
-// enemyId → 採用スラッグのマッピングに基づき、各 PNG を public/sprites/enemies/<enemyId>.png へ保存する。
+// enemyId → 採用スラッグのマッピングに基づき、各 PNG を src/assets/enemies/<enemyId>.png へ保存する。
 // リクエスト間隔は 500ms。既存ファイルはスキップ（冪等）。
 // 非商用利用・クレジット不要（利用規約: https://dot-illust.net/terms/）
 
@@ -8,7 +8,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(here, '../public/sprites/enemies');
+const OUT_DIR = resolve(here, '../src/assets/enemies');
 const BASE_URL = 'https://dot-illust.net/wp-content/themes/dotillust/assets/dl';
 
 const SPRITE_MAP = {

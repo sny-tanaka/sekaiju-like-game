@@ -143,7 +143,7 @@ SVG が必要なら `.png` を `.svg` に。横幅 500px 程度の静止画。
 
 ## 次のステップ候補
 
-1. **一括ダウンロードスクリプトを作る**: `scripts/fetch-dot-illust-sprites.mjs` を作り、本表の採用スラッグを全件取得 → `public/sprites/enemies/<enemyId>.png` に保存。
+1. **一括ダウンロードスクリプトを作る**: `scripts/fetch-dot-illust-sprites.mjs` を作り、本表の採用スラッグを全件取得 → `src/assets/enemies/<enemyId>.png` に保存。
 2. **× の 9 体について別素材ソースを調査**: 同じく `dev-docs/enemy-sprite-supplements.md` でカバー方針を確定。
 3. **本素材を BattleScreen に組み込む試作**: 1〜2 体だけ先に組み込んで、サイズ感・背景との馴染みを確認してから全量配置。
 
@@ -188,4 +188,4 @@ DOT ILLUST 側に該当素材がない 9 体について、**素材を作りに�
 
 ### 完了後
 
-全 60 体が DOT ILLUST 素材で 100% カバーされる。`scripts/fetch-dot-illust-sprites.mjs` の `SPRITE_MAP` に上記 9 件を追記して再実行すれば、`public/sprites/enemies/` も全件揃う。
+全 60 体が DOT ILLUST 素材で 100% カバーされる。`scripts/fetch-dot-illust-sprites.mjs` の `SPRITE_MAP` に上記 9 件を追記して再実行すれば、`src/assets/enemies/` も全件揃う。

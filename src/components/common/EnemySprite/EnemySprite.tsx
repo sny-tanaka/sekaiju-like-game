@@ -26,12 +26,15 @@ export const EnemySprite = ({
   alt,
   className,
 }: Props) => {
+  const url = enemySpriteUrl(enemyId);
+  if (!url) return null;
+
   const resolvedAlt = alt ?? ENEMIES[enemyId]?.name ?? '';
 
   return (
     <span className={`${styles.wrap} ${className ?? ''}`}>
       <img
-        src={enemySpriteUrl(enemyId)}
+        src={url}
         alt={resolvedAlt}
         className={`${styles.img} ${styles[size]} ${silhouette ? styles.silhouette : ''}`}
       />
