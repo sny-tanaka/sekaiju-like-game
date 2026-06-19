@@ -1,90 +1,119 @@
-# フェーズ 2: dungeon 画面リデザイン（sonnet 用指示書）
+# フェーズ 2: dungeon 画面リデザイン（sonnet 用指示書） — **改訂版 v2 — モック忠実化**
+
+> **改訂理由**: 前回の実装は「色味は黒曜化したが、ボタン配置・☰ メニュー / 道具モーダル / 採集 / 階段確認
+> など、画面構成そのものがモックと大幅にズレてしまった」。
+> **本改訂の方針: モック忠実化を最優先**。前回の「機能優先で省略」ジャッジは原則撤回する。
+> モックに描かれている要素はすべて配置する。disabled でも形と位置は維持する。
 
 `dev-docs/redesign-A.md`（**§1.1〜§1.4 トークン** / **§1.5 レイアウト運用ルール**）と
 `dev-docs/redesign-A-title.md` / `dev-docs/redesign-A-title-fix.md` を **必ず先に読むこと**。
-本ファイルは dungeon 画面（一人称ビュー + オートマップ + メニュー / 道具 / 調理 / 確認）
-のリデザインに閉じた実装手順。
+本ファイルは dungeon 画面（一人称ビュー + オートマップ + メニュー / 道具 / 調理 / 確認）の
+リデザインに閉じた実装手順。
 
-> dungeon は本ゲームの探索コア画面で、機能がとくに密。
-> **「上半身に一人称ビュー帯（D-pad オーバーレイ内蔵）→ エンカウント予兆 → 下半身に
-> 大きめオートマップ → 文脈アクション → メニュー / 道具モーダル」** という縦割り構成は
-> モック準拠で既存実装も同じ流れ。**マークアップ構造はそのまま、ローカル SCSS と
-> 一部マークアップの装飾を黒曜トークンで描き直す**。
+モック原本: `/tmp/sekaiju-design/案A_v2.dc.html` line 818〜984。
+- `8a explore` 通常探索
+- `8b encounter flash / 採集 / 調理 / 階段確認`
+- `8c dungeon menu`（☰メニュー）
+- `8d item use`（道具を使う）
 
 ---
 
-## 触ってよいファイル
+## 1. 触ってよいファイル / 触ってはいけないファイル
+
+### 触ってよい
 
 | 区分 | パス | 操作 |
 | --- | --- | --- |
-| 編集 | `src/pages/dungeon/index.tsx` | マークアップの細部（章マーク追加、ヘッダ構造の組み直し、`gauge` の文言、フッタアクションのグルーピング）。**ロジック・hook・モーダル制御の `useState` は触らない** |
+| 編集 | `src/pages/dungeon/index.tsx` | マークアップを **モック構造に揃える**。ボタンの位置・グルーピング・モーダル内 dl の構成を作り直す。**hook / useState の構成・ロジック・event handler の実体は触らない** |
 | 編集 | `src/pages/dungeon/style.module.scss` | 黒曜テーマで全面再構築（`@use 'variables'` を外し `var(--*)` に切替） |
-| 編集 | `src/pages/dungeon/Dungeon.stories.tsx` | 既存 `Default` を維持。必要なら `Menu` / `ItemUse` / `Cook` のストーリーを追加（play で各モーダルを開く） |
+| 編集 | `src/pages/dungeon/Dungeon.stories.tsx` | 既存 `Default` / `Menu` を維持。`ItemUse` / `StairsConfirm` / `Gather` を追加（play で各モーダルを開く） |
 
-> **共通コンポーネントは触らない**。共通基盤フェーズで黒曜化済み:
-> - `src/components/common/FirstPersonView/`（疑似 3D 台形描画）
-> - `src/components/common/DungeonMap/`（Canvas オートマップ）
-> - `src/components/common/EncounterGauge/`（5 段階ゲージ）
-> - `src/components/common/CharacterPortrait/` / `ItemSprite/` / `SkillTree/`
->
-> dungeon 画面側からはこれらを **props だけ渡す通常利用**。
-> 内部の配色・モーション・SVG 構造には触らない。
->
-> **`src/domain/dive.ts` / `gather.ts` / `cooking.ts` / `movement.ts` / `itemUse.ts` /
-> `encounter.ts` / `skillTree.ts` のロジックは触らない**。
+### 触ってはいけない
 
-## やってはいけないこと
+- 共通コンポーネント: `FirstPersonView`, `DungeonMap`, `EncounterGauge`, `CharacterPortrait`, `ItemSprite`, `SkillTree`
+- ドメイン: `src/domain/dive.ts`, `gather.ts`, `cooking.ts`, `movement.ts`, `itemUse.ts`, `encounter.ts`, `skillTree.ts`, `stats.ts`
+- 型: `src/domain/types.ts`
+- 全画面共通: `src/_variables.scss`, `src/_obsidian.scss`, `src/index.scss`, `index.html`
+- 他画面の `src/pages/*/`
 
-- 自分でさらに `Agent` / `Task` を spawn しない。
-- `src/_variables.scss` / `src/_obsidian.scss` を変更しない。
-- 他画面の `style.module.scss` / `index.tsx` を変更しない。
-- ゲームロジックを変えない（`moveStep` / `gatherHere` / `cook` / `applyFieldItem` / `pathTo` 等）。
-- 文言・aria-label・テストの assert 文を変えない。
+## 2. やってはいけないこと
+
+- **自分で Edit / Write / Bash を使って実装すること。さらに `Agent` / `Task` を spawn しないこと**（孫委譲禁止）。
+- `useState` / `useRef` / `useCallback` の依存配列を変えない。
+- `moveStep` / `gatherHere` / `cook` / `applyFieldItem` / `pathTo` / `learnSkill` の呼び出し方を変えない。
+- 既存 aria-label の文言を変えない（テストが拾っている）。
 - 写本テーマ由来の SCSS 変数 (`$parchment` 等) を新規参照しない。
-- `useState` / `useRef` / `useCallback` の構成・依存配列を変えない（既存挙動を温存）。
+- **モックに描かれている要素を「機能が無いから」と省略しない**。disabled / 形だけでもよいので必ず配置する。
 
-## ゴール
+## 3. モックとの差分一覧（**現状の実装 → モック**）
 
-Storybook の `Pages/Dungeon` 配下で以下が黒曜カラーで描画され、`yarn lint` /
+### 3.1 探索メイン画面（モック 8a / line 818〜885）
+
+1. **FPV 帯の高さ**: モックは `height: 232px` 固定。**現状実装は領域の取り方が違う**。FPV 帯を「画面上部の固定 232px (clamp で 180-240px に縮める)」として独立させ、その内側に D-pad / 振り向き / ☰ / 章マークを絶対配置する。
+2. **章マーク + 深度ラベル（FPV 左上）**: モックは `position: absolute; top: 10px; left: 14px;` で「`F2`」を Shippori Mincho 16px / 「`苔生す回廊`」を 9px / `letter-spacing: .1em;` で 2 行。**現状の章マーク `❦ 探索` はモックには無い**。**章マーク `❦ 探索` は削除**し、モック準拠の 2 行表記に変える。
+3. **「⚠ 奥にボスゲートの気配」帯**: モック (line 829) には FPV 上端中央に `font-size: 10px; color: var(--danger-text); letter-spacing: .14em;` で警告テキストがある。ボス階の予兆として、現在のフロアにボスゲートが存在するときに出す。
+   - 出し方: `floor` から bossGate がある（`stairsAt` で `'stairsUp'` 系か、または `floor` の cells に boss tile が含まれるか）を判定。確実な API は `canAscend(save, depth) === false` か、`floor` の cells を走査する。**判定ロジックを増やすのが大変な場合は disabled 状態でも構わず、見出しを `null` にして場所だけ確保**。
+4. **☰ メニューボタン**: モックは `width: 30px; height: 30px; border: 1px solid rgba(201,168,106,.4); color: var(--gold); font-size: 13px;` で、**右上 `top: 10px; right: 14px;`**。**現状実装は色とサイズが微妙に違う**。完全に合わせる。
+5. **D-pad の見た目**: モック (line 834〜841) は `↰` / `▲` / `↱` の 1 行 + その下に `↻` 1 個。`▲` は **金箔タイントの矩形**（`52x44px; border-radius: 6px; border: 1px solid rgba(201,168,106,.6); background: rgba(201,168,106,.16); color: var(--gold);`）、`↰ ↱` は **円形** (`42x42px; border-radius: 50%; border: 1px solid rgba(201,168,106,.4); background: rgba(8,9,13,.62); color: var(--gold);`)、`↻` は **角丸矩形** (`42x38px; border-radius: 6px; border: 1px solid rgba(255,255,255,.14); background: rgba(8,9,13,.62); color: var(--text-mute);`)。**現状実装はこれらが揃ってない**。形・色・サイズを完全にモック準拠にする。
+6. **エンカウント予兆ゲージ**: モックは FPV 帯の **直下に separate band** として配置（`padding: 9px 16px; background: #0a0c10; border-bottom: 1px solid rgba(255,255,255,.06);`）。「エンカウント予兆」ラベル + ゲージ（5 段 6px high）。**現状実装は近いが border-bottom が無いことがある**。モック準拠の帯にする。
+7. **オートマップヘッダ**: モックは `padding: 14px 16px;` で「`AUTOMAP ・ F2`」と「`セルタップで自動移動`」(`color: var(--text-blue);` 相当の青)。**現状実装は近いが色味が違う**。`color: #6f9fd8;` 相当 → `var(--text-blue)` に。
+8. **マップカード**: モックは `background: #0a0c10; border: 1px solid rgba(255,255,255,.07); border-radius: 5px; padding: 8px;` のカード内に `DungeonMap` を入れる。**現状実装は枠が無い or 違うことがある**。揃える。
+9. **マップ凡例**: モックは `display: flex; gap: 14px; font-size: 9px; color: var(--text-faint);` の横並び。`▲ 上り階段 / ▼ 下り階段 / ● 警戒FOE (赤) / ● 未警戒 (茶) / 🌿 採集` の 5 つ。**現状実装は文言が違う**（「上り」「下り」など省略）。**モック準拠で文言「上り階段 / 下り階段」と完全表記**。
+10. **「現在地: 通常マス…」ヒント**: モックは `position: absolute; bottom: 14px; left: 14px; right: 14px; height: 42px; border-radius: 4px; border: 1px dashed rgba(255,255,255,.1); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-quote);`。**現状実装は様式が違う**（border-dashed では無い）。**dashed 枠 + 中央配置の 42px ピル**にする。
+11. **アクション（階段 / 採集 / 調理）の出し分け**: モックは「現在地が通常マスの場合は dashed ヒントのみ表示、アクションがある場合はそのアクションのカードを表示」する。**現状実装は両方表示されることがある**。**アクションがある場合は dashed ヒントを出さない**（既存ロジックに近いが、CSS で `:has()` でなく `if (stairKind || gatherPoint || atCookingSpot)` で JSX 分岐）。
+
+### 3.2 採集 / 調理 / 階段確認の見た目（モック 8b / line 888〜916）
+
+12. **採集結果カード**: モックは `background: #0e131a; border: 1px solid rgba(143,208,160,.3); border-radius: 5px; padding: 14px;` の **緑系カード**。中身は「`✦ 採集成功 — 薬草の茂み`」見出し + 横並び 3 列の結果セル（`🌿 薬の葉 ×2` など）。**現状実装はインラインの notice テキストのみ**。**カード化**して、最後の採集結果（`notice` を緑カードに昇格）。複数アイテムの場合は順に並べる。
+    - 注意: 現在は `setNotice(...)` で 1 行テキストだけが出るが、`gatherHere(...)` の結果には `itemId` 1 つしか含まれない場合もある。**簡易対応として、1 セルだけ表示する緑カードを出す**（複数表示は将来課題として残す）。
+13. **調理パネル**: モックは `background: #0e131a; border: 1px solid rgba(216,168,111,.3);` の **琥珀系カード**。中身は「`🍲 調理 — 薬草スープ`」見出し + `font-size: 11px; color: var(--text-base); line-height: 1.6;` の説明文 + 「やめる」「調理する」の 2 ボタン (40px high)。**現状実装は様式が違う**（モーダルになっている）。**モック準拠で `actionRow` の下に inline カード**として置く（モーダルではなく現状画面に直接出す）。
+    - **注意**: 現状実装の `cookOpen` モーダルとの整合: モーダルでレシピ一覧を選んで「作る」のフローは温存して良い。ただし、調理メニュー内のカードの **見た目**は上記モックに揃える（モーダル開いてからの中身の話）。**モック準拠の inline カードは「現在地で 1 つだけレシピが推奨されている時」**の表示に留め、複数レシピがある場合は現状のモーダルに任せて良い。
+14. **階段確認カード**: モックは画面下端固定の `background: #15171f; border: 1px solid rgba(201,168,106,.3); border-radius: 5px; padding: 14px;` のカード。中身は「`▼ 下り階段` / `F2 → F3`」の dl + 「やめる」「次階へ降りる」の 2 ボタン。**現状実装は単一の `階段` ボタンだけで、確認ダイアログが別レイヤー**。**階段確認は `confirm` モーダル経由でなく、モック準拠の inline カードに変える**。
+    - **注意**: 既存の `setConfirm({...})` 経由のフローは「道具使用」「採集」など他の確認にも使われているので **削除しない**。階段は確認モーダルを経由せず、ヒント表示状態のとき下端に出す inline カードに置き換える。
+    - 「次階へ降りる / 上へ」ボタンが primary、「やめる」が outline。
+
+### 3.3 ☰メニュー（モック 8c / line 919〜953）
+
+15. **メニューの開閉演出**: モックは `position: absolute; inset: 0;` のオーバーレイで FPV 背景上に半透明 `rgba(6,7,10,.78)` を重ねる **画面遷移風**。**現状実装はモーダル枠**。**モック準拠で「全画面ディム + flex column パネル」**に変える。
+16. **メニュー上部のヘッダ**: モックは左に「`メニュー` (Shippori Mincho 18px)」と「`F2 ・ 苔生す回廊` (10px green)」、右に閉じるボタン `✕` (30px 円形 outline)。**現状実装は文字構成が違う**。揃える。
+17. **パーティセクション見出し**: 「`パーティ` (10px gold letter-spacing .16em) + `タップで詳細・スキル` (グレー)」。**現状実装は文言が違う**。揃える。
+18. **パーティ行カード**: モックは行ごとに `background: var(--surface-panel); border: 1px solid var(--rule-soft); border-radius: 3px; padding: 8px 11px;` で、左に 32x32 サムネ、中央に「名前 + 右端に `Lv34` mono」、その下に 2 段 HP / TP バー (3px high、3px gap、H/T ラベル)、右端に `➜` (gold)。**現状実装はバーの形式が違う**（StatBar コンポを使ってないかも）。揃える。
+   - 先頭の選択中行は border が `rgba(201,168,106,.3)`、それ以外は `rgba(255,255,255,.07)`。
+   - **`StatBar` は触らないが、H/T の小さいバーはこの場でインライン HTML で OK**（モックも同じ）。
+19. **アクションボタン 2x2 グリッド**: モック (line 941〜948) は `display: grid; grid-template-columns: 1fr 1fr; gap: 9px;` で 4 つの 58px ボタン。順序: `🎒 道具を使う` (active な金箔タイント枠) / `⚙ 設定` / `🪢 帰還の糸 (所持3)` (緑系枠) / `🗺 全体マップ` (グレー)。
+   - **現状実装は単一カラムの縦リスト**。2x2 grid に組み直す。
+   - **「設定」「全体マップ」は機能無いので disabled** だが、**位置・形は維持**（モック準拠）。
+20. **自動保存表示**: モック (line 950) は「`● 自動保存済 ・ 12:08`」(`color: #5d8a6c; font-family: var(--font-mono);`) を画面下端の上にセンタリングで配置。**現状実装は無い**。**dive 中は自動保存済みなので、現在時刻 (`new Date()`) からの HH:MM` を表示**する。1 分ごとに更新する必要は無い（マウント時の時刻で OK）。
+21. **「とじる」ボタン**: モック (line 951) は **48px 高、金箔 outline (`border: 1px solid rgba(201,168,106,.5); background: rgba(201,168,106,.08); color: var(--gold);`)、`letter-spacing: .16em`** の 1 ボタン。「`とじる（探索へ戻る）`」。**現状実装は様式が違う**。揃える。
+22. **メニュー内のキャラ詳細**: モックには無いので、現状の **キャラ選択 → ステ + スキルツリー** のフローは温存。ただし、キャラ行をタップした時の遷移は同じパネル内で「メニュー → キャラ詳細」をスライド切替するのが望ましい（モックに記載なし）。**現状の実装を温存**。
+
+### 3.4 道具を使う（モック 8d / line 957〜981）
+
+23. **アイテム一覧の様式**: モックは `display: flex; flex-direction: column; gap: 8px;` で「`🧪 回復薬 / HP +120 ・ 味方単体 / ×8`」のカード型。選択中は border `rgba(201,168,106,.55); background: rgba(201,168,106,.1);`、未選択は border `rgba(255,255,255,.06);`。**現状実装は様式が違う**。揃える。
+24. **対象選択ボトムシート**: モックは画面下端から **bottom sheet** として上がってくる `position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface-panel); border-top: 1px solid rgba(201,168,106,.3); border-radius: 10px 10px 0 0; padding: 18px 20px 22px; box-shadow: 0 -16px 50px rgba(0,0,0,.5);`。上端に handle (40x4px 角丸)。
+   - 中身は「`🧪 回復薬 を使う` / `対象の味方を選択（HP +120）`」見出し + 味方カード（HP bar）+ 「`使う` ボタン (`border: 1px solid rgba(143,208,160,.5); color: var(--success);`)」+ 末尾「`もどる`」outline ボタン。
+   - **現状実装はモーダルで上から下まで広がる形**。**bottom sheet 化**して、ハンドル + 角丸トップ + box-shadow を揃える。
+   - **「満タンのキャラには `満タン` テキストを出して使えない**（`opacity: .6;`）**ようにする**。モック準拠。
+25. **「`もどる`」ボタン**: 42px outline (`border: 1px solid rgba(255,255,255,.14); color: var(--text-mute);`)。
+
+## 4. ゴール（Storybook ストーリー一覧）
+
+`Pages/Dungeon` 配下で以下が黒曜カラーで描画され、`yarn lint` /
 `yarn test --run` / `yarn tsc -b`（または `yarn build`）が緑。
 
-1. `Default`（mockMidDive・F2 探索中）— 一人称ビュー帯 + D-pad + 振り向きボタン +
-   エンカウント予兆ゲージ + オートマップ + マップヒント + フッタアクション
-2. `Menu`（任意・追加可）— ☰ メニューを開いた状態（パーティ一覧 + どうぐ / 帰還の糸など）
-3. `ItemUse`（任意・追加可）— 道具メニューを開いた状態（対象選択 UI まで）
+1. **`Default`**（mockMidDive・F2 探索中）— FPV 帯（232px・章マーク無し / F2 / 苔生す回廊 / ☰ / D-pad / 振り向き）+ エンカウントゲージ + マップカード + 凡例 + ヒント
+2. **`Menu`**（☰ 開）— ディム + flex column パネル + パーティ 5 行 + 2x2 アクション grid + 自動保存表示 + `とじる`
+3. **`ItemUse`** (追加) — メニュー → 道具を使うを開いた状態。bottom sheet で対象選択中。
+4. **`StairsConfirm`** (追加) — 階段の上で立ったときの inline 確認カード
+5. **`Gather`** (追加) — 採集ポイントに立った時のアクションカード
 
 ---
 
-## レイアウト運用ルール（**§1.5 を厳守**）
-
-`redesign-A.md §1.5` の 8 項目を必ず守る:
-
-1. ルートは `display: flex; flex-direction: column; height: 100dvh; max-width: 560px; margin: 0 auto; overflow: hidden;` +
-   `padding-bottom: max(20px, env(safe-area-inset-bottom, 0px))`。
-2. 縦に `header → fpvWrap → encounterRow → mid（map + ヒント）→ actionRow（階段 / 採集 / 調理 / 通知）→ footer` の流れ。
-3. **可変領域は `.mid` ひとつ**（`flex: 1 1 auto; min-height: 0; overflow-y: auto;`）。
-   それ以外の section は `flex-shrink: 0` で高さ固定。
-4. ページ全体スクロール禁止。
-5. 装飾要素（背景グラデ・モーダル backdrop）以外は絶対配置しない。
-   ただし「**FPV 上に重ねる D-pad / 振り向き / ☰**」は装飾ではなく機能だが、
-   FPV 内部のレイヤーとして `position: absolute` で重ねる **例外を認める**（モック準拠）。
-   親 `.fpvWrap` を `position: relative` にする。これは title-fix で言う「装飾レイヤー」
-   と同じ扱い: **コンテンツ全体の積み上げ順に絶対値で介入しない** ことが本旨。
-6. ボタン群は flex item として下から積む。`bottom: NN px` を直書きしない。
-7. clamp で短画面（iPhone SE）対応。FPV の `aspect-ratio` か `height: clamp(...)` で
-   面積を制御し、`.mid` のマップが必ず可視に残るようにする。
-8. iPhone 16 / iPhone SE / iPad mini 幅で要素が重ならないことを確認。
-
-> モックでは FPV 帯の高さが 232px 固定。ここは `height: clamp(180px, 28dvh, 240px)` で
-> 短画面でも縮むようにする。
-
----
-
-## 実装ステップ
+## 5. 実装ステップ（モック準拠の具体構造）
 
 ### Step 0. 旧 `@use 'variables'` を外す
 
-`src/pages/dungeon/style.module.scss` の冒頭 `@use 'variables' as var;` を **削除**。
+`src/pages/dungeon/style.module.scss` の冒頭の `@use 'variables' as var;` を **削除**。
 すべての色を `var(--*)` で書き直す。
 
 ### Step 1. ルートレイアウト (`.layout`)
@@ -104,130 +133,164 @@ Storybook の `Pages/Dungeon` 配下で以下が黒曜カラーで描画され�
 }
 ```
 
-> モック準拠で **左右 padding は 0**（FPV 帯と背景 deep が画面端まで届く）。
-> マップ・アクション領域だけ内部で `padding: 0 14px;` を取る。
+**左右 padding は 0**（FPV 帯と背景 deep が画面端まで届く）。内部セクションが個別に padding を取る。
 
-### Step 2. ヘッダー (`.head`) と FPV (`.fpvWrap`) の組み替え
-
-モック (line 822〜841) では、FPV 帯の **内部**に深度ラベル（左上）/ ☰メニュー（右上）/
-D-pad（下中央）/ 振り向き は別途配置している。本実装では:
-
-- 章マーク `❦ 探索` + 深度 + 帯テーマ名を FPV 帯左上に絶対配置でオーバーレイ
-- ☰ メニューを FPV 帯右上に絶対配置でオーバーレイ
-- D-pad は既存 `.fpvControls`、振り向きは `.fpvBack` を維持
-- `EncounterGauge` は FPV 帯の **直下** に separate row として置く
+### Step 2. FPV 帯（`.fpvWrap`）
 
 ```tsx
-<header className={styles.head} aria-label="探索ヘッダー">
+<header className={styles.head}>
   <div className={styles.fpvWrap}>
     <FirstPersonView ... />
-
-    {/* 左上: 深度＋帯テーマ */}
-    <div className={styles.depthWrap}>
-      <span className={styles.depthChapterMark}>❦ 探索</span>
-      <div className={styles.depth}>
-        F{dive.depth}
-        <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
-      </div>
+    {/* 章マーク無し */}
+    <div className={styles.depthLeft}>
+      <div className={styles.depthFloor}>F{dive.depth}</div>
+      <div className={styles.depthTheme}>{bandThemeFor(dive.depth).name}</div>
     </div>
-
-    {/* 右上: ☰ メニュー */}
-    <button
-      type="button"
-      className={styles.menuBtn}
-      aria-label="メニュー"
-      onClick={() => { play('cursor'); setMenuCharId(null); setMenuOpen(true); }}
-    >
-      ☰
-    </button>
-
-    {/* 下中央: D-pad */}
-    <div className={styles.fpvControls}>...</div>
-
-    {/* 振り向き */}
-    <button className={styles.fpvBack} aria-label="振り向く" onClick={...}>↻</button>
+    {hasBossGate && (
+      <div className={styles.bossGateOmen}>⚠ 奥にボスゲートの気配</div>
+    )}
+    <button type="button" className={styles.fpvBack} onClick={...} aria-label="振り向く">↻</button>
+    <button type="button" className={styles.menuBtn} aria-label="メニュー" onClick={...}>☰</button>
+    <div className={styles.fpvControls}>
+      <button type="button" className={styles.fpvTurnLeft} aria-label="左を向く">↰</button>
+      <button type="button" className={styles.fpvForward} onClick={...}>▲</button>
+      <button type="button" className={styles.fpvTurnRight} aria-label="右を向く">↱</button>
+    </div>
   </div>
 </header>
+```
 
+```scss
+.head { flex: 0 0 auto; }
+.fpvWrap {
+  position: relative;
+  height: clamp(180px, 28dvh, 232px);
+  overflow: hidden;
+}
+.depthLeft {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  z-index: 1;
+}
+.depthFloor {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-strong);
+}
+.depthTheme {
+  font-size: 9px;
+  color: #8fae8c;            /* モック準拠の苔色 (緑系) */
+  letter-spacing: .1em;
+}
+.bossGateOmen {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: var(--danger-text);
+  letter-spacing: .14em;
+  z-index: 1;
+}
+.menuBtn {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--rule-gold);
+  border-radius: 3px;
+  background: rgba(8, 9, 13, .62);
+  color: var(--gold);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.fpvBack {
+  /* 振り向きは ↻ で、D-pad の下に積む。モックは D-pad の下中央。
+     現状の右上配置から、D-pad の下に移動する。 */
+}
+.fpvControls {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 1;
+}
+.fpvControlsRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.fpvTurnLeft,
+.fpvTurnRight {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-gold);
+  background: rgba(8, 9, 13, .62);
+  color: var(--gold);
+  font-size: 15px;
+}
+.fpvForward {
+  width: 52px;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid var(--rule-gold-strong);
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-size: 18px;
+}
+.fpvBack {
+  width: 42px;
+  height: 38px;
+  border-radius: 6px;
+  border: 1px solid var(--rule-base);
+  background: rgba(8, 9, 13, .62);
+  color: var(--text-mute);
+  font-size: 15px;
+}
+```
+
+> `hasBossGate` の判定は簡易に `canAscend(save, dive.depth) === false` で OK。
+> （正確には「ボス階かつ未撃破」だが、現状の `canAscend` でほぼ同義）。
+> 不確実な場合は判定を `false` 固定にして見た目だけ仕込み、disabled 状態にしておく（**機能優先で省略しない**）。
+
+### Step 3. エンカウントゲージ帯
+
+```tsx
 <div className={styles.gaugeRow}>
   <span className={styles.gaugeLabel}>エンカウント予兆</span>
   <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
 </div>
 ```
 
-SCSS:
-
-- `.head`: `position: relative; flex-shrink: 0;`
-- `.fpvWrap`: `position: relative; width: 100%; height: clamp(180px, 28dvh, 232px); background: linear-gradient(180deg, #0d141a, #070b0f); overflow: hidden;`
-  - 内側の `FirstPersonView` 自体は `width: 100%; height: 100%; display: block;` で
-    親に追従する想定。既存 FPV が固定 px なら、`.fpvWrap > :first-child { width: 100%; height: 100%; }` で吸収する（共通コンポーネントは触らない方針なので、外側のラッパで対応）。
-- `.depthWrap`: `position: absolute; top: 12px; left: 14px; display: flex; flex-direction: column; gap: 0; pointer-events: none;`
-- `.depthChapterMark`: `font-family: var(--font-display); font-size: 10px; letter-spacing: .3em; color: var(--text-blue);`
-- `.depth`: `font-family: var(--font-display); font-size: 16px; color: var(--text-strong);`
-- `.theme`: `display: block; font-size: 9px; letter-spacing: .1em; color: var(--info-blue); margin-top: 2px;`
-- `.menuBtn`: `position: absolute; top: 10px; right: 12px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--rule-gold); border-radius: 3px; background: rgba(8,9,13,.6); color: var(--gold); font-size: 14px; cursor: pointer;`
-- `.fpvControls`: `position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 9px;`
-- `.fpvForward`: `width: 56px; height: 46px; border-radius: 6px; border: 1px solid var(--rule-gold-strong); background: var(--gold-tint); color: var(--gold); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;`
-- `.fpvTurn`: `width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--rule-gold); background: rgba(8,9,13,.62); color: var(--gold); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;`
-- `.fpvBack`: `position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 42px; height: 36px; border-radius: 6px; border: 1px solid var(--rule-base); background: rgba(8,9,13,.62); color: var(--text-mute); font-size: 14px; cursor: pointer;` （※ モックでは左上ではなく中央上に置く例もあるが、既存仕様の「振り向き」は画面の D-pad とは別エリア。**位置はモック line 832 準拠で右上 ☰ と被らない場所に置く**。具体的には FPV 帯の **真下** に細い帯として配置するか、`bottom: 10px` の D-pad の **真下**に配置するのが良い。最終的に「☰ / D-pad / ↻ が 3 つとも独立してタップできる」ことが満たせれば配置の微調整は OK。）
-
-### Step 3. エンカウント予兆行 (`.gaugeRow`)
-
-モック line 844〜847 の「ラベル + 5 段階のセグメント」を再現する。
-ただし `EncounterGauge` 共通コンポーネント側は触らないので、外側だけ装飾:
-
 ```scss
 .gaugeRow {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  background: var(--bg-mid);
+  gap: 8px;
+  padding: 9px 16px;
+  background: #0a0c10;
   border-bottom: 1px solid var(--rule-soft);
-  flex-shrink: 0;
+}
+.gaugeLabel {
   font-size: 10px;
   color: var(--text-faint);
   letter-spacing: .1em;
 }
-.gaugeLabel { flex-shrink: 0; }
 ```
 
-`EncounterGauge` 側のレンダリングが既に 5 段階のバー風になっているならそのまま並べる。
-変更が必要なら共通基盤フェーズの担当者に申し送りし、本指示書側では触らない。
-
-### Step 4. マップ / ヒント `.mid`
-
-```scss
-.mid {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 16px;
-}
-
-.mapWrap {
-  background: var(--bg-deep);
-  border: 1px solid var(--rule-soft);
-  border-radius: 5px;
-  padding: 8px;
-}
-
-.paletteHint {
-  margin: 0;
-  font-size: 10px;
-  color: var(--info-blue);
-  text-align: right;
-  letter-spacing: .04em;
-}
-```
-
-モックではマップ上に「AUTOMAP・F2」見出しと「セルタップで自動移動」ヒントが両端に並ぶ
-ので、`.mapHead` を追加してそれを描画してもよい:
+### Step 4. 可変領域: マップ + 凡例 + アクション + ヒント
 
 ```tsx
 <div className={styles.mid}>
@@ -235,156 +298,572 @@ SCSS:
     <span className={styles.mapHeadLabel}>AUTOMAP ・ F{dive.depth}</span>
     <span className={styles.mapHeadHint}>セルタップで自動移動</span>
   </div>
-  <div className={styles.mapWrap}>
+  <div className={styles.mapCard}>
     <DungeonMap ... />
   </div>
   <div className={styles.mapLegend}>
-    <span>▲ 上り</span>
-    <span>▼ 下り</span>
+    <span>▲ 上り階段</span>
+    <span>▼ 下り階段</span>
     <span className={styles.legendAlert}>● 警戒FOE</span>
     <span className={styles.legendCalm}>● 未警戒</span>
     <span>🌿 採集</span>
   </div>
+
+  {/* アクション or ヒント */}
+  <div className={styles.actionRow}>
+    {gatherPoint ? <GatherCard ... /> : null}
+    {atCookingSpot ? <CookCard ... /> : null}
+    {stairKind ? <StairsCard ... /> : null}
+    {!stairKind && !gatherPoint && !atCookingSpot ? (
+      <p className={styles.tileHint}>現在地: 通常マス ・ 足元にオブジェクトがあればアクションが出ます</p>
+    ) : null}
+    {notice && <p className={styles.notice}>{notice}</p>}
+  </div>
 </div>
 ```
 
-- `.mapHead`: `display: flex; justify-content: space-between; align-items: center; font-size: 10px; letter-spacing: .14em; color: var(--text-faint);`
-- `.mapHeadHint`: `color: var(--info-blue); letter-spacing: .04em;`
-- `.mapLegend`: `display: flex; flex-wrap: wrap; gap: 10px; font-size: 9px; color: var(--text-mute);`
-- `.legendAlert`: `color: var(--danger-text);`
-- `.legendCalm`: `color: var(--text-mute);`
+```scss
+.mid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mapHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mapHeadLabel {
+  font-size: 10px;
+  letter-spacing: .16em;
+  color: var(--text-faint);
+}
+.mapHeadHint {
+  font-size: 10px;
+  color: var(--text-blue);
+}
+.mapCard {
+  background: #0a0c10;
+  border: 1px solid var(--rule-soft);
+  border-radius: 5px;
+  padding: 8px;
+}
+.mapLegend {
+  display: flex;
+  gap: 14px;
+  font-size: 9px;
+  color: var(--text-faint);
+  flex-wrap: wrap;
+}
+.legendAlert { color: var(--danger-text); }
+.legendCalm { color: #9a7a6a; }    /* モック準拠の茶色 */
 
-### Step 5. アクション行（階段 / 採集 / 調理 / 通知）
+.tileHint {
+  margin: 0;
+  height: 42px;
+  border-radius: 4px;
+  border: 1px dashed var(--rule-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-quote);
+}
+```
 
-既存実装の構造（条件付きで `.stairs` / `.action` ボタンが flex column に並ぶ）を維持。
-モック (line 884) では「現在地: 通常マス」ヒントの破線枠を文脈アクションが無いときに
-出している。本実装でもアクションが何も出ない場合の「fallback ヒント」を追加してよい:
+### Step 5. アクションカード（採集 / 調理 / 階段）
+
+#### 5.1 採集カード（モック line 900〜907 準拠）
 
 ```tsx
-{!stairKind && !gatherPoint && !atCookingSpot ? (
-  <p className={styles.tileHint}>現在地: 通常マス ・ 足元にオブジェクトがあればアクションが出ます</p>
+<div className={styles.gatherCard}>
+  <div className={styles.gatherHead}>
+    <span className={styles.gatherSparkle}>✦</span>
+    <span className={styles.gatherTitle}>採集 — {gatherPoint.name}</span>
+  </div>
+  <button
+    type="button"
+    className={styles.gatherBtn}
+    disabled={isGatherDepleted(...) || !canGather(...)}
+    onClick={handleGather}
+  >
+    {gatherButtonLabel}
+  </button>
+</div>
+```
+
+```scss
+.gatherCard {
+  background: #0e131a;
+  border: 1px solid rgba(143, 208, 160, .3);
+  border-radius: 5px;
+  padding: 14px;
+}
+.gatherHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.gatherSparkle { font-size: 16px; color: #9ed8b4; }
+.gatherTitle {
+  font-size: 13px;
+  color: #9ed8b4;
+  font-weight: 700;
+}
+.gatherBtn {
+  width: 100%;
+  height: 40px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #d8a86f, #b8884f);
+  color: var(--bg-mid);
+  font-weight: 700;
+  font-size: 12px;
+}
+```
+
+#### 5.2 調理カード（モック line 909〜913 準拠）
+
+調理メニューを開くトリガとしては inline カード、開いた中身は既存モーダル温存（既存実装フロー維持）。
+
+```tsx
+{atCookingSpot && (
+  <div className={styles.cookCard}>
+    <div className={styles.cookHead}>
+      <span className={styles.cookIcon}>🍲</span>
+      <span className={styles.cookTitle}>調理</span>
+    </div>
+    <p className={styles.cookDesc}>食材を消費して探索バフを得る。</p>
+    <div className={styles.cookActions}>
+      <button type="button" className={styles.cookCancel} onClick={...}>やめる</button>
+      <button type="button" className={styles.cookPrimary} onClick={() => setCookOpen(true)}>調理する</button>
+    </div>
+  </div>
+)}
+```
+
+```scss
+.cookCard {
+  background: #0e131a;
+  border: 1px solid rgba(216, 168, 111, .3);
+  border-radius: 5px;
+  padding: 14px;
+}
+.cookHead { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.cookIcon { font-size: 18px; }
+.cookTitle { font-size: 13px; color: #e0b07c; font-weight: 700; }
+.cookDesc { font-size: 11px; color: var(--text-base); line-height: 1.6; margin: 0 0 10px; }
+.cookActions { display: flex; gap: 8px; }
+.cookCancel,
+.cookPrimary {
+  flex: 1; height: 40px; border-radius: 3px; font-size: 12px;
+}
+.cookCancel { border: 1px solid var(--rule-base); color: var(--text-mute); background: transparent; }
+.cookPrimary {
+  background: linear-gradient(180deg, #d8a86f, #b8884f);
+  color: var(--bg-mid);
+  font-weight: 700;
+  border: 0;
+}
+```
+
+#### 5.3 階段確認カード（モック line 914〜915 準拠）
+
+```tsx
+{stairKind && (
+  <div className={styles.stairsCard}>
+    <div className={styles.stairsHead}>
+      <span className={styles.stairsLabel}>
+        {stairKind === 'stairsUp' ? '▲ 上り階段' : '▼ 下り階段'}
+      </span>
+      <span className={styles.stairsSub}>
+        {stairKind === 'stairsUp' ? `F${dive.depth} → F${dive.depth + 1}` : `F${dive.depth} → F${dive.depth - 1}`}
+      </span>
+    </div>
+    <div className={styles.stairsActions}>
+      <button type="button" className={styles.stairsCancel} onClick={() => {/* dismiss: no-op */}}>やめる</button>
+      <button type="button" className={styles.stairsPrimary} onClick={() => void handleStairs()}>
+        {stairKind === 'stairsUp' ? '次階へ登る' : '前の階へ降りる'}
+      </button>
+    </div>
+  </div>
+)}
+```
+
+```scss
+.stairsCard {
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 5px;
+  padding: 14px;
+}
+.stairsHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.stairsLabel { font-size: 13px; color: var(--text-strong); }
+.stairsSub { font-size: 10px; color: var(--text-faint); }
+.stairsActions { display: flex; gap: 8px; }
+.stairsCancel { flex: 1; height: 40px; border-radius: 3px; border: 1px solid var(--rule-base); color: var(--text-mute); background: transparent; font-size: 12px; }
+.stairsPrimary {
+  flex: 1; height: 40px; border-radius: 3px; background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: var(--bg-mid); font-weight: 700; border: 0; font-size: 12px;
+}
+```
+
+> **注意**: 階段は **既存の `setConfirm({...})` 経由のフローを通さず**、画面上の inline カードで直接 `handleStairs()` を呼ぶ。既存の `confirm` モーダル機能自体は他の用途（道具使用など）で温存。
+
+### Step 6. ☰ メニュー（モック 8c）
+
+```tsx
+{menuOpen ? (
+  <div className={styles.menuOverlay}>
+    <div className={styles.menuPanel}>
+      <div className={styles.menuHead}>
+        <div>
+          <div className={styles.menuTitle}>メニュー</div>
+          <div className={styles.menuSub}>F{dive.depth} ・ {bandThemeFor(dive.depth).name}</div>
+        </div>
+        <button type="button" className={styles.menuClose} aria-label="閉じる" onClick={...}>✕</button>
+      </div>
+
+      <p className={styles.menuPartyLabel}>
+        パーティ <span className={styles.menuPartyLabelSub}>タップで詳細・スキル</span>
+      </p>
+      <div className={styles.menuPartyList}>
+        {dive.party.map((p, i) => /* メンバーカード */ ...)}
+      </div>
+
+      <div className={styles.menuActionGrid}>
+        <button type="button" className={styles.menuActionItem} onClick={...}>
+          <span className={styles.menuActionIcon}>🎒</span>
+          <span className={styles.menuActionLabel}>道具を使う</span>
+        </button>
+        <button type="button" className={styles.menuActionSetting} disabled>
+          <span className={styles.menuActionIcon}>⚙</span>
+          <span className={styles.menuActionLabel}>設定</span>
+        </button>
+        <button type="button" className={styles.menuActionThread} onClick={() => /* return-thread item */}>
+          <span className={styles.menuActionIcon}>🪢</span>
+          <div className={styles.menuActionMeta}>
+            <span className={styles.menuActionLabelGreen}>帰還の糸</span>
+            <span className={styles.menuActionSubGreen}>町へ戻る ・ 所持 {threadCount}</span>
+          </div>
+        </button>
+        <button type="button" className={styles.menuActionMap} disabled>
+          <span className={styles.menuActionIcon}>🗺</span>
+          <span className={styles.menuActionLabel}>全体マップ</span>
+        </button>
+      </div>
+
+      <div className={styles.menuSavedRow}>
+        <span className={styles.menuSavedDot}>●</span>
+        <span>自動保存済 ・ {savedAt}</span>
+      </div>
+
+      <button type="button" className={styles.menuCloseBig} onClick={...}>
+        とじる（探索へ戻る）
+      </button>
+    </div>
+  </div>
 ) : null}
 ```
 
-SCSS:
+```scss
+.menuOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 7, 10, .78);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+.menuPanel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px 18px;
+  overflow-y: auto;
+  gap: 14px;
+}
+.menuHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.menuTitle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
+}
+.menuSub {
+  font-size: 10px;
+  color: #8fae8c;
+  margin-top: 2px;
+}
+.menuClose {
+  width: 30px; height: 30px;
+  border: 1px solid var(--rule-base);
+  border-radius: 50%;
+  color: var(--text-mute);
+  background: transparent;
+  font-size: 13px;
+}
 
-- `.actionRow`（既存の `.stairs` / `.action` を包む新規 div）: `flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding: 0 16px 8px;`
-- `.stairs`: `min-height: 50px; border-radius: 3px; background: linear-gradient(180deg, var(--gold), var(--gold-deep)); color: var(--bg-mid); font-weight: 700; font-size: 14px; letter-spacing: .12em; border: none; cursor: pointer;`
-- `.action`: `min-height: 46px; border-radius: 3px; border: 1px solid var(--rule-gold); background: var(--gold-tint); color: var(--gold); font-size: 13px; letter-spacing: .12em; cursor: pointer;`
-  - `&:disabled`: `border-color: var(--rule-base); background: transparent; color: var(--text-mute); cursor: default;`
-- `.notice`: `margin: 0; padding: 10px 12px; background: var(--surface-elev); border-left: 2px solid var(--gold); border-radius: 0 3px 3px 0; color: var(--text-soft); font-size: 12px; line-height: 1.6;`
-- `.tileHint`: `margin: 0; padding: 10px 12px; border: 1px dashed var(--rule-soft); border-radius: 4px; color: var(--text-faint); font-size: 11px; text-align: center;`
+.menuPartyLabel {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: .16em;
+  color: var(--gold);
+  font-weight: 700;
+}
+.menuPartyLabelSub {
+  color: var(--text-quote);
+  letter-spacing: 0;
+  font-weight: 400;
+  margin-left: 4px;
+}
+.menuPartyList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.menuMember {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 8px 11px;
+}
+.menuMemberLeader {
+  border-color: var(--rule-gold);
+}
+/* 行内: portrait 32x32 + name + Lv mono + HP/TP 2 段 (3px high) + ➜ */
 
-### Step 6. メニュー / 道具 / 調理 / キャラ詳細モーダル
+.menuActionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+.menuActionItem,
+.menuActionSetting,
+.menuActionThread,
+.menuActionMap {
+  height: 58px;
+  border-radius: 4px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-strong);
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+}
+.menuActionItem {
+  background: #1a2030;
+  border-color: var(--rule-gold);
+}
+.menuActionThread {
+  border-color: rgba(143, 208, 160, .35);
+}
+.menuActionLabelGreen { font-size: 13px; color: #9ed8b4; }
+.menuActionSubGreen { font-size: 9px; color: var(--text-faint); }
+.menuActionIcon { font-size: 20px; }
+.menuActionSetting:disabled,
+.menuActionMap:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
 
-すべて `.itemOverlay + .itemPanel` を踏襲する。背景はモーダル backdrop（fixed, var(--bg-overlay)）+
-パネルは bottom sheet 風（モック line 970-980「target select for 回復薬」が典型）か、
-画面中央パネル（モック line 8c の dungeon menu）か、状況に応じて分かれる。
+.menuSavedRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #5d8a6c;
+  margin-top: auto;
+}
+.menuSavedDot {
+  color: #5d8a6c;
+  animation: glowPulse 2.5s ease-in-out infinite;
+}
 
-> **シンプル化方針**: 全モーダルを `.itemOverlay`（fixed inset 0 / centered）+
-> `.itemPanel`（max-height: 86vh / overflow-y: auto / border-radius: 6px / 中央寄せ）に統一する。
-> モックの bottom sheet 風（道具→対象選択の下から競り上がる UI）は **将来課題** とし、
-> 本タスクでは中央パネルで実装。これで全モーダルが同じ枠組みになり実装も検証もシンプル。
-
-- `.itemOverlay`: `position: fixed; inset: 0; background: var(--bg-overlay); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px;`
-- `.itemPanel`: `width: min(420px, calc(100% - 40px)); max-height: min(86vh, calc(100dvh - 64px)); overflow-y: auto; background: var(--surface-panel); border: 1px solid var(--rule-gold); border-radius: 6px; padding: 20px 22px; box-shadow: var(--shadow-modal); display: flex; flex-direction: column; gap: 12px; color: var(--text-base);`
-- `.itemTitle`: `font-family: var(--font-display); font-size: 18px; color: var(--text-strong); margin: 0;`
-- `.menuGold`: `margin: 0; padding: 8px 12px; background: var(--gold-tint); border: 1px solid var(--rule-gold); border-radius: 3px; color: var(--gold); font-family: var(--font-mono); font-size: 14px; text-align: center;`
-- `.menuActions`: `display: grid; grid-template-columns: 1fr 1fr; gap: 9px;`
-- `.menuAction`: `min-height: 58px; padding: 0 14px; display: flex; align-items: center; gap: 10px; border-radius: 4px; border: 1px solid var(--rule-soft); background: var(--surface-elev); color: var(--text-strong); font-size: 14px; cursor: pointer;`
-- `.menuSectionLabel`: `margin: 0; font-size: 10px; letter-spacing: .16em; color: var(--gold); font-weight: 700;`
-- `.menuMember`: `display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface-elev); border: 1px solid var(--rule-soft); border-radius: 3px; color: var(--text-base); cursor: pointer;`
-  - 最初の要素（リーダー）に gold ボーダーを付けたいなら `.menuMember:first-of-type { border-color: var(--rule-gold); }` でも OK
-- `.menuMemberPortrait`: `width: 32px; height: 32px; border-radius: 3px; background: var(--bg-deep); overflow: hidden; flex-shrink: 0;`
-- `.menuMemberInfo`: `flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;`
-- `.menuMemberName`: `display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--text-strong);`
-- `.menuMemberJob`: `font-family: var(--font-mono); font-size: 10px; color: var(--text-faint);`
-- `.menuMemberStat`: `font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); display: flex; gap: 8px;`
-- `.menuSp`: `color: var(--gold); margin-left: auto;`
-- `.itemClose`: `min-height: 46px; margin-top: 4px; border: 1px solid var(--rule-gold); border-radius: 3px; background: var(--gold-tint); color: var(--gold); font-size: 13px; letter-spacing: .16em; cursor: pointer;`
-
-道具行 / 調理行 / キャラ詳細スキルツリー側のクラスも同じトークンで揃える:
-
-- `.itemRow`: `display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--surface-elev); border: 1px solid var(--rule-soft); border-radius: 3px;`
-- `.itemHeader`: `display: flex; align-items: center; gap: 12px;`
-- `.itemName`: `font-size: 13px; color: var(--text-strong); display: flex; flex-direction: column; gap: 2px;`
-- `.itemDesc`: `font-size: 10px; color: var(--text-faint);`
-- `.itemTargets`: `display: flex; flex-direction: column; gap: 6px; margin-top: 4px;`
-- `.itemTarget`: `display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg-deep); border: 1px solid var(--rule-soft); border-radius: 3px; color: var(--text-base); cursor: pointer;`
-- `.itemTargetInfo`: `flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 11px;`
-- `.itemHp`: `font-family: var(--font-mono); font-size: 10px; color: var(--text-faint);`
-- `.itemUse`: `min-height: 32px; padding: 0 12px; border-radius: 3px; border: 1px solid var(--rule-gold); background: var(--gold-tint); color: var(--gold); font-size: 11px; cursor: pointer;`
-  - `&:disabled`: `border-color: var(--rule-base); background: transparent; color: var(--text-mute);`
-- `.itemEmpty`: `margin: 0; padding: 16px 0; color: var(--text-faint); font-size: 12px; text-align: center;`
-- `.confirmOverlay`: `position: fixed; inset: 0; background: var(--bg-overlay); display: flex; align-items: center; justify-content: center; z-index: 200;` （メニュー overlay より上に出すため z-index 200）
-- `.confirmBox`: `width: min(320px, calc(100% - 48px)); background: var(--surface-panel); border: 1px solid var(--rule-gold); border-radius: 6px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-modal);`
-- `.confirmText`: `font-size: 13px; color: var(--text-strong); line-height: 1.6; text-align: center;`
-- `.confirmActions`: `display: flex; gap: 8px;`
-- `.confirmCancel`: `flex: 1; min-height: 42px; border: 1px solid var(--rule-base); border-radius: 3px; background: transparent; color: var(--text-mute); font-size: 13px; cursor: pointer;`
-- `.confirmOk`: `flex: 1; min-height: 42px; border-radius: 3px; background: linear-gradient(180deg, var(--gold), var(--gold-deep)); color: var(--bg-mid); font-weight: 700; font-size: 13px; cursor: pointer; border: none;`
-
-スキルツリーのタブ:
-
-- `.skillTabs`: `display: flex; gap: 6px;`
-- `.skillTab`: `flex: 1; min-height: 36px; border-radius: 3px; border: 1px solid var(--rule-soft); background: transparent; color: var(--text-mute); font-size: 12px; cursor: pointer;`
-- `.skillTabOn`: `border-color: var(--gold); background: var(--gold-tint); color: var(--gold);`
-- `.menuStats`: `display: flex; flex-wrap: wrap; gap: 6px;`
-- `.menuStat`: `font-family: var(--font-mono); font-size: 10px; color: var(--text-soft); background: var(--bg-deep); border-radius: 2px; padding: 3px 6px; border: 1px solid var(--rule-soft);`
-
-### Step 7. ストーリー追加（任意）
-
-`Dungeon.stories.tsx` に以下を追加してよい（必須ではない・無くてもディレクター側で
-作る場合がある）。
-
-```ts
-export const Menu: Story = {
-  decorators: [withGameContext(mockMidDive, { name: 'dungeon' })],
-  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
-    const btn = canvasElement.querySelector<HTMLButtonElement>('button[aria-label="メニュー"]');
-    btn?.click();
-  },
-};
+.menuCloseBig {
+  height: 46px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-gold-strong);
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-size: 14px;
+  letter-spacing: .16em;
+}
 ```
 
-`ItemUse` / `Cook` も同様に play で開く。Storybook の `@storybook/test` を使ってもよいが、
-ベースの `querySelector` で十分。
+> `savedAt` は `new Date()` から `HH:MM` を組み立てる（モック準拠で 1 回計算）。
+> `threadCount` は `save.guild.storage` から `item_return_thread` を絞り込んで `qty` を合算。
 
----
+### Step 7. 道具を使う（モック 8d / bottom sheet）
 
-## 機能優先で省略 / 追加するもの
+```tsx
+{itemOpen ? (
+  <div className={styles.itemOverlay} onClick={() => setItemOpen(false)}>
+    <div className={styles.itemHeader}>
+      <span className={styles.itemHeaderTitle}>道具</span>
+      <button type="button" className={styles.itemHeaderClose} aria-label="閉じる" onClick={() => setItemOpen(false)}>✕</button>
+    </div>
+    <div className={styles.itemList} onClick={(e) => e.stopPropagation()}>
+      <p className={styles.itemListLabel}>所持アイテム</p>
+      {usable.map((s) => (
+        <button
+          key={s.itemId}
+          type="button"
+          className={`${styles.itemCard} ${selectedItemId === s.itemId ? styles.itemCardSelected : ''}`}
+          onClick={() => setSelectedItemId(s.itemId)}
+        >
+          <ItemSprite itemId={s.itemId} size="sm" />
+          <div className={styles.itemCardMeta}>
+            <span className={styles.itemCardName}>{ITEMS[s.itemId]?.name}</span>
+            <span className={styles.itemCardDesc}>{itemEffectLabel(s.itemId)}</span>
+          </div>
+          <span className={styles.itemCardCount}>×{s.qty}</span>
+        </button>
+      ))}
+    </div>
 
-### 省略（モックにあるが現状機能に無い、または範囲外）
+    {selectedItemId && (
+      <div className={styles.itemSheet} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.itemSheetHandle} />
+        <div className={styles.itemSheetHead}>
+          <span className={styles.itemSheetIcon}>🧪</span>
+          <div>
+            <div className={styles.itemSheetTitle}>{itemName} を使う</div>
+            <div className={styles.itemSheetSub}>{itemDescLine}</div>
+          </div>
+        </div>
+        <div className={styles.itemTargetList}>
+          {dive.party.map((p) => /* 各味方カード, ボタン色は使えるなら緑 / disabled は満タン表示 */ ...)}
+        </div>
+        <button type="button" className={styles.itemSheetClose} onClick={() => setSelectedItemId(null)}>もどる</button>
+      </div>
+    )}
+  </div>
+) : null}
+```
 
-- モック line 944〜946 の **「全体マップ」「設定」**メニュー項目: 現状 dungeon メニューは
-  「どうぐ・食料 / 拠点へ帰還 / パーティ詳細」の 3 種で、全体マップ画面・設定モーダル機能は
-  実装されていない。**省略**。
-- モック line 950 の **「自動保存済 ・ 12:08」インジケータ**: dungeon メニュー画面で
-  `lastSavedAt` を表示する仕様は無い（title 画面の SaveCard だけ）。**省略**。
-- モック line 888〜915 の **「採集成功カード / 調理ダイアログ / 階段確認ダイアログ」を
-  常時積層して表示**: 既存実装は notice 文字列 + confirm ダイアログ 1 枚で表現する。
-  バナー風カードでの履歴表示は **省略**。
-- モック line 8b の **エンカウント発生時の赤フラッシュ + 封蝋スタンプ演出**: ゲーム本体の
-  エンカウント演出は `useEncounterEffect` 等のロジック層で発火する別タスク。dungeon 画面の
-  SCSS では **対応しない**（共通エフェクト or battle 画面側で対応）。
+```scss
+.itemOverlay {
+  position: absolute;
+  inset: 0;
+  background: var(--surface-card);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 0;
+}
+.itemHeaderTitle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
+}
+.itemHeaderClose {
+  width: 30px; height: 30px;
+  border: 1px solid var(--rule-base);
+  border-radius: 50%;
+  color: var(--text-mute);
+  background: transparent;
+  font-size: 13px;
+}
+.itemList {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 14px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.itemListLabel {
+  font-size: 10px;
+  letter-spacing: .16em;
+  color: var(--gold);
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.itemCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 10px 12px;
+  width: 100%;
+}
+.itemCardSelected {
+  background: rgba(201, 168, 106, .1);
+  border-color: rgba(201, 168, 106, .55);
+}
+.itemCardMeta { flex: 1; display: flex; flex-direction: column; gap: 1px; text-align: left; }
+.itemCardName { font-size: 13px; color: var(--text-strong); }
+.itemCardDesc { font-size: 10px; color: #8fd0a0; }
+.itemCardCount { font-family: var(--font-mono); font-size: 12px; color: var(--gold); }
 
-### 維持 / 追加（機能上必要・モックに無くても残す）
+.itemSheet {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: var(--surface-panel);
+  border-top: 1px solid var(--rule-gold);
+  border-radius: 10px 10px 0 0;
+  padding: 18px 20px 22px;
+  box-shadow: 0 -16px 50px rgba(0, 0, 0, .5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.itemSheetHandle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, .18);
+  margin: 0 auto;
+}
+.itemSheetHead { display: flex; align-items: center; gap: 10px; }
+.itemSheetIcon { font-size: 20px; }
+.itemSheetTitle { font-size: 13px; color: var(--text-strong); }
+.itemSheetSub { font-size: 10px; color: var(--text-faint); margin-top: 2px; }
+.itemTargetList { display: flex; flex-direction: column; gap: 7px; }
+.itemSheetClose {
+  height: 42px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  color: var(--text-mute);
+  background: transparent;
+  font-size: 13px;
+}
+```
 
-- 採集 / 調理ボタンの「採集済み」「スキル要」「採集できる」分岐 UI: モックには無いが
-  既存仕様で必要。**維持**。
-- D-pad の **振り向きボタン（↻）**: モック line 840 にもあるが、現実装の `.fpvBack` の
-  オーバーレイ位置は同等。**維持**。
-- 確認ダイアログ (`confirm` state): モックの bottom-sheet 風と置き換えるのは大工事なので
-  **当面は中央パネルで維持**（このまま黒曜カラーをあてる）。
+> **既存実装の道具モーダル**（`itemOpen` true 時の `<div className={styles.itemOverlay}>` で
+> 道具一覧 + 対象選択を同時に出している構造）から、**選択 → bottom sheet** の 2 段階に変える。
+> ロジックは `setSelectedItemId` 新規 useState を追加して 1 件保持するだけ。`applyFieldItem`
+> の呼び出しタイミングは変えない。
 
----
+### Step 8. 反転した「機能優先」方針の取り扱い
 
-## 追加トークン
+- **「設定」「全体マップ」は機能無いので disabled** だが、位置・形は維持（モック差分 19）。
+- **「ボスゲートの気配」** は判定が難しい場合は `false` 固定で良いが、見た目だけはコンポーネントを残して `null` を返すこと。**マークアップから消すのは NG**。
+- **採集結果カード** は 1 セルだけの表示で OK（現状 `gatherHere` の戻り値が 1 itemId のみ）。
 
-新規追加なし。
-
----
-
-## 検証
+## 6. 検証
 
 ```
 yarn lint
@@ -392,54 +871,31 @@ yarn test --run
 yarn tsc -b
 ```
 
-すべて緑であること。
+3 点すべて緑。
 
-その後 Storybook（`yarn storybook --host 0.0.0.0`）で `Pages/Dungeon / Default` が
-黒曜カラーで描画されること、FPV 帯と map 領域が iPhone SE 縦（dvh ≒ 559）でも重ならない
-ことを目視確認。
-
-### 既存テスト
-
-`src/pages/dungeon/__tests__/` に integration テストがある場合、`getByText('▲ 前進')`
-など文言で要素を取っている。**文言は変えない**。クラス名だけ変える方針なのでテストは通る。
-
----
-
-## ブランチ / コミット
-
-現在の `feature/redesign-A` ブランチで作業する。コミットを 1 つ追加して commit SHA を
-報告（push はしない）。
+## 7. コミット
 
 ```
-feat(theme): apply 黒曜 OBSIDIAN MINIMAL to dungeon page
+feat(redesign-A): rebuild dungeon page to match mock v2 (改訂版)
 
-- redesign FPV header with absolute-positioned depth label and ☰ menu
-- restyle encounter gauge row, automap surface, and contextual action buttons
-- rebuild item/cook/menu/confirm modals with obsidian surface tokens
-- keep logic intact (movement, gather, cook, item use, skill tree)
+- FPV 232px band with D-pad, boss-gate omen, depth label per mock
+- gauge band w/ border-bottom and gold map header
+- inline action cards (gather / cook / stairs) replacing modal confirm
+- ☰ menu redesigned as full-screen panel with 2x2 action grid
+- item use bottom-sheet pattern with target list
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
 ```
 
+push 不要。SHA を最終応答で報告。
+
 ---
 
-## 想定 Q&A
+## 機能優先で残す例外（必ず最終応答で明記）
 
-- **FPV の高さが clamp になると `FirstPersonView` 内部の Canvas / SVG がスケールしない**:
-  `FirstPersonView` 側が固定 width / height で描画する想定なら、外側の `.fpvWrap` を
-  `display: grid; place-items: center;` にして子要素をセンタリングする。FPV 自体は触らない。
-- **`EncounterGauge` のラベル文字色が背景に埋まる**: 共通コンポーネント側で色を持っていて
-  オーバーライドできないなら、共通基盤フェーズの担当に申し送りし、本タスクでは触らない。
-  外側の `.gaugeRow` の背景を見やすくするくらいに留める。
-- **bottom-sheet 風モーダルにしないと駄目?**
-  しない（理由は Step 6 冒頭の「シンプル化方針」を参照）。フェーズ 2 完了後の別タスクとする。
-- **キャラ詳細パネルが長くなって `.itemPanel` の max-height を突破する**:
-  `.itemPanel` が `overflow-y: auto` なので内側でスクロールする。`SkillTree` 共通コンポーネント
-  が内部スクロールを持っている場合は二重スクロールにならないよう注意（共通コンポーネント側で
-  オーバースクロール制御している前提）。
-- **`stairs` ボタンの文言「▲ 次の階へ進む」「▼ 前の階へ戻る」「▼ 拠点へ戻る」は変える?**
-  変えない（既存ロジック / テスト依存）。
-
-不明点が出たら止めて報告すること。
+- 「ボスゲートの気配」のロジックは `canAscend(save, depth) === false` を proxy として使う。完全一致を保証できない場合は **disabled state 同等**として扱い、表示しない（コンポーネントは仕込んでおく）。
+- 採集結果カードは 1 セル分のみ（モックは 3 セルだが現実装では 1 itemId のみ返るため）。
+- 「全体マップ」「設定」ボタンは disabled。位置・形は維持。
+- 「自動保存済」の時刻はマウント時の現在時刻で固定（1 分ごとの更新は省略）。

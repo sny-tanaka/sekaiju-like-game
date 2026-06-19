@@ -1,84 +1,93 @@
-# フェーズ 2: codex 画面リデザイン（sonnet 用指示書）
+# フェーズ 2: codex 画面リデザイン（sonnet 用指示書） — **改訂版 v2 — モック忠実化**
+
+> **改訂理由**: 前回の実装は「色味は黒曜化したが、ボタン配置・グリッド構造・ボス選択カード・統計カード
+> など、画面構成そのものがモックと大幅にズレてしまった」。ユーザー直々の指示で再修正に入る。
+> **本改訂の方針: モック忠実化を最優先**。前回の「機能優先で省略」ジャッジは原則撤回する。
+> モックに描かれている要素はすべて配置する。disabled でも形と位置は維持する。
 
 `dev-docs/redesign-A.md`（特に **§1.1〜§1.4 トークン**と **§1.5 レイアウト運用ルール**）と、
-`dev-docs/redesign-A-title.md` / `dev-docs/redesign-A-title-fix.md`（黒曜テーマの実装パターン・
-flex column ベースのレイアウト規範）を **必ず先に読むこと**。本ファイルは codex 画面（図鑑 / 記録）
-のリデザインに閉じた実装手順。
-
-> codex は「到達記録 / 図鑑」の 2 タブ構成。モンスター情報を網羅的に確認する画面なので、
-> **暗背景上に金箔アクセントで撃破バッジ・達成率を強調する** 黒曜テーマと相性がよい。
-> モックでは図鑑タブが grid 表示・選択中のボス詳細カードあり、到達記録タブは 2x2 統計カード +
-> 達成率リング + ボス撃破履歴。**既存実装は list 表示 + 展開行**で、機能としては grid でも list
-> でも等価。ここでは「機能的に等価な範囲でモック準拠の見た目」に倒す（後述の優先順位を参照）。
+`dev-docs/redesign-A-title.md` / `dev-docs/redesign-A-title-fix.md`（実装パターンの相場感）を
+**必ず先に読むこと**。本ファイルは codex 画面（図鑑 / 記録）のリデザインに閉じた実装手順。
 
 ---
 
-## 触ってよいファイル
+## 1. 触ってよいファイル / 触ってはいけないファイル
 
-以下のみ。他のファイルは絶対に変更しない。
+### 触ってよい
 
 | 区分 | パス | 操作 |
 | --- | --- | --- |
-| 編集 | `src/pages/codex/index.tsx` | マークアップ調整（タブ・statBig → 2x2 カード化・達成率リング SVG・ボス履歴カード化・図鑑グリッド化） |
-| 編集 | `src/pages/codex/style.module.scss` | 黒曜テーマで全面再構築（旧 `@use 'variables'` を外し `var(--*)` 直接参照に切替） |
-| 編集 | `src/pages/codex/Codex.stories.tsx` | `Default` / `CodexTab` の play で `tab` ボタンを切り替える既存仕様を維持。必要なら `BossLog`（履歴の最大長を確認）ストーリーを追加してよい |
+| 編集 | `src/pages/codex/index.tsx` | マークアップ構造の **全面置換**（モック準拠の grid / 選択ボス詳細カード / 2x2 統計 / リング / ボス履歴 / 拠点へ戻るボタン） |
+| 編集 | `src/pages/codex/style.module.scss` | 黒曜テーマで全面再構築。`@use 'variables'` を使わず `var(--*)` 直接参照に統一 |
+| 編集 | `src/pages/codex/Codex.stories.tsx` | 既存 `Default` / `CodexTab` を維持。`SelectedBoss` ストーリーを追加（撃破済みのボスを 1 体クリックして詳細カードが出ている状態を撮りたい） |
 
-> **`src/components/common/EnemySprite/`・`ResistBadges/` は触らない**。共通基盤フェーズで
-> 黒曜化済み。codex 画面側からは props だけ受け取る。
->
-> **`src/domain/codex.ts`・`src/data/enemies.ts`・型定義 (`src/domain/types.ts`) は触らない**。
-> 機能ロジック・データソースには手を入れない。
+### 触ってはいけない
 
-## やってはいけないこと
+- 共通コンポーネント: `src/components/common/EnemySprite/`, `ResistBadges/`, `ItemSprite/`, `CharacterPortrait/`, `StatBar/`, `BattleExpBar/`, `InkSplatter/`, `SkillTree/`, `EncounterGauge/`, `DungeonMap/`, `FirstPersonView/`
+- ドメイン: `src/domain/codex.ts`, `src/domain/ailment.ts`, `src/data/enemies.ts`
+- 型: `src/domain/types.ts`
+- 全画面共通: `src/_variables.scss`, `src/_obsidian.scss`, `src/index.scss`, `index.html`
+- 他画面の `src/pages/*/`（特に dungeon / battle と並列で進む）
 
-- 自分でさらに `Agent` / `Task` を spawn しない（孫委譲禁止。指示の入れ子は NG）。
-- `src/_variables.scss` / `src/_obsidian.scss` を変更しない（既存トークンは追加しない方針。
-  どうしても不足する場合は本書の「追加トークン」セクションを参照）。
-- 他画面の `style.module.scss` / `index.tsx` を変更しない。
-- `codexSummary` / `monsterCodex` / `resolveEnemyAilmentResist` の戻り値構造を変えない。
-- 既存テストの assert 文を変えない（既存テストがあれば、文言を変えず構造のみ調整して通す）。
-- 写本テーマ由来の SCSS 変数（`$parchment` 等）を新規参照しない。
-- モックに「ドロップ列で個別のアイテム画像をサムネイル化」している箇所があるが、
-  既存実装は `ItemSprite` を codex リストでは使っていない（テキスト「？」/ ドロップ名）。
-  ドロップ列のアイコン化は **しない**（既存と同じテキスト表示を維持）。
+## 2. やってはいけないこと
 
-## ゴール
+- **自分で Edit / Write / Bash を使って実装すること。さらに `Agent` / `Task` を spawn しないこと**（孫委譲禁止）。
+- `codexSummary(save)` / `monsterCodex(save)` / `resolveEnemyAilmentResist(id)` の戻り値構造を変えない。
+- 既存テスト assert の文言・構造を変えない（必要なら data-testid や aria-label の追加は OK だが、既存検証ポイントは温存）。
+- 写本テーマ由来の SCSS 変数（`$parchment` 等）を新規参照しない。旧 `@use 'variables'` は削除する。
+- **モックに描かれている要素を「機能が無いから」という理由で省略しない**。disabled / 形だけでもよいので、必ず配置する。例外を作る場合は本書 §3 の「機能優先で残す例外」と整合させる。
 
-Storybook の `Pages/Codex` 配下で以下のストーリーが黒曜テーマで描画され、`yarn lint` /
-`yarn test --run` / `yarn tsc -b`（または `yarn build`）が緑。
+## 3. モックとの差分一覧（**現状の実装 → モック**）
 
-1. `Default`（到達記録タブ）— 2x2 統計カード（最深到達階 / 挑戦回数 / 最高撃破ボス / 図鑑達成率リング）+
-   ボス撃破履歴カード列 + 「拠点へ戻る」フッタ
-2. `CodexTab`（図鑑タブ）— 上部サマリ行（撃破 M/N・ドロップ P/Q）+ モンスター行リスト
-   （既存実装の縦リスト構造を維持）+ 行展開時に大型スプライト + 属性 / 状態異常耐性バッジ + フッタ
+モック原本: `/tmp/sekaiju-design/案A_v2.dc.html` line 745〜812（`7a bestiary grid` / `7b records`）。
+箇条書きで具体差分を列挙する。実装時はこの一つずつを潰すこと。
+
+### 図鑑タブ（7a）
+
+1. **タブの見た目が違う**。モックでは active タブが「金箔ベタ塗りの矩形 (`background:#c9a86a; color:#0e0f13;`)、border-radius `3px 3px 0 0`、下端に下線」。非 active は淡いグレー文字のみ。**現状はオーバル/ピル状チップで見た目が異なる**。`tab-radius 3 3 0 0` + 金箔ベタを再現。
+2. **サマリ行**: モックでは `padding 12px 20px 0;` で「撃破 18 / 42 ・ ドロップ 31 / 84」を `var(--text-mute)`、右端に「達成 43%」を `var(--gold)` + mono フォントで表示。**現状実装は出してはいるが余白とフォントが異なる**。モック準拠の余白と font-family（数値部分は `var(--font-mono)`）に統一。
+3. **選択中のボス詳細カード**: モックでは図鑑タブ内の上部に「選択中ボス」のカードがある（line 754〜757）。グラデーション `linear-gradient(120deg,#231a1c,#13151c)`、危険系の `border: 1px solid rgba(212,103,79,.4)`、66x66 サムネ + 名前 + `撃破` バッジ + 「第 5 帯 ・ ボス ・ 撃破 1 回」のメタ + 属性バッジ (氷弱・炎耐・毒無効) + ドロップ列（取得済み / 未取得 ?）が並ぶ。**現状実装は行を展開する形で、独立した詳細カードになっていない**。grid 上で選択中のセル / 行をタップ → ヘッダ直下の詳細カードがその内容に切り替わる構造に変更する。
+4. **モンスター一覧が grid ではなく list**: モックは `grid-template-columns:repeat(6,1fr); gap:6px;` の **6 列 grid**。各セルは `aspect-ratio: 1; border-radius: 3px;`、未撃破=緑系 border (`rgba(143,208,160,.4)`)、撃破済みボス=危険系 border (`rgba(212,103,79,.6)`) + 内部背景 `#1c1316`、未遭遇=シルエット (`filter: brightness(0) opacity(.5)`)。**現状実装は縦リスト + 展開行**。grid 化する。
+5. **凡例**: モックでは grid の上の右側に小さく「金=ボス / 緑=撃破 / 影=未遭遇」がある。**現状は無い**。追加する。
+6. **末尾の「… ほか N 体（第 X 帯以降）」フッタ**: モックは grid の下に絶対配置で 1 行表示。**現状は無い**。表示中の grid に乗っていない残りの体数を「… ほか N 体」として末尾に出す（簡易対応で OK・1 行のテキスト）。
+7. **「拠点へ戻る」ボタン**: モックは下端から 22px のところに 46px の outline ボタン (`border: 1px solid rgba(255,255,255,.1); color: #9a958a; letter-spacing: .16em;`)。**現状実装は様式が違う**（金箔ボタン or 様式不明）。モック準拠の outline + center text + letter-spacing で再現。
+
+### 到達記録タブ（7b）
+
+8. **2x2 統計カードのレイアウト**: モックは `display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 20px;` の **2 列 2 行**。各カードは `background: #15171f; border: 1px solid rgba(255,255,255,.06); border-radius: 4px; padding: 14px;`。**現状実装は近いが、間隔・border-radius・border 色がモックと違う**。完全に合わせる。
+9. **統計カードの内容**: モック準拠で 4 枚。
+   - 「最深到達階」: ラベル 10px mute、数値 24px mono `var(--gold)` + 末尾 13px mute の `F`
+   - 「挑戦回数」: ラベル 10px mute、数値 24px mono `var(--text-strong)`
+   - 「最高撃破ボス」: ラベル 10px mute、本文 15px display `var(--text-strong)` + 9px mute サブ「第 N 帯」
+   - 「図鑑達成率リング」: 60x60 SVG リング（既存実装と同様）+ 中央テキスト 13px mono `var(--gold)`
+   - **現状実装は「最高撃破ボス」を `{N}F のボス` と表示しているが、モック準拠で「ボス名 / 第 N 帯」を出す**。撃破履歴の最新 1 件から depth を引いて「第 (Math.floor(depth/10)+1) 帯」と表示する（簡易対応・正確な帯番号は `bandThemeFor(depth)` の参照禁止なので、`Math.floor((depth-1)/10) + 1` で算出）。
+10. **「ボス撃破履歴（新しい順）」セクション**: モックは `font-size: 11px; letter-spacing: .16em; color: var(--gold); font-weight: 700;` の見出し + サブテキスト「（新しい順）」を `var(--text-quote)` で並べる。リストは **個別のカード**（38x38 サムネ + 名前 + サブメタ + 右端の赤い ✦ スタンプ）。
+    - **現状実装は depth と「のボスを撃破」のテキストだけで、サムネも ✦ スタンプも無い**。サムネは `EnemySprite` を `size="sm"` で使用（撃破履歴の `enemyId` が無ければ `bossDefeatLog` を素直に並べる）。
+    - ✦ スタンプは `font-size: 18px; color: var(--danger-glow); transform: rotate(-12deg);` で右端に。
+    - サブメタは「{depth}F ・ {label}」。`label` は最新が「前回」/「12:01」のようなフレーバーで構わないが、データに時刻が無い場合は省略可（**省略する場合は `{depth}F` のみ表示**）。
+11. **「拠点へ戻る」ボタン**: 図鑑タブと同じく outline スタイル（差分 7 と同じ）。
+12. **章マーク**: モックは画面タイトル上に章マーク `❦ 台帳` は無く、直接「図鑑 / 記録」を `font-family: Shippori Mincho; font-size: 18px; color: var(--text-strong);` で 1 行表示している。**現状実装は章マーク `❦ 台帳` を出しているが、モックは出していない**。**章マークは削除**（モック準拠）。
+
+## 4. ゴール（Storybook ストーリー一覧）
+
+`Pages/Codex` 配下で以下のストーリーが黒曜テーマ + モック構造で描画され、
+`yarn lint` / `yarn test --run` / `yarn tsc -b`（または `yarn build`）が緑。
+
+1. **`Default`**（到達記録タブ）— 2x2 統計カード（最深到達階 / 挑戦回数 / 最高撃破ボス / 図鑑達成率リング）+ ボス撃破履歴カード列 + outline 「拠点へ戻る」フッタ
+2. **`CodexTab`**（図鑑タブ）— サマリ行 + 6 列 grid（緑/赤/影のセル区別）+ 凡例 + 「… ほか N 体」+ outline 「拠点へ戻る」フッタ
+3. **`SelectedBoss`**（図鑑タブで撃破済みボスを 1 体選択中）— 上記 + 上部に選択中ボスの詳細カード（属性バッジ + ドロップ列）
+   - play 関数: 図鑑タブに切り替えた後、grid 内のボス（撃破済み）セルを 1 つクリック
 
 ---
 
-## レイアウト運用ルール（**§1.5 を厳守**・全画面共通）
-
-`redesign-A.md §1.5` の 8 項目を必ず守る。要点だけ抜粋:
-
-1. ルートは `display: flex; flex-direction: column; height: 100dvh; max-width: 560px; margin: 0 auto; overflow: hidden;`
-   に `padding-bottom: max(20px, env(safe-area-inset-bottom, 0px))` を加算。
-2. 縦に `header → tabs → content（タブ別の可変領域）→ footer` の 4 層を flex item として積む。
-3. **可変領域はちょうど 1 つだけ**（`flex: 1 1 auto; min-height: 0; overflow-y: auto;`）。
-   ここに到達記録 / 図鑑のスクロール領域を入れる。残りは `flex-shrink: 0`。
-4. ページ全体スクロール禁止（`overflow: hidden` を `.layout` に維持）。スクロールは可変領域内のみ。
-5. 装飾要素（背景グラデ・浮遊粒子）以外は絶対配置禁止。「下端から N px」とか書かない。
-6. ボタン群は flex item として下から積む（`margin-top: auto` で押し下げる）。
-7. clamp で font-size やカードサイズを調整して、iPhone SE（375x667）でも崩れないようにする。
-8. メインアセット（`EnemySprite`）は `width: 100%; height: auto;` の親に入れ、親が高さを決める。
-
----
-
-## 実装ステップ
+## 5. 実装ステップ（モック準拠の具体構造）
 
 ### Step 0. 旧 `@use 'variables'` を外す
 
-`src/pages/codex/style.module.scss` の冒頭 `@use 'variables' as var;` を **削除**。
+`src/pages/codex/style.module.scss` の冒頭の `@use 'variables' as var;` を **削除**。
 すべての色を `var(--*)` で書き直す。
 
-### Step 1. ルートレイアウト (`.layout`) の組み替え
+### Step 1. ルートレイアウト (`.layout`)
 
 ```scss
 .layout {
@@ -87,7 +96,7 @@ Storybook の `Pages/Codex` 配下で以下のストーリーが黒曜テーマ�
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 14px 20px max(16px, env(safe-area-inset-bottom, 0px));
+  padding: 16px 20px max(22px, env(safe-area-inset-bottom, 22px));
   overflow: hidden;
   background: var(--bg-page-gradient);
   color: var(--text-base);
@@ -96,201 +105,528 @@ Storybook の `Pages/Codex` 配下で以下のストーリーが黒曜テーマ�
 }
 ```
 
-(モックの padding は 16px 20px だが、左右はサイズが伸びる端末でも収まる 20px に統一。
-gap でセクション間距離をコントロールするのは title-fix と同じ流儀。)
-
-### Step 2. ヘッダー (`.head`) の黒曜化
-
-モック準拠の最小ヘッダー:
+### Step 2. ヘッダ
 
 ```tsx
 <header className={styles.head}>
-  <p className={styles.chapterMark}>❦ 台帳</p>
   <h1 className={styles.title}>図鑑 / 記録</h1>
 </header>
 ```
 
-- `.head`: `display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;`
-- `.chapterMark`: `font-family: var(--font-display); font-size: 12px; letter-spacing: .32em; color: var(--text-blue); margin: 0;`
-- `.title`: `font-family: var(--font-display); font-weight: 700; font-size: clamp(18px, 5.2vw, 22px); color: var(--text-strong); margin: 0;`
+```scss
+.head {
+  flex: 0 0 auto;
+}
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
+  letter-spacing: .04em;
+}
+```
 
-### Step 3. タブ (`.tabs`) を黒曜カードタブ風に
+> **章マーク `❦ 台帳` は出さない**（差分 12）。モックには無い。
 
-モック（line 751, 796）の `border-bottom: 1px solid rgba(255,255,255,.08)` の上で
-active タブだけ gold 背景になる形を踏襲する。
+### Step 3. タブ
 
-- `.tabs`: `display: flex; gap: 4px; flex-shrink: 0; border-bottom: 1px solid var(--rule-soft);`
-- `.tab`: `flex: 1; min-height: 44px; padding: 9px 0; border: none; background: transparent; color: var(--text-faint); font-size: 13px; cursor: pointer; border-radius: 3px 3px 0 0;`
-- `.tabActive`: `background: var(--gold); color: var(--bg-mid); font-weight: 700;`
+モックの style に厳密に合わせる。
 
-タップ時の `play('cursor')` は既存ロジックを保持。
+```scss
+.tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 9px 0;
+  font-size: 12px;
+  color: var(--text-faint);
+  background: transparent;
+  border: 0;
+  border-radius: 3px 3px 0 0;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+.tabActive {
+  color: var(--bg-mid);
+  font-weight: 700;
+  background: var(--gold);
+}
+```
 
-### Step 4. 到達記録タブ (`.records`) を 2x2 グリッド化
-
-既存実装は「大きな最深到達階 + dl 3 行 + ボス撃破履歴」だが、モックでは 2x2 カードに統計
-4 件 + ボス履歴リスト。**機能を維持しつつモック寄りに**:
+### Step 4. 可変領域（タブ別）
 
 ```tsx
-<div className={styles.records}>
-  <div className={styles.statGrid}>
-    <div className={styles.statCard}>
-      <span className={styles.statLabel}>最深到達階</span>
-      <span className={styles.statNum}>{rec.deepestReached}<span className={styles.statSuffix}>F</span></span>
-    </div>
-    <div className={styles.statCard}>
-      <span className={styles.statLabel}>挑戦回数</span>
-      <span className={styles.statNum}>{rec.totalDives}</span>
-    </div>
-    <div className={styles.statCard}>
-      <span className={styles.statLabel}>最高撃破ボス</span>
-      {rec.highestBossDefeated > 0
-        ? <span className={styles.statText}>{rec.highestBossDefeated}F のボス</span>
-        : <span className={styles.statText}>—</span>}
-    </div>
-    <div className={styles.statCard}>
-      <span className={styles.statLabel}>図鑑達成率</span>
-      <div className={styles.ringWrap}>
-        {/* 達成率リング (SVG)：モック準拠 */}
-        <svg viewBox="0 0 60 60" className={styles.ringSvg} aria-hidden>
-          <circle cx="30" cy="30" r="25" fill="none" stroke="var(--rule-base)" strokeWidth="5" />
-          <circle cx="30" cy="30" r="25" fill="none" stroke="var(--gold)" strokeWidth="5"
-                  strokeDasharray="157"
-                  strokeDashoffset={Math.round(157 * (1 - sum.completionPct / 100))}
-                  transform="rotate(-90 30 30)" strokeLinecap="round" />
-        </svg>
-        <span className={styles.ringText}>{sum.completionPct}%</span>
-      </div>
-    </div>
-  </div>
-
-  <p className={styles.h2Caption}>ボス撃破履歴 <span className={styles.h2Sub}>新しい順</span></p>
-  {rec.bossDefeatLog.length === 0 ? (
-    <p className={styles.empty}>まだボスを倒していません。</p>
-  ) : (
-    <ul className={styles.bossLog}>
-      {rec.bossDefeatLog.slice().reverse().map((b, i) => (
-        <li key={i} className={styles.bossRow}>
-          <span className={styles.bossDepth}>{b.depth}F</span>
-          <span className={styles.bossText}>のボスを撃破</span>
-          <span className={styles.bossSeal}>✦</span>
-        </li>
-      ))}
-    </ul>
-  )}
+<div className={styles.content}>
+  {tab === 'record' ? <RecordsPanel ... /> : <BestiaryPanel ... />}
 </div>
 ```
 
-SCSS:
-
-- `.records`: `flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; display: flex; flex-direction: column; gap: 14px;`
-- `.statGrid`: `display: grid; grid-template-columns: 1fr 1fr; gap: 10px;`
-- `.statCard`: `background: var(--surface-panel); border: 1px solid var(--rule-soft); border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-height: 80px;`
-- `.statLabel`: `font-size: 10px; letter-spacing: .12em; color: var(--text-faint);`
-- `.statNum`: `font-family: var(--font-mono); font-size: clamp(22px, 6vw, 26px); font-weight: 700; color: var(--gold); line-height: 1;`
-- `.statSuffix`: `font-size: 13px; color: var(--text-faint); margin-left: 2px;`
-- `.statText`: `font-family: var(--font-display); font-size: 14px; color: var(--text-strong);`
-- `.ringWrap`: `position: relative; width: 60px; height: 60px; margin-top: 4px;`
-- `.ringSvg`: `width: 60px; height: 60px;`
-- `.ringText`: `position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 13px; color: var(--gold);`
-- `.h2Caption`: `font-size: 11px; letter-spacing: .16em; color: var(--gold); font-weight: 700; margin: 0;`
-- `.h2Sub`: `color: var(--text-faint); letter-spacing: 0; font-weight: 400; margin-left: 6px; font-size: 10px;`
-- `.bossLog`: `list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px;`
-- `.bossRow`: `display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface-panel); border: 1px solid var(--rule-soft); border-radius: 3px; color: var(--text-base); font-size: 13px;`
-- `.bossDepth`: `font-family: var(--font-mono); color: var(--gold); font-weight: 700;`
-- `.bossText`: `flex: 1; font-size: 13px;`
-- `.bossSeal`: `color: var(--danger-glow); font-size: 18px; transform: rotate(-12deg);`
-- `.empty`: `color: var(--text-faint); font-size: 13px; text-align: center; padding: 16px 0; margin: 0;`
-
-> **機能優先で省略するもの**:
-> - モックでは「ボス撃破履歴」の各行に**ボススプライト画像**を表示しているが、既存の
->   `BossDefeatLog` 型は `depth` のみで `enemyId` を保持していない（`src/domain/types.ts`
->   を **読むだけで** 確認すること）。
->   スプライト表示は仕様に無いので **省略**。階数だけ表示する。
-> - モックでは右上に「達成 43%」のテキスト表示があるが、リング内に同じ情報があるので
->   重複を避けて省略。
->
-> **機能優先で追加するもは無し**（既存実装と機能等価）。
-
-### Step 5. 図鑑タブ (`.codex`) の黒曜化
-
-既存実装の「縦リスト + 展開行」構造を維持する（モックは 6列 grid だが、grid 化はテーマ
-リデザインの範囲外なので **list のまま** 進める）。
-
-> 判断: モックの図鑑 grid は機能的に「展開時に詳細を表示する」点が list と等価で、
-> 並びと密度だけが違う。grid 化はテスト・展開ロジック・スクロール挙動の再設計が必要で、
-> リデザイン本筋（黒曜トークン適用）の外側に出る。**今回は list のまま黒曜カラーだけ
-> あてる**。grid 化はフェーズ 2 完了後の別タスクとする。
-
-- `.codex`: `flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; display: flex; flex-direction: column; gap: 8px;`
-- `.codexSummary`: `display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; color: var(--text-faint);` 右側に `<span className={styles.codexSummaryPct}>` で達成率 `{sum.completionPct}%` を `font-family: var(--font-mono); color: var(--gold);` で表示
-- `.list`: `display: flex; flex-direction: column; gap: 6px;`
-- `.row`: `display: flex; gap: 10px; align-items: center; padding: 10px 12px; background: var(--surface-panel); border: 1px solid var(--rule-soft); border-radius: 3px; color: var(--text-base); flex-wrap: wrap;`
-- `.rowClickable:hover, .rowClickable:focus-visible`: `border-color: var(--rule-gold); background: var(--gold-tint); outline: none;`
-- `.unseen`: `opacity: 0.55;`
-- `.thumb`: `flex-shrink: 0; width: 40px; height: 40px; border-radius: 3px; background: var(--bg-deep); border: 1px solid var(--rule-soft); display: flex; align-items: center; justify-content: center; overflow: hidden;` （`EnemySprite size="sm"` を入れる枠）
-- `.info`: `flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;`
-- `.name`: `font-family: var(--font-display); font-size: 14px; color: var(--text-strong); display: flex; align-items: center; gap: 6px;`
-- `.badge`: `font-size: 9px; font-weight: 700; color: var(--bg-mid); background: var(--danger-glow); border-radius: 2px; padding: 1px 6px;` （撃破バッジ）
-- `.expand`: `font-size: 10px; color: var(--text-faint); margin-left: auto;`
-- `.sub`: `font-size: 11px; color: var(--text-faint);`
-- `.empty`: 上記 statGrid と同様 `var(--text-faint)`
-
-#### 展開詳細
-
-- `.resistDetail`: `margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--rule-soft); display: flex; flex-direction: column; gap: 8px; width: 100%;`
-- `.spriteLarge`: `display: flex; justify-content: center; padding: 8px 0 4px; background: var(--bg-deep); border-radius: 3px;`
-- `.resistSection`: `display: flex; flex-direction: column; gap: 4px;`
-- `.resistHead`: `font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: .14em; text-transform: uppercase;`
-
-### Step 6. フッタ (`.foot` / `.back`)
-
 ```scss
-.foot {
-  flex-shrink: 0;
-  padding-top: 8px;
-  border-top: 1px solid var(--rule-soft);
-}
-
-.back {
-  width: 100%;
-  min-height: 46px;
-  border: 1px solid var(--rule-base);
-  border-radius: 3px;
-  background: transparent;
-  color: var(--text-mute);
-  font-size: 13px;
-  letter-spacing: .16em;
-  cursor: pointer;
-
-  &:active {
-    background: var(--surface-elev);
-  }
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 ```
 
-「拠点へ戻る」ボタンの文言は既存と同じ。`onClick={() => navigate({ name: 'town' })}` も維持。
+### Step 5. RecordsPanel（到達記録タブ）— モック 7b 準拠
 
-### Step 7. ストーリー追加（任意）
+```tsx
+<section className={styles.records}>
+  <div className={styles.statGrid}>
+    <article className={styles.statCard}>
+      <span className={styles.statLabel}>最深到達階</span>
+      <span className={styles.statNumGold}>
+        {rec.deepestReached}
+        <span className={styles.statSuffix}>F</span>
+      </span>
+    </article>
+    <article className={styles.statCard}>
+      <span className={styles.statLabel}>挑戦回数</span>
+      <span className={styles.statNumPlain}>{rec.totalDives}</span>
+    </article>
+    <article className={styles.statCard}>
+      <span className={styles.statLabel}>最高撃破ボス</span>
+      {/* モック準拠で 2 行：本文 15px display + サブ 9px mute */}
+      <span className={styles.statBossName}>{bossName ?? '—'}</span>
+      <span className={styles.statBossBand}>第 {bandNo} 帯</span>
+    </article>
+    <article className={styles.statCardRing}>
+      <span className={styles.statLabel}>図鑑達成率</span>
+      <div className={styles.ringWrap}>{/* 60x60 SVG リング */}</div>
+    </article>
+  </div>
 
-既存 `Default` / `CodexTab` の play 関数は維持。`mockPostBoss` を使っているので、
-**ボス撃破履歴に複数行ある状態が描画される**。新規 preset 追加は不要。
+  <div className={styles.bossLogHead}>
+    <span className={styles.bossLogHeadLabel}>ボス撃破履歴</span>
+    <span className={styles.bossLogHeadSub}>（新しい順）</span>
+  </div>
+  <ul className={styles.bossLog}>
+    {rec.bossDefeatLog.slice().reverse().map((b, i) => (
+      <li key={i} className={styles.bossRow}>
+        <div className={styles.bossThumb}>
+          {/* enemyId が分かるならスプライト。無ければ絵文字 👹 をフォールバック */}
+        </div>
+        <div className={styles.bossMeta}>
+          <span className={styles.bossName}>{bossLabel}</span>
+          <span className={styles.bossSub}>{b.depth}F</span>
+        </div>
+        <span className={styles.bossSeal}>✦</span>
+      </li>
+    ))}
+  </ul>
+</section>
+```
 
-もし「撃破履歴が空のケース」を撮影したいときだけ、`Codex.stories.tsx` に
-`EmptyRecords` ストーリーを追加してよい（`mockWithParty` を使えば撃破履歴が空）。
-**追加しなくても可**。
+SCSS（モック寸法準拠）:
 
----
+```scss
+.statGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.statCard,
+.statCardRing {
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.statCardRing { align-items: stretch; }
+.statLabel {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.statNumGold {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  color: var(--gold);
+  margin-top: 4px;
+}
+.statNumPlain {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  color: var(--text-strong);
+  margin-top: 4px;
+}
+.statSuffix {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.statBossName {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text-strong);
+  margin-top: 6px;
+}
+.statBossBand {
+  font-size: 9px;
+  color: var(--text-faint);
+}
+.ringWrap {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 6px auto 0;
+}
+.ringText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--gold);
+}
 
-## 追加トークン
+.bossLogHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.bossLogHeadLabel {
+  font-size: 11px;
+  letter-spacing: .16em;
+  color: var(--gold);
+  font-weight: 700;
+}
+.bossLogHeadSub {
+  font-size: 9px;
+  color: var(--text-quote);
+}
+.bossLog {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bossRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 10px 12px;
+}
+.bossThumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 3px;
+  background: var(--bg-deep);
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.bossMeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bossName {
+  font-size: 13px;
+  color: var(--text-strong);
+}
+.bossSub {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.bossSeal {
+  font-size: 18px;
+  color: var(--danger-glow);
+  transform: rotate(-12deg);
+}
+```
 
-新規追加なし。`_obsidian.scss` の既存 CSS 変数のみで全配色が成立する。
-もし不足が見つかった場合は、コミット前に本書を更新してからトークンを追加すること。
+> **`bossLabel`**: `bossDefeatLog` の各エントリに enemyId が含まれていれば `ENEMIES[id]?.name` を表示。
+> 含まれていなければ「{depth}F のボス」と表示（既存テキストのまま）。
+> **`bandNo`**: `Math.floor((rec.deepestReached - 1) / 10) + 1`。
 
----
+### Step 6. BestiaryPanel（図鑑タブ）— モック 7a 準拠
 
-## 検証
+```tsx
+<section className={styles.bestiary}>
+  <div className={styles.summary}>
+    <span className={styles.summaryText}>
+      撃破 {sum.monstersDefeated} / {sum.monstersTotal} ・
+      ドロップ {sum.dropsFound} / {sum.dropsTotal}
+    </span>
+    <span className={styles.summaryPct}>達成 {sum.completionPct}%</span>
+  </div>
 
-完了前に以下を回し、すべて緑であること:
+  {selectedEntry ? (
+    <SelectedBossCard entry={selectedEntry} />
+  ) : null}
+
+  <div className={styles.legendRow}>
+    <span className={styles.legendLabel}>一覧 ・ {entries.length} 体</span>
+    <span className={styles.legendHint}>金=ボス / 緑=撃破 / 影=未遭遇</span>
+  </div>
+
+  <div className={styles.grid}>
+    {entries.slice(0, GRID_LIMIT).map((e) => (
+      <button
+        key={e.id}
+        type="button"
+        className={cellClass(e)}
+        disabled={!e.seen}
+        onClick={() => setSelectedId(e.id)}
+        aria-label={e.seen ? e.name : '未遭遇のモンスター'}
+      >
+        {e.seen ? <EnemySprite enemyId={e.id} size="sm" /> : <span className={styles.cellUnseen}>？</span>}
+      </button>
+    ))}
+  </div>
+  {entries.length > GRID_LIMIT && (
+    <p className={styles.gridFooterHint}>
+      … ほか {entries.length - GRID_LIMIT} 体（次の帯以降）
+    </p>
+  )}
+</section>
+```
+
+`GRID_LIMIT` は 24 で固定（モックの grid セル数）。
+`cellClass(e)` は以下のロジックで `.cell` / `.cellBoss` / `.cellDefeated` / `.cellUnseen` を組み合わせる。
+枠色のロジック:
+
+- ボス + 撃破: `.cellBoss .cellDefeated` (border 危険系)
+- 通常 + 撃破: `.cellDefeated` (border 緑系)
+- 未撃破・遭遇済み: `.cell` (border soft)
+- 未遭遇: `.cellUnseen` (silhouette + 破線 border)
+
+SCSS:
+
+```scss
+.summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0 4px;
+}
+.summaryText {
+  font-size: 12px;
+  color: var(--text-mute);
+}
+.summaryPct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+}
+
+.legendRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.legendLabel {
+  font-size: 10px;
+  letter-spacing: .14em;
+  color: var(--gold);
+  font-weight: 700;
+}
+.legendHint {
+  font-size: 9px;
+  color: var(--text-faint);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--bg-deep);
+  border: 1px solid var(--rule-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.cellDefeated {
+  border-color: rgba(143, 208, 160, .4);
+}
+.cellBoss {
+  background: #1c1316;
+  border-color: rgba(212, 103, 79, .6);
+}
+.cellUnseen {
+  filter: brightness(0) opacity(.5);
+  border-style: dashed;
+  border-color: rgba(212, 103, 79, .4);
+}
+.gridFooterHint {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-mute);
+  margin: 8px 0 0;
+}
+```
+
+### Step 7. 選択中ボス詳細カード（モック line 754〜757）
+
+```tsx
+<article className={styles.selectedBoss}>
+  <div className={styles.selectedHead}>
+    <div className={styles.selectedThumb}>
+      <EnemySprite enemyId={entry.id} size="md" />
+    </div>
+    <div className={styles.selectedMeta}>
+      <div className={styles.selectedNameRow}>
+        <span className={styles.selectedName}>{entry.name}</span>
+        {entry.defeated ? <span className={styles.selectedDefeatedBadge}>撃破</span> : null}
+      </div>
+      <span className={styles.selectedSub}>
+        第 {tierBand(entry)} 帯 ・ ボス ・ 撃破 {defeatCount}回
+      </span>
+      <div className={styles.selectedResists}>
+        <ResistBadges elementResist={master.resist} ailmentResist={undefined} />
+      </div>
+    </div>
+  </div>
+  <div className={styles.selectedDrops}>
+    {entry.drops.map((d, i) => (
+      <div key={i} className={d.found ? styles.dropFound : styles.dropMissing}>
+        {d.found ? <ItemSprite itemId={d.itemId} size="sm" /> : <span>？</span>}
+        <span>{d.found ? d.name : '未入手'}</span>
+      </div>
+    ))}
+  </div>
+</article>
+```
+
+```scss
+.selectedBoss {
+  background: linear-gradient(120deg, #231a1c, #13151c);
+  border: 1px solid rgba(212, 103, 79, .4);
+  border-radius: 4px;
+  padding: 13px;
+}
+.selectedHead {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.selectedThumb {
+  width: 66px;
+  height: 66px;
+  border-radius: 4px;
+  background: var(--bg-deep);
+  border: 1px solid rgba(212, 103, 79, .3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: none;
+}
+.selectedMeta { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.selectedNameRow { display: flex; align-items: center; gap: 8px; }
+.selectedName {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text-strong);
+}
+.selectedDefeatedBadge {
+  font-size: 9px;
+  color: var(--bg-mid);
+  background: var(--danger-glow);
+  border-radius: 2px;
+  padding: 1px 6px;
+  font-weight: 700;
+}
+.selectedSub {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.selectedResists { margin-top: 7px; }
+.selectedDrops {
+  display: flex;
+  gap: 8px;
+  margin-top: 11px;
+}
+.dropFound,
+.dropMissing {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-deep);
+  border-radius: 3px;
+  padding: 7px 9px;
+  font-size: 10px;
+}
+.dropFound { color: var(--text-strong); }
+.dropMissing { color: var(--text-quote); }
+```
+
+> `tierBand(entry)` は既存の `entry.tierBand + 1` をそのまま使ってよい（`monsterCodex` の返り値）。
+> `defeatCount` は `rec.bossDefeatLog` を絞り込んで算出（無ければ 1 固定で可・モック準拠の見た目維持優先）。
+
+### Step 8. 「拠点へ戻る」outline ボタン
+
+```tsx
+<footer className={styles.foot}>
+  <button type="button" className={styles.back} onClick={() => navigate({ name: 'town' })}>
+    拠点へ戻る
+  </button>
+</footer>
+```
+
+```scss
+.foot {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+.back {
+  width: 100%;
+  height: 46px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-mute);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  letter-spacing: .16em;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+.back:hover { color: var(--gold); border-color: var(--rule-gold); }
+```
+
+### Step 9. 反転した「機能優先」方針の取り扱い
+
+- 「選択中ボス詳細カード」のドロップアイコン: 既存 `ItemSprite` を使用してよい（`size="sm"`）。
+  モックは 22x22 で表示しているのでサイズ感は近い。
+- 撃破履歴のサムネ: `bossDefeatLog` のエントリに `enemyId` が **格納されているか** を確認し、
+  あれば `EnemySprite`、無ければプレースホルダ絵文字 `👹` でフォールバック。
+  - 確認ポイント: `src/domain/types.ts` の `BossDefeatLog` 型定義。型を変えない範囲で対応すること。
+  - フォールバックは「機能優先で残す例外」として明記する（モック差分で省略表示になる旨を本書末尾に記載済み）。
+- **モックには `？` ステルス枠が grid に並んでいるが、`entries` から取得できる未遭遇枠を素直に並べれば等価表現になる**（追加データ不要）。
+
+## 6. 検証
 
 ```
 yarn lint
@@ -298,59 +634,33 @@ yarn test --run
 yarn tsc -b
 ```
 
-`yarn tsc -b` が単独で動かないリポなら `yarn build` でもよい（成果物 `docs/` の
-コミットはディレクター側で対応するのでここでは含めなくてよい）。
+3 点すべて緑。Storybook 視覚確認はディレクターが後でまとめて行う（必須ではないが、ローカルで
+`yarn storybook --host 0.0.0.0` を 6006 で立ち上げて自己確認しても良い）。
 
-その後 Storybook を `yarn storybook --host 0.0.0.0` で起動し、`Pages/Codex` の
-`Default` / `CodexTab` の 2 ストーリーが黒曜カラーで描画されることを目視確認。
-スクリーンショットはディレクター側で別途撮るのでサブエージェント側では不要。
+## 7. コミット
 
-### 既存テスト
-
-`src/pages/codex/__tests__/` 配下があれば、文言 assert（「拠点へ戻る」「図鑑」「到達記録」など）
-を変えないように注意。SCSS module のクラス名を変えても、`getByText` / `getByRole`
-ベースのクエリは通る。
-
----
-
-## ブランチ / コミット
-
-現在の `feature/redesign-A` ブランチで作業する。コミットを 1 つ追加して commit SHA を
-報告（push はしない）。コミットメッセージは次の雛形:
+1 つのコミットにまとめる:
 
 ```
-feat(theme): apply 黒曜 OBSIDIAN MINIMAL to codex page
+feat(redesign-A): rebuild codex page to match mock v2 (改訂版)
 
-- rebuild records tab as 2x2 stat grid + completion ring (SVG)
-- restyle codex tab list rows with obsidian tokens
-- keep list layout (grid migration deferred) and maintain logic intact
+- 6-col grid bestiary with green / danger / silhouette cell states
+- selected boss detail card with resist badges and drop slots
+- 2x2 stat grid with achievement ring per mock
+- boss defeat history cards with sprite + seal stamp
+- outline "back to town" button per mock
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
 ```
 
+push 不要。SHA を最終応答で報告。
+
 ---
 
-## 想定 Q&A
+## 機能優先で残す例外（必ず最終応答で明記）
 
-- **モックで「ドロップ」ブロックがボス詳細カードに出ているけど、ここで実装する?**
-  しない。codex の既存仕様では「行展開時にスプライト + 耐性」を出す方針で、ドロップは
-  リスト行のサブ文字列にテキストで載せている。仕様変更扱いなので**省略**。
-- **`statBig`（大きな最深到達階）が消えるとテストが落ちないか?**
-  既存テスト (`codex` のテストがあれば) は数値そのものを `getByText` で取っているはず。
-  数字は statCard の `.statNum` 内に残るので通る。失敗したら**そのテストの構造調整**で
-  追従する（assert 文の意味は変えない）。
-- **モックの 6 列グリッド grid 図鑑にしないと駄目?**
-  しない（理由は Step 5 冒頭の判断ブロックを参照）。
-- **達成率リングは SVG で正しい?**
-  `<svg>` を直書きする。`stroke-dasharray="157"` は `2 * pi * r ≈ 157` の決め打ち。
-  `strokeDashoffset` は完成率から逆算するので `Math.round(157 * (1 - pct / 100))`。
-  reduce-motion 時は CSS で `transition: none;` だけかけて、JS でアニメ追加はしない。
-- **モックに「金=ボス / 緑=撃破 / 影=未遭遇」の凡例があるが入れる?**
-  list 維持の方針なので、対応する色分けは:
-  - 未遭遇: `.unseen` の `opacity: 0.55;`
-  - 撃破: `.badge` の朱色「撃破」バッジ
-  だけで足りる。凡例文は省略。
-
-不明点が出たら止めて報告すること。
+- 撃破履歴のサムネは `enemyId` がデータに含まれない場合に絵文字でフォールバック（モックは画像）。
+- 撃破日時（モックは「12:01」「前回」）は既存データに無いため省略可。
+- 「最高撃破ボス」のボス名は `enemyId` が `bossDefeatLog` に格納されていれば `ENEMIES[id]?.name` を表示。無ければ `{depth}F のボス` のテキスト（モック差分）。

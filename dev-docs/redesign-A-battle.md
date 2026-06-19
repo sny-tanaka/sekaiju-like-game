@@ -1,97 +1,274 @@
-# フェーズ 2: battle 画面リデザイン（sonnet 用指示書）
+# フェーズ 2: battle 画面リデザイン（sonnet 用指示書） — **改訂版 v2 — モック忠実化**
+
+> **改訂理由**: 前回の実装は「色味は黒曜化したが、ボタン配置・コマンドパネル・敵カード・行動順帯
+> など、画面構成そのものがモックと大幅にズレてしまった」。
+> **本改訂の方針: モック忠実化を最優先**。前回の「機能優先で省略」ジャッジは原則撤回する。
+> モックに描かれている要素はすべて配置する。disabled でも形と位置は維持する。
+>
+> **加えて、行動順帯（モック line 996）の機能を実装する**。AGI 順で並ぶ「順 ⚔ ◯ ◯ ◯ ◯ …」のバー。
+> このバーは既存ロジック (`resolveTurnOrder` in `src/domain/combat.ts`) を再利用して UI に出す。
 
 `dev-docs/redesign-A.md`（**§1.1〜§1.4 トークン** / **§1.5 レイアウト運用ルール**）と
 `dev-docs/redesign-A-title.md` / `dev-docs/redesign-A-title-fix.md` を **必ず先に読むこと**。
-本ファイルは battle 画面（戦闘）のリデザインに閉じた実装手順。
 
-> battle は本ゲームで **最も巨大で複雑な画面**（`index.tsx` 約 1.8k 行、`style.module.scss`
-> 約 1.1k 行）。コマンドモード状態機械（global / individual / strategy / anim / 対象選択 / スキル
-> 選択 / ユニオン）、敵 / 召喚 / 味方カード、ログ、リザルト、敗北、逃走のすべてが 1 ファイルに
-> 集約されている。リスクを下げるため:
->
-> 1. **マークアップ構造とロジックは原則そのまま**。SCSS とローカル装飾だけ黒曜化する。
-> 2. **既存テスト assert は変えない**。`yarn test --run` が緑であることが最低条件。
-> 3. **敵タップ＝対象選択＋被弾 FX、下部コマンドパネルでモード遷移 (global → individual →
->    strategy → anim) の UI 流れはモック準拠で既に揃っているので、見た目だけ更新**。
-> 4. サブコンポーネント (`StatBar` / `BattleExpBar` / `InkSplatter` / `EnemySprite` /
->    `CharacterPortrait` / `ResistBadges`) は共通基盤フェーズで黒曜化済み。**触らない**。
+モック原本: `/tmp/sekaiju-design/案A_v2.dc.html` line 987〜1123。
+- `9a interactive main` — 戦闘の通常画面（line 989〜1073）
+- `9b intro` — 戦闘開始（line 1076〜1085）
+- `9d defeat` — 全滅（line 1094〜1104）
+- `9e flee` — 逃走成功（line 1107〜1123）
 
 ---
 
-## 触ってよいファイル
+## 1. 触ってよいファイル / 触ってはいけないファイル
+
+### 触ってよい
 
 | 区分 | パス | 操作 |
 | --- | --- | --- |
-| 編集 | `src/pages/battle/style.module.scss` | 黒曜テーマで全面再構築（`@use 'variables'` を外し `var(--*)` 直接参照に切替） |
-| 編集 | `src/pages/battle/index.tsx` | **マークアップは最小変更**。章マーク・コマンドラベルなど装飾要素の追加のみ可。**JSX のロジック（条件分岐・hook 呼び出し・event handler）は触らない** |
-| 編集 | `src/pages/battle/Battle.stories.tsx` | 既存 4 ストーリー（`Default` / `NoLog` / `SkillMenu` / `BossEncounter`）を維持。必要なら `Strategy` を追加してよい |
+| 編集 | `src/pages/battle/index.tsx` | マークアップを **モック構造に揃える**。**特に「行動順帯」を新規追加**。コマンドパネル・敵カード・味方カード・ログ・リザルト・敗北・逃走の各セクションをモック準拠の構造に組み直す。**hook / useState / useEffect / useCallback の構成・ロジック・event handler の実体・依存配列は触らない** |
+| 編集 | `src/pages/battle/style.module.scss` | 黒曜テーマで全面再構築（`@use 'variables'` を外し `var(--*)` に切替） |
+| 編集 | `src/pages/battle/Battle.stories.tsx` | 既存 4 ストーリー（`Default` / `NoLog` / `SkillMenu` / `BossEncounter`）を維持。`TurnOrderBar` を追加（行動順帯の検証用） |
+| **編集（条件付き）** | `src/domain/combat.ts` | **`resolveTurnOrder` の export はそのまま**。**追加 export として `previewTurnOrder(state: BattleState, rng: Rng): Combatant[]` を新規追加してよい**。実体は既存の `resolveTurnOrder` を呼ぶラッパで、`[...state.allies, ...state.enemies, ...state.summons]` を渡す。テスト 1 件追加 (`combat.test.ts`)。**ロジック自体は変更しない** |
+| **編集（条件付き）** | `src/domain/types.ts` | **`BattleState` の型変更は禁止**。`Combatant` の型も触らない。`previewTurnOrder` の戻り値型は既存の `Combatant[]` をそのまま使う |
 
-> **共通コンポーネントは触らない**:
-> - `src/components/common/StatBar/`（HP / TP / ユニオン% バー）
-> - `src/components/common/BattleExpBar/`（EXP アニメ）
-> - `src/components/common/InkSplatter/`（damage / heal / crit / gold ポップ）
-> - `src/components/common/EnemySprite/` / `CharacterPortrait/` / `ResistBadges/`
->
-> battle 画面側からは **props だけ渡す通常利用**。内部スタイルには介入しない。
+### 触ってはいけない
 
-## やってはいけないこと
+- 共通コンポーネント: `StatBar`, `BattleExpBar`, `InkSplatter`, `EnemySprite`, `CharacterPortrait`, `ResistBadges`, `SkillTree`, `EncounterGauge`, `DungeonMap`, `FirstPersonView`
+- ドメイン: `src/domain/battle.ts`（**`resolveTurn` / `startBattle` / `battleRewards` / `applyBattleResult` などのロジック関数を変えない**）, `src/domain/strategy.ts`, `union.ts`, `passives.ts`, `ailment.ts`
+- ストア: `src/store/gameState.tsx`, `saveStore.ts`, `navigation.tsx`
+- データ: `src/data/battleSkills.ts`, `enemies.ts`
+- 全画面共通: `src/_variables.scss`, `src/_obsidian.scss`, `src/index.scss`, `index.html`
+- 他画面の `src/pages/*/`
 
-- 自分でさらに `Agent` / `Task` を spawn しない。
-- `src/_variables.scss` / `src/_obsidian.scss` を変更しない。
-- 他画面の `style.module.scss` / `index.tsx` を変更しない。
-- `src/domain/battle/`・`src/domain/battle*.ts`・`src/domain/strategy.ts`・`src/domain/union.ts`
-  などのゲームロジックは触らない。
-- `useEffect` / `useCallback` の依存配列を変えない（戦闘ログ逐次再生・anim フェーズ・
-  自動コマンド生成などのタイミングが崩れる）。
-- 既存テスト (`__tests__` / `index.test.tsx` 配下) の assert を変えない。
+## 2. やってはいけないこと
+
+- **自分で Edit / Write / Bash を使って実装すること。さらに `Agent` / `Task` を spawn しないこと**（孫委譲禁止）。
+- `useState` / `useRef` / `useCallback` / `useEffect` の依存配列・実行順を変えない（戦闘ログ逐次再生・anim フェーズ・自動コマンド生成のタイミングが崩れる）。
+- 既存テスト (`__tests__` / `index.test.tsx` 配下・`combat.test.ts`) の assert 文を変えない（**`combat.test.ts` の `'combat: turn order'` describe は既存。新規テストは別 describe で追加**）。
+- 攻撃エフェクト（モック line 1087 の 7 種攻撃 SVG）の追加実装はしない。`InkSplatter` 経由の責務。
 - 写本テーマ由来の SCSS 変数 (`$parchment` 等) を新規参照しない。
-- 攻撃エフェクト（モック line 1087 の 7 種攻撃 SVG）の追加実装はしない。これは
-  `InkSplatter` / 共通エフェクト側の責務であり、battle 画面の SCSS では扱わない。
+- **モックに描かれている要素を「機能が無いから」と省略しない**。disabled / 形だけでもよいので必ず配置する。
 
-## ゴール
+## 3. モックとの差分一覧（**現状の実装 → モック**）
 
-Storybook の `Pages/Battle` 配下で以下 4 ストーリーが黒曜カラーで描画され、
+### 3.1 ヘッダ（モック line 994〜998）
+
+1. **章マーク「`❦ 戦闘 ・ F{depth}`」**: モックは Shippori Mincho 12px / letter-spacing .3em / `var(--gold)`。**現状実装は文言・色が違うことがある**。揃える。
+2. **「リザルト例 ▸」チップ**: モックには右上にデバッグ用のチップがあるが、**これは省略**（モックでもデバッグ用と注記あり）。
+3. **行動順帯（モック line 996）— 機能追加対象**: 後述 §4 で独立 Step として扱う。**現状実装には行動順帯が存在しない**ので新規追加。
+4. **ログプレビュー**: モックは `border-left: 2px solid var(--gold); padding-left: 8px; font-family: var(--font-mono); font-size: 10px; line-height: 1.5; color: var(--text-mute);` の 2 行 + 「`タップで全ログ`」のヒント。
+   - ダメージ数値はオレンジ系 (`var(--danger-text)`)、状態異常付与は紫系 (`#c79be0`)、状態異常付与の文言は inline で色付け。
+   - **現状実装は左罫線が無い or 色が違う**。揃える。
+
+### 3.2 敵エリア（モック line 1000〜1029）
+
+5. **ボスカード（line 1002〜1014）**: ボス 1 体のとき、120x92px の大型カード + HP バー (4px high gradient red→orange) + HP% + 属性バッジ (氷弱 / 火耐) + 状態異常バッジ (`毒3` など) + 状態異常パーティクル + 被弾時の dmg pop / 会心 label。**現状実装は様式が違う**。揃える。
+6. **雑魚カード**: 62px wide + 42px high glyph + 名前 + HP バー + 状態異常バッジ。**現状実装は枠サイズが違う**。揃える。
+7. **召喚体カード（line 1029）**: 「`召喚体 ・ N/3`」の見出し (`font-size: 9px; letter-spacing: .18em; color: #8fd0a0;`) + 3 カードの横並び。各カードは `background: rgba(143,208,160,.06); border: 1px solid rgba(143,208,160,.25); border-radius: 3px;`。**現状実装は緑系の見た目が違う**。揃える。
+
+### 3.3 味方エリア（モック line 1032〜1058）
+
+8. **前衛セクション見出し**: 「`前衛`」9px gold letter-spacing .18em。**現状実装は文言が違う**ことがある。揃える。
+9. **前衛 3x1 grid**: `grid-template-columns: 1fr 1fr 1fr; gap: 6px;`。各カードは 18px ポートレイト + 名前 + 作戦ラベル (3px round chip) + HP/TP/U の 3 段バー + コマンドラベル + 状態異常マーク + U! バッジ（unionReady のとき右上に金色 chip）。**現状実装はバーの段数が違うことがある**。**3 段バー**を揃える。
+10. **後衛セクション見出し**: 「`後衛 近接被ダメ −30%`」9px blue letter-spacing .18em + サブテキスト。
+11. **後衛 2 ぶん grid**: `grid-template-columns: repeat(2, calc((100% - 12px)/3)); justify-content: center; gap: 6px;` で **3 列分の真ん中 2 列に詰める**形（モック）。**現状実装は左寄せの 2 列**。**モック準拠で中央寄せの 2 ぶん**にする。
+
+### 3.4 コマンドパネル（モック line 1060〜1067）
+
+12. **global コマンド**: 「たたかう」(50px primary 金箔ボタン) + 「さくせん」(青系 outline) + 「にげる」(赤系 outline) の上下構成。**現状実装はボタンの形・配色が違う**。揃える。
+13. **individual コマンド**: 「`▸ {activeName} の行動`」見出し + 「攻撃」(46px primary) + 「スキル」(青 outline) の上段、「道具」(緑 outline 40px) + 「防御」(白 outline 40px) + 「もどる」(62px グレー outline) の下段。**現状実装は順序・色が違う**。揃える。**「道具」「防御」が disabled でも形は残す**。
+14. **skill 選択**: 「`スキル選択 ・ {activeName}`」と `TP {tp}/{maxTp}` の右寄せ表示 + grid-auto-flow column / 2 段 / 106px wide のスキルカード横スクロール + 「← 横スクロール（2段）→」の補助テキスト + 「もどる」(36px outline)。**現状実装は縦リスト or 異なる構造**。横スクロール 2 段に変える。
+15. **strategy 選択**: 「`作戦変更 ・ {activeName}`」見出し + 5 段の作戦選択リスト + 「もどる」outline。**現状実装は実装無し or 異なる**。
+16. **target 選択**: 「`対象を選択 — 上の敵をタップ`」12px gold + 「`単体対象 ／ 全体技は敵列すべてに適用`」10px mute + 「もどる」outline + 「確定」primary の 2 ボタン。
+
+### 3.5 ログ オーバーレイ（モック line 1069）
+
+17. ログタップ → `position: absolute; inset: 0; z-index: 20; background: rgba(6,7,10,.93); padding: 20px 18px;` の全画面オーバーレイ。「`戦闘ログ`」見出し + ターンごとに区切られた全ログ。**現状実装は様式が違う**。揃える。
+
+### 3.6 リザルト / 敗北 / 逃走（モック 9a 末尾 / 9d / 9e）
+
+18. **リザルト** (line 1071): 全画面オーバーレイ + 「`勝利`」見出し (Shippori Mincho 20px gold letter-spacing .2em) + 「`獲得経験値`」 + EXP バー + レベルアップカード + 「`ドロップ`」 + 「`獲得ゴールド`」 + 「ダンジョンへ戻る」primary ボタン。
+19. **敗北** (line 1094〜1103): 「`全滅`」46px Shippori Mincho `var(--danger)` letter-spacing .3em text-shadow + 「`隊商は塔に呑まれた…\n最後の自動記録から再開できます。`」 + 「拠点へ戻る」outline + フッタに到達 / 撃破統計。
+20. **逃走** (line 1107〜1123): 横方向の speed line + 「`逃走成功`」30px Shippori Mincho 緑 + 「`隊商は退路を確保した。`」 + 「探索へ戻る」primary。
+
+---
+
+## 4. **行動順帯（新規機能）** — モック line 996 準拠
+
+### 4.1 仕様
+
+- **位置**: ヘッダ内、章マークとログプレビューの間。ヘッダの内側で 1 行使う。
+- **構成**: 左端に「`順`」(9px letter-spacing .14em `var(--text-faint)`) + 右に **アイコン列 (overflow-x: auto + flex-wrap: nowrap)**。
+- **アイコンサイズ**: 28x28px（現在行動中のキャラは 30x30px + 金箔枠 + box-shadow）。`border-radius: 4px`。
+- **中身**:
+  - 味方: `CharacterPortrait` を 24px で center。
+  - 敵: `EnemySprite` を 24px で center。
+  - 召喚体: `font-size: 14px;` の絵文字（既存 `summon.glyph` 相当）。
+- **強調ロジック**:
+  - **現在行動中** (idx === 0 で表示時、行動順帯の先頭): `border: 2px solid var(--gold); box-shadow: 0 0 8px rgba(201,168,106,.4);` + scale なし（モックは scale 無しの border 強調のみ）。
+  - **未行動**: `border: 1px solid rgba(212,103,79,.6)` (敵 = 赤系) または `border: 1px solid var(--rule-base)` (味方 = 中間グレー)。
+  - **既に行動済み**: opacity .35 に落とす（このターン解決中の場合）。
+  - 末尾の「`…`」(`font-size: 10px; color: var(--text-quote);`): 行動順が画面幅を超えた時の省略マーク。
+- **行動順の取得**: `previewTurnOrder(state, rng)` を `src/domain/combat.ts` に追加し、UI 側で `useMemo` で 1 度計算する（rngRef は既存のものを使い回す。1 ターン中は決定的な順序が要るので **rng の seed をターン番号と organism-id 由来で固定化** する。実装の簡略化のため、`createRng((state.turn * 0x9e3779b9) >>> 0)` で **ローカル ephemeral rng** を作って渡す）。
+- **「既に行動済み / 未行動」の区別**: 戦闘の逐次再生 (`anim.revealed`) 中は「現在進行中の actor を強調」する必要があるが、実装難度が高い。**現状の改訂では「次ターンの予測行動順」を出すだけで OK**（モックは次ターンの予測順を見せる UX として成立する）。
+  - つまり実装は「ターン開始時に `previewTurnOrder` を計算 → 全員 `border` 状態で並べる」だけで OK。
+  - **「行動済み」状態の表現は本改訂版ではスキップ**してよい（オリジナル機能拡張で、モックに「行動済み」の状態区別は描かれていないため）。
+
+### 4.2 データ取得経路
+
+```ts
+import { previewTurnOrder } from '@/domain/combat';
+// ...
+const turnOrder = useMemo(() => {
+  if (!state) return [];
+  const ephemeralRng = createRng((state.turn * 0x9e3779b9) >>> 0);
+  return previewTurnOrder(state, ephemeralRng);
+}, [state?.turn, state?.allies, state?.enemies, state?.summons]);
+```
+
+### 4.3 `previewTurnOrder` 実装（追加）
+
+```ts
+// src/domain/combat.ts に追加
+import type { BattleState } from './types';
+
+/**
+ * UI 表示用に、次ターンの行動順を予測して返す（[03 §10] と同じロジック）。
+ * resolveTurn 内部の rng 消費とは別系統の ephemeral rng を呼び出し側が渡す。
+ */
+export function previewTurnOrder(state: BattleState, rng: Rng): Combatant[] {
+  return resolveTurnOrder(
+    [...state.allies, ...state.enemies, ...state.summons],
+    rng
+  );
+}
+```
+
+### 4.4 UI 配置
+
+ヘッダ内、章マーク下、ログプレビュー上。
+
+```tsx
+<div className={styles.turnOrderBar}>
+  <span className={styles.turnOrderLabel}>順</span>
+  <div className={styles.turnOrderList}>
+    {turnOrder.slice(0, 8).map((c, i) => (
+      <div
+        key={c.id}
+        className={`${styles.turnOrderCell} ${i === 0 ? styles.turnOrderCellActive : ''} ${c.side === 'enemy' ? styles.turnOrderCellEnemy : ''}`}
+      >
+        {c.side === 'ally' ? (
+          <CharacterPortrait raceId={c.raceId!} classId={c.classId!} size={24} />
+        ) : c.enemyId ? (
+          <EnemySprite enemyId={c.enemyId} size="xs" />
+        ) : (
+          <span className={styles.turnOrderCellGlyph}>{c.summonGlyph ?? '✦'}</span>
+        )}
+      </div>
+    ))}
+    {turnOrder.length > 8 && <span className={styles.turnOrderEllipsis}>…</span>}
+  </div>
+</div>
+```
+
+```scss
+.turnOrderBar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 7px;
+  overflow: hidden;
+}
+.turnOrderLabel {
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: var(--text-faint);
+  flex: none;
+}
+.turnOrderList {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1;
+}
+.turnOrderList::-webkit-scrollbar { display: none; }
+.turnOrderCell {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--rule-base);
+  background: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: none;
+}
+.turnOrderCellEnemy {
+  border-color: rgba(212, 103, 79, .6);
+}
+.turnOrderCellActive {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 8px rgba(201, 168, 106, .4);
+}
+.turnOrderCellGlyph { font-size: 14px; }
+.turnOrderEllipsis {
+  font-size: 10px;
+  color: var(--text-quote);
+  flex: none;
+}
+```
+
+### 4.5 行動順帯の検証用ストーリー
+
+```tsx
+export const TurnOrderBar: Story = {
+  decorators: [withGameContext(mockBattle, { name: 'battle' })],
+  args: {
+    __storyMockEnemyIds: [...MAX_ZAKO_ENEMY_IDS],
+  },
+  // 上端の行動順帯に味方 5 + 敵 6 が並んでいることを Storybook で目視確認するため
+  // 専用の play 関数は不要。Default ストーリーとの差はラベル名のみ。
+};
+```
+
+### 4.6 デザイン責任
+
+**行動順帯はオリジナル機能拡張**（モックには概念だけ載っているが詳細仕様は無い）。
+モックとデザイン上の差異が生じる場合は、本指示書のスタイルを正解とする。
+モック原本との完全一致を求めない（ただし、モック line 996 の見た目は最大限尊重する）。
+
+---
+
+## 5. ゴール（Storybook ストーリー一覧）
+
+`Pages/Battle` 配下で以下 5 ストーリーが黒曜カラーで描画され、
 `yarn lint` / `yarn test --run` / `yarn tsc -b`（または `yarn build`）が緑。
 
-1. `Default`（mockBattle・雑魚 6 + 味方 5）— ヘッダー（章マーク + 行動順帯）+ 敵エリア（カード wrap）+
-   召喚体エリア + 味方エリア（前衛 / 後衛 2 段グリッド）+ ログプレビュー + コマンドパネル（global）
-2. `NoLog`（同上・ログプレビュー短）
-3. `SkillMenu`（mockBattleSkillMenu）— individual モードでスキル選択中の 2 列カードリスト
-4. `BossEncounter`（mockBossBattle）— ボス（md）+ 雑魚 3 + 味方 5・対象選択中（ボスに ring）
+1. **`Default`**（mockBattle・雑魚 6 + 味方 5）— ヘッダー（章マーク + 行動順帯 + ログプレビュー）+ 敵エリア + 召喚エリア + 味方エリア（前衛 3 + 後衛 2 中央寄せ）+ コマンドパネル（global）
+2. **`NoLog`**（同上・ログプレビュー短）
+3. **`SkillMenu`**（mockBattleSkillMenu）— individual モードでスキル選択中の横スクロール 2 段カード
+4. **`BossEncounter`**（mockBossBattle）— ボス（md）+ 雑魚 3 + 味方 5・対象選択中（ボスに ring）
+5. **`TurnOrderBar`**（追加）— Default と同じだが、行動順帯の目視検証専用
 
 ---
 
-## レイアウト運用ルール（**§1.5 を厳守**）
-
-`redesign-A.md §1.5` の 8 項目を必ず守る。battle は要素が多いので特に注意:
-
-1. ルートは `display: flex; flex-direction: column; height: 100dvh; max-width: 560px; margin: 0 auto; overflow: hidden;` +
-   `padding-bottom: max(20px, env(safe-area-inset-bottom, 0px))`。
-2. 縦に `header → battlefield（敵 / 召喚 / 味方）→ log → command` の 4 層を flex item として積む。
-3. **可変領域は `.command` ひとつ**（モック準拠で `flex: 1 1 auto; min-height: 0;` を持ち、
-   コマンドパネルが画面下端を埋める）。
-   - 既存実装では `.battlefield` を `flex: 1` で吸収し、`.command` を flex-shrink: 0 にしている。
-     これだと敵 + 味方が多いとき内部スクロールが入り、対象選択時にスクロール位置が動く問題が
-     出る可能性がある。**title-fix の流儀**に合わせて「敵 + 味方を `flex-shrink: 0` で
-     固定高、コマンドパネルを `flex: 1 1 auto;` で吸収」する形に倒す。
-     - 敵 / 味方カードのサイズは clamp で短画面対応する（後述）。
-4. ページ全体スクロール禁止。
-5. リザルト / 敗北 / 逃走オーバーレイは `position: fixed; inset: 0;` の **装飾レイヤー**として
-   許可（モーダル相当）。
-6. コマンドパネルのボタンは flex item として積み、`bottom: NN px` は使わない。
-7. clamp で敵カードサイズ・味方カードサイズを調整。iPhone SE で要素が重ならないこと。
-8. 敵カード幅 `width: clamp(58px, 18vw, 120px)` などで雑魚と md ボスのサイズ差をスケール。
-
----
-
-## 実装ステップ
+## 6. 実装ステップ
 
 ### Step 0. 旧 `@use 'variables'` を外す
 
 `src/pages/battle/style.module.scss` の冒頭 `@use 'variables' as var;` を **削除**。
-全色を `var(--*)` で書き直す。
+すべての色を `var(--*)` で書き直す。
 
-### Step 1. ルートレイアウト (`.layout`)
+### Step 1. `previewTurnOrder` を `src/domain/combat.ts` に追加
+
+`resolveTurnOrder` の直下に `previewTurnOrder` を追加。**ロジックは既存関数を再利用するラッパに留める**。
+テストは `src/domain/combat.test.ts` に 1 件追加（既存 describe `'combat: turn order'` の下に **新しい test として追加**。describe を増やさない）。
+
+### Step 2. ルートレイアウト
 
 ```scss
 .layout {
@@ -108,843 +285,256 @@ Storybook の `Pages/Battle` 配下で以下 4 ストーリーが黒曜カラー
 }
 ```
 
-> 左右 padding は 0。各セクションの内部で `padding: 0 14px;` を取る（モック準拠で
-> 敵エリア / 味方エリア / コマンドエリアが背景色の帯として分かれる）。
-
-### Step 2. ヘッダー（章マーク + 行動順帯 + ログプレビュー雛形）
-
-モック line 994〜997 では:
-
-- 上段: `❦ 戦闘 ・ F{depth}` + 右端に「リザルト例 ▸」のチップ（デバッグ用なので **省略**）
-- 中段: 「順」+ 行動順アイコン列（活動中のキャラ / 敵を 6〜8 個）
-- 下段: 戦闘ログ最新 2 行のインラインプレビュー + 「タップで全ログ」
-
-既存実装の `.chapterMark`（`❦ 戦闘`）はそのまま、その下の「**行動順帯**」だけ新規追加する。
-行動順は `state.turnOrder` のような state があるかをまず確認し、無ければ既存ログプレビューだけ
-出して **行動順帯は省略**（既存実装には行動順 UI が無いはず・モックは UI モックなので機能未整備）。
+### Step 3. ヘッダ（章マーク + 行動順帯 + ログプレビュー）
 
 ```tsx
 <header className={styles.head}>
-  <div className={styles.headRow}>
-    <p className={styles.chapterMark}>❦ 戦闘 ・ F{depth}</p>
-    {/* リザルト例ボタンは省略 */}
+  <div className={styles.chapterRow}>
+    <span className={styles.chapter}>❦ 戦闘 ・ F{state.depth}</span>
   </div>
-  {/* 行動順帯は機能未実装なので省略（モックダミー UI のため） */}
+  {/* 行動順帯（§4 の構造を貼り付け） */}
+  <div className={styles.turnOrderBar}>...</div>
+  {/* ログプレビュー */}
+  <button type="button" className={styles.logPreview} onClick={() => setLogOpen(true)}>
+    {recentLogEntries(state.log).map((line, i) => <div key={i}>{line}</div>)}
+    <span className={styles.logPreviewHint}>（タップで全ログ）</span>
+  </button>
 </header>
 ```
 
-SCSS:
-
-- `.head`: `flex-shrink: 0; padding: 11px 14px 9px; background: linear-gradient(180deg, rgba(20,16,18,0.96), rgba(11,12,16,0.35)); border-bottom: 1px solid var(--rule-soft);`
-- `.headRow`: `display: flex; justify-content: space-between; align-items: center;`
-- `.chapterMark`: `margin: 0; font-family: var(--font-display); font-size: 12px; letter-spacing: .3em; color: var(--gold);`
-
-### Step 3. 敵エリア (`.battlefield > .enemies`)
-
-モック (line 999〜1029) は **敵カードを flex-wrap + center justify** で並べる。ボスは
-120px 幅 (md スプライト相当)、雑魚は 62px 幅 (sm 相当)。
-
 ```scss
-.battlefield {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
+.head {
+  flex: 0 0 auto;
+  padding: 11px 14px 9px;
+  background: linear-gradient(180deg, rgba(20, 16, 18, .96), rgba(11, 12, 16, .35));
 }
-
-.enemies {
+.chapterRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  align-items: flex-end;
-  padding: 12px 12px 10px;
-  background: radial-gradient(95% 85% at 50% 16%, #241b22, var(--bg-deep) 78%);
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
 }
-
-.enemy {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: clamp(58px, 18vw, 120px);    // ボスは max 120px、雑魚は min 58px
-  padding: 6px 6px 8px;
-  background: transparent;
-  border: none;
+.chapter {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: .3em;
+  color: var(--gold);
+}
+.logPreview {
   cursor: pointer;
-  text-align: center;
-}
-
-.enemy::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  pointer-events: none;
-  transition: border-color var(--motion-quick);
-}
-
-.targeted::before {
-  border-color: var(--rule-gold-strong);
-}
-
-.enemy:active::before {
-  border-color: var(--gold);
-}
-
-.flash {
-  animation: obsidian-warnBlink 0.4s steps(1) 2;
-}
-
-.down {
-  opacity: 0.35;
-  filter: grayscale(1);
-}
-
-.enemyHeader {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  justify-content: center;
-}
-
-.enemyName {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 9px;
-  color: var(--text-base);
-}
-
-.enemyNameText {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.enemyMarks {
-  flex-shrink: 0;
-  font-size: 9px;
-}
-
-// 雑魚カードの HP バー（細い）
-.enemy .gaugeRow {     // 既存 SCSS の構造に合わせて調整
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(255,255,255,.1);
-  overflow: hidden;
-}
-
-// ターゲット中だけ表示する耐性コンパクト
-.enemyResist {
-  margin-top: 4px;
-  text-align: left;
-}
-.targeted .enemyResist {
-  min-height: 36px;
-}
-
-.inkOverlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
-}
-```
-
-> モック (line 1008) では耐性チップ（「氷弱」「火耐」）が敵カードに常時表示されている。
-> 既存実装ではターゲット中のみ `ResistBadges compact` を出す。**既存仕様を維持**
-> （常時表示は情報過多 + 雑魚カード幅が足りない）。
-
-### Step 4. 召喚体エリア (`.summons`)
-
-モック (line 1029) では味方エリア上に「召喚体 ・ 3/3」と並ぶ。
-
-```scss
-.summons {
-  display: flex;
-  gap: 6px;
-  padding: 0 14px 8px;
-  background: var(--bg-deep);
-}
-
-.summonsLabel {        // 新規: 既存実装で「召喚体 ・ N/3」見出しが無ければ追加
-  font-size: 9px;
-  letter-spacing: .18em;
-  color: var(--success);
-  padding: 0 14px 4px;
-}
-
-.summon {
-  flex: 1;
-  background: rgba(63, 138, 92, 0.06);
-  border: 1px solid rgba(63, 138, 92, 0.25);
-  border-radius: 3px;
-  padding: 5px 7px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.summonName {
-  font-size: 9px;
-  color: var(--text-base);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.summonHp {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--success);
-}
-```
-
-> 召喚体表示は機能上必須（仕様 §2.13・MAX_SUMMONS=3）。モックに描かれているとおり維持。
-
-### Step 5. 味方エリア (`.party`)
-
-モック (line 1031〜1058):
-
-- `前衛` ラベル (gold) + 3列 grid
-- `後衛 近接被ダメ −30%` ラベル (blue) + 中央寄せ grid
-
-```scss
-.party {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 14px 10px;
-  background: var(--bg-mid);
-  border-top: 1px solid var(--rule-soft);
-  flex-shrink: 0;
-}
-
-.rowTag {
-  font-size: 9px;
-  letter-spacing: .18em;
-  color: var(--gold);
-  margin: 0;
-}
-
-.party > .rowTag:nth-of-type(2) {
-  color: var(--info-blue);
-}
-
-.cardRow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-// 後衛は 2 列センター寄せ
-.party > .rowTag:nth-of-type(2) + .cardRow {
-  grid-template-columns: repeat(2, calc((100% - 12px) / 3));
-  justify-content: center;
-}
-
-.card {
-  position: relative;
-  padding: 6px;
-  background: var(--surface-panel);
-  border: 1px solid var(--rule-soft);
-  border-radius: 3px;
-}
-
-// activeId キャラのカード（既存実装が active クラスを付けるなら）
-.cardActive {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 1px var(--gold-glow);
-}
-
-.jobBadge {
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  color: var(--bg-mid);
-  background: var(--gold);
-  border-radius: 2px;
-  padding: 1px 4px;
-  font-weight: 700;
-}
-
-.cardHeader {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.cardPortrait {
-  width: 18px;
-  height: 18px;
-  border-radius: 2px;
-  background: var(--bg-deep);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.cardHeaderText {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.cardName {
-  font-size: 9px;
-  color: var(--text-strong);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.cardNameText {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cardMarks { flex-shrink: 0; font-size: 9px; }
-.uni { color: var(--gold); }
-
-.cardStrategy {
-  font-size: 7px;
-  font-weight: 700;
-  color: var(--bg-mid);
-  background: var(--gold-bright);
-  border-radius: 2px;
-  padding: 0 3px;
-}
-
-.cardNums {
-  display: flex;
-  gap: 4px;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  color: var(--text-faint);
-  margin-top: 2px;
-}
-
-.gaugeRow {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  margin-top: 2px;
-}
-
-.gaugeLabel {
-  font-size: 6px;
-  color: var(--text-faint);
-  width: 7px;
-}
-
-.cardCmd {
-  margin-top: 3px;
-  font-size: 7px;
-  color: var(--gold);
-  min-height: 9px;
-}
-
-// ダウン状態（HP 0）
-.cardDown {
-  opacity: 0.4;
-  filter: grayscale(1);
-}
-```
-
-> 既存実装の細かいクラス名（`cardActive` などが無ければ `.card.active` の形）は temas
-> ファイル側で踏襲して書くこと。**新クラスは追加せず、既存クラス名のスタイルだけ書き直す**。
-
-### Step 6. ログプレビュー (`.log`)
-
-モック (line 997) では「border-left 2px gold + mono font + 2 行」。
-
-```scss
-.log {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 14px;
-  background: var(--bg-mid);
-  border-top: 1px solid var(--rule-soft);
   border-left: 2px solid var(--gold);
+  padding: 0 0 0 8px;
   font-family: var(--font-mono);
   font-size: 10px;
   line-height: 1.5;
   color: var(--text-mute);
+  background: transparent;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
   text-align: left;
-  cursor: pointer;
-  border-radius: 0;
+  width: 100%;
 }
+.logPreviewHint {
+  color: var(--text-quote);
+  margin-left: 6px;
+}
+```
 
-.logHeader {
+### Step 4. 敵エリア（モック準拠）
+
+```tsx
+<section className={styles.enemyArea}>
+  <div className={styles.enemyList}>
+    {state.enemies.map((e) => (
+      isBoss(e) ? <BossCard ... /> : <ZakoCard ... />
+    ))}
+  </div>
+  {/* 召喚体 */}
+  {state.summons.length > 0 && (
+    <div className={styles.summonsWrap}>
+      <span className={styles.summonsHead}>召喚体 ・ {alive}/{max}</span>
+      <div className={styles.summonsList}>...</div>
+    </div>
+  )}
+</section>
+```
+
+```scss
+.enemyArea {
+  flex: 0 0 auto;
+  position: relative;
+  padding: 14px 12px 12px;
+  background: radial-gradient(95% 85% at 50% 16%, #241b22, var(--bg-deep) 78%);
+}
+.enemyList {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: var(--font-display);
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* BossCard / ZakoCard はモック準拠の寸法・色を厳守 */
+.summonsWrap { margin-top: 12px; }
+.summonsHead {
   font-size: 9px;
+  letter-spacing: .18em;
+  color: #8fd0a0;
+  margin-bottom: 5px;
+  display: block;
+}
+.summonsList { display: flex; gap: 6px; }
+```
+
+### Step 5. 味方エリア（前衛 / 後衛）
+
+```tsx
+<section className={styles.allyArea}>
+  <span className={styles.allyHeadFront}>前衛</span>
+  <div className={styles.allyFront}>
+    {alliesFront.map((a) => <AllyCard ... />)}
+  </div>
+  <span className={styles.allyHeadBack}>
+    後衛 <span className={styles.allyHeadBackSub}>近接被ダメ −30%</span>
+  </span>
+  <div className={styles.allyBack}>
+    {alliesBack.map((a) => <AllyCard ... />)}
+  </div>
+</section>
+```
+
+```scss
+.allyArea {
+  flex: 0 0 auto;
+  padding: 12px 12px 8px;
+  border-top: 1px solid var(--rule-soft);
+}
+.allyHeadFront {
+  display: block;
+  font-size: 9px;
+  letter-spacing: .18em;
   color: var(--gold);
-  letter-spacing: .14em;
+  margin: 0 0 5px;
 }
-
-.logHeaderHint { color: var(--text-faint); letter-spacing: 0; }
-
-.logBody {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.allyFront {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
 }
-
-.logLine {
-  color: var(--text-mute);
+.allyHeadBack {
+  display: block;
+  font-size: 9px;
+  letter-spacing: .18em;
+  color: var(--text-blue);
+  margin: 0 0 5px;
 }
-
-.logLineNew {
-  color: var(--text-base);
-  animation: obsidian-warnBlink 0.4s steps(1) 1;
+.allyHeadBackSub {
+  color: var(--text-quote);
+  letter-spacing: 0;
+}
+.allyBack {
+  /* モック準拠で中央 2 列に詰める */
+  display: grid;
+  grid-template-columns: repeat(2, calc((100% - 12px) / 3));
+  justify-content: center;
+  gap: 6px;
 }
 ```
 
-ログオーバーレイ（全履歴）はモック line 1069 のとおり `inset: 0; background: rgba(6,7,10,.93);`:
+### Step 6. コマンドパネル（4 モード）
 
-```scss
-.logOverlayBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(6, 7, 10, 0.93);
-  padding: 20px 18px;
-  cursor: pointer;
-  overflow-y: auto;
-}
-
-.logOverlayHead {
-  font-family: var(--font-display);
-  font-size: 14px;
-  color: var(--gold);
-  margin-bottom: 14px;
-}
-
-.logOverlayBody {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 2;
-  color: var(--text-mute);
-}
+```tsx
+<section className={styles.commandPanel}>
+  {uiMode.kind === 'global' && <GlobalCommands ... />}
+  {uiMode.kind === 'individual' && <IndividualCommands ... />}
+  {skillMenu && <SkillMenuPanel ... />}
+  {uiMode.kind === 'strategy' && <StrategyPanel ... />}
+  {uiMode.kind === 'target' && <TargetPanel ... />}
+</section>
 ```
 
-### Step 7. コマンドパネル (`.command`)
-
-モック (line 1060〜1066) の global / individual / strategy / target / skill すべての
-モードを既存実装が同じ `.command` 内で切り替えている。**JSX 構造は触らない**ので、
-SCSS だけ各クラスに当てる:
-
 ```scss
-.command {
+.commandPanel {
   flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 9px;
+  background: linear-gradient(180deg, rgba(11, 12, 16, 0), var(--surface-card) 30%);
   padding: 12px 14px 14px;
-  background: linear-gradient(180deg, rgba(11,12,16,0), var(--surface-panel) 30%);
 }
+```
 
-.menu {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
+各モードのボタンスタイルはモック準拠で厳密に再現。
 
-.menuBtn {     // global の「たたかう」プライマリ
-  min-height: 50px;
+```scss
+/* global: たたかう / さくせん / にげる */
+.globalPrimary {
+  height: 50px;
   border-radius: 3px;
   background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: var(--bg-mid);
+  color: var(--bg-deep);
   font-weight: 700;
   font-size: 15px;
   letter-spacing: .12em;
-  border: none;
-  cursor: pointer;
 }
-
-// 「さくせん」「にげる」のサブ行
-.menuRow {
-  display: flex;
-  gap: 9px;
-}
-
-.menuBtnSecondary {
+.globalStrategy {
   flex: 1;
-  min-height: 44px;
+  height: 44px;
   border-radius: 3px;
   border: 1px solid rgba(143, 182, 224, .5);
   background: rgba(111, 159, 216, .1);
-  color: var(--info-blue);
+  color: #9cc2ec;
   font-size: 14px;
-  cursor: pointer;
 }
-
-.menuBtnDanger {
+.globalFlee {
   flex: 1;
-  min-height: 44px;
+  height: 44px;
   border-radius: 3px;
-  border: 1px solid var(--danger-glow);
+  border: 1px solid rgba(212, 103, 79, .45);
   background: transparent;
   color: var(--danger-text);
   font-size: 14px;
-  cursor: pointer;
 }
 
-.cmdHead {
-  font-size: 11px;
-  color: var(--gold);
-  margin: 0 0 8px;
-}
+/* individual: 攻撃 / スキル / 道具 / 防御 / もどる */
+.individualAttack { /* primary 46px */ }
+.individualSkill { /* 青系 outline 46px */ }
+.individualItem { /* 緑系 outline 40px */ }
+.individualGuard { /* 白系 outline 40px */ }
+.individualBack { /* グレー 62px */ }
 
-// 対象選択ヒント
-.target {
-  text-align: center;
-  padding: 12px;
-  border: 1px dashed var(--rule-gold);
-  border-radius: 4px;
-  color: var(--text-soft);
-}
-
-.targetAlly {
-  border-color: var(--info-blue);
-  color: var(--info-blue);
-}
-
-.targetMark {
-  font-family: var(--font-display);
-  font-size: 11px;
-  color: var(--gold);
-  letter-spacing: .2em;
-  display: block;
-  margin-bottom: 6px;
-}
-
-.targetName {
-  font-size: 13px;
-  color: var(--text-strong);
-}
-
-.targetHint {
-  font-size: 10px;
-  color: var(--text-faint);
-  margin-left: 6px;
-}
-
-// スキル選択（2 列）
-.skillList {
+/* skill: 横スクロール 2 段 */
+.skillGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-template-rows: 1fr 1fr;
+  grid-auto-columns: 106px;
   gap: 7px;
-  max-height: 180px;
-  overflow-y: auto;
+  overflow-x: auto;
+  padding-bottom: 6px;
 }
-
-.skillBtn {
-  text-align: left;
-  padding: 7px 8px;
-  background: var(--surface-elev);
-  border: 1px solid var(--rule-soft);
-  border-radius: 3px;
-  color: var(--text-base);
-  cursor: pointer;
-}
-
-.skillBtnDisabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.skillName { font-size: 11px; color: var(--text-strong); }
-.skillCost { font-family: var(--font-mono); font-size: 9px; color: var(--info-blue); margin-top: 3px; }
-.skillTag  { font-size: 8px; color: var(--text-faint); margin-top: 2px; }
-
-// 作戦変更
-.strategyList {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.strategyItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border: 1px solid var(--rule-soft);
-  border-radius: 3px;
-  background: var(--surface-elev);
-  color: var(--text-base);
-  cursor: pointer;
-}
-
-.strategyItemActive {
-  border-color: var(--gold);
-  background: var(--gold-tint);
-  color: var(--gold);
-  font-weight: 700;
-}
-
-.strategyDesc {
-  flex: 1;
+.skillScrollHint {
+  font-size: 8px;
+  color: var(--text-quote);
   text-align: right;
-  font-size: 9px;
-  color: var(--text-faint);
-}
-
-// 「もどる」サブ
-.backBtn {
-  min-height: 36px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-base);
-  color: var(--text-mute);
-  background: transparent;
-  font-size: 12px;
-  cursor: pointer;
+  margin-top: 2px;
 }
 ```
 
-### Step 8. リザルト / 敗北 / 逃走 オーバーレイ
+### Step 7. ログオーバーレイ / リザルト / 敗北 / 逃走
 
-#### リザルト (`.resultOverlay` / `.result`)
+各オーバーレイは `position: absolute; inset: 0; z-index: 20;` のレイヤーで、モック準拠の色とフォントで実装。
+**マークアップ構造は新規ではなく、現状実装のオーバーレイを SCSS だけ調整するイメージ**。文言・hook 呼び出しは触らない。
 
-モック (line 1071) は `position: absolute; inset: 0; background: rgba(6,7,10,.96)` で
-画面いっぱい。
+### Step 8. 反転した「機能優先」方針の取り扱い
 
-```scss
-.resultOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(6, 7, 10, 0.96);
-  padding: 22px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-}
+- 「リザルト例 ▸」デバッグチップは省略（モックでもデバッグ用注記あり）。**例外**として明記。
+- 「道具」「防御」ボタンは既存実装で機能無しの場合 disabled で残す。**位置・形は維持**。
+- 「作戦変更」は既存実装が動いていれば既存どおり。動いていない場合は disabled。
+- 行動順帯の「行動済み / 未行動」状態区別はスキップ（§4.1 参照）。**例外**として明記。
 
-.result { flex: 1; display: flex; flex-direction: column; gap: 14px; }
-
-.resultTitle {
-  font-family: var(--font-display);
-  font-size: 22px;
-  color: var(--gold);
-  text-align: center;
-  letter-spacing: .2em;
-  text-shadow: 0 0 20px var(--gold-glow);
-}
-
-.resultBody { color: var(--text-base); font-size: 13px; line-height: 1.8; }
-
-.expList { display: flex; flex-direction: column; gap: 10px; }
-
-.expRow {
-  background: var(--surface-panel);
-  border: 1px solid var(--rule-gold);
-  border-radius: 4px;
-  padding: 12px 14px;
-}
-
-.expName {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-family: var(--font-display);
-  font-size: 14px;
-  color: var(--text-strong);
-}
-
-.expLv { font-family: var(--font-mono); font-size: 12px; color: var(--gold); }
-.expUp { color: var(--success); margin-left: 4px; }
-
-.victoryGold {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: var(--gold-tint);
-  border: 1px solid var(--rule-gold);
-  border-radius: 3px;
-  color: var(--gold);
-  font-family: var(--font-mono);
-  font-size: 14px;
-}
-
-.primary {        // 「ダンジョンへ戻る」ボタン
-  min-height: 50px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: var(--bg-mid);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: .12em;
-  border: none;
-  cursor: pointer;
-  margin-top: auto;
-}
-```
-
-#### 敗北（モック 9d）
-
-ロジック側で defeat オーバーレイを既に出している前提。背景・タイポを黒曜に:
-
-```scss
-.defeatOverlay {       // 既存クラス名に合わせて命名（無ければ追加して JSX 側も微調整）
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: radial-gradient(circle at 50% 45%, rgba(120, 20, 24, .3), #0a0608 65%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  padding: 40px 20px max(40px, env(safe-area-inset-bottom, 0px));
-}
-
-.defeatTitle {
-  font-family: var(--font-display);
-  font-size: clamp(36px, 11vw, 46px);
-  color: var(--danger);
-  letter-spacing: .3em;
-  text-shadow: 0 0 30px rgba(178, 60, 48, 0.6);
-}
-
-.defeatBody {
-  font-size: 13px;
-  color: var(--text-mute);
-  line-height: 1.9;
-  text-align: center;
-}
-
-.defeatAction {
-  margin-top: 22px;
-  min-height: 50px;
-  width: clamp(180px, 56vw, 220px);
-  border: 1px solid var(--rule-gold-strong);
-  border-radius: 3px;
-  background: var(--gold-tint);
-  color: var(--gold);
-  font-size: 13px;
-  letter-spacing: .16em;
-  cursor: pointer;
-}
-```
-
-#### 逃走成功（モック 9e）
-
-```scss
-.fleeOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: radial-gradient(80% 70% at 30% 45%, #1a1f2b, var(--bg-deep) 75%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 20px;
-}
-
-.fleeTitle {
-  font-family: var(--font-display);
-  font-size: clamp(24px, 8vw, 30px);
-  color: var(--success);
-  letter-spacing: .2em;
-}
-
-.fleeBody { font-size: 13px; color: var(--text-faint); }
-
-.fleeAction {
-  margin-top: 30px;
-  min-height: 48px;
-  width: clamp(180px, 56vw, 220px);
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: var(--bg-mid);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: .12em;
-  border: none;
-  cursor: pointer;
-}
-```
-
-#### intro オーバーレイ（モック 9b・エンカウント開始）
-
-既存実装に intro オーバーレイがあれば、背景 `radial-gradient(circle at 50% 42%, rgba(120,30,28,.22), transparent 62%)` + 中央封蝋スタンプ風（既存の `InkSplatter` variant='seal' があれば
-それを使う・無ければ簡素な glow）に整える。**無ければ追加しない**（intro 演出は別タスク）。
-
-### Step 9. 演出フラッシュ・ユニオン
-
-- `.unionBanner` 系は既存命名を踏襲し、`background: var(--gold-tint); border: 1px solid var(--gold); color: var(--text-strong);` で整える。
-- ユニオンキャンセル `.unionCancel`: ghost ボタン (`border: 1px solid var(--rule-base); color: var(--text-mute); background: transparent;`)。
-
-### Step 10. ストーリー追加（任意）
-
-既存 4 ストーリー（`Default` / `NoLog` / `SkillMenu` / `BossEncounter`）は維持。`Strategy`
-（さくせん変更 UI を開いた状態）を撮りたければ `Battle.stories.tsx` に `__storyMockOpenStrategy: true`
-の仕掛けがあるか確認し、無ければ play で「さくせん」ボタンを click するストーリーを追加してよい。
-必須ではない。
-
----
-
-## 機能優先で省略 / 追加するもの
-
-### 省略（モックにあるが現状機能に無い）
-
-- モック line 996 の **行動順帯** (`順 [icon][icon]...`): 行動順の UI 表示は現状無い
-  （内部的に `pickAutoCommand` で逐次解決はしているが、ユーザーに事前公開する UI はない）。
-  仕様未定義なので **省略**。
-- モック line 1063 個別 UI の **「ガード（防御）」ボタン**: 仕様 §2.13 にはガード（防御）
-  が存在するが、既存実装の個別コマンドが `攻撃 / 防御 / スキル / アイテム` の 4 ボタンを
-  どこまで描画しているかを `src/pages/battle/index.tsx` 内の **JSX のみ目視確認**して、
-  既存に「防御」が無ければ **追加しない**（仕様変更扱い）。既存にあれば SCSS だけ装飾する。
-- モック line 1063〜1064 の **個別コマンド内「もどる」**: 既存実装でモード遷移の戻りボタン
-  があるはず。SCSS は `.backBtn` で対応する。
-- モック line 1087 の **攻撃エフェクト 7 種 SVG**: `InkSplatter` 等の共通エフェクト責務
-  なので battle 画面では扱わない。
-- モック line 1091 の **「会心 / 被弾 / 詠唱 / 回復 / 召喚 / 撃破 / ユニオン / エンカウント」
-  汎用 FX**: 同上。
-
-### 維持 / 追加（機能上必要・モックに無くても残す）
-
-- **召喚体エリア**: モック line 1029 にも描かれているが、無くても残す。MAX_SUMMONS=3 を満たす。
-- **ターゲット中の敵カードに耐性コンパクト表示** (`ResistBadges compact`): 仕様 §4.9 で
-  必須。`.targeted .enemyResist { min-height: 36px; }` で領域確保。
-- **状態異常マーク** (`🔒 / 🌀`) と **作戦短縮ラベル** (`ガ / バ / 命 / TP / 命令`):
-  仕様 §4.9 で必須。`.ailMark` / `.cardStrategy` に黒曜カラーで装飾。
-- **個別 UI の `▶ {cmdLabel}` 表示**: 既存実装の `.cardCmd` を維持。
-
----
-
-## 追加トークン
-
-新規追加なし。
-
----
-
-## 検証
+## 7. 検証
 
 ```
 yarn lint
@@ -952,58 +542,36 @@ yarn test --run
 yarn tsc -b
 ```
 
-すべて緑であること。**battle はテストが厚い**ので、構造変更でテストが落ちた場合は
-**SCSS を直すのではなく、JSX 変更を最小限に巻き戻す**こと（assert 文を変えないのが原則）。
+3 点すべて緑。`combat.test.ts` に追加した `previewTurnOrder` のテスト（1 件）も含めて緑。
 
-Storybook（`yarn storybook --host 0.0.0.0`）で `Pages/Battle` の 4 ストーリーが
-黒曜カラーで描画され、敵 6 + 味方 5 がすべて画面内に収まり、コマンドパネルが下端を占めて
-いることを目視確認。
-
----
-
-## ブランチ / コミット
-
-現在の `feature/redesign-A` ブランチで作業する。コミットを 1 つ追加して commit SHA を
-報告（push はしない）。
+## 8. コミット
 
 ```
-feat(theme): apply 黒曜 OBSIDIAN MINIMAL to battle page
+feat(redesign-A): rebuild battle page to match mock v2 (改訂版)
 
-- repaint enemy / summon / party / log / command surfaces with obsidian tokens
-- clamp enemy card width so 6 zako + boss md fit within iPhone SE dvh
-- restyle result / defeat / flee overlays as fixed inset modals
-- keep JSX logic and existing test assertions untouched
+- add turn-order bar (previewTurnOrder helper + UI band)
+- chapter mark + gold-bordered log preview per mock
+- enemy area: boss-card + zako-card sizes per mock
+- ally area: front 3-col + back 2-col centered per mock
+- command panel: global / individual / skill (2-row scroll) / strategy / target per mock
+- log / result / defeat / flee overlays per mock
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
 ```
 
+push 不要。SHA を最終応答で報告。
+
 ---
 
-## 想定 Q&A
+## 機能優先で残す例外（必ず最終応答で明記）
 
-- **敵カードに `width: clamp(58px, 18vw, 120px)` を当てるとボス（md）と雑魚（sm）が同じ
-  幅になって寸詰まり**: ボスカードに専用クラス（`.enemyBoss`）が既に付いているかを
-  `index.tsx` で **目視確認**する。付いていれば `.enemyBoss { width: clamp(96px, 28vw, 140px); }`
-  でオーバーライド。付いていなければ、`EnemySprite` の size prop（`md` / `sm`）に応じた
-  外側ラッパを分けるよう JSX を最小調整してよい（**それ以外の JSX は触らない**）。
-- **行動順帯を出すべき?**
-  出さない（理由は「省略するもの」の冒頭を参照）。
-- **「ガード（防御）」ボタンが既存実装にあるか確認したい**:
-  `index.tsx` の Step 7 で示した `.cmdHead` が出る個別 UI の `if (isIndividual)` ブロック
-  を **目視確認**する。`<button ...>防御</button>` のような行があれば SCSS だけあてる。
-  なければ追加しない（仕様変更扱い）。
-- **モックの「攻撃 7 種カラーバッヂ」を入れたい**:
-  入れない（共通エフェクトの責務）。
-- **`.command` を `flex: 1 1 auto;` にしたら敵カードが詰まって `EnemySprite` が縮む**:
-  `.enemies` に `flex-shrink: 0; min-height` を持たせる。`min-height` は雑魚 6 体ぶんの
-  実測値で OK（例: `min-height: 130px;`）。それ以上の縮みが必要な短画面は媒体側で
-  `@media (max-height: 720px)` で更にカードサイズを縮める。
-- **既存テストで `getByText('たたかう')` などが使われていたら**:
-  ボタン文言を変えないので通る。
-- **リザルトのレベルアップダイアログを LIFO で積み上げる仕様（§2.14-7）はどう実装する?**
-  既存実装が `.expRow` を `.map` で描画していれば、SCSS だけ装飾する。LIFO の積み上げ
-  順序ロジックは触らない。
+- 「リザルト例 ▸」デバッグチップ: 省略（モックでもデバッグ用と注記あり）。
+- 行動順帯の「行動済み / 未行動」状態区別: 本改訂版ではスキップ（次ターン予測順のみ表示）。理由: モックに「行動済み」状態が描かれていない & 実装難度（逐次再生中の現在 actor index を取り回す必要あり）。
+- 7 種攻撃エフェクト SVG: 共通 `InkSplatter` の責務として、battle 画面側では追加しない。
 
-不明点が出たら止めて報告すること。
+## 補足: 追加トークン要求
+
+なし。既存の `var(--*)` トークンですべてカバーできる。
+追加が必要になった場合は、本書のこのセクションに「`--turn-order-active-glow` (`0 0 8px rgba(201,168,106,.4)`)」のように追記してから `_obsidian.scss` 編集の要否をディレクターに確認すること（**勝手に追加しない**）。
