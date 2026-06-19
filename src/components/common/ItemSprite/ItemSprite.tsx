@@ -20,9 +20,16 @@ const TIER_HUE_SHIFTS: readonly number[] = [0, 40, 100, 180, 240, 290];
 
 function getHueShift(itemId: ItemId): number {
   const eq = EQUIPMENT[itemId as keyof typeof EQUIPMENT];
-  if (!eq || eq.slot !== 'weapon') return 0;
-  if (eq.weaponType === 'sword' || eq.weaponType === 'fist') return 0; // tier 別色違い画像あり
-  return TIER_HUE_SHIFTS[eq.tier] ?? 0;
+  if (!eq) return 0;
+  if (eq.slot === 'weapon') {
+    if (eq.weaponType === 'sword' || eq.weaponType === 'fist') return 0; // tier 別色違い画像あり
+    return TIER_HUE_SHIFTS[eq.tier] ?? 0;
+  }
+  if (eq.slot === 'armor' && eq.armorType === 'clothes') {
+    // 衣（clothes）は同一ベース画像を使い、tier 別に hue-rotate で色違いを表現
+    return TIER_HUE_SHIFTS[eq.tier] ?? 0;
+  }
+  return 0;
 }
 
 type Props = {

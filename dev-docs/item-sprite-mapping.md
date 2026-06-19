@@ -1,7 +1,18 @@
-# アイテム / 装備スプライト マッピング表 v5（DOT ILLUST + Kenney Tiny Dungeon → 本作 100 個）
+# アイテム / 装備スプライト マッピング表 v6（DOT ILLUST + Kenney Tiny Dungeon + ユーザー提供素材 → 本作 100 個）
 
 > 提供素材: https://dot-illust.net/  （管理人 nko 氏、ライセンスは [enemy-sprite-mapping.md](./enemy-sprite-mapping.md) 参照）
 > Kenney 素材: https://kenney.nl/assets/tiny-dungeon （CC0 1.0、クレジット不要）
+> ユーザー提供素材: 衣（clothes）用フード付きローブ画像
+
+## v5 → v6 の変更点
+
+衣 5 個（clothes）を**ユーザー提供のフード付きローブ画像**に差し替え、CSS `hue-rotate` で tier 別色違いを実装:
+
+- equip_cloth_robe / equip_t2-t5_clothes: 同一ベース画像（ユーザー提供 PNG）+ tier 別色相シフト
+- `ItemSprite.tsx` の hue-rotate 適用範囲を `slot=armor && armorType=clothes` も含めるよう拡張
+- 武器と同じ `TIER_HUE_SHIFTS = [0, 40, 100, 180, 240, 290]` を流用
+
+衣 5 個が ◎ に格上げ、未解決は 15 → **10 件** に減少。
 
 ## v4 → v5 の変更点
 
@@ -16,9 +27,9 @@
 - equip_iron_armor: `shield_buckler_wood` → `armor_iron`（全身鉄鎧に戻す）
 - `ItemSprite.tsx` の hue-rotate を fist も除外（tier 別色違い画像があるため）
 
-残り 15 件は DOT ILLUST に単体素材が存在せず、ユーザー調達依頼として据え置き（詳細は「ユーザー調達依頼リスト」参照）
+残り 15 件は DOT ILLUST に単体素材が存在せず、ユーザー調達依頼として据え置き（v6 で衣 5 個が解決し残り 10 件に減少。詳細は「ユーザー調達依頼リスト」参照）
 
-## ユーザー調達依頼リスト（15 件）
+## ユーザー調達依頼リスト（10 件）
 
 DOT ILLUST にも Kenney にも適切な素材が見つからなかった以下のアイテムは、別の素材ソース（OpenGameArt / pixela / AI 生成等）から調達が必要です。
 
@@ -32,16 +43,6 @@ DOT ILLUST にも Kenney にも適切な素材が見つからなかった以下�
 | equip_t3_light | 軽装 tier 3 | `character_heishi_armor_02_01_red` | 兵士キャラ絵（ユーザー NG） |
 | equip_t4_light | 軽装 tier 4 | `character_heishi_armor_02_01_blue` | 兵士キャラ絵（ユーザー NG） |
 | equip_t5_light | 軽装 tier 5 | `character_heishi_armor_02_01_green` | 兵士キャラ絵（ユーザー NG） |
-
-### 衣 5 個（ローブ単体絵が必要）
-
-| ID | 名前 | 現状スラッグ | 理由 |
-|---|---|---|---|
-| equip_cloth_robe | 布のローブ | `character_shinpu_green` | 神父キャラ絵（ユーザー NG） |
-| equip_t2_clothes | 衣 tier 2 | `character_soryo_purple` | 僧侶キャラ絵（ユーザー NG） |
-| equip_t3_clothes | 衣 tier 3 | `character_madoshi_01_black` | 魔道士キャラ絵（ユーザー NG） |
-| equip_t4_clothes | 衣 tier 4 | `character_mahotsukai_01_purple` | 魔法使いキャラ絵（ユーザー NG） |
-| equip_t5_clothes | 衣 tier 5 | `character_mahotsukai_02_black` | 魔法使いキャラ絵（ユーザー NG） |
 
 ### しっぽ 1 個（尻尾単体絵が必要）
 
@@ -205,11 +206,11 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 | | 3 | equip_t3_light | `character_heishi_armor_02_01_red` **(未解決)** | ○ |
 | | 4 | equip_t4_light | `character_heishi_armor_02_01_blue` **(未解決)** | ○ |
 | | 5 | equip_t5_light | `character_heishi_armor_02_01_green` **(未解決)** | ○ |
-| **clothes（衣）** | 0 | equip_cloth_robe | `character_shinpu_green` **(未解決)** | ○ |
-| | 2 | equip_t2_clothes | `character_soryo_purple` **(未解決)** | ○ |
-| | 3 | equip_t3_clothes | `character_madoshi_01_black` **(未解決)** | ○ |
-| | 4 | equip_t4_clothes | `character_mahotsukai_01_purple` **(未解決)** | ○ |
-| | 5 | equip_t5_clothes | `character_mahotsukai_02_black` **(未解決)** | ○ |
+| **clothes（衣）** | 0 | equip_cloth_robe | **ユーザー提供ローブ** + hue 0° | ◎ |
+| | 2 | equip_t2_clothes | **ユーザー提供ローブ** + hue 40° | ◎ |
+| | 3 | equip_t3_clothes | **ユーザー提供ローブ** + hue 100° | ◎ |
+| | 4 | equip_t4_clothes | **ユーザー提供ローブ** + hue 180° | ◎ |
+| | 5 | equip_t5_clothes | **ユーザー提供ローブ** + hue 240° | ◎ |
 | **accessory（装飾）** | 0 | equip_amulet | `ring_bronze` | ◎ |
 | | 2 | equip_t2_accessory | `ring_silver` | ◎ |
 | | 3 | equip_t3_accessory | `ring_gold` | ◎ |
