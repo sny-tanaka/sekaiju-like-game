@@ -18,7 +18,7 @@ export const Page = () => {
   const { save } = useGameState();
   const play = useSfx();
   const [tab, setTab] = useState<'record' | 'codex'>('record');
-  // 選択中のモンスター ID（タップで詳細展開）
+  // 選択中のモンスター ID（図鑑グリッドでタップして詳細カード表示）
   const [selectedId, setSelectedId] = useState<EnemyId | null>(null);
 
   if (!save) {
@@ -29,15 +29,31 @@ export const Page = () => {
   const sum = codexSummary(save);
   const entries = monsterCodex(save);
 
-  const toggleEntry = (id: EnemyId, seen: boolean) => {
+  const handleCellTap = (id: EnemyId, seen: boolean) => {
     if (!seen) return; // 未遭遇は展開しない
     play('cursor');
     setSelectedId((prev) => (prev === id ? null : id));
   };
 
-  // 達成率リング: 2 * pi * 25 ≈ 157
-  const ringCircumference = 157;
-  const ringOffset = Math.round(ringCircumference * (1 - sum.completionPct / 100));
+  // SVG ring 計算
+  const ringRadius = 25;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference * (1 - sum.completionPct / 100);
+
+  // 最高撃破ボス名（bossDefeatLog の最大階から ENEMIES を引く）
+  const highestBossName = (() => {
+    if (rec.bossDefeatLog.length === 0) return null;
+    const sorted = [...rec.bossDefeatLog].sort((a, b) => b.depth - a.depth);
+    const depth = sorted[0].depth;
+    // depth に対応するボスを探す（tierBand は 10 階層で 1 帯）
+    const boss = Object.values(ENEMIES).find(
+      (e) => e.isBoss && Math.ceil(e.tierBand * 10) >= depth && e.tierBand * 10 <= depth + 10
+    );
+    return boss?.name ?? `${depth}F のボス`;
+  })();
+
+  const selectedEntry = selectedId ? (entries.find((e) => e.id === selectedId) ?? null) : null;
+  const selectedMaster = selectedId ? (ENEMIES[selectedId] ?? null) : null;
 
   return (
     <div className={styles.layout}>
@@ -46,6 +62,7 @@ export const Page = () => {
         <h1 className={styles.title}>図鑑 / 記録</h1>
       </header>
 
+      {/* タブ: 矩形・金箔アクティブ（モック §7 準拠） */}
       <div className={styles.tabs}>
         <button
           type="button"
@@ -53,6 +70,7 @@ export const Page = () => {
           onClick={() => {
             play('cursor');
             setTab('record');
+            setSelectedId(null);
           }}
         >
           到達記録
@@ -69,51 +87,54 @@ export const Page = () => {
         </button>
       </div>
 
-      {tab === 'record' ? (
+      {/* ---------- 到達記録タブ ---------- */}
+      {tab === 'record' && (
         <div className={styles.records}>
-          {/* 2x2 統計カードグリッド */}
-          <div className={styles.statGrid}>
+          {/* 2x2 統計カード */}
+          <div className={styles.statsGrid}>
             <div className={styles.statCard}>
-              <span className={styles.statLabel}>最深到達階</span>
-              <span className={styles.statNum}>
+              <span className={styles.statCardLabel}>最深到達階</span>
+              <span className={styles.statCardNum}>
                 {rec.deepestReached}
-                <span className={styles.statSuffix}>F</span>
+                <span className={styles.statCardUnit}>F</span>
               </span>
             </div>
             <div className={styles.statCard}>
-              <span className={styles.statLabel}>挑戦回数</span>
-              <span className={styles.statNum}>{rec.totalDives}</span>
+              <span className={styles.statCardLabel}>挑戦回数</span>
+              <span className={styles.statCardNum}>{rec.totalDives}</span>
             </div>
             <div className={styles.statCard}>
-              <span className={styles.statLabel}>最高撃破ボス</span>
-              {rec.highestBossDefeated > 0 ? (
-                <span className={styles.statText}>{rec.highestBossDefeated}F のボス</span>
+              <span className={styles.statCardLabel}>最高撃破ボス</span>
+              {highestBossName ? (
+                <>
+                  <span className={styles.statCardBossName}>{highestBossName}</span>
+                  <span className={styles.statCardBossTier}>{rec.highestBossDefeated}F</span>
+                </>
               ) : (
-                <span className={styles.statText}>—</span>
+                <span className={styles.statCardNum}>—</span>
               )}
             </div>
             <div className={styles.statCard}>
-              <span className={styles.statLabel}>図鑑達成率</span>
+              <span className={styles.statCardLabel}>図鑑達成率</span>
               <div className={styles.ringWrap}>
                 <svg
                   viewBox="0 0 60 60"
-                  className={styles.ringSvg}
-                  aria-hidden
+                  className={styles.ringsvg}
                 >
                   <circle
                     cx="30"
                     cy="30"
-                    r="25"
+                    r={ringRadius}
                     fill="none"
-                    stroke="var(--rule-base)"
+                    stroke="rgba(33,36,27,0.12)"
                     strokeWidth="5"
                   />
                   <circle
                     cx="30"
                     cy="30"
-                    r="25"
+                    r={ringRadius}
                     fill="none"
-                    stroke="var(--gold)"
+                    stroke="#B89255"
                     strokeWidth="5"
                     strokeDasharray={ringCircumference}
                     strokeDashoffset={ringOffset}
@@ -121,108 +142,138 @@ export const Page = () => {
                     strokeLinecap="round"
                   />
                 </svg>
-                <span className={styles.ringText}>{sum.completionPct}%</span>
+                <span className={styles.ringPct}>{sum.completionPct}%</span>
               </div>
             </div>
           </div>
 
-          <p className={styles.h2Caption}>
-            ボス撃破履歴 <span className={styles.h2Sub}>新しい順</span>
+          {/* ボス撃破履歴 */}
+          <p className={styles.sectionLabel}>
+            ボス撃破履歴<span className={styles.sectionLabelSub}>（新しい順）</span>
           </p>
           {rec.bossDefeatLog.length === 0 ? (
             <p className={styles.empty}>まだボスを倒していません。</p>
           ) : (
             <ul className={styles.bossLog}>
-              {rec.bossDefeatLog
-                .slice()
-                .reverse()
-                .map((b, i) => (
-                  <li
-                    key={i}
-                    className={styles.bossRow}
-                  >
-                    <span className={styles.bossDepth}>{b.depth}F</span>
-                    <span className={styles.bossText}>のボスを撃破</span>
-                    <span className={styles.bossSeal}>✦</span>
-                  </li>
-                ))}
+              {[...rec.bossDefeatLog].reverse().map((b, i) => (
+                <li
+                  key={i}
+                  className={styles.bossRow}
+                >
+                  <span className={styles.bossStamp}>✦</span>
+                  <span className={styles.bossName}>{b.depth}F のボス</span>
+                  <span className={styles.bossMeta}>{b.depth}F</span>
+                </li>
+              ))}
             </ul>
           )}
         </div>
-      ) : (
+      )}
+
+      {/* ---------- 図鑑タブ ---------- */}
+      {tab === 'codex' && (
         <div className={styles.codex}>
-          <div className={styles.codexSummary}>
-            <span>
-              撃破 {sum.monstersDefeated}/{sum.monstersTotal}・ドロップ {sum.dropsFound}/
+          {/* サマリ行 */}
+          <div className={styles.codexSummaryRow}>
+            <span className={styles.codexSummaryText}>
+              撃破 {sum.monstersDefeated}/{sum.monstersTotal} ・ ドロップ {sum.dropsFound}/
               {sum.dropsTotal}
             </span>
             <span className={styles.codexSummaryPct}>{sum.completionPct}%</span>
           </div>
-          <div className={styles.list}>
-            {entries.map((e) => {
-              const isOpen = selectedId === e.id;
-              const master = ENEMIES[e.id];
-              return (
+
+          {/* 選択中ボスの詳細カード（グリッドの上に独立表示） */}
+          {selectedEntry && selectedMaster && (
+            <div className={styles.bossDetail}>
+              <div className={styles.bossDetailLeft}>
+                <div className={styles.bossDetailSprite}>
+                  <EnemySprite
+                    enemyId={selectedEntry.id}
+                    size="md"
+                  />
+                </div>
+              </div>
+              <div className={styles.bossDetailInfo}>
+                <div className={styles.bossDetailNameRow}>
+                  <span className={styles.bossDetailName}>{selectedEntry.name}</span>
+                  {selectedEntry.defeated && <span className={styles.badge}>撃破</span>}
+                </div>
+                <div className={styles.bossDetailMeta}>
+                  第{selectedEntry.tierBand + 1}帯 ・{' '}
+                  {selectedMaster.isBoss ? 'ボス' : 'モンスター'}
+                </div>
+                <div className={styles.bossDetailResist}>
+                  <ResistBadges
+                    elementResist={selectedMaster.resist}
+                    ailmentResist={undefined}
+                  />
+                </div>
+                <div className={styles.bossDetailResist}>
+                  <ResistBadges
+                    elementResist={undefined}
+                    ailmentResist={resolveEnemyAilmentResist(selectedEntry.id)}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ドロップ行（選択中のみ） */}
+          {selectedEntry && selectedEntry.drops.length > 0 && (
+            <div className={styles.dropRow}>
+              {selectedEntry.drops.map((d) => (
                 <div
-                  key={e.id}
-                  className={`${styles.row} ${e.seen ? '' : styles.unseen} ${e.seen ? styles.rowClickable : ''}`}
-                  role={e.seen ? 'button' : undefined}
-                  tabIndex={e.seen ? 0 : undefined}
-                  onClick={() => toggleEntry(e.id, e.seen)}
-                  onKeyDown={(ev) => {
-                    if (ev.key === 'Enter' || ev.key === ' ') toggleEntry(e.id, e.seen);
-                  }}
+                  key={d.itemId}
+                  className={`${styles.dropCell} ${d.found ? styles.dropFound : styles.dropUnknown}`}
                 >
-                  <div className={styles.thumb}>
+                  {d.found ? d.name : '未入手'}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 6列グリッド */}
+          <div className={styles.entries}>
+            <div className={styles.gridLabel}>
+              <span className={styles.gridLabelText}>一覧 ・ {sum.monstersTotal} 体</span>
+              <span className={styles.gridLegend}>金=ボス / 緑=撃破 / 影=未遭遇</span>
+            </div>
+            <div className={styles.grid}>
+              {entries.map((e) => {
+                const master = ENEMIES[e.id];
+                const isBoss = master?.isBoss ?? false;
+                const isSelected = selectedId === e.id;
+                let cellClass = styles.cell;
+                if (!e.seen) cellClass += ` ${styles.cellUnseen}`;
+                else if (e.defeated) cellClass += ` ${styles.cellDefeated}`;
+                else cellClass += ` ${styles.cellSeen}`;
+                if (isBoss) cellClass += ` ${styles.cellBoss}`;
+                if (isSelected) cellClass += ` ${styles.cellSelected}`;
+
+                return (
+                  <div
+                    key={e.id}
+                    className={cellClass}
+                    role={e.seen ? 'button' : undefined}
+                    tabIndex={e.seen ? 0 : undefined}
+                    onClick={() => handleCellTap(e.id, e.seen)}
+                    onKeyDown={(ev) => {
+                      if (ev.key === 'Enter' || ev.key === ' ') handleCellTap(e.id, e.seen);
+                    }}
+                    aria-label={e.seen ? e.name : '未遭遇のモンスター'}
+                    aria-pressed={isSelected || undefined}
+                  >
                     <EnemySprite
                       enemyId={e.id}
                       size="sm"
                       silhouette={!e.seen}
-                      alt={e.seen ? e.name : '未遭遇のモンスター'}
+                      alt={e.seen ? e.name : '未遭遇'}
+                      className={styles.cellSprite}
                     />
                   </div>
-                  <div className={styles.info}>
-                    <span className={styles.name}>
-                      {e.seen ? e.name : '？？？'}
-                      {e.defeated ? <span className={styles.badge}>撃破</span> : null}
-                      {e.seen ? <span className={styles.expand}>{isOpen ? '▲' : '▼'}</span> : null}
-                    </span>
-                    <span className={styles.sub}>
-                      第{e.tierBand + 1}帯
-                      {e.seen && e.drops.length > 0
-                        ? '・' + e.drops.map((d) => (d.found ? d.name : '？')).join(' / ')
-                        : ''}
-                    </span>
-                  </div>
-
-                  {/* §16: 耐性詳細（遭遇済みのみ展開表示） */}
-                  {isOpen && master ? (
-                    <div className={styles.resistDetail}>
-                      <div className={styles.spriteLarge}>
-                        <EnemySprite
-                          enemyId={e.id}
-                          size="lg"
-                        />
-                      </div>
-                      <div className={styles.resistSection}>
-                        <span className={styles.resistHead}>属性</span>
-                        <ResistBadges
-                          elementResist={master.resist}
-                          ailmentResist={undefined}
-                        />
-                      </div>
-                      <div className={styles.resistSection}>
-                        <span className={styles.resistHead}>状態異常</span>
-                        <ResistBadges
-                          elementResist={undefined}
-                          ailmentResist={resolveEnemyAilmentResist(e.id)}
-                        />
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

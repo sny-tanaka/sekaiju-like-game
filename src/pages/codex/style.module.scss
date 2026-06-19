@@ -1,5 +1,8 @@
-// codex 画面 — 黒曜 OBSIDIAN MINIMAL テーマ
-// var(--*) は src/_obsidian.scss / src/index.scss が :root に配布するカスタムプロパティ
+@use 'variables' as var;
+
+// ===========================================================
+// codex — 図鑑/記録（v2: モック忠実化）
+// ===========================================================
 
 .layout {
   display: flex;
@@ -7,164 +10,177 @@
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 14px 20px max(16px, env(safe-area-inset-bottom, 0px));
+  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
+  color: var.$ink;
   overflow: hidden;
-  background: var(--bg-page-gradient);
-  color: var(--text-base);
-  font-family: var(--font-body);
-  gap: 12px;
+  background-color: var.$parchment;
 }
 
-// ---- ヘッダー ----
+// ---- ヘッダ ----
 .head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
+  flex: none;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.75px solid var.$rule;
 }
 
 .chapterMark {
-  font-family: var(--font-display);
+  font-family: 'Kaisei Tokumin', serif;
   font-size: 12px;
-  letter-spacing: 0.32em;
-  color: var(--text-blue);
-  margin: 0;
+  font-weight: 500;
+  color: var.$ink-faint;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
 }
 
 .title {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(18px, 5.2vw, 22px);
-  color: var(--text-strong);
   margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+  color: var.$ink;
 }
 
-// ---- タブ ----
+// ---- タブ: 矩形、アクティブ=金箔背景 ----
 .tabs {
+  flex: none;
   display: flex;
   gap: 4px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--rule-soft);
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(33, 36, 27, 0.15);
 }
 
 .tab {
   flex: 1;
-  min-height: 44px;
-  padding: 9px 0;
+  min-height: 40px;
   border: none;
-  background: transparent;
-  color: var(--text-faint);
+  border-radius: 0;
+  background-color: transparent;
+  color: var.$ink-faint;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  border-radius: 3px 3px 0 0;
-  font-family: var(--font-body);
-
-  &:active {
-    background: var(--surface-elev);
-  }
+  padding: 9px 0;
+  transition: color 140ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tabActive {
-  background: var(--gold);
-  color: var(--bg-mid);
+  background-color: var.$illumination-gold;
+  color: var.$ink;
   font-weight: 700;
+  border-radius: 0;
 }
 
-// ---- 到達記録タブ ----
-.records {
-  flex: 1 1 auto;
+// ---- 共通: 内部スクロール領域 ----
+%scrollRegion {
+  flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  padding-top: 12px;
 }
 
-.statGrid {
+// ==========================================================
+// 到達記録タブ
+// ==========================================================
+.records {
+  @extend %scrollRegion;
+}
+
+// 2x2 統計カード grid
+.statsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .statCard {
-  background: var(--surface-panel);
-  border: 1px solid var(--rule-soft);
-  border-radius: 4px;
-  padding: 12px 14px;
+  background-color: var.$parchment-card;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-height: 80px;
 }
 
-.statLabel {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: var(--text-faint);
+.statCardLabel {
+  font-size: 11px;
+  color: var.$ink-faint;
+  letter-spacing: 0.04em;
 }
 
-.statNum {
-  font-family: var(--font-mono);
-  font-size: clamp(22px, 6vw, 26px);
+.statCardNum {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 24px;
   font-weight: 700;
-  color: var(--gold);
-  line-height: 1;
+  color: var.$illumination-gold;
+  line-height: 1.1;
+  margin-top: 4px;
 }
 
-.statSuffix {
-  font-size: 13px;
-  color: var(--text-faint);
-  margin-left: 2px;
-}
-
-.statText {
-  font-family: var(--font-display);
+.statCardUnit {
   font-size: 14px;
-  color: var(--text-strong);
+  color: var.$ink-faint;
 }
 
-// 達成率リング
+.statCardBossName {
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 15px;
+  color: var.$ink;
+  margin-top: 6px;
+  line-height: 1.3;
+}
+
+.statCardBossTier {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var.$ink-faint;
+}
+
+// SVG リング（図鑑達成率）
 .ringWrap {
   position: relative;
   width: 60px;
   height: 60px;
-  margin-top: 4px;
+  margin: 6px auto 0;
 }
 
-.ringSvg {
+.ringsvg {
   width: 60px;
   height: 60px;
 }
 
-.ringText {
+.ringPct {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
-  color: var(--gold);
-}
-
-.h2Caption {
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  color: var(--gold);
   font-weight: 700;
-  margin: 0;
+  color: var.$illumination-gold;
 }
 
-.h2Sub {
-  color: var(--text-faint);
-  letter-spacing: 0;
-  font-weight: 400;
-  margin-left: 6px;
+// セクションラベル
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var.$illumination-gold;
+  margin: 0 0 10px;
+}
+
+.sectionLabelSub {
   font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var.$ink-faint;
 }
 
+// ボス撃破履歴
 .bossLog {
   list-style: none;
   margin: 0;
@@ -178,221 +194,277 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  background-color: var.$parchment-card;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
   padding: 10px 12px;
-  background: var(--surface-panel);
-  border: 1px solid var(--rule-soft);
-  border-radius: 3px;
-  color: var(--text-base);
-  font-size: 13px;
 }
 
-.bossDepth {
-  font-family: var(--font-mono);
-  color: var(--gold);
-  font-weight: 700;
-}
-
-.bossText {
-  flex: 1;
-  font-size: 13px;
-}
-
-.bossSeal {
-  color: var(--danger-glow);
+.bossStamp {
   font-size: 18px;
+  color: var.$vermilion;
   transform: rotate(-12deg);
   display: inline-block;
+  flex: none;
+}
+
+.bossName {
+  flex: 1;
+  font-size: 13px;
+  color: var.$ink;
+}
+
+.bossMeta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var.$ink-faint;
 }
 
 .empty {
-  color: var(--text-faint);
-  font-size: 13px;
-  text-align: center;
-  padding: 16px 0;
-  margin: 0;
+  color: var.$ink-faint;
+  font-size: 14px;
+  padding: 8px 0;
 }
 
-// ---- 図鑑タブ ----
+// ==========================================================
+// 図鑑タブ
+// ==========================================================
 .codex {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+  @extend %scrollRegion;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
-.codexSummary {
+// サマリ行
+.codexSummaryRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 0;
+  margin-bottom: 8px;
+}
+
+.codexSummaryText {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
-  color: var(--text-faint);
-  flex-shrink: 0;
+  color: var.$ink-faint;
 }
 
 .codexSummaryPct {
-  font-family: var(--font-mono);
-  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var.$illumination-gold;
 }
 
-.list {
+// 選択中モンスターの詳細カード（独立・グリッド上）
+.bossDetail {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  gap: 13px;
+  background: linear-gradient(120deg, var.$parchment-card, var.$parchment);
+  border: 1px solid rgba(178, 44, 44, 0.35);
+  border-radius: 0;
+  padding: 13px;
+  margin-bottom: 12px;
 }
 
-.row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 12px;
-  background: var(--surface-panel);
-  border: 1px solid var(--rule-soft);
-  border-radius: 3px;
-  color: var(--text-base);
-  flex-wrap: wrap;
+.bossDetailLeft {
+  flex: none;
 }
 
-.rowClickable {
-  cursor: pointer;
-  user-select: none;
-
-  &:hover,
-  &:focus-visible {
-    border-color: var(--rule-gold);
-    background: var(--gold-tint);
-    outline: none;
-  }
-
-  &:active {
-    background: var(--surface-elev);
-  }
-}
-
-.unseen {
-  opacity: 0.55;
-}
-
-.thumb {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 3px;
-  background: var(--bg-deep);
-  border: 1px solid var(--rule-soft);
+.bossDetailSprite {
+  width: 66px;
+  height: 66px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-edge;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-.info {
+.bossDetailInfo {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.name {
-  font-family: var(--font-display);
-  font-size: 14px;
-  color: var(--text-strong);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.badge {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--bg-mid);
-  background: var(--danger-glow);
-  border-radius: 2px;
-  padding: 1px 6px;
-}
-
-.expand {
-  font-size: 10px;
-  color: var(--text-faint);
-  margin-left: auto;
-}
-
-.sub {
-  font-size: 11px;
-  color: var(--text-faint);
-}
-
-// §16: 耐性詳細（展開時）
-.resistDetail {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--rule-soft);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.spriteLarge {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0 4px;
-  background: var(--bg-deep);
-  border-radius: 3px;
-}
-
-.resistSection {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.resistHead {
-  font-size: 10px;
+.bossDetailNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bossDetailName {
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 15px;
+  color: var.$ink;
+}
+
+.badge {
+  font-size: 9px;
   font-weight: 700;
-  color: var(--gold);
+  color: var.$parchment;
+  background-color: var.$vermilion;
+  border-radius: 0;
+  padding: 1px 6px;
+}
+
+.bossDetailMeta {
+  font-size: 11px;
+  color: var.$ink-faint;
+}
+
+.bossDetailResist {
+  margin-top: 4px;
+}
+
+// ドロップ行
+.dropRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dropCell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var.$parchment-card;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  padding: 7px 9px;
+  font-size: 11px;
+}
+
+.dropFound {
+  color: var.$ink;
+}
+
+.dropUnknown {
+  color: var.$ink-faint;
+}
+
+// グリッドラベル
+.gridLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.gridLabelText {
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  color: var.$illumination-gold;
+}
+
+.gridLegend {
+  font-size: 10px;
+  color: var.$ink-faint;
+}
+
+// 6列グリッド本体（スクロール可能）
+.entries {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+// グリッドセル（aspect-ratio:1）
+.cell {
+  aspect-ratio: 1;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  border: 0.75px solid var.$rule;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  cursor: default;
+}
+
+.cellSprite {
+  width: 100%;
+  height: 100%;
+}
+
+// 遭遇済み（緑枠）
+.cellSeen {
+  border-color: rgba(63, 107, 74, 0.5);
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+// 撃破済み（濃い緑枠）
+.cellDefeated {
+  border-color: rgba(63, 107, 74, 0.9);
+  background-color: var.$parchment;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+// ボス（朱破線枠）
+.cellBoss {
+  border: 1px dashed rgba(178, 44, 44, 0.6);
+}
+
+.cellBoss.cellDefeated {
+  border: 1px solid rgba(178, 44, 44, 0.7);
+}
+
+// 未遭遇（暗影）
+.cellUnseen {
+  background-color: var.$parchment-edge;
+  border-color: rgba(33, 36, 27, 0.1);
+  opacity: 0.5;
+}
+
+// 選択中ハイライト
+.cellSelected {
+  outline: 2px solid var.$illumination-gold;
+  outline-offset: -2px;
 }
 
 // ---- フッタ ----
 .foot {
-  flex-shrink: 0;
-  padding-top: 8px;
-  border-top: 1px solid var(--rule-soft);
+  flex: none;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 0.75px solid var.$rule;
 }
 
 .back {
   width: 100%;
   min-height: 46px;
-  border: 1px solid var(--rule-base);
-  border-radius: 3px;
-  background: transparent;
-  color: var(--text-mute);
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: transparent;
+  color: var.$ink-faint;
   font-size: 13px;
   letter-spacing: 0.16em;
   cursor: pointer;
-  font-family: var(--font-body);
+  transition: color 140ms cubic-bezier(0.4, 0, 0.2, 1);
 
   &:active {
-    background: var(--surface-elev);
-  }
-}
-
-// ---- 短画面対応 ----
-@media (max-height: 720px) {
-  .layout {
-    gap: 8px;
-    padding-top: 10px;
-  }
-
-  .statCard {
-    min-height: 68px;
-    padding: 10px 12px;
+    color: var.$ink;
   }
 }
