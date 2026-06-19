@@ -18,7 +18,7 @@
     "prepare": "husky",
     "preinstall": "bash ./check-node-version.sh",
     "screenshot": "node scripts/screenshot.mjs",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 6006 --no-open",
     "build-storybook": "storybook build"
   },
   "dependencies": {
