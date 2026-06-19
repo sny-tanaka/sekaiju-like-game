@@ -141,6 +141,32 @@ export const mockShop: SaveData = (() => {
 })();
 
 // ============================================================
+// mockShopWithEquipped — mockShop + 先頭メンバーが equip_inst_1 を装備済み
+// 売るタブのロック行テスト用
+// ============================================================
+export const mockShopWithEquipped: SaveData = (() => {
+  const equippedInst = mockShop.guild.equipment[0]; // equip_inst_1 (short_sword)
+  if (!equippedInst) return mockShop;
+  return {
+    ...mockShop,
+    guild: {
+      ...mockShop.guild,
+      members: mockShop.guild.members.map((m, i) =>
+        i === 0
+          ? {
+              ...m,
+              equipment: {
+                ...m.equipment,
+                weapon: equippedInst,
+              },
+            }
+          : m
+      ),
+    },
+  };
+})();
+
+// ============================================================
 // mockForge — mockWithParty + インゴット (銅3/銀1/金0) + 装備プールに 4 個
 // ============================================================
 export const mockForge: SaveData = (() => {
@@ -229,62 +255,6 @@ export const mockBattleSkillMenu: SaveData = {
               skill_warrior_war_cry: 1, // 使える
               skill_warrior_blade_storm: 1, // 高 TP (使えない想定)
               skill_warrior_executioner: 1, // 高 TP (使えない想定)
-            },
-          }
-        : m
-    ),
-  },
-};
-
-// ============================================================
-// mockGuildCharWithTitle — 戦士が称号（title_berserker）を習得済みの状態
-// GuildChar の WithTitleSkillTab ストーリー用
-// ============================================================
-export const mockGuildCharWithTitle: SaveData = {
-  ...mockWithParty,
-  towerState: {
-    ...mockWithParty.towerState,
-    record: {
-      ...mockWithParty.towerState.record,
-      deepestReached: 20, // UNLOCK.TITLE_DEPTH 以上
-    },
-  },
-  guild: {
-    ...mockWithParty.guild,
-    members: mockWithParty.guild.members.map((m) =>
-      m.id === 'char_mock_warrior'
-        ? {
-            ...m,
-            level: 15,
-            titleId: 'title_berserker',
-            learnedSkills: {
-              ...m.learnedSkills,
-              skill_power_slash: 1,
-              skill_cleave: 1,
-            },
-          }
-        : m
-    ),
-  },
-};
-
-// ============================================================
-// mockGuildCharLv100 — 戦士が Lv100（転生可能）状態
-// GuildChar の ReincarnateOpen ストーリー用
-// ============================================================
-export const mockGuildCharLv100: SaveData = {
-  ...mockWithParty,
-  guild: {
-    ...mockWithParty.guild,
-    members: mockWithParty.guild.members.map((m) =>
-      m.id === 'char_mock_warrior'
-        ? {
-            ...m,
-            level: 100,
-            rebirthBonus: {
-              count: 0,
-              stats: { hp: 0, tp: 0, str: 0, vit: 0, agi: 0, int: 0, mnd: 0, luc: 0 },
-              bonusSp: 0,
             },
           }
         : m

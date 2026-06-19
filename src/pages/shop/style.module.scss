@@ -1,84 +1,70 @@
-// shop/style.module.scss — 黒曜 OBSIDIAN MINIMAL v2（モック忠実化）
+@use 'variables' as var;
 
-// ---- coin pop ローカルアニメ ----
-@keyframes shop-coinPop {
-  0% { transform: translateY(0) scale(1); opacity: 0.9; }
-  50% { transform: translateY(-14px) scale(1.15); opacity: 1; }
-  100% { transform: translateY(-28px) scale(0.95); opacity: 0; }
-}
-
-// ---- ルートレイアウト ----
 .layout {
-  position: relative;
   display: flex;
   flex-direction: column;
-  width: 100%;
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 20px max(20px, env(safe-area-inset-bottom, 0px));
+  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
+  color: var.$ink;
   overflow: hidden;
-  background: radial-gradient(130% 90% at 50% -8%, #1c2230 0%, #0e0f13 56%, #090a0d 100%);
-  color: var(--text-base);
-  font-family: var(--font-body);
-  gap: 12px;
+  background-color: var.$parchment;
 }
 
-// ---- ヘッダー ----
 .head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  flex-shrink: 0;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.75px solid var.$rule;
 }
 
 .title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-strong);
+  font-size: 24px;
+  font-weight: 900;
+  color: var.$ink;
 }
 
 .gold {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var.$illumination-gold;
 }
 
-// ---- flat underline タブバー ----
 .tabs {
   display: flex;
-  gap: 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .tab {
   flex: 1;
-  text-align: center;
-  padding: 9px 0;
-  font-size: 12px;
-  color: var(--text-faint);
-  border-radius: 3px 3px 0 0;
-  background: transparent;
-  border: none;
+  min-height: 44px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
-  font-family: var(--font-body);
 }
 
 .tabActive {
-  color: var(--bg-mid);
-  font-weight: 700;
-  background: var(--gold);
+  border-color: var.$verdant;
+  background-color: var.$parchment;
+  color: var.$verdant;
 }
 
-// ---- カテゴリチップ＋ソート行 ----
+// カテゴリ絞り込み＋並び替え
 .controls {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex-shrink: 0;
+  margin-bottom: 12px;
 }
 
 .filters {
@@ -88,315 +74,239 @@
 }
 
 .chip {
-  font-size: 11px;
-  padding: 5px 11px;
-  border-radius: 14px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--text-mute);
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  font-family: var(--font-body);
 }
 
 .chipActive {
-  background: var(--gold);
-  color: var(--bg-mid);
-  font-weight: 700;
-  border: 1px solid var(--gold);
+  border-color: var.$verdant;
+  background-color: var.$parchment;
+  color: var.$verdant;
 }
 
 .sortRow {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
+  gap: 8px;
+}
+
+.sortLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var.$ink-faint;
 }
 
 .sort {
-  font-size: 11px;
-  color: var(--text-faint);
-  background: transparent;
-  border: none;
-  appearance: none;
-  -webkit-appearance: none;
+  flex: 1;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  font-family: var(--font-body);
-  text-align: right;
 }
 
-// ---- 商品リスト（唯一の可変領域） ----
+// ---- 商品リスト（内部スクロール） ----
 .list {
-  flex: 1 1 auto;
+  flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  padding: 4px 0;
+  gap: 8px;
 }
 
-// ---- 買うタブ: 行 ----
 .row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: var(--surface-panel);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
-  padding: 11px 13px;
-}
-
-// 先頭行の強調スタイル（最高価格の装備向け）
-.rowHighlight {
-  background: linear-gradient(100deg, #1a2030, #13151c);
-  border: 1px solid rgba(201, 168, 106, 0.35);
-}
-
-// ItemSprite ラッパー（44x44 カード）
-.spriteCard {
-  width: 44px;
-  height: 44px;
-  flex: none;
-  border-radius: 3px;
-  background: #0c0d11;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-// ItemSprite ラッパー (42x42 for sell tab)
-.spriteCardSm {
-  width: 42px;
-  height: 42px;
-  flex: none;
-  border-radius: 3px;
-  background: #0c0d11;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
 }
 
 .info {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .name {
-  font-size: 13px;
-  color: var(--text-strong);
-}
-
-.nameBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-strong);
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  color: var.$ink;
 }
 
 .note {
-  font-size: 10px;
-  color: var(--text-faint);
-  margin-top: 2px;
+  font-size: 12px;
+  color: var.$ink-faint;
 }
 
-// 価格ボタン（通常: gold border）
 .action {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--gold);
-  border: 1px solid rgba(201, 168, 106, 0.4);
-  border-radius: 3px;
-  padding: 7px 11px;
-  background: transparent;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
-}
-
-// 価格ボタン強調（高価商品: gold 塗り）
-.actionHighlight {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--bg-mid);
-  font-weight: 700;
-  background: var(--gold);
-  border-radius: 3px;
-  padding: 7px 11px;
+  min-height: 40px;
+  padding: 0 14px;
   border: none;
+  border-radius: 0;
+  background-color: var.$verdant;
+  color: var.$parchment;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  flex-shrink: 0;
 
   &:disabled {
-    opacity: 0.35;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 }
 
-// ---- 売るタブ: 装備中ロック行 ----
+.empty {
+  color: var.$ink-faint;
+  font-size: 14px;
+}
+
+// 装備中ロック行（売却不可）
 .rowLocked {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: #101218;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-  padding: 11px 13px;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0.75px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0;
+  background-color: var.$parchment-card;
   opacity: 0.6;
+  pointer-events: none;
 }
 
 .noteName {
-  font-size: 13px;
-  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 700;
+  color: var.$ink;
 }
 
 .noteLocked {
-  font-size: 10px;
-  color: #e0917f;
-  margin-top: 2px;
+  font-size: 11px;
+  color: var.$ink-faint;
 }
 
 .lockIcon {
-  font-size: 16px;
-  color: #46443e;
   flex-shrink: 0;
+  margin-left: auto;
+  font-size: 14px;
 }
 
-// 強化値テキスト（売るタブ行内）
-.forgeLevel {
-  color: #7c7a74;
-}
-
-// 空状態
-.empty {
-  color: var(--text-mute);
-  font-size: 13px;
-  padding: 8px 0;
-}
-
-// ---- フッタ ----
 .foot {
-  flex-shrink: 0;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 0.75px solid var.$rule;
 }
 
 .back {
   width: 100%;
-  height: 46px;
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-mute);
-  font-size: 13px;
-  letter-spacing: 0.16em;
-  background: transparent;
+  min-height: 44px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: transparent;
+  color: var.$ink;
+  font-size: 14px;
   cursor: pointer;
-  font-family: var(--font-body);
 }
 
-// ---- 確認ダイアログ（共通基盤） ----
+// 売買の確認ダイアログ（誤タップ防止）
 .confirmOverlay {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(6, 7, 10, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 28px;
+  padding: 24px;
+  background-color: rgba(33, 36, 27, 0.45);
 }
 
 .confirmBox {
-  width: 100%;
-  max-width: 360px;
-  background: var(--surface-panel);
-  border: 1px solid rgba(201, 168, 106, 0.4);
-  border-radius: 6px;
-  padding: 22px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 20px 18px;
+  border-radius: 4px;
+  border: 0.75px solid var.$rule;
+  background-color: var.$parchment-card;
+  box-shadow: 0 6px 24px var.$shadow-ink;
 }
 
-// 商品ヘッダー（アイコン＋名前）
-.dialogHead {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.dialogSprite {
-  width: 56px;
-  height: 56px;
-  flex: none;
-  border-radius: 3px;
-  background: #0c0d11;
-  border: 1px solid rgba(201, 168, 106, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.dialogItemName {
-  font-family: var(--font-display);
-  font-size: 16px;
-  color: var(--text-strong);
-}
-
-.dialogItemNote {
-  font-size: 11px;
-  color: var(--text-faint);
-  margin-top: 3px;
-}
-
-// coin pop アニメ
-.coinPop {
-  display: block;
+.confirmText {
+  font-size: 15px;
+  line-height: 1.5;
   text-align: center;
-  font-size: 18px;
-  margin: -4px 0 20px;
-  animation: shop-coinPop 1.8s ease-in-out infinite;
+  color: var.$ink;
 }
 
-// 数量ステッパー
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirmCancel,
+.confirmOk {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: 0;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirmCancel {
+  border: 0.75px solid var.$rule;
+  background-color: transparent;
+  color: var.$ink;
+}
+
+.confirmOk {
+  background-color: var.$verdant;
+  color: var.$parchment;
+}
+
+// 数量ステッパー（#30）— 写本トークンで再塗装
 .stepperRow {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-bottom: 18px;
 }
 
 .stepperBtn {
-  width: 38px;
-  height: 38px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: var(--text-mute);
+  min-width: 40px;
+  min-height: 40px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
   font-size: 18px;
-  border-radius: 3px;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: 700;
   cursor: pointer;
-  flex-shrink: 0;
-  font-family: var(--font-body);
+
+  &:active {
+    color: var.$verdant-dark;
+  }
 
   &:disabled {
     opacity: 0.35;
@@ -405,27 +315,24 @@
 }
 
 .stepperVal {
-  flex: 1;
+  min-width: 48px;
   text-align: center;
-  font-family: var(--font-mono);
-  font-size: 16px;
-  color: var(--text-strong);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: var.$ink;
 }
 
 .stepperMax {
-  width: 48px;
-  height: 38px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: var(--text-mute);
-  font-size: 11px;
-  border-radius: 3px;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0.75px solid var.$verdant;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$verdant-dark;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  flex-shrink: 0;
-  font-family: var(--font-body);
 
   &:disabled {
     opacity: 0.35;
@@ -433,154 +340,66 @@
   }
 }
 
-// 合計行
 .totalRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
-
-.totalLabel {
-  color: var(--text-mute);
-}
-
-.totalValue {
-  font-family: var(--font-mono);
-  color: var(--text-strong);
-}
-
-// 購入後の所持金行
-.postGoldRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  margin-bottom: 20px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.postGoldLabel {
-  color: var(--text-faint);
-}
-
-.postGoldValue {
-  font-family: var(--font-mono);
-  color: var(--gold);
-}
-
-// 売却額行（sellEquip 用）
-.sellPriceRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 20px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.sellPriceLabel {
-  color: var(--text-mute);
-}
-
-.sellPriceValue {
-  font-family: var(--font-mono);
-  color: var(--gold);
-}
-
-// アクションボタン行
-.confirmActions {
-  display: flex;
-  gap: 10px;
-}
-
-.confirmCancel {
-  flex: 1;
-  height: 48px;
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #c8c4ba;
-  background: transparent;
+  text-align: center;
   font-size: 14px;
-  cursor: pointer;
-  font-family: var(--font-body);
+  color: var.$ink-faint;
 }
 
-.confirmOk {
-  flex: 1;
-  height: 48px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: var(--bg-mid);
-  font-weight: 700;
-  font-size: 14px;
+// 装備名をタップ可能にするボタン（#31）
+.nameBtn {
+  background: none;
   border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var.$verdant;
+  text-decoration: underline;
   cursor: pointer;
-  font-family: var(--font-body);
+  text-align: left;
 }
 
-// ---- 装備詳細モーダル ----
+// 装備詳細モーダル（#31）
 .detailHeader {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.detailSprite {
-  width: 56px;
-  height: 56px;
-  flex: none;
-  border-radius: 3px;
-  background: #0c0d11;
-  border: 1px solid rgba(201, 168, 106, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.detailNameBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .detailName {
-  font-family: var(--font-display);
   font-size: 16px;
-  color: var(--text-strong);
+  font-weight: 900;
+  color: var.$ink;
 }
 
 .detailSlot {
-  display: inline-block;
-  font-size: 11px;
-  color: var(--gold);
-  border: 1px solid var(--rule-gold);
-  border-radius: 2px;
+  font-size: 12px;
   padding: 2px 8px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment;
+  color: var.$ink-faint;
 }
 
-.detailGrid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 6px 12px;
-  margin-bottom: 16px;
+.detailRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  color: var.$ink;
 }
 
 .detailLabel {
   font-size: 11px;
-  color: var(--text-mute);
-  white-space: nowrap;
+  font-weight: 700;
+  color: var.$ink-faint;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.detailValue {
-  font-size: 12px;
-  color: var(--text-base);
-  text-align: right;
-}
-
-// ---- 購入確定 InkSplatter（Phase 2） ----
+// 購入確定 InkSplatter（Phase 2）
 .buyConfirmedFx {
   position: fixed;
   top: 50%;
