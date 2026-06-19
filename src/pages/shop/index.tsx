@@ -4,6 +4,7 @@ import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
+import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ARMOR_TYPE_LABEL, EQUIP_SLOT_LABEL, WEAPON_TYPE_LABEL } from '@/data/equipLabels';
 import { EQUIPMENT } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
@@ -374,6 +375,10 @@ export const Page = () => {
                 key={e.id}
                 className={styles.row}
               >
+                <ItemSprite
+                  itemId={e.id as ItemId}
+                  size="sm"
+                />
                 <div className={styles.info}>
                   {e.kind === 'equip' ? (
                     <button
@@ -424,6 +429,10 @@ export const Page = () => {
               key={r.key}
               className={styles.row}
             >
+              <ItemSprite
+                itemId={(r.kind === 'equip' ? r.inst.masterId : r.itemId) as ItemId}
+                size="sm"
+              />
               <div className={styles.info}>
                 {r.kind === 'equip' ? (
                   <button

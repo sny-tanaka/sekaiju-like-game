@@ -4,6 +4,7 @@ import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
+import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { SkillTree } from '@/components/common/SkillTree/SkillTree';
 import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
@@ -174,6 +175,10 @@ export const Page = ({ id }: { id: string }) => {
                         className={styles.pickBtn}
                         onClick={() => void applyAndPersist((s) => equipItem(s, id, e.id))}
                       >
+                        <ItemSprite
+                          itemId={e.masterId}
+                          size="sm"
+                        />
                         {equipDisplayName(e)} 装備
                       </button>
                     ))}

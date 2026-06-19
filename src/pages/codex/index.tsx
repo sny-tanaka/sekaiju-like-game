@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { ENEMIES } from '@/data/enemies';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
@@ -125,6 +126,13 @@ export const Page = () => {
                     if (ev.key === 'Enter' || ev.key === ' ') toggleEntry(e.id, e.seen);
                   }}
                 >
+                  <EnemySprite
+                    enemyId={e.id}
+                    size="sm"
+                    silhouette={!e.seen}
+                    className={styles.thumb}
+                    alt={e.seen ? e.name : '未遭遇のモンスター'}
+                  />
                   <div className={styles.info}>
                     <span className={styles.name}>
                       {e.seen ? e.name : '？？？'}
@@ -142,6 +150,12 @@ export const Page = () => {
                   {/* §16: 耐性詳細（遭遇済みのみ展開表示） */}
                   {isOpen && master ? (
                     <div className={styles.resistDetail}>
+                      <div className={styles.spriteLarge}>
+                        <EnemySprite
+                          enemyId={e.id}
+                          size="lg"
+                        />
+                      </div>
                       <div className={styles.resistSection}>
                         <span className={styles.resistHead}>属性</span>
                         <ResistBadges

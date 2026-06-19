@@ -77,7 +77,7 @@ export function enemyArchetypeOf(master: EnemyMaster): EnemyArchetype {
   const name = master.name;
   const id = master.id;
 
-  // 機械/構造: ゴーレム、哨戒機、自動兵器、番犬、歯車、装甲、結晶、クリスタル、タイデン、ホウデン
+  // 機械/構造: ゴーレム、哨戒機、自動兵器、番犬、歯車、装甲、結晶、クリスタル、タイデン、ホウデン、人造
   if (
     name.includes('ゴーレム') ||
     name.includes('哨戒機') ||
@@ -89,10 +89,10 @@ export function enemyArchetypeOf(master: EnemyMaster): EnemyArchetype {
     name.includes('クリスタル') ||
     name.includes('タイデン') ||
     name.includes('ホウデン') ||
+    name.includes('人造') ||
     id.includes('golem') ||
     id.includes('sentinel') ||
     id.includes('automaton') ||
-    id.includes('crystal') ||
     id.includes('idol') // ホウデンキョゾウ（discharge_idol）
   ) {
     return 'construct';
@@ -112,7 +112,7 @@ export function enemyArchetypeOf(master: EnemyMaster): EnemyArchetype {
     return 'spirit';
   }
 
-  // 不死/瘴気: 骸骨、怨霊、呪詛、墓守、腐肉、疫病、這い虫、亡者
+  // 不死/瘴気: 骸骨、怨霊、呪詛、墓守、腐肉、疫病、這い虫、亡者、吸血、死神
   if (
     name.includes('骸骨') ||
     name.includes('怨霊') ||
@@ -123,6 +123,8 @@ export function enemyArchetypeOf(master: EnemyMaster): EnemyArchetype {
     name.includes('這い虫') ||
     name.includes('亡者') ||
     name.includes('腐王') || // 瘴気を統べる腐王
+    name.includes('吸血') ||
+    name.includes('死神') ||
     id.includes('bone') ||
     id.includes('grave') ||
     id.includes('corpse') ||
@@ -133,12 +135,13 @@ export function enemyArchetypeOf(master: EnemyMaster): EnemyArchetype {
     return 'undead';
   }
 
-  // 植物/菌: タケ、樹人
+  // 植物/菌: タケ、樹人、じゅひょうの精（rime_beetle）
   if (
     name.includes('タケ') ||
     name.includes('樹人') ||
     id.includes('mushroom') ||
-    id.includes('treant')
+    id.includes('treant') ||
+    id.includes('rime_beetle')
   ) {
     return 'plant';
   }
@@ -154,12 +157,7 @@ export function enemyArchetypeOf(master: EnemyMaster): EnemyArchetype {
     name.includes('ヤスデ') ||
     name.includes('ガニ') ||
     name.includes('ガマ') ||
-    name.includes('毒蛾') ||
-    id.includes('beetle') ||
-    id.includes('crawler') ||
-    id.includes('crab') ||
-    id.includes('toad') ||
-    id.includes('moth')
+    name.includes('毒蛾')
   ) {
     return 'insect';
   }

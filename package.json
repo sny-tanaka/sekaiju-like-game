@@ -1,6 +1,6 @@
 {
   "name": "sekaiju-like-game",
-  "version": "0.2.10",
+  "version": "0.2.16",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,7 +17,8 @@
     "lint-staged": "lint-staged",
     "prepare": "husky",
     "preinstall": "bash ./check-node-version.sh",
-    "storybook": "storybook dev -p 6006",
+    "screenshot": "node scripts/screenshot.mjs",
+    "storybook": "storybook dev -p 6006 --no-open",
     "build-storybook": "storybook build"
   },
   "dependencies": {
@@ -51,6 +52,7 @@
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "lint-staged": "^15.3.0",
+    "playwright-core": "^1.61.0",
     "plop": "^4.0.1",
     "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "^4.1.0",

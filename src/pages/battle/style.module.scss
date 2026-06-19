@@ -51,6 +51,25 @@
   border: 0.75px solid var.$vermilion;
 }
 
+// 敵スプライト画像（enemyName の直上に縦積み）— boss/FOE 用
+.enemySprite {
+  display: block;
+  margin: 0 auto 4px;
+}
+
+// 雑魚用：スプライト(sm) + 名前を横並び
+.enemyHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+// 雑魚用：インラインスプライトが縮まないよう固定
+.enemySpriteInline {
+  flex-shrink: 0;
+}
+
 .enemyName {
   display: flex;
   align-items: center;

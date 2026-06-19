@@ -88,12 +88,32 @@ describe('enemyArchetypeOf: アーキタイプ分類', () => {
     expect(enemyArchetypeOf(ENEMIES['enemy_t0_elder_treant'])).toBe('plant');
   });
 
-  test('ヤスデ（どうくつヤスデ）は insect', () => {
-    expect(enemyArchetypeOf(ENEMIES['enemy_t0_cave_crawler'])).toBe('insect');
+  test('どくスライム（enemy_t0_cave_crawler）は slime', () => {
+    expect(enemyArchetypeOf(ENEMIES['enemy_t0_cave_crawler'])).toBe('slime');
   });
 
-  test('ムシ（いわかぶとムシ）は insect', () => {
-    expect(enemyArchetypeOf(ENEMIES['enemy_t1_stone_beetle'])).toBe('insect');
+  test('いわくつのミミック（enemy_t1_stone_beetle）は beast', () => {
+    expect(enemyArchetypeOf(ENEMIES['enemy_t1_stone_beetle'])).toBe('beast');
+  });
+
+  test('ひょうけつの人造兵（enemy_t2_glacier_crab）は construct', () => {
+    expect(enemyArchetypeOf(ENEMIES['enemy_t2_glacier_crab'])).toBe('construct');
+  });
+
+  test('じゅひょうの精（enemy_t2_rime_beetle）は plant', () => {
+    expect(enemyArchetypeOf(ENEMIES['enemy_t2_rime_beetle'])).toBe('plant');
+  });
+
+  test('らいでんイカ（enemy_t3_spark_beetle）は beast', () => {
+    expect(enemyArchetypeOf(ENEMIES['enemy_t3_spark_beetle'])).toBe('beast');
+  });
+
+  test('あらしの吸血族（enemy_t3_static_crystal）は undead', () => {
+    expect(enemyArchetypeOf(ENEMIES['enemy_t3_static_crystal'])).toBe('undead');
+  });
+
+  test('下級の死神（enemy_t4_miasma_moth）は undead', () => {
+    expect(enemyArchetypeOf(ENEMIES['enemy_t4_miasma_moth'])).toBe('undead');
   });
 
   test('タカ（こうちタカ）は bird', () => {
@@ -168,7 +188,8 @@ describe('resolveEnemyAilmentResist: マージ（種別デフォルト + アー�
   });
 
   test('insect アーキタイプ: poison=0.5、paralysis=1.3', () => {
-    const resist = resolveEnemyAilmentResist('enemy_t0_cave_crawler');
+    // いわガマ（enemy_t1_boulder_toad）は name に 'ガマ' を含むため insect 分類
+    const resist = resolveEnemyAilmentResist('enemy_t1_boulder_toad');
     expect(resist.poison).toBeCloseTo(0.5);
     expect(resist.paralysis).toBeCloseTo(1.3);
   });

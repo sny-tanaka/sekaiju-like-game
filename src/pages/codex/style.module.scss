@@ -190,6 +190,15 @@
   border-radius: 0;
   background-color: var.$parchment-card;
   color: var.$ink;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+// スプライトサムネイル（リスト左端）
+.thumb {
+  flex-shrink: 0;
 }
 
 .unseen {
@@ -200,6 +209,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .name {
@@ -254,6 +265,15 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  // 展開時は行全体の幅を使う
+  width: 100%;
+}
+
+// 展開詳細内の大きいスプライト（中央寄せ）
+.spriteLarge {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
 }
 
 .resistSection {

@@ -6,7 +6,9 @@ import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
+import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
+import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
@@ -1014,6 +1016,7 @@ export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: Battle
           const isTargeted = targetId === e.id;
           const masterEnemyId = e.enemyId as EnemyId | undefined;
           const master = masterEnemyId ? ENEMIES[masterEnemyId] : undefined;
+          const isLarge = master?.kind === 'boss' || master?.kind === 'foe';
           return (
             <button
               type="button"
@@ -1046,10 +1049,29 @@ export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: Battle
                     </div>
                   );
                 })()}
-              <span className={styles.enemyName}>
-                <span className={styles.enemyNameText}>{e.name}</span>
-                <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
-              </span>
+              {isLarge ? (
+                <>
+                  <EnemySprite
+                    enemyId={masterEnemyId ?? (e.enemyId as EnemyId)}
+                    size="md"
+                    className={styles.enemySprite}
+                  />
+                  <span className={styles.enemyName}>
+                    <span className={styles.enemyNameText}>{e.name}</span>
+                    <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
+                  </span>
+                </>
+              ) : (
+                <span className={styles.enemyHeader}>
+                  <EnemySprite
+                    enemyId={masterEnemyId ?? (e.enemyId as EnemyId)}
+                    size="sm"
+                    className={styles.enemySpriteInline}
+                  />
+                  <span className={styles.enemyNameText}>{e.name}</span>
+                  <span className={styles.enemyMarks}>{ailmentMark(e)}</span>
+                </span>
+              )}
               <StatBar
                 value={d.hp}
                 max={e.maxHp}
@@ -1445,6 +1467,10 @@ export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: Battle
                           onClick={() => assign(active.id, { kind: 'item', itemId: id })}
                         >
                           <span className={styles.skillTop}>
+                            <ItemSprite
+                              itemId={id}
+                              size="sm"
+                            />
                             <span className={styles.skillName}>
                               {ITEMS[id].name} ×{remaining}
                             </span>

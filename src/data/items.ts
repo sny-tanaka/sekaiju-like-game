@@ -8,7 +8,7 @@ import type { ItemId, ItemMaster } from '@/domain/types';
 export const ITEMS: Record<ItemId, ItemMaster> = {
   item_potion: {
     id: 'item_potion',
-    name: 'やくそう',
+    name: 'きずぐすり',
     description: 'HP を 30 回復する。',
     category: 'consumable',
     buyPrice: 30,
@@ -18,7 +18,7 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
   },
   item_hi_potion: {
     id: 'item_hi_potion',
-    name: 'よいやくそう',
+    name: 'いいきずぐすり',
     description: 'HP を 80 回復する。',
     category: 'consumable',
     buyPrice: 90,
@@ -82,8 +82,8 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
   },
   item_bat_wing: {
     id: 'item_bat_wing',
-    name: 'コウモリの翼',
-    description: 'どうくつコウモリの素材。売ると新しい装備が並ぶことがある。',
+    name: 'もりゴブリンの小刀',
+    description: 'もりゴブリンが携えていた粗末な獣骨の刃。売ると新しい装備が並ぶことがある。',
     category: 'material',
     buyPrice: 0,
   },
@@ -208,7 +208,7 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
   item_mat_t0_chitin_plate: {
     id: 'item_mat_t0_chitin_plate',
     name: '硬い甲殻板',
-    description: '洞窟の蟲の素材。売ると新しい装備が並ぶことがある。',
+    description: 'どくスライムの外殻素材。売ると新しい装備が並ぶことがある。',
     category: 'material',
     buyPrice: 0,
   },

@@ -7,6 +7,7 @@ import { CharacterPortrait } from '@/components/common/CharacterPortrait/Charact
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
+import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { SkillTree } from '@/components/common/SkillTree/SkillTree';
 import { bandThemeFor } from '@/data/bandTheme';
 import { CLASSES } from '@/data/classes';
@@ -388,9 +389,15 @@ export const Page = () => {
                     key={s.itemId}
                     className={styles.itemRow}
                   >
-                    <div className={styles.itemName}>
-                      {item.name} ×{s.qty}
-                      <span className={styles.itemDesc}>{item.description}</span>
+                    <div className={styles.itemHeader}>
+                      <ItemSprite
+                        itemId={s.itemId}
+                        size="sm"
+                      />
+                      <div className={styles.itemName}>
+                        {item.name} ×{s.qty}
+                        <span className={styles.itemDesc}>{item.description}</span>
+                      </div>
                     </div>
                     {isReturn ? (
                       <button
