@@ -4,28 +4,29 @@ import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
-import { MenuButton } from '@/components/common/MenuButton/MenuButton';
+import { SoundSettings } from '@/components/common/SoundSettings';
 import { startDive } from '@/domain/dive';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
-// 拠点（街）ハブ（[07 §2]）。各施設への導線を持つ。
+// 拠点（街）ハブ — 黒曜 OBSIDIAN MINIMAL v2（2x2 グリッド + 大ダイブカード）
 export const Page = () => {
   const { navigate } = useNavigation();
   const { save, exitToTitle, applyAndPersist } = useGameState();
   const play = useSfx();
-  const [warpOpen, setWarpOpen] = useState(false);
-  // ダイブ開始 封蝋スタンプ演出（Phase 2）。早期リターンより前に置く必要あり。
-  const [sealActive, setSealActive] = useState(false);
 
-  // セーブが無い状態で直接来たらタイトルへ
+  const [warpOpen, setWarpOpen] = useState(false);
+  const [soundOpen, setSoundOpen] = useState(false);
+  const [sealActive, setSealActive] = useState(false);
+  const [sealingDepth, setSealingDepth] = useState<number>(1);
+
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
   }
 
   const { guild, towerState, diveState } = save;
-  // 団員が 0 人の間はギルドメニュー以外（ダイブ・ショップ等）を使えない（確定事項）。
   const hasMembers = guild.members.length > 0;
+  const checkpoints = towerState.warp.unlockedCheckpoints;
 
   const handleExit = () => {
     play('cancel');
@@ -33,56 +34,88 @@ export const Page = () => {
     navigate({ name: 'title' });
   };
 
-  // ダイブ開始（潜行中でなければ第1階から開始してオートセーブ）/ 潜行を再開
-  const handleDive = async () => {
-    play('dive');
-    if (!diveState) {
-      await applyAndPersist((s) => startDive(s, 1));
-      // 封蝋スタンプ演出（Phase 2）: 300ms 待ってからダンジョンへ遷移
-      setSealActive(true);
-      await new Promise((r) => setTimeout(r, 320));
+  // ダイブカード押下: 潜行中なら即再開、そうでなければ bottom-sheet を開く
+  const handleDiveClick = () => {
+    if (!hasMembers) return;
+    if (diveState) {
+      void resumeDive();
+      return;
     }
+    play('decide');
+    setWarpOpen(true);
+  };
+
+  const resumeDive = async () => {
+    play('dive');
     navigate({ name: 'dungeon' });
   };
 
-  // 10層ワープ（[06 §5]）: 解放済みチェックポイントへ新規ダイブ開始。
-  const checkpoints = towerState.warp.unlockedCheckpoints;
-  const handleWarp = async (depth: number) => {
+  // bottom-sheet から階を選択 → ダイブ実行
+  const handleSelectFloor = async (depth: number) => {
     play('warp');
     setWarpOpen(false);
     await applyAndPersist((s) => startDive(s, depth));
+    setSealingDepth(depth);
+    setSealActive(true);
+    await new Promise((r) => setTimeout(r, 320));
     navigate({ name: 'dungeon' });
   };
 
+  // 2x2 タイル押下
+  const goto = (target: 'guild' | 'shop' | 'forge' | 'codex') => () => {
+    if (diveState) return;
+    play('decide');
+    navigate({ name: target });
+  };
+
+  // bottom-sheet に並べる選択肢: 1F + 解放済みチェックポイント (昇順)
+  const sheetFloors: number[] = [1, ...checkpoints.filter((d) => d !== 1)].sort((a, b) => a - b);
+  // モック準拠表示: 1F は「最初から潜る」、それ以外は「第 N 帯」
+  const floorLabel = (d: number) =>
+    d === 1 ? '第1階から（最初から潜る）' : `第 ${Math.ceil(d / 10)} 帯`;
+
+  // 自動保存表示用 HH:MM（save.savedAt が 0 の場合は時刻無し）
+  const autosaveLabel = (() => {
+    if (!save.savedAt) return '自動保存済';
+    const time = new Date(save.savedAt).toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return `自動保存済 ・ ${time}`;
+  })();
+
   return (
     <div className={styles.layout}>
-      {/* Step 1: ヘッダー刷新 */}
       <header className={styles.head}>
         <div className={styles.headTop}>
           <div className={styles.headTitleBlock}>
             <p className={styles.chapterMark}>❦ 拠点</p>
             <h1 className={styles.guildName}>{guild.name}</h1>
           </div>
+          <button
+            type="button"
+            className={styles.gearBtn}
+            aria-label="設定"
+            onClick={() => {
+              play('decide');
+              setSoundOpen(true);
+            }}
+          >
+            ⚙
+          </button>
         </div>
-        <dl className={styles.stats}>
-          <div className={styles.statGold}>
-            <dt>所持金</dt>
-            <dd>◇ {guild.gold.toLocaleString()} G</dd>
-          </div>
+        <div className={styles.stats}>
+          <span className={styles.statGold}>◇ {guild.gold.toLocaleString()} G</span>
           {towerState.record.deepestReached > 0 && (
-            <div className={styles.statDepth}>
-              <dt>最高</dt>
-              <dd>{towerState.record.deepestReached}F</dd>
-            </div>
+            <span className={styles.statFaint}>最高 {towerState.record.deepestReached}F</span>
           )}
-          <div className={hasMembers ? styles.statMembers : styles.statMembersWarn}>
-            <dt>団員</dt>
-            <dd>{guild.members.length} 人</dd>
-          </div>
-        </dl>
+          <span className={hasMembers ? styles.statFaint : styles.statWarn}>
+            団員 {guild.members.length} 人
+          </span>
+        </div>
       </header>
 
-      {/* Step 2: ヒント文（条件カード） */}
       {!hasMembers && (
         <div className={`${styles.hint} ${styles.hintGold}`}>
           まずは「ギルド管理」で冒険者を作成してください。団員がいないとダイブできません。
@@ -90,66 +123,150 @@ export const Page = () => {
       )}
       {hasMembers && diveState && (
         <div className={`${styles.hint} ${styles.hintBlue}`}>
-          潜行中のため、ダイブ再開と「タイトルへ戻る」以外は利用できません。
+          ⚓ 潜行中のため、ダイブ再開と「タイトルへ戻る」以外は利用できません。
         </div>
       )}
 
-      {/* Step 3: メニュー（MenuButton の縦リスト） */}
       <main className={styles.menu}>
-        <MenuButton
-          label={diveState ? '潜行を再開' : 'ダイブ開始'}
-          description={
-            !hasMembers
+        {/* ダイブ大カード（grid-column span 2） */}
+        <button
+          type="button"
+          className={`${styles.dive} ${diveState ? styles.diveResume : ''}`}
+          disabled={!hasMembers}
+          onClick={handleDiveClick}
+        >
+          <span
+            className={styles.diveDecor}
+            aria-hidden="true"
+          >
+            塔
+          </span>
+          <span className={styles.diveBadge}>{diveState ? 'RESUME' : 'DIVE'}</span>
+          <span className={styles.diveTitle}>{diveState ? '潜行を再開' : 'ダイブ開始'}</span>
+          <span className={styles.diveDesc}>
+            {!hasMembers
               ? '団員が必要です'
               : diveState
                 ? `${diveState.depth}F から再開`
-                : '第1階からタワーへ潜る'
-          }
-          variant="primary"
-          disabled={!hasMembers}
-          sfx={null}
-          onClick={() => void handleDive()}
-        />
-        <MenuButton
-          label="ワープ"
-          description={
-            checkpoints.length === 0
-              ? 'ボス撃破で解放'
-              : diveState
-                ? '潜行中は使えません'
-                : `解放済み: ${checkpoints.map((d) => `${d}F`).join('・')}`
-          }
-          disabled={!hasMembers || checkpoints.length === 0 || !!diveState}
-          sfx={null}
-          onClick={() => setWarpOpen(true)}
-        />
-        <MenuButton
-          label="ギルド管理"
-          description={diveState ? '潜行中は使えません' : '編成・キャラ作成'}
+                : checkpoints.length > 0
+                  ? `第1階から潜る ・ 解放階(${Math.max(...checkpoints)}F)も選択可`
+                  : '第1階から潜る'}
+          </span>
+        </button>
+
+        {/* 団員 0 のときはギルド管理を横長ガイドカードに切り替え */}
+        {!hasMembers ? (
+          <button
+            type="button"
+            className={styles.tileGuide}
+            onClick={goto('guild')}
+          >
+            <span
+              className={styles.tileGuideIcon}
+              aria-hidden="true"
+            >
+              📜
+            </span>
+            <span className={styles.tileGuideText}>
+              <span className={styles.tileGuideLabel}>ギルド管理</span>
+              <span className={styles.tileGuideHint}>まずここで冒険者を作成</span>
+            </span>
+            <span
+              className={styles.tileGuideArrow}
+              aria-hidden="true"
+            >
+              ›
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={styles.tile}
+            disabled={!!diveState}
+            onClick={goto('guild')}
+          >
+            <span
+              className={styles.tileIcon}
+              aria-hidden="true"
+            >
+              📜
+            </span>
+            <span className={styles.tileBody}>
+              <span className={styles.tileLabel}>ギルド管理</span>
+              <span className={styles.tileDesc}>{diveState ? '🔒 潜行中不可' : '編成・作成'}</span>
+            </span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          className={styles.tile}
           disabled={!!diveState}
-          onClick={() => navigate({ name: 'guild' })}
-        />
-        <MenuButton
-          label="ショップ"
-          description={diveState ? '潜行中は使えません' : '装備・アイテム売買'}
+          onClick={goto('shop')}
+        >
+          <span
+            className={styles.tileIcon}
+            aria-hidden="true"
+          >
+            🛡
+          </span>
+          <span className={styles.tileBody}>
+            <span className={styles.tileLabel}>ショップ</span>
+            <span className={styles.tileDesc}>{diveState ? '🔒 潜行中不可' : '装備・売買'}</span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={styles.tile}
           disabled={!!diveState}
-          onClick={() => navigate({ name: 'shop' })}
-        />
-        <MenuButton
-          label="鍛冶屋"
-          description={diveState ? '潜行中は使えません' : '装備の強化・リサイクル'}
+          onClick={goto('forge')}
+        >
+          <span
+            className={styles.tileIcon}
+            aria-hidden="true"
+          >
+            ⚒
+          </span>
+          <span className={styles.tileBody}>
+            <span className={styles.tileLabel}>鍛冶屋</span>
+            <span className={styles.tileDesc}>
+              {diveState ? '🔒 潜行中不可' : '強化・リサイクル'}
+            </span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={styles.tile}
           disabled={!!diveState}
-          onClick={() => navigate({ name: 'forge' })}
-        />
-        <MenuButton
-          label="図鑑 / 記録"
-          description={diveState ? '潜行中は使えません' : '到達記録・モンスター図鑑'}
-          disabled={!!diveState}
-          onClick={() => navigate({ name: 'codex' })}
-        />
+          onClick={goto('codex')}
+        >
+          <span
+            className={styles.tileIcon}
+            aria-hidden="true"
+          >
+            📖
+          </span>
+          <span className={styles.tileBody}>
+            <span className={styles.tileLabel}>図鑑 / 記録</span>
+            <span className={styles.tileDesc}>
+              {diveState ? '🔒 潜行中不可' : '到達記録・図鑑'}
+            </span>
+          </span>
+        </button>
       </main>
 
-      {/* Step 4: フッター */}
+      {hasMembers && !diveState && (
+        <div
+          className={styles.autosave}
+          aria-hidden="true"
+        >
+          <span className={styles.autosaveDot} />
+          {autosaveLabel}
+        </div>
+      )}
+
       <footer className={styles.foot}>
         <button
           type="button"
@@ -160,42 +277,41 @@ export const Page = () => {
         </button>
       </footer>
 
-      {/* Step 5: ワープモーダル（bottom-sheet） */}
       {warpOpen ? (
         <div
-          className={styles.warpOverlay}
+          className={styles.sheetOverlay}
           onClick={() => setWarpOpen(false)}
         >
           <div
-            className={styles.warpSheet}
+            className={styles.sheet}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
-            aria-label="ワープ先を選択"
+            aria-label="ダイブ先を選択"
           >
             <div
-              className={styles.warpHandle}
-              aria-hidden
+              className={styles.sheetHandle}
+              aria-hidden="true"
             />
-            <div className={styles.warpHead}>
-              <span className={styles.warpTitle}>ワープ先を選択</span>
-              <span className={styles.warpCount}>解放: {checkpoints.length} 地点</span>
+            <div className={styles.sheetHead}>
+              <span className={styles.sheetTitle}>ダイブ先を選択</span>
+              <span className={styles.sheetCount}>解放: {sheetFloors.length} 地点</span>
             </div>
-            <div className={styles.warpList}>
-              {checkpoints.map((d) => (
+            <div className={styles.sheetList}>
+              {sheetFloors.map((d) => (
                 <button
                   type="button"
                   key={d}
-                  className={styles.warpItem}
-                  onClick={() => void handleWarp(d)}
+                  className={styles.sheetItem}
+                  onClick={() => void handleSelectFloor(d)}
                 >
-                  <span className={styles.warpDepth}>{d}F</span>
-                  <span className={styles.warpItemLabel}>第 {d} 階へ</span>
+                  <span className={styles.sheetDepth}>{d}F</span>
+                  <span className={styles.sheetItemLabel}>{floorLabel(d)}</span>
                 </button>
               ))}
             </div>
             <button
               type="button"
-              className={styles.warpClose}
+              className={styles.sheetClose}
               onClick={() => {
                 play('cancel');
                 setWarpOpen(false);
@@ -207,7 +323,47 @@ export const Page = () => {
         </div>
       ) : null}
 
-      {/* Step 6: ダイブ開始 封蝋スタンプ（Phase 2） */}
+      {soundOpen ? (
+        <div
+          className={styles.modalBackdrop}
+          onClick={() => {
+            play('cursor');
+            setSoundOpen(false);
+          }}
+        >
+          <div
+            className={styles.modalPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <span>設定</span>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                aria-label="閉じる"
+                onClick={() => {
+                  play('cursor');
+                  setSoundOpen(false);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <SoundSettings />
+            <button
+              type="button"
+              className={styles.modalClose}
+              onClick={() => {
+                play('cursor');
+                setSoundOpen(false);
+              }}
+            >
+              とじる
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {sealActive ? (
         <div
           className={styles.sealOverlay}
@@ -219,6 +375,7 @@ export const Page = () => {
             size={120}
             onDone={() => setSealActive(false)}
           />
+          <div className={styles.sealCaption}>SEALING… {sealingDepth}F へ</div>
         </div>
       ) : null}
     </div>

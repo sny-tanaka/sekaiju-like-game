@@ -31,7 +31,7 @@ export const MidDive: Story = {
   decorators: [withGameContext(mockMidDive, { name: 'town' })],
 };
 
-/** ワープ解放後（チェックポイント複数解放） */
+/** ボス撃破後（ワープチェックポイント解放済み） */
 export const PostBoss: Story = {
   decorators: [withGameContext(mockPostBoss, { name: 'town' })],
 };
