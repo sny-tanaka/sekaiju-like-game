@@ -6,7 +6,7 @@
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 32px 24px max(24px, env(safe-area-inset-bottom, 0px));
+  padding: 34px 40px max(24px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
   background: radial-gradient(
     120% 80% at 50% 30%,
@@ -50,6 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 16px; // モック準拠 (34px 余白を gap 18 + 16 で表現)
 }
 
 .emblemRing {
@@ -116,4 +117,5 @@
 @media (max-height: 720px) {
   .layout { gap: 16px; padding-top: 24px; }
   .body { gap: 12px; }
+  .emblem { margin-bottom: 8px; }
 }

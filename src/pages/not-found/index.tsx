@@ -1,6 +1,17 @@
 import styles from './style.module.scss';
 
+import { useGameState } from '@/store/gameState';
+import { useNavigation } from '@/store/navigation';
+
 export const Page = () => {
+  const { navigate } = useNavigation();
+  const { save } = useGameState();
+
+  // セーブが無ければ title に戻し、あれば town に戻す。
+  const handleBack = () => {
+    navigate({ name: save ? 'town' : 'title' });
+  };
+
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
@@ -27,9 +38,9 @@ export const Page = () => {
         <button
           type="button"
           className={styles.back}
-          onClick={() => history.back()}
+          onClick={handleBack}
         >
-          戻る
+          {save ? '拠点へ戻る' : 'タイトルへ戻る'}
         </button>
       </footer>
     </div>
