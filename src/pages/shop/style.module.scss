@@ -1,172 +1,191 @@
-@use 'variables' as var;
+// ショップ — 黒曜 OBSIDIAN MINIMAL テーマ
+// var(--*) を直接参照。@use 'variables' は使わない。
 
 .layout {
+  position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
-  color: var.$ink;
+  padding: 14px 20px max(14px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  background-color: var.$parchment;
+  background: var(--bg-page-gradient);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  gap: 10px;
 }
 
 .head {
   display: flex;
-  align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 0.75px solid var.$rule;
+  align-items: baseline;
+  flex-shrink: 0;
 }
 
 .title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-strong);
   margin: 0;
-  font-size: 24px;
-  font-weight: 900;
-  color: var.$ink;
 }
 
 .gold {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 16px;
-  font-weight: 700;
-  color: var.$illumination-gold;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--gold);
 }
 
+// ---- タブ ----
 .tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 4px;
+  border-bottom: 1px solid var(--rule-soft);
+  flex-shrink: 0;
 }
 
 .tab {
   flex: 1;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 15px;
-  font-weight: 700;
+  padding: 9px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-faint);
+  background: transparent;
+  border: none;
+  border-radius: 3px 3px 0 0;
   cursor: pointer;
+  font-family: var(--font-body);
+  letter-spacing: 0.08em;
 }
 
 .tabActive {
-  border-color: var.$verdant;
-  background-color: var.$parchment;
-  color: var.$verdant;
+  color: var(--bg-mid);
+  font-weight: 700;
+  background: var(--gold);
 }
 
-// カテゴリ絞り込み＋並び替え
+// ---- カテゴリ絞り込み＋並び替え ----
 .controls {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .filters {
   display: flex;
-  flex-wrap: wrap;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .chip {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 11px;
+  padding: 5px 11px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid var(--rule-base);
+  color: var(--text-mute);
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
 .chipActive {
-  border-color: var.$verdant;
-  background-color: var.$parchment;
-  color: var.$verdant;
+  background: var(--gold);
+  color: var(--bg-mid);
+  font-weight: 700;
+  border-color: var(--gold);
 }
 
 .sortRow {
   display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sortLabel {
-  font-size: 13px;
-  font-weight: 700;
-  color: var.$ink-faint;
+  justify-content: flex-end;
 }
 
 .sort {
-  flex: 1;
-  min-height: 40px;
+  font-size: 11px;
+  color: var(--text-mute);
+  background: transparent;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  height: 28px;
   padding: 0 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
-// ---- 商品リスト（内部スクロール） ----
+// ---- 商品リスト（内部スクロール・唯一の可変領域） ----
 .list {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
+  padding: 4px 0;
 }
 
 .row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
+  gap: 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 11px 13px;
+
+  // ItemSprite 周辺のバッファ
+  > :first-child {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .info {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var.$ink;
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+.nameBtn {
+  font-size: 13px;
+  color: var(--text-strong);
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0;
+  text-decoration: underline dotted rgba(201, 168, 106, 0.4);
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
 .note {
-  font-size: 12px;
-  color: var.$ink-faint;
+  font-size: 10px;
+  color: var(--text-faint);
 }
 
 .action {
-  min-height: 40px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--gold);
+  background: transparent;
+  border: 1px solid var(--rule-gold);
+  border-radius: 3px;
+  padding: 7px 11px;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
 
   &:disabled {
     opacity: 0.4;
@@ -175,206 +194,234 @@
 }
 
 .empty {
-  color: var.$ink-faint;
-  font-size: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-mute);
+  padding: 24px 0;
 }
 
+// ---- フッタ ----
 .foot {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 0.75px solid var.$rule;
+  flex-shrink: 0;
 }
 
 .back {
   width: 100%;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 14px;
+  height: clamp(44px, 12vw, 46px);
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 13px;
+  letter-spacing: 0.16em;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
-// 売買の確認ダイアログ（誤タップ防止）
+// ---- 確認ダイアログ ----
 .confirmOverlay {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 100;
   padding: 24px;
-  background-color: rgba(33, 36, 27, 0.45);
 }
 
 .confirmBox {
+  width: min(360px, calc(100% - 56px));
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 6px;
+  padding: 22px;
+  box-shadow: var(--shadow-modal);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 360px;
-  padding: 20px 18px;
-  border-radius: 4px;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
-  box-shadow: 0 6px 24px var.$shadow-ink;
+  gap: 14px;
 }
 
 .confirmText {
+  font-family: var(--font-display);
   font-size: 15px;
-  line-height: 1.5;
+  color: var(--text-strong);
   text-align: center;
-  color: var.$ink;
+  line-height: 1.7;
+
+  strong {
+    color: var(--gold);
+  }
 }
 
-.confirmActions {
-  display: flex;
-  gap: 8px;
-}
-
-.confirmCancel,
-.confirmOk {
-  flex: 1;
-  min-height: 48px;
-  border: none;
-  border-radius: 0;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.confirmCancel {
-  border: 0.75px solid var.$rule;
-  background-color: transparent;
-  color: var.$ink;
-}
-
-.confirmOk {
-  background-color: var.$verdant;
-  color: var.$parchment;
-}
-
-// 数量ステッパー（#30）— 写本トークンで再塗装
+// 数量ステッパー
 .stepperRow {
   display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
+  align-items: center;
 }
 
 .stepperBtn {
-  min-width: 40px;
-  min-height: 40px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 18px;
-  font-weight: 700;
+  width: 38px;
+  height: 38px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 16px;
   cursor: pointer;
-
-  &:active {
-    color: var.$verdant-dark;
-  }
+  font-family: var(--font-body);
 
   &:disabled {
-    opacity: 0.35;
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.stepperMax {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font-body);
+
+  &:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
   }
 }
 
 .stepperVal {
-  min-width: 48px;
+  flex: 1;
   text-align: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 20px;
-  font-weight: 700;
-  color: var.$ink;
-}
-
-.stepperMax {
-  min-height: 36px;
-  padding: 0 8px;
-  border: 0.75px solid var.$verdant;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$verdant-dark;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--text-strong);
 }
 
 .totalRow {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--text-mute);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule-soft);
+
+  strong {
+    font-family: var(--font-mono);
+    color: var(--text-strong);
+  }
+}
+
+.confirmActions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirmCancel {
+  flex: 1;
+  height: 48px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-soft);
   font-size: 14px;
-  color: var.$ink-faint;
-}
-
-// 装備名をタップ可能にするボタン（#31）
-.nameBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var.$verdant;
-  text-decoration: underline;
   cursor: pointer;
-  text-align: left;
+  font-family: var(--font-body);
 }
 
-// 装備詳細モーダル（#31）
+.confirmOk {
+  flex: 1;
+  height: 48px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: var(--bg-mid);
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+// ---- 装備詳細モーダル ----
 .detailHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 4px;
 }
 
 .detailName {
+  font-family: var(--font-display);
   font-size: 16px;
-  font-weight: 900;
-  color: var.$ink;
+  color: var(--text-strong);
 }
 
 .detailSlot {
-  font-size: 12px;
-  padding: 2px 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment;
-  color: var.$ink-faint;
+  font-size: 10px;
+  color: var(--gold);
+  border: 1px solid var(--rule-gold);
+  border-radius: 2px;
+  padding: 1px 7px;
 }
 
 .detailRow {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 14px;
-  color: var.$ink;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--text-base);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule-soft);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
 }
 
 .detailLabel {
   font-size: 11px;
-  font-weight: 700;
-  color: var.$ink-faint;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--text-faint);
 }
 
-// 購入確定 InkSplatter（Phase 2）
+// ---- 購入確定 InkSplatter ----
 .buyConfirmedFx {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 50;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
+  z-index: 200;
+}
+
+// ---- (任意) coin pop アニメ（ローカル限定） ----
+@keyframes shop-coinPop {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.9;
+  }
+
+  50% {
+    transform: translateY(-14px) scale(1.15);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-28px) scale(0.95);
+    opacity: 0;
+  }
+}
+
+// 短画面対応
+@media (max-height: 720px) {
+  .layout {
+    gap: 7px;
+    padding-top: 10px;
+  }
 }
