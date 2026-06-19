@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { userEvent, within } from 'storybook/test';
 
 import { Page } from './index';
 
@@ -22,49 +21,65 @@ export const Empty: Story = {
   decorators: [withGameContext(mockEmpty, { name: 'guild' })],
 };
 
-/** 団員 3 名（一覧・編成タブ有効） */
+/** 団員 3 名（作成タブ・作成フォーム有効） */
 export const WithMembers: Story = {
   decorators: [withGameContext(mockWithParty, { name: 'guild' })],
 };
 
-/** 一覧タブ */
+/** 一覧タブ（前衛/後衛/控えの色分け行） */
 export const Roster: Story = {
   decorators: [withGameContext(mockWithParty, { name: 'guild' })],
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(await canvas.findByRole('tab', { name: '一覧' }));
+    // 一覧タブをクリック
+    const canvas = canvasElement;
+    const tabs = canvas.querySelectorAll('button');
+    const rosterTab = Array.from(tabs).find((b) => b.textContent === '一覧');
+    rosterTab?.click();
   },
 };
 
-/** 編成タブ */
+/** 編成タブ（3列 grid） */
 export const Party: Story = {
   decorators: [withGameContext(mockWithParty, { name: 'guild' })],
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(await canvas.findByRole('tab', { name: '編成' }));
+    const canvas = canvasElement;
+    const tabs = canvas.querySelectorAll('button');
+    const partyTab = Array.from(tabs).find((b) => b.textContent === '編成');
+    partyTab?.click();
   },
 };
 
-/** 編成タブ + ピッカー展開（前衛スロットをクリック） */
+/** 編成タブ + ピッカー bottom sheet を開いた状態 */
 export const PartyPicker: Story = {
   decorators: [withGameContext(mockWithParty, { name: 'guild' })],
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(await canvas.findByRole('tab', { name: '編成' }));
-    // 前衛1スロット（最初のスロットボタン）をクリック
-    const slots = await canvas.findAllByText(/前衛1|＋ 前衛1/);
-    if (slots[0]) await userEvent.click(slots[0]);
+    const canvas = canvasElement;
+    // 編成タブへ切替
+    const tabs = canvas.querySelectorAll('button');
+    const partyTab = Array.from(tabs).find((b) => b.textContent === '編成');
+    partyTab?.click();
+    // 少し待ってからスロットカードをクリック
+    await new Promise((r) => setTimeout(r, 100));
+    const slotCards = canvas.querySelectorAll('button');
+    // ＋ボタン（空きスロット）を探す
+    const emptySlot = Array.from(slotCards).find((b) => b.textContent?.includes('＋'));
+    emptySlot?.click();
   },
 };
 
-/** 追放タブ + 確認ダイアログ展開 */
+/** 追放確認ダイアログ */
 export const BanishConfirm: Story = {
   decorators: [withGameContext(mockWithParty, { name: 'guild' })],
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(await canvas.findByRole('tab', { name: '追放' }));
-    // 最初の追放ボタンをクリック
-    const banishBtns = await canvas.findAllByRole('button', { name: '追放' });
-    if (banishBtns[0]) await userEvent.click(banishBtns[0]);
+    const canvas = canvasElement;
+    // 追放タブへ切替
+    const tabs = canvas.querySelectorAll('button');
+    const banishTab = Array.from(tabs).find((b) => b.textContent === '追放');
+    banishTab?.click();
+    // 少し待ってから最初の「追放」ボタンをクリック
+    await new Promise((r) => setTimeout(r, 100));
+    const buttons = canvas.querySelectorAll('button');
+    const banishBtn = Array.from(buttons).find((b) => b.textContent === '追放');
+    banishBtn?.click();
   },
 };
