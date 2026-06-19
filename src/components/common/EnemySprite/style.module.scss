@@ -1,0 +1,34 @@
+// EnemySprite — 敵スプライト表示コンポーネント
+
+.wrap {
+  display: inline-block;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.img {
+  display: block;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+// サイズバリアント
+.sm {
+  width: 48px;
+  height: 48px;
+}
+
+.md {
+  width: 96px;
+  height: 96px;
+}
+
+.lg {
+  width: 160px;
+  height: 160px;
+}
+
+// シルエット化（図鑑の未遭遇用）
+.silhouette {
+  filter: brightness(0) opacity(0.45);
+}

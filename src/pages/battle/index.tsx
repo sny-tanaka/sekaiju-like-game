@@ -6,6 +6,7 @@ import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
+import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
@@ -1046,6 +1047,11 @@ export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: Battle
                     </div>
                   );
                 })()}
+              <EnemySprite
+                enemyId={masterEnemyId ?? (e.enemyId as EnemyId)}
+                size="md"
+                className={styles.enemySprite}
+              />
               <span className={styles.enemyName}>
                 <span className={styles.enemyNameText}>{e.name}</span>
                 <span className={styles.enemyMarks}>{ailmentMark(e)}</span>

@@ -51,6 +51,12 @@
   border: 0.75px solid var.$vermilion;
 }
 
+// 敵スプライト画像（enemyName の直上に縦積み）
+.enemySprite {
+  display: block;
+  margin: 0 auto 4px;
+}
+
 .enemyName {
   display: flex;
   align-items: center;
