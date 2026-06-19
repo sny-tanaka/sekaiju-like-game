@@ -147,7 +147,24 @@ JetBrains Mono 400/600
 ```
 （既存 `index.scss` の値を踏襲）。
 
-### 1.5 トークン配布の構造
+### 1.5 レイアウト運用ルール（**全画面共通・必須**）
+
+**絶対配置 + 固定 `top` / `bottom` で画面を組まない**。短い画面（iPhone SE 系の dvh、URL バー表示時の dvh）で要素同士が確実に重なる。
+
+採用するパターン:
+
+1. ページのルートは `display: flex; flex-direction: column; height: 100dvh; max-width: 560px; margin: 0 auto; overflow: hidden;`。`padding-bottom: env(safe-area-inset-bottom, 0px)` を必ず加算する。
+2. ヘッダー → ヒーロー（タイトル/エンブレム等）→ 可変メタ領域 → アクション → フッタ の順で **flex item として積む**。サブ状態（ダイアログ）も同じレイアウトの中で分岐させる。
+3. 画面内で 1 セクションだけ可変（`flex: 1 1 auto` で空きを吸収）。残りは `flex-shrink: 0` で固定高。
+4. 必要に応じて **そのセクション内部だけ** `overflow: auto` で縦スクロールさせる（例: roster の長いリスト）。**ページ全体はスクロールさせない**（`html, body { overflow: hidden }` 方針と整合）。
+5. 装飾要素（浮遊粒子・背景グラデーション・モーダルのバックドロップ）に限って絶対配置 / fixed を使う。**コンテンツの座標を絶対値で書かない**。
+6. 短画面 (`@media (max-height: 720px)`) でエンブレム・余白・引用などを段階的に縮める（gap を詰める / 行数を減らす / フォントサイズを 1〜2px 落とす）。
+7. ボタン群は flex item として下から積む。`bottom: NN px` を直書きしない。`gap` と `margin-top: auto` を使う。
+8. すべての画面で「URL バー表示時 / iPhone SE / iPad mini 横幅」の 3 視点で **要素が重ならない**ことを確認する。
+
+メインアセット (`CharacterPortrait` / `EnemySprite` / `ItemSprite`) は `width: 100%; height: auto;` の親に入れ、絶対サイズで描かない。
+
+### 1.6 トークン配布の構造
 
 - `src/_obsidian.scss` を新規追加。SCSS 変数（`$obsidian-bg-deep` 等）と、
   グローバル CSS 変数（`:root { --bg-deep: #090a0d; ... }`）の両方を出力する。
