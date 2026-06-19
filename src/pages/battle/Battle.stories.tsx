@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Page } from './index';
 
 import { withGameContext } from '@/__stories__/decorators';
-import { mockBattle, mockBattleSkillMenu } from '@/__stories__/mockSaves';
+import { mockBattle, mockBattleSkillMenu, mockBossBattle } from '@/__stories__/mockSaves';
 
 const meta = {
   title: 'Pages/Battle',
@@ -56,5 +56,26 @@ export const SkillMenu: Story = {
   decorators: [withGameContext(mockBattleSkillMenu, { name: 'battle' })],
   args: {
     __storyMockOpenSkillMenu: true,
+  },
+};
+
+const BOSS_SAMPLE_LOG = [
+  'てきが あらわれた！（1 ターン目）',
+  '門番のゴーレム の 大地割り',
+  'ランス に 35 のダメージ',
+  'セラ に 28 のダメージ',
+  'ランス の パワースラッシュ',
+  '門番のゴーレム に 120 のダメージ',
+];
+
+/**
+ * F5 ボス戦のレイアウト確認。スプライトは md サイズで大きく表示される。
+ * mockBossBattle は diveState.pendingFoeBattle に enemy_boss_gatekeeper が設定されており、
+ * Page マウント後の useEffect で startBattle が走り戦闘が即立ち上がる。
+ */
+export const BossEncounter: Story = {
+  decorators: [withGameContext(mockBossBattle, { name: 'battle' })],
+  args: {
+    __storyMockLogPreview: BOSS_SAMPLE_LOG,
   },
 };

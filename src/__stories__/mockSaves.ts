@@ -170,6 +170,27 @@ export const mockBattle: SaveData = (() => {
 })();
 
 // ============================================================
+// mockBossBattle — F5 ボス階 + pendingFoeBattle（門番のゴーレムと遭遇直前）
+// ============================================================
+export const mockBossBattle: SaveData = (() => {
+  const f5Save = startDive(mockWithParty, 5);
+  if (!f5Save.diveState) return f5Save;
+
+  return {
+    ...f5Save,
+    diveState: {
+      ...f5Save.diveState,
+      pendingFoeBattle: {
+        spawnId: 'mock_boss_0',
+        enemyId: 'enemy_boss_gatekeeper',
+        firstStrike: 'none',
+        isBoss: true,
+      },
+    },
+  };
+})();
+
+// ============================================================
 // mockBattleSkillMenu — mockBattle と同じ状況だが、戦士が複数スキルを習得済み
 // （スキル選択画面のスクショ用。2列レイアウト + TP 不足のグレーアウトを確認できる）
 // ============================================================
