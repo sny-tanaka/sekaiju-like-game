@@ -380,7 +380,7 @@ v5: 拳 5 個（○→◎）+ equip_iron_armor（○→◎）= 6 件が ◎ に�
 
 ## 次のステップ
 
-1. このマッピング v2 で OK なら、**`scripts/fetch-item-sprites.mjs` を作って一括 DL** → `public/sprites/items/<itemOrEquipId>.png`
+1. このマッピング v2 で OK なら、**`scripts/fetch-item-sprites.mjs` を作って一括 DL** → `src/assets/items/<itemOrEquipId>.png`
 2. **`<ItemSprite>` 共通コンポーネント**（`<EnemySprite>` と同じ要領、sm/md サイズ対応）
 3. **インベントリ / 商店 / 鍛冶屋 / 装備画面のリスト各行**にスプライト組込
 4. **Storybook ストーリー**で見た目確認
