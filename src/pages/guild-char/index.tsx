@@ -90,7 +90,7 @@ export const Page = ({ id }: { id: string }) => {
         <div className={styles.headText}>
           <h1 className={styles.title}>{char.name}</h1>
           <span className={styles.sub}>
-            {RACES[char.raceId]?.name} / {CLASSES[char.classId]?.name} / Lv{char.level}
+            {RACES[char.raceId]?.name} ・ {CLASSES[char.classId]?.name} ・ Lv{char.level}
           </span>
         </div>
       </header>
@@ -98,7 +98,7 @@ export const Page = ({ id }: { id: string }) => {
       <main className={styles.body}>
         {/* ステータス */}
         <section className={styles.card}>
-          <h2 className={styles.h2}>ステータス</h2>
+          <h2 className={styles.h2}>能力値</h2>
           <dl className={styles.stats}>
             {STAT_ROWS.map((r) => (
               <div key={r.key}>
@@ -219,22 +219,24 @@ export const Page = ({ id }: { id: string }) => {
               </button>
             ) : null}
           </div>
-          <SkillTree
-            nodes={
-              skillTab === 'class'
-                ? (CLASSES[char.classId]?.skillTree.skills ?? [])
-                : skillTab === 'race'
-                  ? (RACES[char.raceId]?.raceSkillTree.skills ?? [])
-                  : char.titleId
-                    ? (TITLES[char.titleId]?.skillTree.skills ?? [])
-                    : []
-            }
-            char={char}
-            onLearn={(skillId) => {
-              play('create');
-              void updateChar((c) => learnSkill(c, skillId));
-            }}
-          />
+          <div className={styles.skillTreeFrame}>
+            <SkillTree
+              nodes={
+                skillTab === 'class'
+                  ? (CLASSES[char.classId]?.skillTree.skills ?? [])
+                  : skillTab === 'race'
+                    ? (RACES[char.raceId]?.raceSkillTree.skills ?? [])
+                    : char.titleId
+                      ? (TITLES[char.titleId]?.skillTree.skills ?? [])
+                      : []
+              }
+              char={char}
+              onLearn={(skillId) => {
+                play('create');
+                void updateChar((c) => learnSkill(c, skillId));
+              }}
+            />
+          </div>
         </section>
 
         {/* 育成: 転職・称号・転生 */}
