@@ -1,6 +1,21 @@
-# アイテム / 装備スプライト マッピング表 v2（DOT ILLUST → 本作 100 個）
+# アイテム / 装備スプライト マッピング表 v3（DOT ILLUST + Kenney Tiny Dungeon → 本作 100 個）
 
 > 提供素材: https://dot-illust.net/  （管理人 nko 氏、ライセンスは [enemy-sprite-mapping.md](./enemy-sprite-mapping.md) 参照）
+> Kenney 素材: https://kenney.nl/assets/tiny-dungeon （CC0 1.0、クレジット不要）
+
+## v2 → v3 の変更点
+
+- **Kenney Tiny Dungeon (CC0) で確信のある 3 個を差し替え**:
+  - `item_return_thread` → tile_0124（スクロール/巻物） ◎
+  - `item_mat_t4_rotflesh` → tile_0120（骨付き肉） ◎
+  - `item_mat_t4_steel_gear` → tile_0100（コイン/円形） ○
+- 残り 13 個（槍 5、衣 5、木材、猿王毛皮、帯電獣皮）は **Kenney にも該当タイルなし**のため v2 のまま据え置き
+- 適合度サマリ: ◎ 56 → 59、○ 28 → 29、△ 16 → 13
+
+## Kenney CC0 補完について
+
+差し替えた 3 個は https://kenney.nl/assets/tiny-dungeon の Kenney Tiny Dungeon (CC0 1.0) 由来。
+クレジット表記不要（CC0）だが、出所として本セクションを残す。
 
 ## v1 → v2 の変更点
 
@@ -88,7 +103,7 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 | item_tp_herb | まほうのは | `portion_02_purple_01` | ◎ |
 | item_tp_herb_mid | よいまほうのは | `portion_02_purple_02` | ◎ |
 | item_tp_herb_hi | とくぶつまほうのは | `portion_02_pink` | ◎ |
-| item_return_thread | 帰還の糸 | `portion_02_lightblue_01` | △ |
+| item_return_thread | 帰還の糸 | `tile_0124 (Kenney)` | ◎ |
 
 #### 売却素材 - モンスタードロップ（4 個）
 
@@ -168,12 +183,12 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 
 | ID | 名前 | 採用スラッグ | 適合度 |
 |---|---|---|---|
-| item_mat_t4_rotflesh | 腐肉のかけら | `hone` | △ |
+| item_mat_t4_rotflesh | 腐肉のかけら | `tile_0120 (Kenney)` | ◎ |
 | item_mat_t4_grave_dust | 墓場の灰塵 | `koseki_white` | ○ |
 | item_mat_t4_cursed_marrow | 呪詛の髄液 | `crystal_purple` | ○ |
 | item_mat_t4_toxic_scale | 毒鱗の粉 | `crystal_yellowgreen` | ○ |
 | item_mat_t4_spectral_ash | 亡霊の燐灰 | `crystal_white` | ○ |
-| item_mat_t4_steel_gear | 鋼の歯車 | `koseki_silver` | △ |
+| item_mat_t4_steel_gear | 鋼の歯車 | `tile_0100 (Kenney)` | ○ |
 | item_mat_t4_corroded_plate | 腐食した装甲板 | `vikinghelmet_iron` | ○ |
 | item_mat_t4_sovereign_crown | 腐王の冠 | `vikinghelmet_red` | ○ |
 
@@ -184,25 +199,24 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 | 区分 | 個数 |
 |---|---|
 | 全体（装備 + アイテム） | 100 |
-| ◎ ぴったり | 56 |
-| ○ 流用（雰囲気合致） | 28 |
-| △ 妥協（雰囲気のみ） | 16 |
+| ◎ ぴったり | 59 |
+| ○ 流用（雰囲気合致） | 29 |
+| △ 妥協（雰囲気のみ） | 13 |
 | × 要別ソース | **0** |
 
-v1 (◎32/○24/△44) → v2 (◎56/○28/△16) で **◎ が 32 → 56 に大幅増、△ は 44 → 16 に大幅減**。
+v1 (◎32/○24/△44) → v2 (◎56/○28/△16) → v3 (◎59/○29/△13) で **◎ が 56 → 59 に増、△ は 16 → 13 に減**。
 
-ユニークスラッグ数: 約 60 個（v1 約 39 → v2 約 60）
+ユニークスラッグ数: 約 63 個（v2 約 60 → v3 約 63、Kenney 3 個追加）
 
-## 残る △ 16 個の内訳
+## 残る △ 13 個の内訳
 
-- 槍（spear）全 tier: 槍単体素材なし → `tsurugi_sanshunojingi` で代用
-- 衣（clothes）全 tier: 衣単体素材なし → 魔道士キャラ絵で代用
-- 帰還の糸: 適当なポーション色違いで代用
-- 木材（item_lumber）: 松ぼっくりで代用
-- t1/t3 獣皮、t1 猿王毛皮: 鉱石色違いで代用
-- t4 腐肉のかけら、鋼の歯車: 骨・銀鉱石で代用
+- 槍（spear）全 tier（5 個）: 槍単体素材なし（DOT ILLUST / Kenney ともになし）→ `tsurugi_sanshunojingi` で代用
+- 衣（clothes）全 tier（5 個）: 衣単体素材なし（DOT ILLUST / Kenney ともになし）→ 魔道士キャラ絵で代用
+- 木材（item_lumber）: 松ぼっくりで代用（Kenney にも該当なし）
+- t1 猿王毛皮（item_mat_t1_lord_pelt）: 鉱石色違いで代用（Kenney にも該当なし）
+- t3 帯電獣皮（item_mat_t3_charged_hide）: 鉱石色違いで代用（Kenney にも該当なし）
 
-→ これ以上の改善には **別 CC0 ソース or 自作素材** が必要。
+→ Kenney Tiny Dungeon でも補完できず。これ以上の改善には **別 CC0 ソース or 自作素材** が必要。
 
 ## 次のステップ
 

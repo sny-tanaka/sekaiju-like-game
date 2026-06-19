@@ -2,6 +2,8 @@
 // itemId/equipId → 採用スラッグのマッピングに基づき、各 PNG を public/sprites/items/<id>.png へ保存する。
 // リクエスト間隔は 500ms。既存ファイルはスキップ（冪等）。
 // 非商用利用・クレジット不要（利用規約: https://dot-illust.net/terms/）
+// ⚠ Kenney Tiny Dungeon 由来の 3 個（item_return_thread / item_mat_t4_rotflesh / item_mat_t4_steel_gear）
+//   は本スクリプトの SPRITE_MAP では DOT ILLUST に向いている。再実行すると上書きされるので注意。
 
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
