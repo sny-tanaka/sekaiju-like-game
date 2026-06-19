@@ -1,7 +1,9 @@
 .root {
   padding: 16px;
-  min-height: 100vh;
   box-sizing: border-box;
+  height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .reviewBar {
