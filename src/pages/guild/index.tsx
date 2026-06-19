@@ -174,6 +174,7 @@ export const Page = () => {
             </div>
 
             {/* 種族グリッド */}
+            <div className={styles.gridLabel}>種族 ・ {raceIds.length}種</div>
             <div className={styles.raceGrid}>
               {raceIds.map((id) => (
                 <button
@@ -197,6 +198,7 @@ export const Page = () => {
             </div>
 
             {/* 職業チップ */}
+            <div className={styles.gridLabel}>職業 ・ {classIds.length}種</div>
             <div className={styles.classChips}>
               {classIds.map((id) => (
                 <button
@@ -233,16 +235,6 @@ export const Page = () => {
                 </span>
               </div>
             </div>
-
-            {/* 作成ボタン */}
-            <button
-              type="button"
-              className={styles.primary}
-              disabled={busy || isFull}
-              onClick={() => void handleCreate()}
-            >
-              {isFull ? '団員が上限です' : '作成する'}
-            </button>
 
             {notice ? <p className={styles.notice}>{notice}</p> : null}
           </>
@@ -477,13 +469,24 @@ export const Page = () => {
 
       {/* フッタ */}
       <footer className={styles.foot}>
-        <button
-          type="button"
-          className={styles.sub}
-          onClick={() => navigate({ name: 'town' })}
-        >
-          拠点へ戻る
-        </button>
+        {tab === 'create' ? (
+          <button
+            type="button"
+            className={styles.primary}
+            disabled={busy || isFull}
+            onClick={() => void handleCreate()}
+          >
+            {isFull ? '団員が上限です' : '作成する'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={styles.sub}
+            onClick={() => navigate({ name: 'town' })}
+          >
+            拠点へ戻る
+          </button>
+        )}
       </footer>
 
       {/* 編成スロットの団員ピッカー（bottom sheet） */}
@@ -591,7 +594,7 @@ export const Page = () => {
               <CharacterPortrait
                 raceId={banishTarget.raceId}
                 classId={banishTarget.classId}
-                size={26}
+                size={36}
               />
             </div>
             <p className={styles.confirmTitle}>{banishTarget.name} を追放しますか？</p>
