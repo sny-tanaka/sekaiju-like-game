@@ -104,6 +104,55 @@
     1. `browser.newContext({ ignoreHTTPSErrors: true })` で証明書エラーを無視する。
     2. スクショ前に `await page.evaluate(() => document.fonts.ready)` でフォント読込完了を待つ。
 
+## ローカル開発サーバを LAN に公開してスマホから確認する
+
+ユーザーは PC を remote-control して**スマホからセッションを操作していることがある**。その状態だと
+PC 側のターミナルでスクショを開いたり、`localhost` のサーバを見たりできない。スマホからも
+動作確認できるように、ローカル開発サーバは**プライベート IP で公開してその URL を案内すること**。
+
+### 起動コマンド（必ず `--host 0.0.0.0` を付ける）
+
+| 用途 | コマンド | デフォルトポート |
+|---|---|---|
+| Storybook | `yarn storybook --host 0.0.0.0` | 6006 |
+| 実ゲーム dev | `yarn dev --host 0.0.0.0` | 5173 |
+
+`--host` を付けないと `localhost` だけで listen し、LAN 内の他端末（スマホ）から見えない。
+`lsof -i :<port> -sTCP:LISTEN -P` で `IPv4 *:<port> (LISTEN)` になっていることを確認。
+`IPv6 *:<port>` だけのときは外部から繋がらないことがある（同マシンの curl だけ通る罠）。
+
+### スマホ向け URL の組み立て
+
+```bash
+ipconfig getifaddr en0   # Wi-Fi 経由のプライベート IP（例: 192.168.11.7）
+```
+
+その上で、
+
+- Storybook 個別ストーリー: `http://<private IP>:6006/?path=/story/<story-id>`
+- Storybook 軽量プレビュー: `http://<private IP>:6006/iframe.html?id=<story-id>&viewMode=story`
+- 実ゲーム: `http://<private IP>:5173/sekaiju-like-game/`（`base` は `vite.config.ts` 参照）
+
+### 繋がらない時の切り分け（端末のセキュリティ設定で遮断されることがある）
+
+`--host 0.0.0.0` で立てたサーバにスマホから繋がらないとき、まず**ネットワーク経路自体の問題か
+サーバ側の問題か**を切り分ける。最も軽い方法は Python の簡易サーバ:
+
+```bash
+cd /tmp && python3 -m http.server 8080 --bind 0.0.0.0
+# スマホで http://<private IP>:8080/ を開く
+```
+
+- これも見えなければ **端末（mac）のセキュリティ設定 / ファイアウォール / 仮想化ソフト / VPN / Wi-Fi の
+  AP isolation** などが LAN 接続自体を遮断している。ユーザーに端末設定の確認を促す。
+- これは見えるが Storybook / dev は見えないなら、起動オプション側の問題（`--host` 漏れ等）。
+
+### スマホでの SendUserFile プレビュー問題
+
+`SendUserFile` で送った PNG が**スマホクライアントで「PNG カード」表示になりプレビューが
+出ないこと**がある。スマホ環境では `SendUserFile` に頼り切らず、上記の LAN 公開した dev サーバや
+Storybook の URL を**併記**して、ブラウザで直接見られる経路を用意すること。
+
 ## レビュー
 
 - 実装後は別途レビュー用の新規エージェントを起動し、品質を担保してください。
@@ -112,3 +161,7 @@
 
 - 判断に迷う場合は憶測で勝手に進めず、ユーザーにヒアリングしてください。
 - ヒアリングの際は「どうすればいいか？」と聞くのではなく、「こうしたらどうか？」と提案する形にしてください。
+
+## ドット絵素材
+https://dot-illust.net/
+上記サイトを利用する
