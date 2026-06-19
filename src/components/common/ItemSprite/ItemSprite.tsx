@@ -21,7 +21,7 @@ const TIER_HUE_SHIFTS: readonly number[] = [0, 40, 100, 180, 240, 290];
 function getHueShift(itemId: ItemId): number {
   const eq = EQUIPMENT[itemId as keyof typeof EQUIPMENT];
   if (!eq || eq.slot !== 'weapon') return 0;
-  if (eq.weaponType === 'sword') return 0;
+  if (eq.weaponType === 'sword' || eq.weaponType === 'fist') return 0; // tier 別色違い画像あり
   return TIER_HUE_SHIFTS[eq.tier] ?? 0;
 }
 

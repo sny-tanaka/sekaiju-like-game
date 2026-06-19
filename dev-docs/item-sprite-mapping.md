@@ -1,7 +1,63 @@
-# アイテム / 装備スプライト マッピング表 v4（DOT ILLUST + Kenney Tiny Dungeon → 本作 100 個）
+# アイテム / 装備スプライト マッピング表 v5（DOT ILLUST + Kenney Tiny Dungeon → 本作 100 個）
 
 > 提供素材: https://dot-illust.net/  （管理人 nko 氏、ライセンスは [enemy-sprite-mapping.md](./enemy-sprite-mapping.md) 参照）
 > Kenney 素材: https://kenney.nl/assets/tiny-dungeon （CC0 1.0、クレジット不要）
+
+## v4 → v5 の変更点
+
+第二次ユーザーレビューで NG だった 21 件のうち、DOT ILLUST 内で代替が見つかった 6 件を差し替え:
+
+- 拳 5 個: `hammer` → ニット手袋 tier 別色違い (`tebukuro_knit_*_right`)
+  - equip_iron_knuckle → `tebukuro_knit_brown_right`
+  - equip_t2_fist → `tebukuro_knit_red_right`
+  - equip_t3_fist → `tebukuro_knit_blue_right`
+  - equip_t4_fist → `tebukuro_knit_green_right`
+  - equip_t5_fist → `tebukuro_knit_black_right`
+- equip_iron_armor: `shield_buckler_wood` → `armor_iron`（全身鉄鎧に戻す）
+- `ItemSprite.tsx` の hue-rotate を fist も除外（tier 別色違い画像があるため）
+
+残り 15 件は DOT ILLUST に単体素材が存在せず、ユーザー調達依頼として据え置き（詳細は「ユーザー調達依頼リスト」参照）
+
+## ユーザー調達依頼リスト（15 件）
+
+DOT ILLUST にも Kenney にも適切な素材が見つからなかった以下のアイテムは、別の素材ソース（OpenGameArt / pixela / AI 生成等）から調達が必要です。
+
+### 軽装防具 6 個（服・コート・マント単体絵が必要）
+
+| ID | 名前 | 現状スラッグ | 理由 |
+|---|---|---|---|
+| equip_leather_armor | 革の鎧 | `character_heishi_armor_01_01_red` | 兵士キャラ絵（ユーザー NG） |
+| equip_bat_cloak | コウモリのマント | `character_heishi_armor_01_01_blue` | 兵士キャラ絵（ユーザー NG） |
+| equip_t2_light | 軽装 tier 2 | `character_heishi_armor_01_01_green` | 兵士キャラ絵（ユーザー NG） |
+| equip_t3_light | 軽装 tier 3 | `character_heishi_armor_02_01_red` | 兵士キャラ絵（ユーザー NG） |
+| equip_t4_light | 軽装 tier 4 | `character_heishi_armor_02_01_blue` | 兵士キャラ絵（ユーザー NG） |
+| equip_t5_light | 軽装 tier 5 | `character_heishi_armor_02_01_green` | 兵士キャラ絵（ユーザー NG） |
+
+### 衣 5 個（ローブ単体絵が必要）
+
+| ID | 名前 | 現状スラッグ | 理由 |
+|---|---|---|---|
+| equip_cloth_robe | 布のローブ | `character_shinpu_green` | 神父キャラ絵（ユーザー NG） |
+| equip_t2_clothes | 衣 tier 2 | `character_soryo_purple` | 僧侶キャラ絵（ユーザー NG） |
+| equip_t3_clothes | 衣 tier 3 | `character_madoshi_01_black` | 魔道士キャラ絵（ユーザー NG） |
+| equip_t4_clothes | 衣 tier 4 | `character_mahotsukai_01_purple` | 魔法使いキャラ絵（ユーザー NG） |
+| equip_t5_clothes | 衣 tier 5 | `character_mahotsukai_02_black` | 魔法使いキャラ絵（ユーザー NG） |
+
+### しっぽ 1 個（尻尾単体絵が必要）
+
+| ID | 名前 | 現状スラッグ | 理由 |
+|---|---|---|---|
+| item_rat_tail | ねずみのしっぽ | `nezumi_albino` | アルビノネズミ全体絵（ユーザー NG） |
+
+### 毛皮 3 個（革・皮・毛皮単体絵が必要）
+
+| ID | 名前 | 現状スラッグ | 理由 |
+|---|---|---|---|
+| item_mat_t0_soft_pelt | やわらかな毛皮 | `usagi_albino` | 白ウサギ全体絵（ユーザー NG） |
+| item_mat_t2_frost_pelt | 霜降りの毛皮 | `kuma_shirokuma` | シロクマ全体絵（ユーザー NG） |
+| item_mat_t3_charged_hide | 帯電した獣皮 | `okami_gray` | 灰色オオカミ全体絵（ユーザー NG） |
+
+---
 
 ## v3 → v4 の変更点
 
@@ -92,7 +148,7 @@ const TIER_HUE_SHIFTS = [0, 40, 100, 180, 240, 290]; // T0〜T5
 
 1. **リスト内の名前左に表示する小アイコン用途** に最適化（sm 約 48px）。
 2. **同種類装備でも tier ごとに色違いで識別**（例: ショートソード = 茶色、銀の剣 = 赤、ミスリルソード = 青）。
-3. tier 違いの色違い素材がない場合（槍・斧・弓・拳・杖）は同じ素材を使い回し、名前で識別。
+3. tier 違いの色違い素材がない場合（槍・斧・弓・杖）は同じ素材を使い回し、名前で識別。拳は v5 で tier 別色違い画像を採用。
 4. tier 素材は素材タイプ別の代表アイコンを使用、tier ごとに色を変える。
 
 ## DL URL の構造
@@ -123,32 +179,37 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 | **spear（槍）** | 0-5 | equip_iron_spear / equip_t2-t5_spear | `tsurugi_sanshunojingi` + hue-rotate | ○ |
 | **axe（斧）** | 0-5 | equip_battle_axe / equip_t2-t5_axe | `ono` + hue-rotate | ◎ |
 | **bow（弓）** | 0-5 | equip_short_bow / equip_t2-t5_bow | `yumi` + hue-rotate | ◎ |
-| **fist（拳）** | 0-5 | equip_iron_knuckle / equip_t2-t5_fist | `hammer` + hue-rotate | ○ |
+| **fist（拳）** | 0 | equip_iron_knuckle | `tebukuro_knit_brown_right` | ◎ |
+| | 2 | equip_t2_fist | `tebukuro_knit_red_right` | ◎ |
+| | 3 | equip_t3_fist | `tebukuro_knit_blue_right` | ◎ |
+| | 4 | equip_t4_fist | `tebukuro_knit_green_right` | ◎ |
+| | 5 | equip_t5_fist | `tebukuro_knit_black_right` | ◎ |
 | **staff（杖）** | 0-5 | equip_oak_staff / equip_t2-t5_staff | `tsue` + hue-rotate | ◎ |
 
-> 槍/斧/弓/拳/杖は tier 別色違い画像なし。v4 から CSS hue-rotate で tier 別色相シフト（TIER_HUE_SHIFTS = [0, 40, 100, 180, 240, 290]）を付与。
+> 槍/斧/弓/杖は tier 別色違い画像なし。v4 から CSS hue-rotate で tier 別色相シフト（TIER_HUE_SHIFTS = [0, 40, 100, 180, 240, 290]）を付与。
+> 拳（fist）は v5 で tier 別色違い画像（tebukuro_knit_*_right）を採用したため hue-rotate 対象から除外。
 
 #### 防具（armorType × tier）
 
 | 種別 | tier | ID | 採用スラッグ | 適合度 |
 |---|---|---|---|---|
-| **heavy（重装）** | 0 | equip_iron_armor | `shield_buckler_wood` | ○ |
+| **heavy（重装）** | 0 | equip_iron_armor | `armor_iron` | ◎ |
 | | 1 | equip_slime_shield | `shield_buckler_iron` | ○ |
 | | 2 | equip_t2_heavy | `armor_koshiate_iron` | ○ |
 | | 3 | equip_t3_heavy | `armor_koshiate_red` | ○ |
 | | 4 | equip_t4_heavy | `armor_koshiate_blue` | ○ |
 | | 5 | equip_t5_heavy | `armor_koshiate_green` | ○ |
-| **light（軽装）** | 0 | equip_leather_armor | `character_heishi_armor_01_01_red` | ○ |
-| | 1 | equip_bat_cloak | `character_heishi_armor_01_01_blue` | ○ |
-| | 2 | equip_t2_light | `character_heishi_armor_01_01_green` | ○ |
-| | 3 | equip_t3_light | `character_heishi_armor_02_01_red` | ○ |
-| | 4 | equip_t4_light | `character_heishi_armor_02_01_blue` | ○ |
-| | 5 | equip_t5_light | `character_heishi_armor_02_01_green` | ○ |
-| **clothes（衣）** | 0 | equip_cloth_robe | `character_shinpu_green` | ○ |
-| | 2 | equip_t2_clothes | `character_soryo_purple` | ○ |
-| | 3 | equip_t3_clothes | `character_madoshi_01_black` | ○ |
-| | 4 | equip_t4_clothes | `character_mahotsukai_01_purple` | ○ |
-| | 5 | equip_t5_clothes | `character_mahotsukai_02_black` | ○ |
+| **light（軽装）** | 0 | equip_leather_armor | `character_heishi_armor_01_01_red` **(未解決)** | ○ |
+| | 1 | equip_bat_cloak | `character_heishi_armor_01_01_blue` **(未解決)** | ○ |
+| | 2 | equip_t2_light | `character_heishi_armor_01_01_green` **(未解決)** | ○ |
+| | 3 | equip_t3_light | `character_heishi_armor_02_01_red` **(未解決)** | ○ |
+| | 4 | equip_t4_light | `character_heishi_armor_02_01_blue` **(未解決)** | ○ |
+| | 5 | equip_t5_light | `character_heishi_armor_02_01_green` **(未解決)** | ○ |
+| **clothes（衣）** | 0 | equip_cloth_robe | `character_shinpu_green` **(未解決)** | ○ |
+| | 2 | equip_t2_clothes | `character_soryo_purple` **(未解決)** | ○ |
+| | 3 | equip_t3_clothes | `character_madoshi_01_black` **(未解決)** | ○ |
+| | 4 | equip_t4_clothes | `character_mahotsukai_01_purple` **(未解決)** | ○ |
+| | 5 | equip_t5_clothes | `character_mahotsukai_02_black` **(未解決)** | ○ |
 | **accessory（装飾）** | 0 | equip_amulet | `ring_bronze` | ◎ |
 | | 2 | equip_t2_accessory | `ring_silver` | ◎ |
 | | 3 | equip_t3_accessory | `ring_gold` | ◎ |
@@ -177,7 +238,7 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 | ID | 名前 | 採用スラッグ | 適合度 |
 |---|---|---|---|
 | item_slime_jelly | スライムゼリー | `character_monster_slime_green` | ◎ |
-| item_rat_tail | ねずみのしっぽ | `nezumi_albino` | ○ |
+| item_rat_tail | ねずみのしっぽ | `nezumi_albino` **(未解決)** | ○ |
 | item_bat_wing | もりゴブリンの小刀 | `cutlery_knife` | ◎ |
 | item_golem_core | ゴーレムの核 | `crystal_sphere_blue` | ◎ |
 
@@ -211,7 +272,7 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 
 | ID | 名前 | 採用スラッグ | 適合度 |
 |---|---|---|---|
-| item_mat_t0_soft_pelt | やわらかな毛皮 | `usagi_albino` | ○ |
+| item_mat_t0_soft_pelt | やわらかな毛皮 | `usagi_albino` **(未解決)** | ○ |
 | item_mat_t0_spore_cap | ひかるかさ | `character_monster_kinoko_green` | ◎ |
 | item_mat_t0_faint_ember | かすかな残り火 | `crystal_red` | ◎ |
 | item_mat_t0_great_antler | りっぱな角 | `shika_tsuno` | ◎ |
@@ -232,7 +293,7 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 
 | ID | 名前 | 採用スラッグ | 適合度 |
 |---|---|---|---|
-| item_mat_t2_frost_pelt | 霜降りの毛皮 | `kuma_shirokuma` | ○ |
+| item_mat_t2_frost_pelt | 霜降りの毛皮 | `kuma_shirokuma` **(未解決)** | ○ |
 | item_mat_t2_ice_crystal | 凍てつく結晶 | `crystal_lightblue` | ◎ |
 | item_mat_t2_chill_core | 冷気の核 | `crystal_sphere_lightblue` | ◎ |
 | item_mat_t2_monarch_diadem | 女王の氷冠 | `crown_02_silver_blue` | ◎ |
@@ -241,7 +302,7 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 
 | ID | 名前 | 採用スラッグ | 適合度 |
 |---|---|---|---|
-| item_mat_t3_charged_hide | 帯電した獣皮 | `okami_gray` | ○ |
+| item_mat_t3_charged_hide | 帯電した獣皮 | `okami_gray` **(未解決)** | ○ |
 | item_mat_t3_storm_feather | 嵐鳥の風切羽 | `hane_yellow` | ◎ |
 | item_mat_t3_thunder_carapace | 雷甲の外殻 | `crystal_yellow` | ○ |
 | item_mat_t3_sovereign_horn | 覇王の雷角 | `crown_02_gold_blue` | ◎ |
@@ -266,28 +327,32 @@ https://dot-illust.net/wp-content/themes/dotillust/assets/dl/<slug>.png
 | 区分 | 個数 |
 |---|---|
 | 全体（装備 + アイテム） | 100 |
-| ◎ ぴったり | 53 |
-| ○ 流用（雰囲気合致） | 47 |
+| ◎ ぴったり | 59 |
+| ○ 流用（雰囲気合致）うち未解決 15 件含む | 41 |
 | △ 妥協（雰囲気のみ） | 0 |
 | × 要別ソース | **0** |
+| **(未解決)** ユーザー調達待ち | **15** |
 
-v1 (◎32/○24/△44) → v2 (◎56/○28/△16) → v3 (◎59/○29/△13) → **v4 (◎53/○47/△0)**。
-△ が全滅。重装 6 個が ◎→○（armor 系から buckler/koshiate に変更）したが、
-△ だった 13 個（槍×5、衣×5、木材、猿王毛皮、帯電獣皮）が全員 ○ 以上に昇格。
+v1 (◎32/○24/△44) → v2 (◎56/○28/△16) → v3 (◎59/○29/△13) → v4 (◎53/○47/△0) → **v5 (◎59/○41/△0/未解決15)**。
+v5: 拳 5 個（○→◎）+ equip_iron_armor（○→◎）= 6 件が ◎ に格上げ。
+未解決 15 件（軽装 6 / 衣 5 / しっぽ 1 / 毛皮 3）はユーザー調達待ち。
 
-ユニークスラッグ数: 約 70 個（v4 で約 7 スラッグを新規追加）
+ユニークスラッグ数: 約 75 個（v5 で拳 5 スラッグ + armor_iron を新規追加）
 
 ## 注記
 
 - 槍（spear）全 tier（5 個）: CSS hue-rotate で tier 別色相シフト付与（△ → ○）
-- 衣（clothes）全 tier（5 個）: 神父/僧侶/魔道士/魔法使い のバリエーションで tier 識別（△ → ○）
+- 衣（clothes）全 tier（5 個）: 神父/僧侶/魔道士/魔法使い のバリエーションで tier 識別（△ → ○）**(未解決)**
 - 木材（item_lumber）: ki_kareki（枯れ木）に差し替え（△ → ○）
 - t1 猿王毛皮（item_mat_t1_lord_pelt）: saru_nihonzaru（ニホンザル）に差し替え（△ → ○）
-- t3 帯電獣皮（item_mat_t3_charged_hide）: okami_gray（灰色オオカミ）に差し替え（△ → ○）
-- 重装 6 個: armor_iron/armor_red/blue/green → shield_buckler + koshiate に入れ替え（◎ → ○）
-- 軽装 6 個: shield_buckler + koshiate → character_heishi_armor に入れ替え（○ → ○）
+- t3 帯電獣皮（item_mat_t3_charged_hide）: okami_gray（灰色オオカミ）に差し替え（△ → ○）**(未解決)**
+- 重装 6 個（v4）: armor_iron/armor_red/blue/green → shield_buckler + koshiate に入れ替え（◎ → ○）
+- 重装 t0（v5）: shield_buckler_wood → armor_iron（全身鉄鎧）に戻す（○ → ◎）
+- 軽装 6 個: shield_buckler + koshiate → character_heishi_armor に入れ替え（○ → ○）**(未解決)**
+- 拳（fist）5 個（v5）: hammer + hue-rotate → tebukuro_knit_*_right（ニット手袋）に差し替え（○ → ◎）
+  - hue-rotate も fist を除外対象に追加
 
-→ Kenney Tiny Dungeon でも補完できず。これ以上の改善には **別 CC0 ソース or 自作素材** が必要。
+→ 未解決 15 件は **別 CC0 ソース or 自作素材** が必要。ユーザー調達依頼リストを参照。
 
 ## 次のステップ
 

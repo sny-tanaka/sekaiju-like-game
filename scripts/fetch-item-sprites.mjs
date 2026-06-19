@@ -41,12 +41,12 @@ const SPRITE_MAP = {
   equip_t3_bow: 'yumi',
   equip_t4_bow: 'yumi',
   equip_t5_bow: 'yumi',
-  // fist (一律)
-  equip_iron_knuckle: 'hammer',
-  equip_t2_fist: 'hammer',
-  equip_t3_fist: 'hammer',
-  equip_t4_fist: 'hammer',
-  equip_t5_fist: 'hammer',
+  // fist (tier 別色違い)
+  equip_iron_knuckle: 'tebukuro_knit_brown_right',
+  equip_t2_fist: 'tebukuro_knit_red_right',
+  equip_t3_fist: 'tebukuro_knit_blue_right',
+  equip_t4_fist: 'tebukuro_knit_green_right',
+  equip_t5_fist: 'tebukuro_knit_black_right',
   // staff (一律)
   equip_oak_staff: 'tsue',
   equip_t2_staff: 'tsue',
@@ -56,7 +56,7 @@ const SPRITE_MAP = {
 
   // ---- 防具 ----
   // heavy (tier 別色違い) ← v4: 旧 light(koshiate/buckler)に移動
-  equip_iron_armor: 'shield_buckler_wood',
+  equip_iron_armor: 'armor_iron',
   equip_slime_shield: 'shield_buckler_iron',
   equip_t2_heavy: 'armor_koshiate_iron',
   equip_t3_heavy: 'armor_koshiate_red',
