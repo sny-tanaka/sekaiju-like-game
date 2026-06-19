@@ -31565,7 +31565,7 @@ const _x = 2500,
                 i.jsxs('footer', {
                   className: hA.foot,
                   children: [
-                    i.jsxs('span', { className: hA.version, children: ['v', '0.2.22'] }),
+                    i.jsxs('span', { className: hA.version, children: ['v', '0.2.23'] }),
                     i.jsx('button', {
                       type: 'button',
                       className: hA.updateBtn,
