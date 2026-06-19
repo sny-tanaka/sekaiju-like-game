@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { userEvent, within } from 'storybook/test';
 
 import { Page } from './index';
 
@@ -17,41 +16,44 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** ショップ（所持 G 5000・装備 5 個） */
+/** ショップ（所持 G 5000・装備 5 個）— 買うタブ初期表示 */
 export const Default: Story = {
   decorators: [withGameContext(mockShop, { name: 'shop' })],
 };
 
-/** 売るタブ表示 */
+/** 売るタブ（装備個体プール） */
 export const Sell: Story = {
   decorators: [withGameContext(mockShop, { name: 'shop' })],
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(await canvas.findByRole('button', { name: '売る' }));
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    // 「売る」タブをクリック
+    const buttons = canvasElement.querySelectorAll<HTMLElement>('button');
+    for (const b of buttons) {
+      if (b.textContent?.trim() === '売る') {
+        b.click();
+        break;
+      }
+    }
   },
 };
 
-/** 買うタブで価格ボタン押下 → 購入確認ダイアログ */
+/** 購入ダイアログ ＋ coin pop FX（リスト先頭の価格ボタンをクリック） */
 export const BuyConfirm: Story = {
   decorators: [withGameContext(mockShop, { name: 'shop' })],
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    // 「N G」形式の価格ボタンを先頭から拾う
-    const priceBtn = (await canvas.findAllByRole('button')).find((b: HTMLElement) =>
-      /\d+ G$/.test(b.textContent ?? '')
-    );
-    if (priceBtn) await userEvent.click(priceBtn);
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    // class に "action" を含む最初のボタンをクリックして購入ダイアログを開く
+    const actionBtns = canvasElement.querySelectorAll<HTMLElement>('button[class*="action"]');
+    const first = actionBtns[0];
+    if (first) first.click();
   },
 };
 
-/** 買うタブで装備行の名前ボタン押下 → 装備詳細モーダル */
+/** 装備詳細モーダル（装備行の名前ボタンをクリック） */
 export const EquipDetail: Story = {
   decorators: [withGameContext(mockShop, { name: 'shop' })],
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    // nameBtn クラスを持つボタンをクリック
-    const allButtons = await canvas.findAllByRole('button');
-    const nameBtn = allButtons.find((b: HTMLElement) => b.className.includes('nameBtn'));
-    if (nameBtn) await userEvent.click(nameBtn);
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    // class に "nameBtn" を含む最初のボタンをクリックして装備詳細モーダルを開く
+    const nameBtns = canvasElement.querySelectorAll<HTMLElement>('button[class*="nameBtn"]');
+    const first = nameBtns[0];
+    if (first) first.click();
   },
 };

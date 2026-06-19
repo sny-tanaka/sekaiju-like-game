@@ -1,6 +1,13 @@
-// ショップ — 黒曜 OBSIDIAN MINIMAL テーマ
-// var(--*) を直接参照。@use 'variables' は使わない。
+// shop/style.module.scss — 黒曜 OBSIDIAN MINIMAL v2（モック忠実化）
 
+// ---- coin pop ローカルアニメ ----
+@keyframes shop-coinPop {
+  0% { transform: translateY(0) scale(1); opacity: 0.9; }
+  50% { transform: translateY(-14px) scale(1.15); opacity: 1; }
+  100% { transform: translateY(-28px) scale(0.95); opacity: 0; }
+}
+
+// ---- ルートレイアウト ----
 .layout {
   position: relative;
   display: flex;
@@ -9,27 +16,28 @@
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 14px 20px max(14px, env(safe-area-inset-bottom, 0px));
+  padding: 16px 20px max(20px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  background: var(--bg-page-gradient);
+  background: radial-gradient(130% 90% at 50% -8%, #1c2230 0%, #0e0f13 56%, #090a0d 100%);
   color: var(--text-base);
   font-family: var(--font-body);
-  gap: 10px;
+  gap: 12px;
 }
 
+// ---- ヘッダー ----
 .head {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
+  justify-content: space-between;
   flex-shrink: 0;
 }
 
 .title {
+  margin: 0;
   font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-strong);
-  margin: 0;
 }
 
 .gold {
@@ -38,26 +46,25 @@
   color: var(--gold);
 }
 
-// ---- タブ ----
+// ---- flat underline タブバー ----
 .tabs {
   display: flex;
   gap: 4px;
-  border-bottom: 1px solid var(--rule-soft);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
 
 .tab {
   flex: 1;
-  padding: 9px 0;
   text-align: center;
+  padding: 9px 0;
   font-size: 12px;
   color: var(--text-faint);
+  border-radius: 3px 3px 0 0;
   background: transparent;
   border: none;
-  border-radius: 3px 3px 0 0;
   cursor: pointer;
   font-family: var(--font-body);
-  letter-spacing: 0.08em;
 }
 
 .tabActive {
@@ -66,7 +73,7 @@
   background: var(--gold);
 }
 
-// ---- カテゴリ絞り込み＋並び替え ----
+// ---- カテゴリチップ＋ソート行 ----
 .controls {
   display: flex;
   flex-direction: column;
@@ -76,8 +83,8 @@
 
 .filters {
   display: flex;
-  gap: 6px;
   flex-wrap: wrap;
+  gap: 6px;
 }
 
 .chip {
@@ -85,7 +92,7 @@
   padding: 5px 11px;
   border-radius: 14px;
   background: transparent;
-  border: 1px solid var(--rule-base);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-mute);
   cursor: pointer;
   font-family: var(--font-body);
@@ -95,27 +102,28 @@
   background: var(--gold);
   color: var(--bg-mid);
   font-weight: 700;
-  border-color: var(--gold);
+  border: 1px solid var(--gold);
 }
 
 .sortRow {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
 }
 
 .sort {
   font-size: 11px;
-  color: var(--text-mute);
+  color: var(--text-faint);
   background: transparent;
-  border: 1px solid var(--rule-base);
-  border-radius: 3px;
-  height: 28px;
-  padding: 0 8px;
+  border: none;
+  appearance: none;
+  -webkit-appearance: none;
   cursor: pointer;
   font-family: var(--font-body);
+  text-align: right;
 }
 
-// ---- 商品リスト（内部スクロール・唯一の可変領域） ----
+// ---- 商品リスト（唯一の可変領域） ----
 .list {
   flex: 1 1 auto;
   min-height: 0;
@@ -128,29 +136,55 @@
   padding: 4px 0;
 }
 
+// ---- 買うタブ: 行 ----
 .row {
   display: flex;
   align-items: center;
   gap: 12px;
   background: var(--surface-panel);
-  border: 1px solid var(--rule-soft);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 4px;
   padding: 11px 13px;
+}
 
-  // ItemSprite 周辺のバッファ
-  > :first-child {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-  }
+// 先頭行の強調スタイル（最高価格の装備向け）
+.rowHighlight {
+  background: linear-gradient(100deg, #1a2030, #13151c);
+  border: 1px solid rgba(201, 168, 106, 0.35);
+}
+
+// ItemSprite ラッパー（44x44 カード）
+.spriteCard {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 3px;
+  background: #0c0d11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+// ItemSprite ラッパー (42x42 for sell tab)
+.spriteCardSm {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 3px;
+  background: #0c0d11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
 }
 
 .name {
@@ -159,45 +193,101 @@
 }
 
 .nameBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
   font-size: 13px;
   color: var(--text-strong);
-  background: transparent;
-  border: none;
-  text-align: left;
-  padding: 0;
-  text-decoration: underline dotted rgba(201, 168, 106, 0.4);
   cursor: pointer;
+  text-align: left;
   font-family: var(--font-body);
 }
 
 .note {
   font-size: 10px;
   color: var(--text-faint);
+  margin-top: 2px;
 }
 
+// 価格ボタン（通常: gold border）
 .action {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--gold);
-  background: transparent;
-  border: 1px solid var(--rule-gold);
+  border: 1px solid rgba(201, 168, 106, 0.4);
   border-radius: 3px;
   padding: 7px 11px;
+  background: transparent;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
 
   &:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
   }
 }
 
-.empty {
-  text-align: center;
+// 価格ボタン強調（高価商品: gold 塗り）
+.actionHighlight {
+  font-family: var(--font-mono);
   font-size: 12px;
+  color: var(--bg-mid);
+  font-weight: 700;
+  background: var(--gold);
+  border-radius: 3px;
+  padding: 7px 11px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+// ---- 売るタブ: 装備中ロック行 ----
+.rowLocked {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #101218;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 11px 13px;
+  opacity: 0.6;
+}
+
+.noteName {
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.noteLocked {
+  font-size: 10px;
+  color: #e0917f;
+  margin-top: 2px;
+}
+
+.lockIcon {
+  font-size: 16px;
+  color: #46443e;
+  flex-shrink: 0;
+}
+
+// 強化値テキスト（売るタブ行内）
+.forgeLevel {
+  color: #7c7a74;
+}
+
+// 空状態
+.empty {
   color: var(--text-mute);
-  padding: 24px 0;
+  font-size: 13px;
+  padding: 8px 0;
 }
 
 // ---- フッタ ----
@@ -207,90 +297,109 @@
 
 .back {
   width: 100%;
-  height: clamp(44px, 12vw, 46px);
+  height: 46px;
   border-radius: 3px;
-  border: 1px solid var(--rule-base);
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-mute);
   font-size: 13px;
   letter-spacing: 0.16em;
+  background: transparent;
   cursor: pointer;
   font-family: var(--font-body);
 }
 
-// ---- 確認ダイアログ ----
+// ---- 確認ダイアログ（共通基盤） ----
 .confirmOverlay {
   position: fixed;
   inset: 0;
-  background: var(--bg-overlay);
+  z-index: 30;
+  background: rgba(6, 7, 10, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
-  padding: 24px;
+  padding: 0 28px;
 }
 
 .confirmBox {
-  width: min(360px, calc(100% - 56px));
+  width: 100%;
+  max-width: 360px;
   background: var(--surface-panel);
-  border: 1px solid var(--rule-gold);
+  border: 1px solid rgba(201, 168, 106, 0.4);
   border-radius: 6px;
   padding: 22px;
-  box-shadow: var(--shadow-modal);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0;
 }
 
-.confirmText {
-  font-family: var(--font-display);
-  font-size: 15px;
-  color: var(--text-strong);
-  text-align: center;
-  line-height: 1.7;
+// 商品ヘッダー（アイコン＋名前）
+.dialogHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
 
-  strong {
-    color: var(--gold);
-  }
+.dialogSprite {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 3px;
+  background: #0c0d11;
+  border: 1px solid rgba(201, 168, 106, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dialogItemName {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-strong);
+}
+
+.dialogItemNote {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 3px;
+}
+
+// coin pop アニメ
+.coinPop {
+  display: block;
+  text-align: center;
+  font-size: 18px;
+  margin: -4px 0 20px;
+  animation: shop-coinPop 1.8s ease-in-out infinite;
 }
 
 // 数量ステッパー
 .stepperRow {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
 }
 
 .stepperBtn {
   width: 38px;
   height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-mute);
+  font-size: 18px;
   border-radius: 3px;
-  border: 1px solid var(--rule-base);
   background: transparent;
-  color: var(--text-soft);
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  flex-shrink: 0;
   font-family: var(--font-body);
 
   &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-}
-
-.stepperMax {
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-base);
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 11px;
-  cursor: pointer;
-  font-family: var(--font-body);
-
-  &:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
   }
 }
@@ -303,21 +412,83 @@
   color: var(--text-strong);
 }
 
-.totalRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 13px;
+.stepperMax {
+  width: 48px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--text-mute);
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rule-soft);
+  font-size: 11px;
+  border-radius: 3px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: var(--font-body);
 
-  strong {
-    font-family: var(--font-mono);
-    color: var(--text-strong);
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
   }
 }
 
+// 合計行
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.totalLabel {
+  color: var(--text-mute);
+}
+
+.totalValue {
+  font-family: var(--font-mono);
+  color: var(--text-strong);
+}
+
+// 購入後の所持金行
+.postGoldRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.postGoldLabel {
+  color: var(--text-faint);
+}
+
+.postGoldValue {
+  font-family: var(--font-mono);
+  color: var(--gold);
+}
+
+// 売却額行（sellEquip 用）
+.sellPriceRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sellPriceLabel {
+  color: var(--text-mute);
+}
+
+.sellPriceValue {
+  font-family: var(--font-mono);
+  color: var(--gold);
+}
+
+// アクションボタン行
 .confirmActions {
   display: flex;
   gap: 10px;
@@ -327,9 +498,9 @@
   flex: 1;
   height: 48px;
   border-radius: 3px;
-  border: 1px solid var(--rule-base);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #c8c4ba;
   background: transparent;
-  color: var(--text-soft);
   font-size: 14px;
   cursor: pointer;
   font-family: var(--font-body);
@@ -351,9 +522,28 @@
 // ---- 装備詳細モーダル ----
 .detailHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 4px;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.detailSprite {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 3px;
+  background: #0c0d11;
+  border: 1px solid rgba(201, 168, 106, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.detailNameBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .detailName {
@@ -363,65 +553,39 @@
 }
 
 .detailSlot {
-  font-size: 10px;
+  display: inline-block;
+  font-size: 11px;
   color: var(--gold);
   border: 1px solid var(--rule-gold);
   border-radius: 2px;
-  padding: 1px 7px;
+  padding: 2px 8px;
 }
 
-.detailRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 13px;
-  color: var(--text-base);
-  padding: 6px 0;
-  border-bottom: 1px solid var(--rule-soft);
-
-  &:last-of-type {
-    border-bottom: none;
-  }
+.detailGrid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin-bottom: 16px;
 }
 
 .detailLabel {
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--text-mute);
+  white-space: nowrap;
 }
 
-// ---- 購入確定 InkSplatter ----
+.detailValue {
+  font-size: 12px;
+  color: var(--text-base);
+  text-align: right;
+}
+
+// ---- 購入確定 InkSplatter（Phase 2） ----
 .buyConfirmedFx {
   position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
   pointer-events: none;
-  z-index: 200;
-}
-
-// ---- (任意) coin pop アニメ（ローカル限定） ----
-@keyframes shop-coinPop {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 0.9;
-  }
-
-  50% {
-    transform: translateY(-14px) scale(1.15);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(-28px) scale(0.95);
-    opacity: 0;
-  }
-}
-
-// 短画面対応
-@media (max-height: 720px) {
-  .layout {
-    gap: 7px;
-    padding-top: 10px;
-  }
 }

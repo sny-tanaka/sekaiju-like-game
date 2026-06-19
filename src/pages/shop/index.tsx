@@ -27,9 +27,9 @@ import { Redirect, useNavigation } from '@/store/navigation';
 
 // 確認待ちの売買操作（タップ1回での誤購入/誤売却を防ぐ。確認ダイアログ経由でのみ実行）。
 type Pending =
-  | { kind: 'buy'; id: string; name: string; price: number }
+  | { kind: 'buy'; id: string; name: string; price: number; note?: string }
   | { kind: 'sellItem'; itemId: string; grade: number; name: string; price: number; maxQty: number }
-  | { kind: 'sellEquip'; id: string; name: string; price: number };
+  | { kind: 'sellEquip'; id: string; masterId: string; name: string; price: number };
 
 // 装備詳細モーダル用（#31）。
 type EquipDetail = {
@@ -77,7 +77,7 @@ export const Page = () => {
   const [pending, setPending] = useState<Pending | null>(null);
   const [pendingQty, setPendingQty] = useState(1);
   const [filter, setFilter] = useState<ShopCat | 'all'>('all');
-  const [sort, setSort] = useState<SortKey>('priceAsc');
+  const [sort, setSort] = useState<SortKey>('priceDesc');
   const [equipDetail, setEquipDetail] = useState<EquipDetail | null>(null);
   // 購入確定演出（Phase 2）: damage（墨色）variant の InkSplatter + チェックマーク。
   const [buyConfirmed, setBuyConfirmed] = useState(false);
@@ -252,41 +252,49 @@ export const Page = () => {
           className={styles.confirmBox}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* 装備詳細ヘッダー: ItemSprite + 名前 + スロットタグ */}
           <div className={styles.detailHeader}>
-            <span className={styles.detailName}>{equipDetail.name}</span>
-            <span className={styles.detailSlot}>{slotLabel}</span>
+            <div className={styles.detailSprite}>
+              <ItemSprite
+                itemId={equipDetail.masterId}
+                size="sm"
+              />
+            </div>
+            <div className={styles.detailNameBlock}>
+              <span className={styles.detailName}>{equipDetail.name}</span>
+              <span className={styles.detailSlot}>{slotLabel}</span>
+            </div>
           </div>
-          {eq.slot === 'weapon' && eq.weaponType && (
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>武器種</span>
-              <span>{WEAPON_TYPE_LABEL[eq.weaponType]}</span>
-            </div>
-          )}
-          {eq.slot === 'armor' && eq.armorType && (
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>防具種</span>
-              <span>{ARMOR_TYPE_LABEL[eq.armorType]}</span>
-            </div>
-          )}
-          {bonusParts.length > 0 && (
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>性能</span>
-              <span>{bonusParts.join(' / ')}</span>
-            </div>
-          )}
-          <div className={styles.detailRow}>
+          {/* 性能グリッド */}
+          <div className={styles.detailGrid}>
+            {eq.slot === 'weapon' && eq.weaponType && (
+              <>
+                <span className={styles.detailLabel}>武器種</span>
+                <span className={styles.detailValue}>{WEAPON_TYPE_LABEL[eq.weaponType]}</span>
+              </>
+            )}
+            {eq.slot === 'armor' && eq.armorType && (
+              <>
+                <span className={styles.detailLabel}>防具種</span>
+                <span className={styles.detailValue}>{ARMOR_TYPE_LABEL[eq.armorType]}</span>
+              </>
+            )}
+            {bonusParts.length > 0 && (
+              <>
+                <span className={styles.detailLabel}>性能</span>
+                <span className={styles.detailValue}>{bonusParts.join(' / ')}</span>
+              </>
+            )}
             <span className={styles.detailLabel}>装備可能</span>
-            <span>{eq.slot === 'accessory' ? '全職業' : classNames.join('・')}</span>
-          </div>
-          <div className={styles.detailRow}>
+            <span className={styles.detailValue}>
+              {eq.slot === 'accessory' ? '全職業' : classNames.join('・')}
+            </span>
             <span className={styles.detailLabel}>
               {equipDetail.mode === 'buy' ? '購入価格' : '売却額'}
             </span>
-            <span>{equipDetail.price} G</span>
-          </div>
-          <div className={styles.detailRow}>
+            <span className={styles.detailValue}>{equipDetail.price} G</span>
             <span className={styles.detailLabel}>所持数</span>
-            <span>{equipDetail.ownedQty}</span>
+            <span className={styles.detailValue}>{equipDetail.ownedQty}</span>
           </div>
           <div className={styles.confirmActions}>
             <button
@@ -302,13 +310,18 @@ export const Page = () => {
     );
   };
 
+  // 買うタブ: 先頭行（最高価格）を強調するかどうか判定。
+  const topBuyKey = buyView[0]?.key;
+
   return (
     <div className={styles.layout}>
+      {/* ヘッダー */}
       <header className={styles.head}>
         <h1 className={styles.title}>ショップ</h1>
-        <span className={styles.gold}>{gold} G</span>
+        <span className={styles.gold}>{gold.toLocaleString()} G</span>
       </header>
 
+      {/* flat underline タブバー */}
       <div className={styles.tabs}>
         <button
           type="button"
@@ -347,7 +360,7 @@ export const Page = () => {
             </button>
           ))}
         </div>
-        <label className={styles.sortRow}>
+        <div className={styles.sortRow}>
           <select
             className={styles.sort}
             value={sort}
@@ -358,132 +371,176 @@ export const Page = () => {
                 key={k}
                 value={k}
               >
-                {SORT_LABEL[k]}
+                ⇅ {SORT_LABEL[k]}
               </option>
             ))}
           </select>
-        </label>
+        </div>
       </div>
 
+      {/* リスト本体 */}
       <div className={styles.list}>
         {tab === 'buy' ? (
           buyView.length === 0 ? (
             <p className={styles.empty}>該当する商品がありません。</p>
           ) : (
-            buyView.map(({ entry: e, qty }) => (
-              <div
-                key={e.id}
-                className={styles.row}
-              >
-                <ItemSprite
-                  itemId={e.id as ItemId}
-                  size="sm"
-                />
-                <div className={styles.info}>
-                  {e.kind === 'equip' ? (
+            buyView.map(({ key, entry: e, qty }) => {
+              const isHighlight = sort === 'priceDesc' && key === topBuyKey;
+              return (
+                <div
+                  key={e.id}
+                  className={isHighlight ? styles.rowHighlight : styles.row}
+                >
+                  <div className={styles.spriteCard}>
+                    <ItemSprite
+                      itemId={e.id as ItemId}
+                      size="sm"
+                    />
+                  </div>
+                  <div className={styles.info}>
+                    {e.kind === 'equip' ? (
+                      <button
+                        type="button"
+                        className={styles.nameBtn}
+                        onClick={() =>
+                          setEquipDetail({
+                            masterId: e.id as ItemId,
+                            name: e.name,
+                            ownedQty: qty,
+                            price: e.price,
+                            mode: 'buy',
+                          })
+                        }
+                      >
+                        {e.name}
+                      </button>
+                    ) : (
+                      <span className={styles.name}>{e.name}</span>
+                    )}
+                    <span className={styles.note}>
+                      {e.note ? `${e.note} ・ ` : ''}所持 {qty}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={isHighlight ? styles.actionHighlight : styles.action}
+                    disabled={gold < e.price}
+                    onClick={() =>
+                      openPending({
+                        kind: 'buy',
+                        id: e.id,
+                        name: e.name,
+                        price: e.price,
+                        note: e.note,
+                      })
+                    }
+                  >
+                    {e.price.toLocaleString()} G
+                  </button>
+                </div>
+              );
+            })
+          )
+        ) : sellView.length === 0 ? (
+          <p className={styles.empty}>売れる物がありません。</p>
+        ) : (
+          sellView.map((r) => {
+            if (r.kind === 'equip') {
+              // 装備個体行: 強化値を色分け表示
+              const baseName = EQUIPMENT[r.inst.masterId]?.name ?? r.name;
+              const forgeLvSuffix = r.inst.forgeLevel > 0 ? ` +${r.inst.forgeLevel}` : '';
+              return (
+                <div
+                  key={r.key}
+                  className={styles.row}
+                >
+                  <div className={styles.spriteCardSm}>
+                    <ItemSprite
+                      itemId={r.inst.masterId as ItemId}
+                      size="sm"
+                    />
+                  </div>
+                  <div className={styles.info}>
                     <button
                       type="button"
                       className={styles.nameBtn}
                       onClick={() =>
                         setEquipDetail({
-                          masterId: e.id as ItemId,
-                          name: e.name,
-                          ownedQty: qty,
-                          price: e.price,
-                          mode: 'buy',
+                          masterId: r.inst.masterId as ItemId,
+                          name: r.name,
+                          ownedQty: 1,
+                          price: r.price,
+                          mode: 'sell',
+                          grade: r.inst.grade ?? 1,
                         })
                       }
                     >
-                      {e.name}
+                      {baseName}
+                      {forgeLvSuffix && <span className={styles.forgeLevel}>{forgeLvSuffix}</span>}
                     </button>
-                  ) : (
-                    <span className={styles.name}>{e.name}</span>
-                  )}
-                  <span className={styles.note}>
-                    {e.note ? `${e.note} ・ ` : ''}所持 {qty}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className={styles.action}
-                  disabled={gold < e.price}
-                  onClick={() =>
-                    openPending({
-                      kind: 'buy',
-                      id: e.id,
-                      name: e.name,
-                      price: e.price,
-                    })
-                  }
-                >
-                  {e.price} G
-                </button>
-              </div>
-            ))
-          )
-        ) : sellView.length === 0 ? (
-          <p className={styles.empty}>売れる物がありません。</p>
-        ) : (
-          sellView.map((r) => (
-            <div
-              key={r.key}
-              className={styles.row}
-            >
-              <ItemSprite
-                itemId={(r.kind === 'equip' ? r.inst.masterId : r.itemId) as ItemId}
-                size="sm"
-              />
-              <div className={styles.info}>
-                {r.kind === 'equip' ? (
+                    <span className={styles.note}>
+                      {CAT_LABEL[r.category]} ・ 個体 #{r.inst.id.slice(-4)}
+                    </span>
+                  </div>
                   <button
                     type="button"
-                    className={styles.nameBtn}
+                    className={styles.action}
                     onClick={() =>
-                      setEquipDetail({
-                        masterId: r.inst.masterId as ItemId,
+                      openPending({
+                        kind: 'sellEquip',
+                        id: r.inst.id,
+                        masterId: r.inst.masterId,
                         name: r.name,
-                        ownedQty: 1,
                         price: r.price,
-                        mode: 'sell',
-                        grade: r.inst.grade ?? 1,
                       })
                     }
                   >
-                    {r.name}
+                    {r.price.toLocaleString()} G
                   </button>
-                ) : (
-                  <span className={styles.name}>{r.name}</span>
-                )}
-                <span className={styles.note}>
-                  {CAT_LABEL[r.category]}
-                  {r.kind === 'item' ? ` ・ 所持 ${r.qty}` : ''}
-                </span>
-              </div>
-              <button
-                type="button"
-                className={styles.action}
-                onClick={() =>
-                  openPending(
-                    r.kind === 'equip'
-                      ? { kind: 'sellEquip', id: r.inst.id, name: r.name, price: r.price }
-                      : {
-                          kind: 'sellItem',
-                          itemId: r.itemId,
-                          grade: r.grade,
-                          name: r.name,
-                          price: r.price,
-                          maxQty: r.qty,
-                        }
-                  )
-                }
-              >
-                売却 {r.price} G
-              </button>
-            </div>
-          ))
+                </div>
+              );
+            } else {
+              return (
+                <div
+                  key={r.key}
+                  className={styles.row}
+                >
+                  <div className={styles.spriteCardSm}>
+                    <ItemSprite
+                      itemId={r.itemId as ItemId}
+                      size="sm"
+                    />
+                  </div>
+                  <div className={styles.info}>
+                    <span className={styles.name}>{r.name}</span>
+                    <span className={styles.note}>
+                      {CAT_LABEL[r.category]} ・ 所持 {r.qty}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.action}
+                    onClick={() =>
+                      openPending({
+                        kind: 'sellItem',
+                        itemId: r.itemId,
+                        grade: r.grade,
+                        name: r.name,
+                        price: r.price,
+                        maxQty: r.qty,
+                      })
+                    }
+                  >
+                    {r.price.toLocaleString()} G
+                  </button>
+                </div>
+              );
+            }
+          })
         )}
       </div>
 
+      {/* フッタ */}
       <footer className={styles.foot}>
         <button
           type="button"
@@ -504,65 +561,127 @@ export const Page = () => {
             className={styles.confirmBox}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={styles.confirmText}>
-              {pending.kind === 'buy' ? (
-                <>
-                  <strong>{pending.name}</strong> を購入しますか？
-                </>
-              ) : pending.kind === 'sellEquip' ? (
-                <>
-                  <strong>{pending.name}</strong> を {pending.price} G で売却しますか？
-                </>
-              ) : (
-                <>
-                  <strong>{pending.name}</strong> を売却しますか？
-                </>
-              )}
+            {/* 商品ヘッダー */}
+            <div className={styles.dialogHead}>
+              <div className={styles.dialogSprite}>
+                <ItemSprite
+                  itemId={
+                    (pending.kind === 'buy'
+                      ? pending.id
+                      : pending.kind === 'sellEquip'
+                        ? pending.masterId
+                        : pending.itemId) as ItemId
+                  }
+                  size="sm"
+                />
+              </div>
+              <div>
+                <div className={styles.dialogItemName}>{pending.name}</div>
+                {pending.kind === 'buy' && pending.note && (
+                  <div className={styles.dialogItemNote}>{pending.note}</div>
+                )}
+              </div>
             </div>
-            {/* 数量ステッパー（sellEquip は数量1固定なので非表示）。 */}
-            {pending.kind !== 'sellEquip' && (
-              <div className={styles.stepperRow}>
-                <button
-                  type="button"
-                  className={styles.stepperBtn}
-                  disabled={pendingQty <= 1}
-                  onClick={() => setPendingQty((q) => Math.max(1, q - 1))}
-                >
-                  −
-                </button>
-                <span className={styles.stepperVal}>{pendingQty}</span>
-                <button
-                  type="button"
-                  className={styles.stepperBtn}
-                  disabled={pendingQty >= pendingMax}
-                  onClick={() => setPendingQty((q) => Math.min(pendingMax, q + 1))}
-                >
-                  ＋
-                </button>
-                <button
-                  type="button"
-                  className={styles.stepperBtn}
-                  disabled={pendingQty >= pendingMax}
-                  onClick={() => setPendingQty((q) => Math.min(pendingMax, q + 10))}
-                >
-                  +10
-                </button>
-                <button
-                  type="button"
-                  className={styles.stepperMax}
-                  disabled={pendingQty >= pendingMax}
-                  onClick={() => setPendingQty(pendingMax)}
-                >
-                  最大
-                </button>
+
+            {/* 購入ダイアログ: coin pop + ステッパー + 合計 + 購入後所持金 */}
+            {pending.kind === 'buy' && (
+              <>
+                <span className={styles.coinPop}>🪙</span>
+                <div className={styles.stepperRow}>
+                  <button
+                    type="button"
+                    className={styles.stepperBtn}
+                    disabled={pendingQty <= 1}
+                    onClick={() => setPendingQty((q) => Math.max(1, q - 1))}
+                  >
+                    −
+                  </button>
+                  <span className={styles.stepperVal}>×{pendingQty}</span>
+                  <button
+                    type="button"
+                    className={styles.stepperBtn}
+                    disabled={pendingQty >= pendingMax}
+                    onClick={() => setPendingQty((q) => Math.min(pendingMax, q + 1))}
+                  >
+                    ＋
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.stepperMax}
+                    disabled={pendingQty >= pendingMax}
+                    onClick={() => setPendingQty(pendingMax)}
+                  >
+                    最大
+                  </button>
+                </div>
+                <div className={styles.totalRow}>
+                  <span className={styles.totalLabel}>合計</span>
+                  <span className={styles.totalValue}>
+                    {(pending.price * pendingQty).toLocaleString()} G
+                  </span>
+                </div>
+                <div className={styles.postGoldRow}>
+                  <span className={styles.postGoldLabel}>購入後の所持金</span>
+                  <span className={styles.postGoldValue}>
+                    {(gold - pending.price * pendingQty).toLocaleString()} G
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* 売却アイテム: ステッパー + 合計 + 売却後所持金 */}
+            {pending.kind === 'sellItem' && (
+              <>
+                <div className={styles.stepperRow}>
+                  <button
+                    type="button"
+                    className={styles.stepperBtn}
+                    disabled={pendingQty <= 1}
+                    onClick={() => setPendingQty((q) => Math.max(1, q - 1))}
+                  >
+                    −
+                  </button>
+                  <span className={styles.stepperVal}>×{pendingQty}</span>
+                  <button
+                    type="button"
+                    className={styles.stepperBtn}
+                    disabled={pendingQty >= pendingMax}
+                    onClick={() => setPendingQty((q) => Math.min(pendingMax, q + 1))}
+                  >
+                    ＋
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.stepperMax}
+                    disabled={pendingQty >= pendingMax}
+                    onClick={() => setPendingQty(pendingMax)}
+                  >
+                    最大
+                  </button>
+                </div>
+                <div className={styles.totalRow}>
+                  <span className={styles.totalLabel}>売却額</span>
+                  <span className={styles.totalValue}>
+                    {(pending.price * pendingQty).toLocaleString()} G
+                  </span>
+                </div>
+                <div className={styles.postGoldRow}>
+                  <span className={styles.postGoldLabel}>売却後の所持金</span>
+                  <span className={styles.postGoldValue}>
+                    {(gold + pending.price * pendingQty).toLocaleString()} G
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* 装備売却: 売却額のみ（数量固定） */}
+            {pending.kind === 'sellEquip' && (
+              <div className={styles.sellPriceRow}>
+                <span className={styles.sellPriceLabel}>売却額</span>
+                <span className={styles.sellPriceValue}>{pending.price.toLocaleString()} G</span>
               </div>
             )}
-            {/* 合計金額（sellEquip 以外）。 */}
-            {pending.kind !== 'sellEquip' && (
-              <div className={styles.totalRow}>
-                合計: <strong>{pending.price * pendingQty} G</strong>
-              </div>
-            )}
+
             <div className={styles.confirmActions}>
               <button
                 type="button"
