@@ -88,11 +88,11 @@ describe('enemyArchetypeOf: アーキタイプ分類', () => {
     expect(enemyArchetypeOf(ENEMIES['enemy_t0_elder_treant'])).toBe('plant');
   });
 
-  test('ヤスデ（どうくつヤスデ）は insect', () => {
-    expect(enemyArchetypeOf(ENEMIES['enemy_t0_cave_crawler'])).toBe('insect');
+  test('どくスライム（enemy_t0_cave_crawler）は slime', () => {
+    expect(enemyArchetypeOf(ENEMIES['enemy_t0_cave_crawler'])).toBe('slime');
   });
 
-  test('ムシ（いわかぶとムシ）は insect', () => {
+  test('いわくつのミミック（enemy_t1_stone_beetle）は insect', () => {
     expect(enemyArchetypeOf(ENEMIES['enemy_t1_stone_beetle'])).toBe('insect');
   });
 

@@ -56,6 +56,16 @@ const SPRITE_MAP = {
   enemy_t3_storm_roc: 'taka_white',
   enemy_t3_discharge_idol: 'character_monster_gargoyle_stone',
   enemy_t3_boss_tempest_sovereign: 'character_monster_mao_03',
+  // 追加分（× → 逆マッピングで救済）
+  enemy_cave_bat: 'character_monster_goblin_01',
+  enemy_t0_wood_caracal: 'character_monster_hana_01',
+  enemy_t0_cave_crawler: 'character_monster_slime_purple',
+  enemy_t1_stone_beetle: 'character_monster_mimic_red',
+  enemy_t2_glacier_crab: 'character_monster_frankenstein_01_blue',
+  enemy_t2_rime_beetle: 'character_monster_treant_02_green',
+  enemy_t3_spark_beetle: 'character_monster_ika_purple',
+  enemy_t3_static_crystal: 'character_monster_kyuketsuki_01_purple',
+  enemy_t4_miasma_moth: 'character_monster_shinigami_01',
   // Tier 4
   enemy_t4_rotwalker: 'character_monster_zombie_green',
   enemy_t4_bone_lancer: 'character_monster_skeleton_02',
@@ -72,8 +82,8 @@ const SPRITE_MAP = {
 
 const total = Object.keys(SPRITE_MAP).length;
 console.log(`[fetch-dot-illust-sprites] エントリ数: ${total}`);
-if (total !== 51) {
-  console.error(`[fetch-dot-illust-sprites] SPRITE_MAP のエントリ数が 51 ではありません（実際: ${total}）。処理を中断します。`);
+if (total !== 60) {
+  console.error(`[fetch-dot-illust-sprites] SPRITE_MAP のエントリ数が 60 ではありません（実際: ${total}）。処理を中断します。`);
   process.exit(1);
 }
 

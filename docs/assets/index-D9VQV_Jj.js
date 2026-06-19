@@ -15404,7 +15404,7 @@ const ck = {
     },
     enemy_cave_bat: {
       id: 'enemy_cave_bat',
-      name: 'どうくつコウモリ',
+      name: 'もりゴブリン',
       baseStats: { hp: 36, tp: 0, str: 5, vit: 2, agi: 9, int: 3, mnd: 2, luc: 5 },
       refDepth: 1,
       tierBand: 0,
@@ -15459,7 +15459,7 @@ const ck = {
     },
     enemy_t0_wood_caracal: {
       id: 'enemy_t0_wood_caracal',
-      name: 'やぶカラカル',
+      name: 'やぶの花妖',
       baseStats: { hp: 60, tp: 0, str: 8, vit: 4, agi: 8, int: 3, mnd: 2, luc: 5 },
       refDepth: 3,
       tierBand: 0,
@@ -15513,7 +15513,7 @@ const ck = {
     },
     enemy_t0_cave_crawler: {
       id: 'enemy_t0_cave_crawler',
-      name: 'どうくつヤスデ',
+      name: 'どくスライム',
       baseStats: { hp: 210, tp: 0, str: 12, vit: 10, agi: 5, int: 2, mnd: 4, luc: 3 },
       refDepth: 6,
       tierBand: 0,
@@ -15582,7 +15582,7 @@ const ck = {
     },
     enemy_t1_stone_beetle: {
       id: 'enemy_t1_stone_beetle',
-      name: 'いわかぶとムシ',
+      name: 'いわくつのミミック',
       baseStats: { hp: 560, tp: 0, str: 13, vit: 13, agi: 6, int: 2, mnd: 5, luc: 4 },
       refDepth: 13,
       tierBand: 1,
@@ -15736,7 +15736,7 @@ const ck = {
     },
     enemy_t2_glacier_crab: {
       id: 'enemy_t2_glacier_crab',
-      name: 'ヒョウケツガニ',
+      name: 'ひょうけつの人造兵',
       baseStats: { hp: 900, tp: 0, str: 23, vit: 20, agi: 8, int: 4, mnd: 10, luc: 5 },
       refDepth: 23,
       tierBand: 2,
@@ -15778,7 +15778,7 @@ const ck = {
     },
     enemy_t2_rime_beetle: {
       id: 'enemy_t2_rime_beetle',
-      name: 'ジュヒョウムシ',
+      name: 'じゅひょうの精',
       baseStats: { hp: 828, tp: 0, str: 25, vit: 19, agi: 11, int: 5, mnd: 7, luc: 6 },
       refDepth: 23,
       tierBand: 2,
@@ -15915,14 +15915,14 @@ const ck = {
     },
     enemy_t3_spark_beetle: {
       id: 'enemy_t3_spark_beetle',
-      name: 'ホウデンムシ',
+      name: 'らいでんイカ',
       baseStats: { hp: 1092, tp: 0, str: 38, vit: 30, agi: 20, int: 10, mnd: 9, luc: 9 },
       refDepth: 33,
       tierBand: 3,
       exp: 720,
       gold: 240,
       attackElement: 'pierce',
-      resist: { volt: 0.5, ice: 1.5, bash: 0.5 },
+      resist: { volt: 0.5, ice: 1.5 },
       drops: [{ itemId: 'item_mat_t3_thunder_carapace', rate: 0.45 }],
       kind: 'zako',
       kit: 'zako_venom',
@@ -15971,14 +15971,14 @@ const ck = {
     },
     enemy_t3_static_crystal: {
       id: 'enemy_t3_static_crystal',
-      name: 'タイデンクリスタル',
+      name: 'あらしの吸血族',
       baseStats: { hp: 1134, tp: 0, str: 38, vit: 32, agi: 18, int: 14, mnd: 16, luc: 7 },
       refDepth: 33,
       tierBand: 3,
       exp: 784,
       gold: 300,
       attackElement: 'bash',
-      resist: { volt: 0, ice: 1.5, slash: 0.5, pierce: 0.5 },
+      resist: { volt: 0.5, fire: 1.5 },
       drops: [{ itemId: 'item_mat_t3_thunder_carapace', rate: 0.45 }],
       kind: 'zako',
       kit: 'zako_caster',
@@ -16100,7 +16100,7 @@ const ck = {
     },
     enemy_t4_miasma_moth: {
       id: 'enemy_t4_miasma_moth',
-      name: '瘴気の毒蛾',
+      name: '下級の死神',
       baseStats: { hp: 1044, tp: 0, str: 58, vit: 40, agi: 22, int: 16, mnd: 16, luc: 20 },
       refDepth: 43,
       tierBand: 4,
@@ -29256,7 +29256,7 @@ const Gw = 2500,
         c.jsxs('footer', {
           className: He.foot,
           children: [
-            c.jsxs('span', { className: He.version, children: ['v', '0.2.10'] }),
+            c.jsxs('span', { className: He.version, children: ['v', '0.2.11'] }),
             c.jsx('button', {
               type: 'button',
               className: He.updateBtn,
