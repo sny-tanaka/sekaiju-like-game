@@ -117,8 +117,8 @@ const SPRITE_MAP = {
   item_mat_t0_great_antler: 'shika_tsuno',
   item_mat_t0_chitin_plate: 'iwa_koseki_green',
   // tier 1
-  item_mat_t1_coarse_hide: 'koseki_brown',
-  item_mat_t1_stone_scale: 'iwa_koseki_brown',
+  item_mat_t1_coarse_hide: 'ishi_bronze',
+  item_mat_t1_stone_scale: 'iwa_koseki_yellow',
   item_mat_t1_sharp_feather: 'hane_white',
   item_mat_t1_ogre_fang: 'hone',
   item_mat_t1_drake_horn: 'crystal_red',
