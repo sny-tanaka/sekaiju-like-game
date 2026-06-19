@@ -16874,10 +16874,10 @@ function xk(l) {
     n.includes('クリスタル') ||
     n.includes('タイデン') ||
     n.includes('ホウデン') ||
+    n.includes('人造') ||
     d.includes('golem') ||
     d.includes('sentinel') ||
     d.includes('automaton') ||
-    d.includes('crystal') ||
     d.includes('idol')
     ? 'construct'
     : n.includes('鬼火') ||
@@ -16898,6 +16898,8 @@ function xk(l) {
           n.includes('這い虫') ||
           n.includes('亡者') ||
           n.includes('腐王') ||
+          n.includes('吸血') ||
+          n.includes('死神') ||
           d.includes('bone') ||
           d.includes('grave') ||
           d.includes('corpse') ||
@@ -16905,7 +16907,11 @@ function xk(l) {
           d.includes('rotwalker') ||
           d.includes('blight')
         ? 'undead'
-        : n.includes('タケ') || n.includes('樹人') || d.includes('mushroom') || d.includes('treant')
+        : n.includes('タケ') ||
+            n.includes('樹人') ||
+            d.includes('mushroom') ||
+            d.includes('treant') ||
+            d.includes('rime_beetle')
           ? 'plant'
           : n.includes('スライム') || d.includes('slime')
             ? 'slime'
@@ -16913,12 +16919,7 @@ function xk(l) {
                 n.includes('ヤスデ') ||
                 n.includes('ガニ') ||
                 n.includes('ガマ') ||
-                n.includes('毒蛾') ||
-                d.includes('beetle') ||
-                d.includes('crawler') ||
-                d.includes('crab') ||
-                d.includes('toad') ||
-                d.includes('moth')
+                n.includes('毒蛾')
               ? 'insect'
               : n.includes('タカ') ||
                   n.includes('チョウ') ||
@@ -29256,7 +29257,7 @@ const Gw = 2500,
         c.jsxs('footer', {
           className: He.foot,
           children: [
-            c.jsxs('span', { className: He.version, children: ['v', '0.2.11'] }),
+            c.jsxs('span', { className: He.version, children: ['v', '0.2.12'] }),
             c.jsx('button', {
               type: 'button',
               className: He.updateBtn,
