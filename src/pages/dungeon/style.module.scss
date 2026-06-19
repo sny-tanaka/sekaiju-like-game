@@ -1,533 +1,511 @@
-@use 'variables' as var;
+// 黒曜 OBSIDIAN MINIMAL テーマ — dungeon 画面
+// @use 'variables' は使わない。すべて var(--*) で参照する。
 
 .layout {
   display: flex;
   flex-direction: column;
-  align-items: center;
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 12px 12px max(20px, env(safe-area-inset-bottom, 0px));
-  color: var.$ink;
+  padding: 0 0 max(12px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  background-color: var.$parchment;
+  background: var(--bg-deep);
+  color: var(--text-base);
+  font-family: var(--font-body);
 }
+
+// ===== ヘッダー（FPV 帯を包む） =====
 
 .head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  margin-bottom: 12px;
+  position: relative;
   flex-shrink: 0;
-}
-
-.depthWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.depthChapterMark {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: var.$ink-faint;
-  letter-spacing: 0.08em;
-  line-height: 1;
-}
-
-.depth {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 22px;
-  font-weight: 700;
-  min-width: 48px;
-  color: var.$ink;
-}
-
-.theme {
-  font-size: 12px;
-  font-weight: 700;
-  color: var.$ink-faint;
-}
-
-.return {
-  min-height: 40px;
-  padding: 0 14px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 14px;
-  cursor: pointer;
 }
 
 .fpvWrap {
   position: relative;
   width: 100%;
-  max-width: 360px;
-  margin-bottom: 12px;
-  flex-shrink: 0;
+  height: clamp(180px, 28dvh, 232px);
+  background: linear-gradient(180deg, #0d141a, #070b0f);
+  overflow: hidden;
+
+  // FirstPersonView を親サイズに追従させる
+  > :first-child {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
 }
 
-// 一人称視点に重ねる操作ボタン（issue #20）
+// 左上: 深度ラベル（FPV に重ねる）
+.depthWrap {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.depthChapterMark {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--text-blue);
+  line-height: 1;
+}
+
+.depth {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-strong);
+  line-height: 1.3;
+}
+
+.theme {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--info-blue);
+  margin-top: 2px;
+}
+
+// 右上: ☰ メニューボタン（FPV に重ねる）
+.menuBtn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 38px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule-gold);
+  border-radius: 3px;
+  background: rgba(8, 9, 13, 0.72);
+  color: var(--gold);
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 2;
+  white-space: nowrap;
+  padding: 0;
+}
+
+// 下中央: D-pad（FPV に重ねる）
 .fpvControls {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 8px;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 8px;
-}
-
-.fpvTurn,
-.fpvForward,
-.fpvBack {
-  min-height: 48px;
-  border: none;
-  border-radius: 0;
-  background-color: rgba(33, 36, 27, 0.62);
-  color: var.$parchment;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.fpvTurn {
-  width: 56px;
+  align-items: center;
+  gap: 9px;
+  z-index: 2;
 }
 
 .fpvForward {
-  flex: 1;
-  max-width: 160px;
+  width: 62px;
+  height: 50px;
+  border-radius: 6px;
+  border: 1px solid var(--rule-gold-strong);
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    background: rgba(201, 168, 106, 0.18);
+  }
 }
 
+.fpvTurn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-gold);
+  background: rgba(8, 9, 13, 0.72);
+  color: var(--gold);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    background: rgba(8, 9, 13, 0.9);
+  }
+}
+
+// 振り向きボタン（FPV 右上に重ねるが ☰ と被らない位置へ）
 .fpvBack {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 44px;
-  min-height: 40px;
-  border: none;
-  border-radius: 0;
-  background-color: rgba(33, 36, 27, 0.62);
-  color: var.$parchment;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-// ヘッダーのメニューボタン（道具・帰還はメニュー内に集約）
-.menuBtn {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
+  top: 10px;
+  right: 58px; // ☰ (right:12 + width:38 + gap:8) を避ける
+  width: 40px;
+  height: 36px;
+  border-radius: 4px;
+  border: 1px solid var(--rule-base);
+  background: rgba(8, 9, 13, 0.72);
+  color: var(--text-mute);
   font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
 }
 
-// メニュー（所持金・パーティ・ステータス・スキル）
-.menuGold {
-  margin: 0 0 8px;
-  font-family: 'JetBrains Mono', monospace;
+// ===== エンカウント予兆行 =====
+
+.gaugeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  background: var(--bg-mid);
+  border-bottom: 1px solid var(--rule-soft);
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-faint);
+  letter-spacing: 0.1em;
+}
+
+.gaugeLabel {
+  flex-shrink: 0;
+}
+
+// ===== 中段: マップ + ヒント =====
+
+.mid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+}
+
+.mapHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}
+
+.mapHeadLabel {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.mapHeadHint {
+  color: var(--info-blue);
+  letter-spacing: 0.04em;
+}
+
+.mapWrap {
+  background: var(--bg-deep);
+  border: 1px solid var(--rule-soft);
+  border-radius: 5px;
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.paletteHint {
+  margin: 0;
+  font-size: 10px;
+  color: var(--info-blue);
+  text-align: right;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.mapLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 9px;
+  color: var(--text-mute);
+  padding-bottom: 2px;
+}
+
+.legendAlert {
+  color: var(--danger-text);
+}
+
+.legendCalm {
+  color: var(--text-mute);
+}
+
+// ===== アクション行（階段 / 採集 / 調理 / 通知） =====
+
+.actionRow {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 14px 6px;
+}
+
+.stairs {
+  width: 100%;
+  min-height: 50px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: var(--bg-mid);
+  font-family: var(--font-body);
   font-weight: 700;
-  color: var.$illumination-gold;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  border: none;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.88;
+  }
+}
+
+.action {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-gold);
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+
+  &:disabled {
+    border-color: var(--rule-base);
+    background: transparent;
+    color: var(--text-mute);
+    cursor: default;
+  }
+
+  &:active:not(:disabled) {
+    background: rgba(201, 168, 106, 0.14);
+  }
+}
+
+.notice {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--surface-elev);
+  border-left: 2px solid var(--gold);
+  border-radius: 0 3px 3px 0;
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.tileHint {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--rule-soft);
+  border-radius: 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+  text-align: center;
+}
+
+// ===== 道具 / 調理 / メニュー オーバーレイ =====
+
+.itemOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.itemPanel {
+  width: min(420px, calc(100% - 40px));
+  max-height: min(86vh, calc(100dvh - 64px));
+  overflow-y: auto;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 6px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-base);
+}
+
+.itemTitle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-strong);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menuGold {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--gold-tint);
+  border: 1px solid var(--rule-gold);
+  border-radius: 3px;
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-align: center;
 }
 
 .menuActions {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
 }
 
 .menuAction {
-  flex: 1;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
+  min-height: 58px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 4px;
+  border: 1px solid var(--rule-soft);
+  background: var(--surface-elev);
+  color: var(--text-strong);
+  font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .menuSectionLabel {
-  margin: 0 0 6px;
-  font-size: 12px;
-  color: var.$ink-faint;
-  letter-spacing: 0.04em;
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  font-weight: 700;
 }
 
 .menuMember {
   display: flex;
-  flex-direction: row;
-  gap: 8px;
   align-items: center;
-  width: 100%;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  text-align: left;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface-elev);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  color: var(--text-base);
   cursor: pointer;
+  text-align: left;
+
+  &:first-of-type {
+    border-color: var(--rule-gold);
+  }
+
+  &:active {
+    background: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .menuMemberPortrait {
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  background: var(--bg-deep);
+  overflow: hidden;
   flex-shrink: 0;
 }
 
 .menuMemberInfo {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  flex: 1;
+  gap: 4px;
 }
 
 .menuMemberName {
-  font-weight: 700;
-  color: var.$ink;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--text-strong);
 }
 
 .menuMemberJob {
-  margin-left: 8px;
-  font-size: 12px;
-  color: var.$ink-faint;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
 }
 
 .menuMemberStat {
-  font-size: 12px;
-  color: var.$ink-faint;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .menuSp {
-  margin-left: 8px;
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--gold);
+  margin-left: auto;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  color: var.$illumination-gold;
 }
 
 .menuStats {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  margin-bottom: 8px;
+  gap: 6px;
 }
 
 .menuStat {
-  font-size: 13px;
-  color: var.$ink;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-soft);
+  background: var(--bg-deep);
+  border-radius: 2px;
+  padding: 3px 6px;
+  border: 1px solid var(--rule-soft);
 }
+
+// ===== スキルツリー タブ =====
 
 .skillTabs {
   display: flex;
   gap: 6px;
-  margin-bottom: 8px;
 }
 
 .skillTab {
   flex: 1;
   min-height: 36px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.skillTabOn {
-  background-color: var.$verdant;
-  border-color: var.$verdant;
-  color: var.$parchment;
-}
-
-// 中段（マップ + 操作系）。上端 (header + fpv) と下端の固定ボタン群の間で、
-// 縦に溢れたぶんはこの内側で吸収する。マップが大きい階層 + 階段/採集/調理が同時に
-// 並んでも、下端の階段ボタンが必ず可視に残るようにする。
-.mid {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-.mapWrap {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  margin-bottom: 12px;
-  flex-shrink: 0;
-}
-
-.palette {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  max-width: 360px;
-  margin-bottom: 4px;
-}
-
-.tool {
-  width: 40px;
-  height: 40px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  font-size: 18px;
-  line-height: 1;
-  color: var.$ink;
-  cursor: pointer;
-}
-
-.toolActive {
-  border-color: var.$verdant;
-  background-color: var.$parchment;
-  box-shadow: 0 0 0 2px rgba(63, 107, 74, 0.35);
-}
-
-.paletteHint {
-  width: 100%;
-  max-width: 360px;
-  margin: 0 0 8px;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var.$ink-faint;
-  text-align: center;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
-.stairs {
-  width: 100%;
-  max-width: 360px;
-  min-height: 48px;
-  margin-bottom: 12px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.action {
-  width: 100%;
-  max-width: 360px;
-  min-height: 44px;
-  margin-bottom: 8px;
-  border: 0.75px solid var.$verdant;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$verdant-dark;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
-
-  &:disabled {
-    opacity: 0.45;
-  }
-}
-
-.notice {
-  max-width: 360px;
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var.$verdant-dark;
-  flex-shrink: 0;
-}
-
-.controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 360px;
-  margin-top: auto;
-}
-
-.row {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.forward {
-  flex: 1;
-  min-height: 64px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 18px;
-  font-weight: 800;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.85;
-  }
-}
-
-.turn {
-  width: 72px;
-  min-height: 64px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 26px;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.85;
-  }
-}
-
-.back {
-  width: 100%;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-// ---- 道具メニュー（オーバーレイ） ----
-.itemOverlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(33, 36, 27, 0.35);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 20;
-}
-
-.itemPanel {
-  width: 100%;
-  max-width: 560px;
-  max-height: 75%;
-  overflow-y: auto;
-  background-color: var.$parchment-card;
-  border-radius: 0;
-  border-top: 0.75px solid var.$rule;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.itemTitle {
-  font-size: 16px;
-  font-weight: 800;
-  color: var.$ink;
-}
-
-.itemEmpty {
-  margin: 0;
-  font-size: 14px;
-  color: var.$ink-faint;
-}
-
-.itemRow {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 0;
-  border-top: 0.75px solid var.$rule;
-}
-
-.itemHeader {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.itemName {
-  font-size: 15px;
-  font-weight: 700;
-  color: var.$ink;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.itemDesc {
-  font-size: 11px;
-  font-weight: 400;
-  color: var.$ink-faint;
-}
-
-.itemTargets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.itemTarget {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  align-items: center;
-  min-height: 44px;
-  padding: 4px 12px;
-  border: 0.75px solid var.$verdant;
-  border-radius: 0;
-  background-color: var.$parchment;
-  color: var.$verdant-dark;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.itemTargetInfo {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-}
-
-.itemHp {
-  font-size: 10px;
-  font-weight: 400;
-  color: var.$ink-faint;
-}
-
-.itemUse {
-  align-self: flex-start;
-  min-height: 40px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: 3px;
+  border: 1px solid var(--rule-soft);
+  background: transparent;
+  color: var(--text-mute);
+  font-family: var(--font-body);
+  font-size: 12px;
   cursor: pointer;
 
   &:disabled {
@@ -536,47 +514,158 @@
   }
 }
 
-.itemClose {
-  margin-top: 4px;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 14px;
-  cursor: pointer;
+.skillTabOn {
+  border-color: var(--gold);
+  background: var(--gold-tint);
+  color: var(--gold);
 }
 
-// 消費系操作の確認ダイアログ（誤タップ防止）
+// ===== 道具行 / 調理行 =====
+
+.itemRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--surface-elev);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.itemName {
+  font-size: 13px;
+  color: var(--text-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemDesc {
+  font-size: 10px;
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.itemTargets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.itemTarget {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-deep);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  color: var(--text-base);
+  font-family: var(--font-body);
+  cursor: pointer;
+  text-align: left;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.itemTargetInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.itemHp {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.itemUse {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-gold);
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 11px;
+  cursor: pointer;
+  align-self: flex-start;
+
+  &:disabled {
+    border-color: var(--rule-base);
+    background: transparent;
+    color: var(--text-mute);
+    cursor: default;
+  }
+}
+
+.itemEmpty {
+  margin: 0;
+  padding: 16px 0;
+  color: var(--text-faint);
+  font-size: 12px;
+  text-align: center;
+}
+
+.itemClose {
+  min-height: 46px;
+  margin-top: 4px;
+  border: 1px solid var(--rule-gold);
+  border-radius: 3px;
+  background: var(--gold-tint);
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+
+  &:active {
+    background: rgba(201, 168, 106, 0.14);
+  }
+}
+
+// ===== 確認ダイアログ =====
+
 .confirmOverlay {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background-color: rgba(33, 36, 27, 0.45);
+  z-index: 200;
 }
 
 .confirmBox {
+  width: min(320px, calc(100% - 48px));
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 6px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 360px;
-  padding: 20px 18px;
-  border-radius: 4px;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
-  box-shadow: 0 6px 24px var.$shadow-ink;
+  gap: 14px;
+  box-shadow: var(--shadow-modal);
 }
 
 .confirmText {
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 13px;
+  color: var(--text-strong);
+  line-height: 1.6;
   text-align: center;
-  color: var.$ink;
 }
 
 .confirmActions {
@@ -584,24 +673,44 @@
   gap: 8px;
 }
 
-.confirmCancel,
-.confirmOk {
+.confirmCancel {
   flex: 1;
-  min-height: 48px;
-  border: none;
-  border-radius: 0;
-  font-size: 15px;
-  font-weight: 700;
+  min-height: 42px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-family: var(--font-body);
+  font-size: 13px;
   cursor: pointer;
 }
 
-.confirmCancel {
-  border: 0.75px solid var.$rule;
-  background-color: transparent;
-  color: var.$ink;
+.confirmOk {
+  flex: 1;
+  min-height: 42px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: var(--bg-mid);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
 }
 
-.confirmOk {
-  background-color: var.$verdant;
-  color: var.$parchment;
+// ===== 短画面対応（iPhone SE: dvh≒559px） =====
+
+@media (max-height: 720px) {
+  .fpvWrap {
+    height: clamp(160px, 26dvh, 200px);
+  }
+
+  .mid {
+    gap: 4px;
+    padding: 8px 14px;
+  }
+
+  .gaugeRow {
+    padding: 5px 14px;
+  }
 }

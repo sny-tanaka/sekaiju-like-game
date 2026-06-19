@@ -245,74 +245,89 @@ export const Page = () => {
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
-        <div className={styles.depthWrap}>
-          <span className={styles.depthChapterMark}>❦ 探索</span>
-          <div className={styles.depth}>
-            {dive.depth}F <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
+        <div className={styles.fpvWrap}>
+          <FirstPersonView
+            floor={floor}
+            pos={dive.pos}
+            dir={dive.dir}
+            foes={foes}
+            theme={bandThemeFor(dive.depth)}
+          />
+
+          {/* 左上: 深度＋帯テーマ */}
+          <div className={styles.depthWrap}>
+            <span className={styles.depthChapterMark}>❦ 探索</span>
+            <div className={styles.depth}>
+              {dive.depth}F <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
+            </div>
+          </div>
+
+          {/* 右上: 振り向き */}
+          <button
+            type="button"
+            className={styles.fpvBack}
+            onClick={() => doTurn(turnBack(dive.dir))}
+            aria-label="振り向く"
+          >
+            ↻
+          </button>
+
+          {/* 右上: ☰ メニュー */}
+          <button
+            type="button"
+            className={styles.menuBtn}
+            aria-label="メニュー"
+            onClick={() => {
+              play('cursor');
+              setMenuCharId(null);
+              setMenuOpen(true);
+            }}
+          >
+            ☰
+          </button>
+
+          {/* 下中央: D-pad（操作ボタンを一人称視点に重ねる issue #20） */}
+          <div className={styles.fpvControls}>
+            <button
+              type="button"
+              className={styles.fpvTurn}
+              onClick={() => doTurn(turnLeft(dive.dir))}
+              aria-label="左を向く"
+            >
+              ↰
+            </button>
+            <button
+              type="button"
+              className={styles.fpvForward}
+              onClick={() => doMove(dive.dir)}
+            >
+              ▲ 前進
+            </button>
+            <button
+              type="button"
+              className={styles.fpvTurn}
+              onClick={() => doTurn(turnRight(dive.dir))}
+              aria-label="右を向く"
+            >
+              ↱
+            </button>
           </div>
         </div>
-        <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
-        <button
-          type="button"
-          className={styles.menuBtn}
-          onClick={() => {
-            play('cursor');
-            setMenuCharId(null);
-            setMenuOpen(true);
-          }}
-        >
-          ☰ メニュー
-        </button>
       </header>
 
-      <div className={styles.fpvWrap}>
-        <FirstPersonView
-          floor={floor}
-          pos={dive.pos}
-          dir={dive.dir}
-          foes={foes}
-          theme={bandThemeFor(dive.depth)}
-        />
-        {/* 操作ボタンを一人称視点に重ねる（issue #20）。 */}
-        <div className={styles.fpvControls}>
-          <button
-            type="button"
-            className={styles.fpvTurn}
-            onClick={() => doTurn(turnLeft(dive.dir))}
-            aria-label="左を向く"
-          >
-            ↰
-          </button>
-          <button
-            type="button"
-            className={styles.fpvForward}
-            onClick={() => doMove(dive.dir)}
-          >
-            ▲ 前進
-          </button>
-          <button
-            type="button"
-            className={styles.fpvTurn}
-            onClick={() => doTurn(turnRight(dive.dir))}
-            aria-label="右を向く"
-          >
-            ↱
-          </button>
-        </div>
-        <button
-          type="button"
-          className={styles.fpvBack}
-          onClick={() => doTurn(turnBack(dive.dir))}
-          aria-label="振り向く"
-        >
-          ↻
-        </button>
+      {/* エンカウント予兆ゲージ */}
+      <div className={styles.gaugeRow}>
+        <span className={styles.gaugeLabel}>エンカウント予兆</span>
+        <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
       </div>
 
-      {/* 中段: マップ + 操作ヒント。上部 (header + fpv) の下、下端の操作ボタン群
-          までの間で縦に溢れたぶんはこの内側で吸収する。階段/採集/調理/注意は
-          画面下端に固定（.mid 外）で、常に可視に保つ。 */}
+      {/* 中段: マップ + 操作ヒント。上部 (header + gaugeRow) の下、アクション行
+          までの間で縦に溢れたぶんはこの内側で吸収する。 */}
       <div className={styles.mid}>
+        <div className={styles.mapHead}>
+          <span className={styles.mapHeadLabel}>AUTOMAP ・ F{dive.depth}</span>
+          <span className={styles.mapHeadHint}>セルタップで自動移動</span>
+        </div>
         <div className={styles.mapWrap}>
           <DungeonMap
             floor={floor}
@@ -325,48 +340,64 @@ export const Page = () => {
           />
         </div>
         <p className={styles.paletteHint}>マップのマスをタップすると、そこまで自動で移動します。</p>
+        <div className={styles.mapLegend}>
+          <span>▲ 上り</span>
+          <span>▼ 下り</span>
+          <span className={styles.legendAlert}>● 警戒FOE</span>
+          <span className={styles.legendCalm}>● 未警戒</span>
+          <span>🌿 採集</span>
+        </div>
       </div>
 
-      {stairKind && (
-        <button
-          type="button"
-          className={styles.stairs}
-          onClick={() => void handleStairs()}
-        >
-          {stairKind === 'stairsUp'
-            ? '▲ 次の階へ進む'
-            : dive.depth <= 1
-              ? '▼ 拠点へ戻る'
-              : '▼ 前の階へ戻る'}
-        </button>
-      )}
+      {/* アクション行: 階段 / 採集 / 調理 / 通知 */}
+      <div className={styles.actionRow}>
+        {stairKind && (
+          <button
+            type="button"
+            className={styles.stairs}
+            onClick={() => void handleStairs()}
+          >
+            {stairKind === 'stairsUp'
+              ? '▲ 次の階へ進む'
+              : dive.depth <= 1
+                ? '▼ 拠点へ戻る'
+                : '▼ 前の階へ戻る'}
+          </button>
+        )}
 
-      {gatherPoint && (
-        <button
-          type="button"
-          className={styles.action}
-          disabled={isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint)}
-          onClick={handleGather}
-        >
-          {isGatherDepleted(save, gatherPoint)
-            ? `🌿 ${GATHER_TYPES[gatherPoint.type].name}（採集済み）`
-            : !canGather(save, gatherPoint)
-              ? `🌿 ${GATHER_TYPES[gatherPoint.type].name}（スキル要）`
-              : `🌿 ${GATHER_TYPES[gatherPoint.type].name}する`}
-        </button>
-      )}
+        {gatherPoint && (
+          <button
+            type="button"
+            className={styles.action}
+            disabled={isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint)}
+            onClick={handleGather}
+          >
+            {isGatherDepleted(save, gatherPoint)
+              ? `🌿 ${GATHER_TYPES[gatherPoint.type].name}（採集済み）`
+              : !canGather(save, gatherPoint)
+                ? `🌿 ${GATHER_TYPES[gatherPoint.type].name}（スキル要）`
+                : `🌿 ${GATHER_TYPES[gatherPoint.type].name}する`}
+          </button>
+        )}
 
-      {atCookingSpot && (
-        <button
-          type="button"
-          className={styles.action}
-          onClick={() => setCookOpen(true)}
-        >
-          🍳 調理する
-        </button>
-      )}
+        {atCookingSpot && (
+          <button
+            type="button"
+            className={styles.action}
+            onClick={() => setCookOpen(true)}
+          >
+            🍳 調理する
+          </button>
+        )}
 
-      {notice && <p className={styles.notice}>{notice}</p>}
+        {notice && <p className={styles.notice}>{notice}</p>}
+
+        {!stairKind && !gatherPoint && !atCookingSpot ? (
+          <p className={styles.tileHint}>
+            現在地: 通常マス ・ 足元にオブジェクトがあればアクションが出ます
+          </p>
+        ) : null}
+      </div>
 
       {itemOpen ? (
         <div

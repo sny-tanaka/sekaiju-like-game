@@ -20,3 +20,12 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   decorators: [withGameContext(mockMidDive, { name: 'dungeon' })],
 };
+
+/** ☰ メニューを開いた状態 */
+export const Menu: Story = {
+  decorators: [withGameContext(mockMidDive, { name: 'dungeon' })],
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    const btn = canvasElement.querySelector<HTMLButtonElement>('button[aria-label="メニュー"]');
+    btn?.click();
+  },
+};
