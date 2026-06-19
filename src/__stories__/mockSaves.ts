@@ -20,17 +20,35 @@ export const mockEmpty: SaveData = (() => {
 })();
 
 // ============================================================
-// mockWithParty — 戦士/癒術士/陰陽士 3 名作成・全員前衛 Lv1
+// mockWithParty — フル編成 5 名（前衛3 + 後衛2 = PARTY_MAX）。
+// Storybook で「各要素が最大の表示領域を必要とする」状態を作るため、
+// 種族・職業を多様化しつつ PARTY_MAX まで埋める（[01]の最大編成）。
+// addCharacterToGuild が前衛→後衛の順に詰めるので、最初の 3 人が前衛、
+// 続く 2 人が後衛に入る。
 // ============================================================
 export const mockWithParty: SaveData = (() => {
   let save = createInitialSaveData(GUILD_NAME);
 
+  // 前衛 3 名: 物理近接系
   const warrior = createCharacter({
     raceId: 'race_human',
     classId: 'class_warrior',
     name: 'ランス',
     id: 'char_mock_warrior',
   });
+  const guardian = createCharacter({
+    raceId: 'race_golan',
+    classId: 'class_guardian',
+    name: 'ブロン',
+    id: 'char_mock_guardian',
+  });
+  const monk = createCharacter({
+    raceId: 'race_therian',
+    classId: 'class_monk',
+    name: 'リオン',
+    id: 'char_mock_monk',
+  });
+  // 後衛 2 名: 回復・遠隔火力
   const healer = createCharacter({
     raceId: 'race_human',
     classId: 'class_medic',
@@ -38,13 +56,15 @@ export const mockWithParty: SaveData = (() => {
     id: 'char_mock_healer',
   });
   const mage = createCharacter({
-    raceId: 'race_human',
+    raceId: 'race_pix',
     classId: 'class_mage',
     name: 'オン',
     id: 'char_mock_mage',
   });
 
   save = addCharacterToGuild(save, warrior);
+  save = addCharacterToGuild(save, guardian);
+  save = addCharacterToGuild(save, monk);
   save = addCharacterToGuild(save, healer);
   save = addCharacterToGuild(save, mage);
 

@@ -20,6 +20,7 @@
   gap: 8px;
   width: 100%;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .depthWrap {
@@ -67,6 +68,7 @@
   width: 100%;
   max-width: 360px;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 // 一人称視点に重ねる操作ボタン（issue #20）
@@ -251,11 +253,27 @@
   color: var.$parchment;
 }
 
+// 中段（マップ + 操作系）。上端 (header + fpv) と下端の固定ボタン群の間で、
+// 縦に溢れたぶんはこの内側で吸収する。マップが大きい階層 + 階段/採集/調理が同時に
+// 並んでも、下端の階段ボタンが必ず可視に残るようにする。
+.mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
 .mapWrap {
   display: flex;
   justify-content: center;
   width: 100%;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .palette {
@@ -295,6 +313,7 @@
   color: var.$ink-faint;
   text-align: center;
   opacity: 0.7;
+  flex-shrink: 0;
 }
 
 .stairs {
@@ -309,6 +328,7 @@
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .action {
@@ -323,6 +343,7 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  flex-shrink: 0;
 
   &:disabled {
     opacity: 0.45;
@@ -335,6 +356,7 @@
   font-size: 13px;
   font-weight: 700;
   color: var.$verdant-dark;
+  flex-shrink: 0;
 }
 
 .controls {

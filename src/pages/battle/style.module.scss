@@ -15,12 +15,26 @@
 
 // 章マーカー
 .chapterMark {
+  flex-shrink: 0;
   margin: 0 0 4px;
   font-family: 'Kaisei Tokumin', serif;
   font-size: 11px;
   font-weight: 500;
   color: var.$ink-faint;
   letter-spacing: 0.08em;
+}
+
+// ---- 戦場（敵 + 召喚 + 味方 + ログ）を内包するスクロール領域 ----
+// 通常ケースでは内部スクロール不要。極端な構成（多数の敵 + フルパーティ + 召喚体）
+// の場合のみ縦に溢れて内部スクロールする。コマンドエリアは常に画面下端に残る。
+.battlefield {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
 }
 
 // ---- 敵 ----
@@ -30,6 +44,7 @@
   gap: 8px;
   justify-content: center;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .enemy {
@@ -93,10 +108,15 @@
 }
 
 // §16: 選択中の敵の耐性コンパクト表示
+// 選択中の敵だけが 36px を確保（耐性バッジ 1〜2 行）。非選択時は 0 に詰めて、
+// 小型端末で縦方向に無駄な余白を作らない。flex-wrap の各行は align-items:stretch で
+// 並ぶため、行内では選択敵の高さに揃う（小さく見えるカードは出ない）。
 .enemyResist {
   margin-top: 4px;
-  min-height: 44px;
   text-align: left;
+}
+.targeted .enemyResist {
+  min-height: 36px;
 }
 
 .down {
@@ -224,6 +244,7 @@
   flex-direction: column;
   gap: 4px;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .rowTag {
@@ -409,6 +430,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .summon {
@@ -459,14 +481,17 @@
 }
 
 // ---- コマンド入力 ----
-// 残りの縦領域を使い、内容が溢れたら内部スクロール (作戦変更で全員分の行 + もどるボタンが
-// bottom sheet ハンドル分の確保エリアに被って隠れるのを防ぐ)。
+// 上部 .battlefield 領域は別途 flex: 1 で吸収するため、コマンドエリアは「内容ぶんだけ
+// 高さを使う」固定領域として扱う（flex: 0 1 auto）。スキル一覧などで縦に長くなった
+// ときだけ max-height: 50% に頭打ちさせ、内部スクロールに切り替える。これにより
+// 「敵カードが高くなるとコマンドの下端が画面外に押し出される」事故を防ぐ。
 .command {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
+  max-height: 50dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
@@ -837,6 +862,7 @@
   padding: 8px 12px;
   border-radius: 0;
   background-color: rgba(33, 36, 27, 0.06);
+  flex-shrink: 0;
 }
 
 .playbackHint {

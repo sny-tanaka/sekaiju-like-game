@@ -309,18 +309,23 @@ export const Page = () => {
         </button>
       </div>
 
-      <div className={styles.mapWrap}>
-        <DungeonMap
-          floor={floor}
-          explored={save.exploredCells[dive.depth] ?? []}
-          pos={dive.pos}
-          dir={dive.dir}
-          foes={foes}
-          depletedGathers={depletedGathers}
-          onCellClick={handleCellClick}
-        />
+      {/* 中段: マップ + 操作ヒント。上部 (header + fpv) の下、下端の操作ボタン群
+          までの間で縦に溢れたぶんはこの内側で吸収する。階段/採集/調理/注意は
+          画面下端に固定（.mid 外）で、常に可視に保つ。 */}
+      <div className={styles.mid}>
+        <div className={styles.mapWrap}>
+          <DungeonMap
+            floor={floor}
+            explored={save.exploredCells[dive.depth] ?? []}
+            pos={dive.pos}
+            dir={dive.dir}
+            foes={foes}
+            depletedGathers={depletedGathers}
+            onCellClick={handleCellClick}
+          />
+        </div>
+        <p className={styles.paletteHint}>マップのマスをタップすると、そこまで自動で移動します。</p>
       </div>
-      <p className={styles.paletteHint}>マップのマスをタップすると、そこまで自動で移動します。</p>
 
       {stairKind && (
         <button
