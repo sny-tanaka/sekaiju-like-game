@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import styles from './style.module.scss';
 
@@ -40,17 +40,6 @@ import { Redirect, useNavigation } from '@/store/navigation';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** HP ratio から低下判定（50%以下で低HP色） */
-function isLowHp(hp: number, maxHp: number): boolean {
-  return maxHp > 0 && hp / maxHp <= 0.5;
-}
-
-/** HH:MM 形式の現在時刻文字列 */
-function nowHHMM(): string {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
-
 // 探索（ダンジョン）。自動生成1階のグリッド移動＋自動マップ＋エンカウントゲージ。
 // 階段で上下移動、帰還で拠点へ。オートセーブは階移動・帰還時（[05 §4]）。
 export const Page = () => {
@@ -63,8 +52,6 @@ export const Page = () => {
   const walkingRef = useRef(false);
   // 道具メニューの開閉
   const [itemOpen, setItemOpen] = useState(false);
-  // 道具選択中のアイテムID（bottom sheet 用）
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   // 調理メニューの開閉
   const [cookOpen, setCookOpen] = useState(false);
   // メニュー（ステータス/スキル/所持金）の開閉と選択中キャラ
@@ -79,10 +66,27 @@ export const Page = () => {
     okLabel: string;
     onYes: () => void;
   } | null>(null);
-  // 自動保存時刻（メニューマウント時に1回計算）
-  const savedAt = useMemo(() => nowHHMM(), []);
+  // 階段確認カードの dismiss（位置が変わるまで非表示にする）
+  const [dismissedStairsAt, setDismissedStairsAt] = useState<{
+    depth: number;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const dive = save?.diveState ?? null;
+
+  // 位置が変わったら階段 dismiss を解除
+  useEffect(() => {
+    if (!dive) return;
+    if (!dismissedStairsAt) return;
+    if (
+      dismissedStairsAt.depth !== dive.depth ||
+      dismissedStairsAt.x !== dive.pos.x ||
+      dismissedStairsAt.y !== dive.pos.y
+    ) {
+      setDismissedStairsAt(null);
+    }
+  }, [dive, dismissedStairsAt]);
   const floor = useMemo(
     () => (save && dive ? save.towerState.floors[dive.depth]?.generated : null),
     [save, dive]
@@ -105,30 +109,6 @@ export const Page = () => {
     () => (save && dive ? (save.towerState.floors[dive.depth]?.depletedGathers ?? []) : []),
     [save, dive]
   );
-
-  // ボスゲートの気配（canAscend が false = ボス階未撃破）の簡易判定
-  const hasBossGate = useMemo(
-    () => (save && dive ? !canAscend(save, dive.depth) : false),
-    [save, dive]
-  );
-
-  // 帰還の糸の所持数
-  const threadCount = useMemo(() => {
-    if (!save) return 0;
-    const all = [...save.guild.storage, ...(save.guild.foodStorage ?? [])];
-    return all.filter((s) => s.itemId === 'item_return_thread').reduce((acc, s) => acc + s.qty, 0);
-  }, [save]);
-
-  // フィールド使用可能アイテム一覧
-  const usableItems = useMemo(() => {
-    if (!save) return [];
-    return [...save.guild.storage, ...(save.guild.foodStorage ?? [])].filter(
-      (s) => ITEMS[s.itemId]?.useContext?.includes('field') && s.qty > 0
-    );
-  }, [save]);
-
-  // 選択中アイテムのマスタ
-  const selectedItemMaster = selectedItemId ? ITEMS[selectedItemId] : null;
 
   const handleGather = useCallback(() => {
     if (!save) return;
@@ -156,7 +136,6 @@ export const Page = () => {
       if (!res.ok) return;
       play('cook');
       void applyAndPersist(() => res.save);
-      setCookOpen(false);
       setNotice(`${RECIPES[recipeId]?.name ?? '料理'} を作った`);
     },
     [save, applyAndPersist, play]
@@ -218,10 +197,7 @@ export const Page = () => {
       if (!result.save.diveState) {
         // 帰還の糸など → 拠点へ
         setItemOpen(false);
-        setSelectedItemId(null);
         navigate({ name: 'town' });
-      } else {
-        setSelectedItemId(null);
       }
     },
     [save, applyAndPersist, navigate]
@@ -278,382 +254,295 @@ export const Page = () => {
   }
 
   const stairKind = stairsAt(save);
-  const hasAction = !!(stairKind || gatherPoint || atCookingSpot);
-
-  // 階段の方向テキスト
-  const stairsLabel = stairKind === 'stairsUp' ? '▲ 上り階段' : '▼ 下り階段';
-  const stairsSub =
-    stairKind === 'stairsUp'
-      ? `F${dive.depth} → F${dive.depth + 1}`
-      : dive.depth <= 1
-        ? `F${dive.depth} → 拠点`
-        : `F${dive.depth} → F${dive.depth - 1}`;
-  const stairsPrimaryLabel =
-    stairKind === 'stairsUp' ? '次階へ登る' : dive.depth <= 1 ? '拠点へ戻る' : '前の階へ降りる';
-
-  // 採集ボタンラベル
-  const gatherBtnLabel = gatherPoint
-    ? isGatherDepleted(save, gatherPoint)
-      ? `${GATHER_TYPES[gatherPoint.type].name}（採集済み）`
-      : !canGather(save, gatherPoint)
-        ? `${GATHER_TYPES[gatherPoint.type].name}（スキル要）`
-        : `${GATHER_TYPES[gatherPoint.type].name}する`
-    : '';
+  const showStairsCard =
+    !!stairKind &&
+    !(
+      dismissedStairsAt &&
+      dismissedStairsAt.depth === dive.depth &&
+      dismissedStairsAt.x === dive.pos.x &&
+      dismissedStairsAt.y === dive.pos.y
+    );
 
   return (
     <div className={styles.layout}>
-      {/* FPV 帯 */}
       <header className={styles.head}>
-        <div className={styles.fpvWrap}>
-          <FirstPersonView
-            floor={floor}
-            pos={dive.pos}
-            dir={dive.dir}
-            foes={foes}
-            theme={bandThemeFor(dive.depth)}
-          />
-          {/* 深度 + テーマ名（左上） */}
-          <div className={styles.depthLeft}>
-            <div className={styles.depthFloor}>F{dive.depth}</div>
-            <div className={styles.depthTheme}>{bandThemeFor(dive.depth).name}</div>
-          </div>
-          {/* ボスゲート予兆（上端中央） */}
-          {hasBossGate && <div className={styles.bossGateOmen}>⚠ 奥にボスゲートの気配</div>}
-          {/* ☰ メニューボタン（右上） */}
-          <button
-            type="button"
-            className={styles.menuBtn}
-            aria-label="メニュー"
-            onClick={() => {
-              play('cursor');
-              setMenuCharId(null);
-              setMenuOpen(true);
-            }}
-          >
-            ☰
-          </button>
-          {/* D-pad（FPV 内 下中央） */}
-          <div className={styles.fpvControls}>
-            <div className={styles.fpvControlsRow}>
-              <button
-                type="button"
-                className={styles.fpvTurnLeft}
-                aria-label="左を向く"
-                onClick={() => doTurn(turnLeft(dive.dir))}
-              >
-                ↰
-              </button>
-              <button
-                type="button"
-                className={styles.fpvForward}
-                onClick={() => doMove(dive.dir)}
-              >
-                ▲
-              </button>
-              <button
-                type="button"
-                className={styles.fpvTurnRight}
-                aria-label="右を向く"
-                onClick={() => doTurn(turnRight(dive.dir))}
-              >
-                ↱
-              </button>
-            </div>
-            <button
-              type="button"
-              className={styles.fpvBack}
-              aria-label="振り向く"
-              onClick={() => doTurn(turnBack(dive.dir))}
-            >
-              ↻
-            </button>
+        <div className={styles.depthWrap}>
+          <span className={styles.depthChapterMark}>❦ 探索</span>
+          <div className={styles.depth}>
+            {dive.depth}F <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
           </div>
         </div>
+        <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
+        <button
+          type="button"
+          className={styles.menuBtn}
+          onClick={() => {
+            play('cursor');
+            setMenuCharId(null);
+            setMenuOpen(true);
+          }}
+        >
+          ☰ メニュー
+        </button>
       </header>
 
-      {/* エンカウントゲージ帯 */}
-      <div className={styles.gaugeRow}>
-        <span className={styles.gaugeLabel}>エンカウント予兆</span>
-        <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
+      <div className={styles.fpvWrap}>
+        <FirstPersonView
+          floor={floor}
+          pos={dive.pos}
+          dir={dive.dir}
+          foes={foes}
+          theme={bandThemeFor(dive.depth)}
+        />
+        {/* 操作ボタンを一人称視点に重ねる（issue #20）。 */}
+        <div className={styles.fpvControls}>
+          <button
+            type="button"
+            className={styles.fpvTurn}
+            onClick={() => doTurn(turnLeft(dive.dir))}
+            aria-label="左を向く"
+          >
+            ↰
+          </button>
+          <button
+            type="button"
+            className={styles.fpvForward}
+            onClick={() => doMove(dive.dir)}
+          >
+            ▲ 前進
+          </button>
+          <button
+            type="button"
+            className={styles.fpvTurn}
+            onClick={() => doTurn(turnRight(dive.dir))}
+            aria-label="右を向く"
+          >
+            ↱
+          </button>
+        </div>
+        <button
+          type="button"
+          className={styles.fpvBack}
+          onClick={() => doTurn(turnBack(dive.dir))}
+          aria-label="振り向く"
+        >
+          ↻
+        </button>
       </div>
 
-      {/* 可変領域: マップ + 凡例 + アクション + ヒント */}
+      {/* 中段: マップ + 操作ヒント。上部 (header + fpv) の下、下端の操作ボタン群
+          までの間で縦に溢れたぶんはこの内側で吸収する。階段/採集/調理/注意は
+          画面下端に固定（.mid 外）で、常に可視に保つ。 */}
       <div className={styles.mid}>
-        <div className={styles.mapHead}>
-          <span className={styles.mapHeadLabel}>AUTOMAP ・ F{dive.depth}</span>
-          <span className={styles.mapHeadHint}>セルタップで自動移動</span>
-        </div>
         <div className={styles.mapCard}>
-          <DungeonMap
-            floor={floor}
-            explored={save.exploredCells[dive.depth] ?? []}
-            pos={dive.pos}
-            dir={dive.dir}
-            foes={foes}
-            depletedGathers={depletedGathers}
-            onCellClick={handleCellClick}
-          />
+          <div className={styles.mapWrap}>
+            <DungeonMap
+              floor={floor}
+              explored={save.exploredCells[dive.depth] ?? []}
+              pos={dive.pos}
+              dir={dive.dir}
+              foes={foes}
+              depletedGathers={depletedGathers}
+              onCellClick={handleCellClick}
+            />
+          </div>
         </div>
-        <div className={styles.mapLegend}>
-          <span>▲ 上り階段</span>
-          <span>▼ 下り階段</span>
-          <span className={styles.legendAlert}>● 警戒FOE</span>
-          <span className={styles.legendCalm}>● 未警戒</span>
-          <span>🌿 採集</span>
-        </div>
-
-        {/* アクション or ヒント */}
-        <div>
-          {/* 採集カード */}
-          {gatherPoint && (
-            <div className={styles.gatherCard}>
-              <div className={styles.gatherHead}>
-                <span className={styles.gatherSparkle}>✦</span>
-                <span className={styles.gatherTitle}>
-                  採集 — {GATHER_TYPES[gatherPoint.type].name}
-                </span>
-              </div>
-              <button
-                type="button"
-                className={styles.gatherBtn}
-                disabled={isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint)}
-                onClick={handleGather}
-              >
-                {gatherBtnLabel}
-              </button>
-            </div>
-          )}
-
-          {/* 調理カード（inline トリガ → cookOpen で既存モーダルを開く） */}
-          {atCookingSpot && (
-            <div className={styles.cookCard}>
-              <div className={styles.cookHead}>
-                <span className={styles.cookIcon}>🍲</span>
-                <span className={styles.cookTitle}>調理</span>
-              </div>
-              <p className={styles.cookDesc}>食材を消費して探索バフを得る。</p>
-              <div className={styles.cookActions}>
-                <button
-                  type="button"
-                  className={styles.cookCancel}
-                  onClick={() => setNotice(null)}
-                >
-                  やめる
-                </button>
-                <button
-                  type="button"
-                  className={styles.cookPrimary}
-                  onClick={() => setCookOpen(true)}
-                >
-                  調理する
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 階段確認カード（inline — confirm モーダルを通さない） */}
-          {stairKind && (
-            <div className={styles.stairsCard}>
-              <div className={styles.stairsHead}>
-                <span className={styles.stairsLabel}>{stairsLabel}</span>
-                <span className={styles.stairsSub}>{stairsSub}</span>
-              </div>
-              <div className={styles.stairsActions}>
-                <button
-                  type="button"
-                  className={styles.stairsCancel}
-                  onClick={() => {
-                    /* noop: 単に無視 */
-                  }}
-                >
-                  やめる
-                </button>
-                <button
-                  type="button"
-                  className={styles.stairsPrimary}
-                  onClick={() => void handleStairs()}
-                >
-                  {stairsPrimaryLabel}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 通常マスヒント（アクション無しの場合のみ） */}
-          {!hasAction && (
-            <p className={styles.tileHint}>
-              現在地: 通常マス ・ 足元にオブジェクトがあればアクションが出ます
-            </p>
-          )}
-
-          {notice && <p className={styles.notice}>{notice}</p>}
-        </div>
+        <p className={styles.paletteHint}>マップのマスをタップすると、そこまで自動で移動します。</p>
       </div>
 
-      {/* ============================================================
-          道具を使う（itemOpen）
-         ============================================================ */}
-      {itemOpen ? (
-        <div className={styles.itemOverlay}>
-          <div className={styles.itemHeader}>
-            <span className={styles.itemHeaderTitle}>道具</span>
+      {showStairsCard && (
+        <div className={styles.stairsCard}>
+          <div className={styles.stairsCardHeader}>
+            <span className={styles.stairsCardTitle}>
+              {stairKind === 'stairsUp'
+                ? '▲ 上り階段'
+                : dive.depth <= 1
+                  ? '▼ 下り階段（拠点へ）'
+                  : '▼ 下り階段'}
+            </span>
+            <span className={styles.stairsCardSub}>
+              {stairKind === 'stairsUp'
+                ? `F${dive.depth} → F${dive.depth + 1}`
+                : dive.depth <= 1
+                  ? 'F1 → 拠点'
+                  : `F${dive.depth} → F${dive.depth - 1}`}
+            </span>
+          </div>
+          <div className={styles.stairsCardActions}>
             <button
               type="button"
-              className={styles.itemHeaderClose}
-              aria-label="閉じる"
-              onClick={() => {
-                setItemOpen(false);
-                setSelectedItemId(null);
-              }}
+              className={styles.stairsCancel}
+              onClick={() =>
+                setDismissedStairsAt({ depth: dive.depth, x: dive.pos.x, y: dive.pos.y })
+              }
             >
-              ✕
+              やめる
+            </button>
+            <button
+              type="button"
+              className={styles.stairsOk}
+              onClick={() => void handleStairs()}
+            >
+              {stairKind === 'stairsUp'
+                ? '次階へ進む'
+                : dive.depth <= 1
+                  ? '拠点へ戻る'
+                  : '前階へ戻る'}
             </button>
           </div>
-          <div className={styles.itemList}>
-            <p className={styles.itemListLabel}>所持アイテム</p>
-            {usableItems.length === 0 ? (
-              <p className={styles.itemEmpty}>使える道具がありません。</p>
-            ) : (
-              usableItems.map((s) => {
-                const item = ITEMS[s.itemId];
-                return (
-                  <button
-                    key={s.itemId}
-                    type="button"
-                    className={`${styles.itemCard} ${selectedItemId === s.itemId ? styles.itemCardSelected : ''}`}
-                    onClick={() => setSelectedItemId(s.itemId)}
-                  >
-                    <ItemSprite
-                      itemId={s.itemId}
-                      size="sm"
-                    />
-                    <div className={styles.itemCardMeta}>
-                      <span className={styles.itemCardName}>{item.name}</span>
-                      <span className={styles.itemCardDesc}>{item.description}</span>
-                    </div>
-                    <span className={styles.itemCardCount}>×{s.qty}</span>
-                  </button>
-                );
-              })
-            )}
-          </div>
+        </div>
+      )}
 
-          {/* bottom sheet — 対象選択 */}
-          {selectedItemId && selectedItemMaster && (
-            <div
-              className={styles.itemSheet}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={styles.itemSheetHandle} />
-              <div className={styles.itemSheetHead}>
-                <span className={styles.itemSheetIcon}>
-                  <ItemSprite
-                    itemId={selectedItemId}
-                    size="sm"
-                  />
-                </span>
-                <div>
-                  <div className={styles.itemSheetTitle}>{selectedItemMaster.name} を使う</div>
-                  <div className={styles.itemSheetSub}>{selectedItemMaster.description}</div>
-                </div>
-              </div>
-              <div className={styles.itemTargetList}>
-                {selectedItemId === 'item_return_thread' ? (
-                  /* 帰還の糸は対象なし → 直接使う */
-                  <button
-                    type="button"
-                    className={styles.itemTargetUseBtn}
-                    onClick={() =>
-                      setConfirm({
-                        message: `${selectedItemMaster.name} を使いますか？`,
-                        okLabel: '使う',
-                        onYes: () => handleUseItem(selectedItemId),
-                      })
-                    }
+      {gatherPoint && (
+        <button
+          type="button"
+          className={`${styles.gatherCard} ${isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint) ? styles.gatherCardDisabled : ''}`}
+          disabled={isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint)}
+          onClick={handleGather}
+        >
+          <span className={styles.gatherSparkle}>✦</span>
+          <span className={styles.gatherCardLabel}>
+            {isGatherDepleted(save, gatherPoint)
+              ? `${GATHER_TYPES[gatherPoint.type].name}（採集済み）`
+              : !canGather(save, gatherPoint)
+                ? `${GATHER_TYPES[gatherPoint.type].name}（スキル要）`
+                : `採集 — ${GATHER_TYPES[gatherPoint.type].name}`}
+          </span>
+        </button>
+      )}
+
+      {atCookingSpot && (
+        <div
+          className={styles.cookCard}
+          onClick={() => setCookOpen(true)}
+        >
+          <span className={styles.cookIcon}>🍲</span>
+          <span className={styles.cookCardLabel}>調理 — 料理をする</span>
+        </div>
+      )}
+
+      {notice && <p className={styles.notice}>{notice}</p>}
+
+      {itemOpen ? (
+        <div
+          className={styles.itemOverlay}
+          onClick={() => setItemOpen(false)}
+        >
+          <div
+            className={styles.itemPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.itemTitle}>どうぐ・食料</div>
+            {(() => {
+              // 倉庫アイテム＋食材（foodStorage）を合わせてフィールド使用可能なものを表示。
+              const usable = [...save.guild.storage, ...(save.guild.foodStorage ?? [])].filter(
+                (s) => ITEMS[s.itemId]?.useContext?.includes('field') && s.qty > 0
+              );
+              if (usable.length === 0) {
+                return <p className={styles.itemEmpty}>使える道具がありません。</p>;
+              }
+              return usable.map((s) => {
+                const item = ITEMS[s.itemId];
+                const isReturn = s.itemId === 'item_return_thread';
+                return (
+                  <div
+                    key={s.itemId}
+                    className={styles.itemRow}
                   >
-                    使う（拠点へ帰還）
-                  </button>
-                ) : (
-                  dive.party.map((p) => {
-                    const c = save.guild.members.find((m) => m.id === p.charId);
-                    if (!c) return null;
-                    const maxStat = computeBaseStats(c);
-                    const hpRatio = maxStat.hp > 0 ? p.hp / maxStat.hp : 1;
-                    const isFull = p.hp >= maxStat.hp;
-                    return (
-                      <div
-                        key={p.charId}
-                        className={`${styles.itemTargetRow} ${isFull ? styles.itemTargetRowDisabled : ''}`}
-                      >
-                        <div className={styles.itemTargetPortraitWrap}>
-                          <CharacterPortrait
-                            raceId={c.raceId}
-                            classId={c.classId}
-                            size={24}
-                          />
-                        </div>
-                        <div className={styles.itemTargetInfo}>
-                          <div className={styles.itemTargetNameRow}>
-                            <span className={styles.itemTargetName}>{c.name}</span>
-                            <span
-                              className={`${styles.itemTargetHpNum} ${isFull ? styles.itemTargetHpNumFull : ''}`}
-                            >
-                              {p.hp}/{maxStat.hp}
-                            </span>
-                          </div>
-                          <div className={styles.itemTargetBarTrack}>
-                            <div
-                              className={`${styles.itemTargetBarFill} ${!isLowHp(p.hp, maxStat.hp) || isFull ? styles.itemTargetBarFillFull : ''}`}
-                              style={{ width: `${Math.min(hpRatio * 100, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                        {isFull ? (
-                          <span className={styles.itemTargetFullText}>満タン</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className={styles.itemTargetUseBtn}
-                            onClick={() => handleUseItem(selectedItemId, p.charId)}
-                          >
-                            使う
-                          </button>
-                        )}
+                    <div className={styles.itemHeader}>
+                      <ItemSprite
+                        itemId={s.itemId}
+                        size="sm"
+                      />
+                      <div className={styles.itemName}>
+                        {item.name} ×{s.qty}
+                        <span className={styles.itemDesc}>{item.description}</span>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-              <button
-                type="button"
-                className={styles.itemSheetClose}
-                onClick={() => setSelectedItemId(null)}
-              >
-                もどる
-              </button>
-            </div>
-          )}
+                    </div>
+                    {isReturn ? (
+                      <button
+                        type="button"
+                        className={styles.itemUse}
+                        onClick={() =>
+                          setConfirm({
+                            message: `${item.name} を使いますか？`,
+                            okLabel: '使う',
+                            onYes: () => handleUseItem(s.itemId),
+                          })
+                        }
+                      >
+                        使う
+                      </button>
+                    ) : (
+                      <div className={styles.itemTargets}>
+                        {dive.party.map((p) => {
+                          const c = save.guild.members.find((m) => m.id === p.charId);
+                          if (!c) return null;
+                          const max = computeBaseStats(c);
+                          const isLowHp = p.hp / max.hp < 0.5;
+                          return (
+                            <div
+                              key={p.charId}
+                              className={`${styles.itemTargetRow} ${isLowHp ? styles.itemTargetRowRecommended : ''}`}
+                            >
+                              <CharacterPortrait
+                                raceId={c.raceId}
+                                classId={c.classId}
+                                size={28}
+                              />
+                              <div className={styles.itemTargetInfo}>
+                                <span className={styles.itemTargetName}>{c.name}</span>
+                                <span className={styles.itemHp}>
+                                  HP {p.hp}/{max.hp}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                className={styles.itemTargetUseBtn}
+                                onClick={() =>
+                                  setConfirm({
+                                    message: `${c.name} に ${item.name} を使いますか？`,
+                                    okLabel: '使う',
+                                    onYes: () => handleUseItem(s.itemId, p.charId),
+                                  })
+                                }
+                              >
+                                使う
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
+            <button
+              type="button"
+              className={styles.itemClose}
+              onClick={() => setItemOpen(false)}
+            >
+              とじる
+            </button>
+          </div>
         </div>
       ) : null}
 
-      {/* ============================================================
-          調理モーダル（cookOpen）
-         ============================================================ */}
       {cookOpen ? (
         <div
-          className={styles.cookOverlay}
+          className={styles.itemOverlay}
           onClick={() => setCookOpen(false)}
         >
           <div
-            className={styles.cookPanel}
+            className={styles.itemPanel}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={styles.cookPanelHandle} />
-            <div className={styles.cookPanelTitle}>調理</div>
+            <div className={styles.itemTitle}>調理</div>
             {(() => {
               const recipes = unlockedRecipes(save);
               if (recipes.length === 0) {
-                return <p className={styles.cookRecipeEmpty}>作れるレシピがありません。</p>;
+                return <p className={styles.itemEmpty}>作れるレシピがありません。</p>;
               }
               return recipes.map((r) => {
                 const ok = canCook(save, r.id);
@@ -663,11 +552,11 @@ export const Page = () => {
                 return (
                   <div
                     key={r.id}
-                    className={styles.cookRecipeRow}
+                    className={styles.itemRow}
                   >
-                    <div className={styles.cookRecipeName}>
+                    <div className={styles.itemName}>
                       {r.name}
-                      <span className={styles.cookRecipeDesc}>
+                      <span className={styles.itemDesc}>
                         {ing} → {ITEMS[r.result.itemId]?.name ?? r.result.itemId}（所持
                         {r.ingredients
                           .map((i) => `${ITEMS[i.itemId]?.name ?? ''}${foodCount(save, i.itemId)}`)
@@ -677,7 +566,7 @@ export const Page = () => {
                     </div>
                     <button
                       type="button"
-                      className={styles.cookRecipeBtn}
+                      className={styles.itemUse}
                       disabled={!ok}
                       onClick={() =>
                         setConfirm({
@@ -695,7 +584,7 @@ export const Page = () => {
             })()}
             <button
               type="button"
-              className={styles.cookPanelClose}
+              className={styles.itemClose}
               onClick={() => setCookOpen(false)}
             >
               とじる
@@ -704,89 +593,152 @@ export const Page = () => {
         </div>
       ) : null}
 
-      {/* ============================================================
-          ☰ メニュー（全画面ディム + flex column パネル）
-         ============================================================ */}
       {menuOpen ? (
-        <div className={styles.menuOverlay}>
-          <div className={styles.menuPanel}>
+        <div
+          className={styles.menuOverlay}
+          onClick={() => {
+            play('cursor');
+            setMenuOpen(false);
+          }}
+        >
+          <div
+            className={styles.menuPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
             {(() => {
               const selected = menuCharId
                 ? save.guild.members.find((m) => m.id === menuCharId)
                 : null;
-
               if (!selected) {
-                // メニュートップ
+                // メニュー: パーティ一覧 + 2x2 アクショングリッド
+                const threadCount =
+                  save.guild.storage.find((s) => s.itemId === 'item_return_thread')?.qty ?? 0;
                 return (
                   <>
-                    <div className={styles.menuHead}>
+                    <div className={styles.menuHeader}>
                       <div>
                         <div className={styles.menuTitle}>メニュー</div>
-                        <div className={styles.menuSub}>
-                          F{dive.depth} ・ {bandThemeFor(dive.depth).name}
+                        <div className={styles.menuSubtitle}>
+                          {dive.depth}F ・ {bandThemeFor(dive.depth).name}
                         </div>
                       </div>
                       <button
                         type="button"
-                        className={styles.menuClose}
-                        aria-label="閉じる"
+                        className={styles.menuCloseBtn}
                         onClick={() => {
                           play('cursor');
                           setMenuOpen(false);
                         }}
+                        aria-label="とじる"
                       >
                         ✕
                       </button>
                     </div>
-
-                    <p className={styles.menuPartyLabel}>
-                      パーティ
-                      <span className={styles.menuPartyLabelSub}>タップで詳細・スキル</span>
-                    </p>
-                    <div className={styles.menuPartyList}>
-                      {dive.party.map((p, i) => {
+                    <div className={styles.menuPartyLabel}>
+                      パーティ <span className={styles.menuPartyHint}>タップで詳細・スキル</span>
+                    </div>
+                    <div className={styles.menuActions}>
+                      <div className={styles.menuGrid}>
+                        <button
+                          type="button"
+                          className={`${styles.menuGridItem} ${styles.menuGridItemActive}`}
+                          onClick={() => {
+                            play('cursor');
+                            setMenuOpen(false);
+                            setItemOpen(true);
+                          }}
+                        >
+                          <span className={styles.menuGridIcon}>🎒</span>
+                          <span className={styles.menuGridLabel}>道具を使う</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.menuGridItem}
+                          onClick={() => {
+                            play('cursor');
+                            setNotice('設定は次バージョンで実装予定');
+                          }}
+                        >
+                          <span className={styles.menuGridIcon}>⚙</span>
+                          <span className={styles.menuGridLabel}>設定</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.menuGridItem} ${styles.menuGridItemThread}`}
+                          onClick={() => {
+                            if (threadCount === 0) {
+                              setNotice('帰還の糸がない');
+                              return;
+                            }
+                            setConfirm({
+                              message: '帰還の糸を使いますか？拠点へ即帰還します。',
+                              okLabel: '使う',
+                              onYes: () => handleUseItem('item_return_thread'),
+                            });
+                          }}
+                        >
+                          <span className={styles.menuGridIcon}>🪢</span>
+                          <div>
+                            <div className={styles.menuGridLabel}>帰還の糸</div>
+                            <div className={styles.menuGridSub}>町へ戻る ・ 所持{threadCount}</div>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.menuGridItem}
+                          onClick={() => {
+                            play('cursor');
+                            setNotice('全体マップは次バージョンで実装予定');
+                          }}
+                        >
+                          <span className={styles.menuGridIcon}>🗺</span>
+                          <span className={styles.menuGridLabel}>全体マップ</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className={styles.menuMemberList}>
+                      {dive.party.map((p, idx) => {
                         const c = save.guild.members.find((m) => m.id === p.charId);
                         if (!c) return null;
                         const st = computeBaseStats(c);
-                        const hpRatio = st.hp > 0 ? p.hp / st.hp : 1;
-                        const tpRatio = st.tp > 0 ? p.tp / st.tp : 1;
+                        const sp = availableSP(c);
                         return (
                           <button
-                            key={p.charId}
                             type="button"
-                            className={`${styles.menuMember} ${i === 0 ? styles.menuMemberLeader : ''}`}
+                            key={p.charId}
+                            className={`${styles.menuMember} ${idx === 0 ? styles.menuMemberLeader : ''}`}
                             onClick={() => {
                               setMenuCharId(p.charId);
                               setSkillTab('class');
                             }}
                           >
-                            <div className={styles.menuMemberPortraitWrap}>
-                              <CharacterPortrait
-                                raceId={c.raceId}
-                                classId={c.classId}
-                                size={28}
-                              />
-                            </div>
+                            <CharacterPortrait
+                              raceId={c.raceId}
+                              classId={c.classId}
+                              size={28}
+                              className={styles.menuMemberPortrait}
+                            />
                             <div className={styles.menuMemberInfo}>
                               <div className={styles.menuMemberNameRow}>
                                 <span className={styles.menuMemberName}>{c.name}</span>
                                 <span className={styles.menuMemberLv}>Lv{c.level}</span>
                               </div>
                               <div className={styles.menuMemberBars}>
-                                <span className={styles.menuMemberBarLabel}>H</span>
-                                <div className={styles.menuMemberBarTrack}>
+                                <span className={styles.menuBarLabel}>H</span>
+                                <div className={styles.menuBar}>
                                   <div
-                                    className={`${styles.menuMemberBarHp} ${isLowHp(p.hp, st.hp) ? styles.menuMemberBarLow : ''}`}
-                                    style={{ width: `${Math.min(hpRatio * 100, 100)}%` }}
+                                    className={styles.menuBarFillHp}
+                                    style={{ width: `${Math.round((p.hp / st.hp) * 100)}%` }}
                                   />
                                 </div>
-                                <span className={styles.menuMemberBarLabel}>T</span>
-                                <div className={styles.menuMemberBarTrack}>
+                                <span className={styles.menuBarLabel}>T</span>
+                                <div className={styles.menuBar}>
                                   <div
-                                    className={styles.menuMemberBarTp}
-                                    style={{ width: `${Math.min(tpRatio * 100, 100)}%` }}
+                                    className={styles.menuBarFillTp}
+                                    style={{ width: `${Math.round((p.tp / st.tp) * 100)}%` }}
                                   />
                                 </div>
+                                {sp > 0 ? <span className={styles.menuSp}>SP {sp}</span> : null}
                               </div>
                             </div>
                             <span className={styles.menuMemberArrow}>➜</span>
@@ -794,83 +746,22 @@ export const Page = () => {
                         );
                       })}
                     </div>
-
-                    {/* 2x2 アクショングリッド */}
-                    <div className={styles.menuActionGrid}>
+                    <div className={styles.menuFooter}>
                       <button
                         type="button"
-                        className={styles.menuActionItem}
+                        className={styles.menuCloseAction}
                         onClick={() => {
+                          play('cursor');
                           setMenuOpen(false);
-                          setItemOpen(true);
-                          setSelectedItemId(null);
                         }}
                       >
-                        <span className={styles.menuActionIcon}>🎒</span>
-                        <span className={styles.menuActionLabel}>道具を使う</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.menuActionSetting}
-                        disabled
-                      >
-                        <span className={styles.menuActionIcon}>⚙</span>
-                        <span className={styles.menuActionLabel}>設定</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.menuActionThread}
-                        onClick={() => {
-                          if (threadCount > 0) {
-                            setMenuOpen(false);
-                            setConfirm({
-                              message: '帰還の糸を使いますか？拠点へ帰還します。',
-                              okLabel: '使う',
-                              onYes: () => handleUseItem('item_return_thread'),
-                            });
-                          }
-                        }}
-                      >
-                        <span className={styles.menuActionIcon}>🪢</span>
-                        <div className={styles.menuActionMeta}>
-                          <span className={styles.menuActionLabelGreen}>帰還の糸</span>
-                          <span className={styles.menuActionSubGreen}>
-                            町へ戻る ・ 所持{threadCount}
-                          </span>
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.menuActionMap}
-                        disabled
-                      >
-                        <span className={styles.menuActionIcon}>🗺</span>
-                        <span className={styles.menuActionLabel}>全体マップ</span>
+                        とじる（探索へ戻る）
                       </button>
                     </div>
-
-                    {/* 自動保存表示 */}
-                    <div className={styles.menuSavedRow}>
-                      <span className={styles.menuSavedDot} />
-                      <span>自動保存済 ・ {savedAt}</span>
-                    </div>
-
-                    {/* とじる */}
-                    <button
-                      type="button"
-                      className={styles.menuCloseBig}
-                      onClick={() => {
-                        play('cursor');
-                        setMenuOpen(false);
-                      }}
-                    >
-                      とじる（探索へ戻る）
-                    </button>
                   </>
                 );
               }
-
-              // キャラ詳細: ステータス + スキル振り
+              // キャラ詳細: ステータス＋スキル振り
               const st = computeBaseStats(selected);
               const nodes =
                 skillTab === 'class'
@@ -882,7 +773,7 @@ export const Page = () => {
                       : [];
               return (
                 <>
-                  <div className={styles.charDetailTitle}>
+                  <div className={styles.itemTitle}>
                     {selected.name}（{CLASSES[selected.classId]?.name} Lv{selected.level}）
                     <span className={styles.menuSp}>SP {availableSP(selected)}</span>
                   </div>
@@ -938,7 +829,7 @@ export const Page = () => {
                   />
                   <button
                     type="button"
-                    className={styles.charBackBtn}
+                    className={styles.itemClose}
                     onClick={() => setMenuCharId(null)}
                   >
                     ← もどる
@@ -950,9 +841,7 @@ export const Page = () => {
         </div>
       ) : null}
 
-      {/* ============================================================
-          消費系操作の確認ダイアログ（誤タップ防止）
-         ============================================================ */}
+      {/* 消費系操作の確認ダイアログ（誤タップ防止）。 */}
       {confirm ? (
         <div
           className={styles.confirmOverlay}
