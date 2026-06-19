@@ -1,4 +1,5 @@
-@use 'variables' as var;
+// codex 画面 — 黒曜 OBSIDIAN MINIMAL テーマ
+// var(--*) は src/_obsidian.scss / src/index.scss が :root に配布するカスタムプロパティ
 
 .layout {
   display: flex;
@@ -6,127 +7,162 @@
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
-  color: var.$ink;
+  padding: 14px 20px max(16px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  background-color: var.$parchment;
+  background: var(--bg-page-gradient);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  gap: 12px;
 }
 
+// ---- ヘッダー ----
 .head {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 0.75px solid var.$rule;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .chapterMark {
-  font-family: 'Kaisei Tokumin', serif;
+  font-family: var(--font-display);
   font-size: 12px;
-  font-weight: 500;
-  color: var.$ink-faint;
-  letter-spacing: 0.08em;
-  margin-bottom: 4px;
+  letter-spacing: 0.32em;
+  color: var(--text-blue);
+  margin: 0;
 }
 
 .title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(18px, 5.2vw, 22px);
+  color: var(--text-strong);
   margin: 0;
-  font-size: 24px;
-  font-weight: 900;
-  color: var.$ink;
 }
 
+// ---- タブ ----
 .tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 4px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--rule-soft);
 }
 
 .tab {
   flex: 1;
   min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 15px;
-  font-weight: 700;
+  padding: 9px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 13px;
   cursor: pointer;
+  border-radius: 3px 3px 0 0;
+  font-family: var(--font-body);
+
+  &:active {
+    background: var(--surface-elev);
+  }
 }
 
 .tabActive {
-  border-color: var.$verdant;
-  background-color: var.$parchment;
-  color: var.$verdant;
+  background: var(--gold);
+  color: var(--bg-mid);
+  font-weight: 700;
 }
 
-// ---- 記録 ----
+// ---- 到達記録タブ ----
 .records {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
-}
-
-.statBig {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 16px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  margin-bottom: 12px;
+  gap: 14px;
 }
 
-.statNum {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 40px;
-  font-weight: 700;
-  color: var.$illumination-gold;
-  line-height: 1;
+.statGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.statCard {
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 80px;
 }
 
 .statLabel {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+}
+
+.statNum {
+  font-family: var(--font-mono);
+  font-size: clamp(22px, 6vw, 26px);
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.statSuffix {
   font-size: 13px;
-  color: var.$ink-faint;
+  color: var(--text-faint);
+  margin-left: 2px;
 }
 
-.statList {
-  margin: 0 0 16px;
-}
-
-.statRow {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 4px;
-  border-bottom: 0.75px solid var.$rule;
+.statText {
+  font-family: var(--font-display);
   font-size: 14px;
-
-  dt {
-    color: var.$ink-faint;
-  }
-  dd {
-    margin: 0;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    color: var.$ink;
-  }
+  color: var(--text-strong);
 }
 
-.h2 {
-  font-size: 15px;
-  font-weight: 800;
-  margin: 0 0 8px;
-  color: var.$ink;
+// 達成率リング
+.ringWrap {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin-top: 4px;
+}
+
+.ringSvg {
+  width: 60px;
+  height: 60px;
+}
+
+.ringText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--gold);
 }
 
 .h2Caption {
   font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--gold);
   font-weight: 700;
-  letter-spacing: 0.04em;
-  margin: 0 0 8px;
-  color: var.$ink-faint;
+  margin: 0;
+}
+
+.h2Sub {
+  color: var(--text-faint);
+  letter-spacing: 0;
+  font-weight: 400;
+  margin-left: 6px;
+  font-size: 10px;
 }
 
 .bossLog {
@@ -135,47 +171,72 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .bossRow {
-  padding: 8px 10px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  font-size: 14px;
-  color: var.$ink;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  color: var(--text-base);
+  font-size: 13px;
 }
 
-// ---- 図鑑エントリ（内部スクロール） ----
-.codex {
+.bossDepth {
+  font-family: var(--font-mono);
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.bossText {
   flex: 1;
+  font-size: 13px;
+}
+
+.bossSeal {
+  color: var(--danger-glow);
+  font-size: 18px;
+  transform: rotate(-12deg);
+  display: inline-block;
+}
+
+.empty {
+  color: var(--text-faint);
+  font-size: 13px;
+  text-align: center;
+  padding: 16px 0;
+  margin: 0;
+}
+
+// ---- 図鑑タブ ----
+.codex {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .codexSummary {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: var.$ink-faint;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-faint);
+  flex-shrink: 0;
 }
 
-// ---- エントリ一覧 ----
-.entries {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.codexSummaryPct {
+  font-family: var(--font-mono);
+  color: var(--gold);
 }
 
 .list {
@@ -185,123 +246,153 @@
 }
 
 .row {
-  padding: 8px 12px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
+  padding: 10px 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  color: var(--text-base);
   flex-wrap: wrap;
 }
 
-// スプライトサムネイル（リスト左端）
-.thumb {
-  flex-shrink: 0;
-}
-
-.unseen {
-  opacity: 0.5;
-}
-
-.info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var.$ink;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: var.$parchment;
-  background-color: var.$vermilion;
-  border-radius: 0;
-  padding: 1px 6px;
-}
-
-.sub {
-  font-size: 12px;
-  color: var.$ink-faint;
-}
-
-.empty {
-  color: var.$ink-faint;
-  font-size: 14px;
-}
-
-// §16: モンスター行のタップ展開
 .rowClickable {
   cursor: pointer;
   user-select: none;
 
-  &:active {
-    background-color: var.$parchment;
+  &:hover,
+  &:focus-visible {
+    border-color: var(--rule-gold);
+    background: var(--gold-tint);
+    outline: none;
   }
+
+  &:active {
+    background: var(--surface-elev);
+  }
+}
+
+.unseen {
+  opacity: 0.55;
+}
+
+.thumb {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 3px;
+  background: var(--bg-deep);
+  border: 1px solid var(--rule-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--text-strong);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--bg-mid);
+  background: var(--danger-glow);
+  border-radius: 2px;
+  padding: 1px 6px;
 }
 
 .expand {
   font-size: 10px;
-  color: var.$ink-faint;
+  color: var(--text-faint);
   margin-left: auto;
+}
+
+.sub {
+  font-size: 11px;
+  color: var(--text-faint);
 }
 
 // §16: 耐性詳細（展開時）
 .resistDetail {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 0.75px dashed var.$rule;
+  border-top: 1px solid var(--rule-soft);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  // 展開時は行全体の幅を使う
+  gap: 8px;
   width: 100%;
 }
 
-// 展開詳細内の大きいスプライト（中央寄せ）
 .spriteLarge {
   display: flex;
   justify-content: center;
   padding: 8px 0 4px;
+  background: var(--bg-deep);
+  border-radius: 3px;
 }
 
 .resistSection {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .resistHead {
-  font-size: 11px;
-  font-weight: 800;
-  color: var.$ink-faint;
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
+// ---- フッタ ----
 .foot {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 0.75px solid var.$rule;
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule-soft);
 }
 
 .back {
   width: 100%;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 14px;
+  min-height: 46px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 13px;
+  letter-spacing: 0.16em;
   cursor: pointer;
+  font-family: var(--font-body);
+
+  &:active {
+    background: var(--surface-elev);
+  }
+}
+
+// ---- 短画面対応 ----
+@media (max-height: 720px) {
+  .layout {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .statCard {
+    min-height: 68px;
+    padding: 10px 12px;
+  }
 }

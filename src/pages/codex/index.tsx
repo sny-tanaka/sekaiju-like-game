@@ -35,6 +35,10 @@ export const Page = () => {
     setSelectedId((prev) => (prev === id ? null : id));
   };
 
+  // 達成率リング: 2 * pi * 25 ≈ 157
+  const ringCircumference = 157;
+  const ringOffset = Math.round(ringCircumference * (1 - sum.completionPct / 100));
+
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
@@ -67,26 +71,64 @@ export const Page = () => {
 
       {tab === 'record' ? (
         <div className={styles.records}>
-          <div className={styles.statBig}>
-            <span className={styles.statNum}>{rec.deepestReached}</span>
-            <span className={styles.statLabel}>最深到達階</span>
+          {/* 2x2 統計カードグリッド */}
+          <div className={styles.statGrid}>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>最深到達階</span>
+              <span className={styles.statNum}>
+                {rec.deepestReached}
+                <span className={styles.statSuffix}>F</span>
+              </span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>挑戦回数</span>
+              <span className={styles.statNum}>{rec.totalDives}</span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>最高撃破ボス</span>
+              {rec.highestBossDefeated > 0 ? (
+                <span className={styles.statText}>{rec.highestBossDefeated}F のボス</span>
+              ) : (
+                <span className={styles.statText}>—</span>
+              )}
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>図鑑達成率</span>
+              <div className={styles.ringWrap}>
+                <svg
+                  viewBox="0 0 60 60"
+                  className={styles.ringSvg}
+                  aria-hidden
+                >
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="25"
+                    fill="none"
+                    stroke="var(--rule-base)"
+                    strokeWidth="5"
+                  />
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="25"
+                    fill="none"
+                    stroke="var(--gold)"
+                    strokeWidth="5"
+                    strokeDasharray={ringCircumference}
+                    strokeDashoffset={ringOffset}
+                    transform="rotate(-90 30 30)"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className={styles.ringText}>{sum.completionPct}%</span>
+              </div>
+            </div>
           </div>
-          <dl className={styles.statList}>
-            <div className={styles.statRow}>
-              <dt>最高撃破ボス階</dt>
-              <dd>{rec.highestBossDefeated > 0 ? `${rec.highestBossDefeated}F` : '—'}</dd>
-            </div>
-            <div className={styles.statRow}>
-              <dt>挑戦回数</dt>
-              <dd>{rec.totalDives}</dd>
-            </div>
-            <div className={styles.statRow}>
-              <dt>図鑑達成率</dt>
-              <dd>{sum.completionPct}%</dd>
-            </div>
-          </dl>
 
-          <p className={styles.h2Caption}>ボス撃破履歴</p>
+          <p className={styles.h2Caption}>
+            ボス撃破履歴 <span className={styles.h2Sub}>新しい順</span>
+          </p>
           {rec.bossDefeatLog.length === 0 ? (
             <p className={styles.empty}>まだボスを倒していません。</p>
           ) : (
@@ -99,7 +141,9 @@ export const Page = () => {
                     key={i}
                     className={styles.bossRow}
                   >
-                    <span>{b.depth}F のボス撃破</span>
+                    <span className={styles.bossDepth}>{b.depth}F</span>
+                    <span className={styles.bossText}>のボスを撃破</span>
+                    <span className={styles.bossSeal}>✦</span>
                   </li>
                 ))}
             </ul>
@@ -108,8 +152,11 @@ export const Page = () => {
       ) : (
         <div className={styles.codex}>
           <div className={styles.codexSummary}>
-            撃破 {sum.monstersDefeated}/{sum.monstersTotal}・ドロップ {sum.dropsFound}/
-            {sum.dropsTotal}
+            <span>
+              撃破 {sum.monstersDefeated}/{sum.monstersTotal}・ドロップ {sum.dropsFound}/
+              {sum.dropsTotal}
+            </span>
+            <span className={styles.codexSummaryPct}>{sum.completionPct}%</span>
           </div>
           <div className={styles.list}>
             {entries.map((e) => {
@@ -126,13 +173,14 @@ export const Page = () => {
                     if (ev.key === 'Enter' || ev.key === ' ') toggleEntry(e.id, e.seen);
                   }}
                 >
-                  <EnemySprite
-                    enemyId={e.id}
-                    size="sm"
-                    silhouette={!e.seen}
-                    className={styles.thumb}
-                    alt={e.seen ? e.name : '未遭遇のモンスター'}
-                  />
+                  <div className={styles.thumb}>
+                    <EnemySprite
+                      enemyId={e.id}
+                      size="sm"
+                      silhouette={!e.seen}
+                      alt={e.seen ? e.name : '未遭遇のモンスター'}
+                    />
+                  </div>
                   <div className={styles.info}>
                     <span className={styles.name}>
                       {e.seen ? e.name : '？？？'}
