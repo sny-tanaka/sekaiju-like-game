@@ -165,6 +165,9 @@
 }
 
 .pickBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   min-height: 34px;
   padding: 0 8px;
   border: 0.75px solid var.$verdant;

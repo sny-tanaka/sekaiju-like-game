@@ -8,6 +8,7 @@ import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
+import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
@@ -1466,6 +1467,10 @@ export const Page = ({ __storyMockLogPreview, __storyMockOpenSkillMenu }: Battle
                           onClick={() => assign(active.id, { kind: 'item', itemId: id })}
                         >
                           <span className={styles.skillTop}>
+                            <ItemSprite
+                              itemId={id}
+                              size="sm"
+                            />
                             <span className={styles.skillName}>
                               {ITEMS[id].name} ×{remaining}
                             </span>

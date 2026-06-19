@@ -4,6 +4,7 @@ import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
+import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { FORGE } from '@/data/balance';
 import { EQUIPMENT } from '@/data/equipment';
 import {
@@ -152,6 +153,10 @@ export const Page = () => {
                     aria-label={`${equipDisplayName(e)} を選択`}
                   />
                 )}
+                <ItemSprite
+                  itemId={e.masterId}
+                  size="sm"
+                />
                 <div className={styles.info}>
                   <span className={styles.name}>{equipDisplayName(e)}</span>
                   <span className={styles.note}>{eq?.slot}</span>

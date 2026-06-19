@@ -440,6 +440,12 @@
   border-top: 0.75px solid var.$rule;
 }
 
+.itemHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 .itemName {
   font-size: 15px;
   font-weight: 700;

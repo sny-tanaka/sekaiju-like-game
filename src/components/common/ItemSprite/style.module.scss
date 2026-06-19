@@ -1,0 +1,34 @@
+// ItemSprite — アイテム/装備スプライト表示コンポーネント
+
+.wrap {
+  display: inline-block;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.img {
+  display: block;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+// サイズバリアント
+.sm {
+  width: 24px;
+  height: 24px;
+}
+
+.md {
+  width: 48px;
+  height: 48px;
+}
+
+.lg {
+  width: 96px;
+  height: 96px;
+}
+
+// シルエット化
+.silhouette {
+  filter: brightness(0) opacity(0.45);
+}
