@@ -103,12 +103,18 @@ export const Page = () => {
     <div className={styles.layout}>
       <header className={styles.head}>
         <h1 className={styles.title}>鍛冶屋</h1>
-        <span className={styles.stock}>
-          銅{copper}・銀{silver}・金{gold}／断片{fragments}
-        </span>
+        <div className={styles.stockRow}>
+          <span className={styles.stockCopper}>銅 {copper}</span>
+          <span className={styles.stockSilver}>銀 {silver}</span>
+          <span className={styles.stockGold}>金 {gold}</span>
+          <span className={styles.stockFrag}>断片 {fragments}</span>
+        </div>
       </header>
 
-      <div className={styles.tabs}>
+      <nav
+        className={styles.tabs}
+        role="tablist"
+      >
         <button
           type="button"
           className={`${styles.tab} ${tab === 'forge' ? styles.tabActive : ''}`}
@@ -123,7 +129,7 @@ export const Page = () => {
         >
           リサイクル
         </button>
-      </div>
+      </nav>
 
       <p className={styles.hint}>
         {tab === 'forge'
