@@ -144,22 +144,24 @@ export const Page = () => {
                 key={e.id}
                 className={`${styles.row} ${tab === 'recycle' && isSelected ? styles.rowSelected : ''}`}
               >
-                {tab === 'recycle' && (
-                  <input
-                    type="checkbox"
-                    className={styles.check}
-                    checked={isSelected}
-                    onChange={() => toggleSelect(e.id)}
-                    aria-label={`${equipDisplayName(e)} を選択`}
+                <div className={styles.rowHead}>
+                  {tab === 'recycle' && (
+                    <input
+                      type="checkbox"
+                      className={styles.check}
+                      checked={isSelected}
+                      onChange={() => toggleSelect(e.id)}
+                      aria-label={`${equipDisplayName(e)} を選択`}
+                    />
+                  )}
+                  <ItemSprite
+                    itemId={e.masterId}
+                    size="sm"
                   />
-                )}
-                <ItemSprite
-                  itemId={e.masterId}
-                  size="sm"
-                />
-                <div className={styles.info}>
-                  <span className={styles.name}>{equipDisplayName(e)}</span>
-                  <span className={styles.note}>{eq?.slot}</span>
+                  <div className={styles.info}>
+                    <span className={styles.name}>{equipDisplayName(e)}</span>
+                    <span className={styles.note}>{eq?.slot}</span>
+                  </div>
                 </div>
                 {tab === 'forge' ? (
                   <div className={styles.actions}>
