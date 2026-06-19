@@ -18,17 +18,29 @@ type Size = 'sm' | 'md' | 'lg'; // sm: ~24px, md: ~48px, lg: ~96px
 // T0〜T5 の色相シフト（deg）。T0 はシフトなし。
 const TIER_HUE_SHIFTS: readonly number[] = [0, 40, 100, 180, 240, 290];
 
+// 同一ベース画像を使う「アイテム素材」の hue-rotate 個別指定（毛皮 3 個）。
+// 茶色ベースの毛皮画像を、tier の特性（やわらか/霜降り/帯電）に合わせて色相を回す。
+const ITEM_HUE_OVERRIDES: Record<string, number> = {
+  item_mat_t0_soft_pelt: 0, // 茶のまま（やわらかな毛皮）
+  item_mat_t2_frost_pelt: 180, // 青系（霜降りの毛皮）
+  item_mat_t3_charged_hide: 240, // 紫系（帯電した獣皮）
+};
+
 function getHueShift(itemId: ItemId): number {
   const eq = EQUIPMENT[itemId as keyof typeof EQUIPMENT];
-  if (!eq) return 0;
-  if (eq.slot === 'weapon') {
-    if (eq.weaponType === 'sword' || eq.weaponType === 'fist') return 0; // tier 別色違い画像あり
-    return TIER_HUE_SHIFTS[eq.tier] ?? 0;
+  if (eq) {
+    if (eq.slot === 'weapon') {
+      if (eq.weaponType === 'sword' || eq.weaponType === 'fist') return 0; // tier 別色違い画像あり
+      return TIER_HUE_SHIFTS[eq.tier] ?? 0;
+    }
+    if (eq.slot === 'armor' && eq.armorType === 'clothes') {
+      // 衣（clothes）は同一ベース画像を使い、tier 別に hue-rotate で色違いを表現
+      return TIER_HUE_SHIFTS[eq.tier] ?? 0;
+    }
   }
-  if (eq.slot === 'armor' && eq.armorType === 'clothes') {
-    // 衣（clothes）は同一ベース画像を使い、tier 別に hue-rotate で色違いを表現
-    return TIER_HUE_SHIFTS[eq.tier] ?? 0;
-  }
+  // アイテム素材の個別 hue 指定
+  const override = ITEM_HUE_OVERRIDES[itemId];
+  if (override !== undefined) return override;
   return 0;
 }
 

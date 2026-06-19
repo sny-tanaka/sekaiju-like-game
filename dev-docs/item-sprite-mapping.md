@@ -4,6 +4,15 @@
 > Kenney 素材: https://kenney.nl/assets/tiny-dungeon （CC0 1.0、クレジット不要）
 > ユーザー提供素材: 衣（clothes）用フード付きローブ画像
 
+## v6.1 → v6.2 の変更点
+
+- **毛皮 3 個** をユーザー提供画像（kegawa.png、茶/クリームの毛皮）に差し替え + 個別 hue-rotate:
+  - item_mat_t0_soft_pelt: 0°（茶のまま、やわらか）
+  - item_mat_t2_frost_pelt: 180°（青系、霜降り）
+  - item_mat_t3_charged_hide: 240°（紫系、帯電）
+- ItemSprite に `ITEM_HUE_OVERRIDES` マップを追加し、装備以外（item_mat_*）にも個別 hue 指定可能に
+- 未解決は 9 → **6 件** に減少（軽装 6 のみ残る）
+
 ## v6 → v6.1 の変更点
 
 - **item_rat_tail**: ユーザー提供の尻尾画像に差し替え（◎ 格上げ）
@@ -34,7 +43,7 @@
 
 残り 15 件は DOT ILLUST に単体素材が存在せず、ユーザー調達依頼として据え置き（v6 で衣 5 個が解決し残り 10 件に減少。詳細は「ユーザー調達依頼リスト」参照）
 
-## ユーザー調達依頼リスト（9 件）
+## ユーザー調達依頼リスト（6 件）
 
 DOT ILLUST にも Kenney にも適切な素材が見つからなかった以下のアイテムは、別の素材ソース（OpenGameArt / pixela / AI 生成等）から調達が必要です。
 
