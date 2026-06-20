@@ -1,3 +1,40 @@
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+@keyframes obsidian-glowPulse {
+  0%, 100% { opacity: 0.4;  transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+
+@keyframes obsidian-sheetRise {
+  0%   { transform: translateY(20%); opacity: 0; }
+  100% { transform: translateY(0);   opacity: 1; }
+}
+
+@keyframes obsidian-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes obsidian-sealStamp {
+  0%   { transform: translate(-50%, -50%) scale(2.4) rotate(-14deg); opacity: 0; }
+  40%  { opacity: 1; }
+  55%  { transform: translate(-50%, -50%) scale(0.92) rotate(-6deg); }
+  70%  { transform: translate(-50%, -50%) scale(1.04) rotate(-6deg); }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(-6deg); opacity: 1; }
+}
+
+@keyframes obsidian-warpScan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(360%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-glowPulse    { 0%, 100% { opacity: 0.6; transform: none; } }
+  @keyframes obsidian-sheetRise    { 0%, 100% { transform: none; opacity: 1; } }
+  @keyframes obsidian-fadeIn       { from { opacity: 1; } to { opacity: 1; } }
+  @keyframes obsidian-sealStamp    { 0%, 100% { transform: translate(-50%, -50%); opacity: 1; } }
+  @keyframes obsidian-warpScan     { 0%, 100% { transform: translateY(0); opacity: 0; } }
+}
+
 .layout {
   position: relative;
   display: flex;

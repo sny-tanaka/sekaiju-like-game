@@ -1,7 +1,26 @@
 // SealStampFx.module.scss
 // 封蝋スタンプ / シジル演出共通コンポーネントのスタイル。
 // EffectsGallery の sealStamp セル・town の diveSealOverlay・battle の戦闘開始シールを一本化。
-// keyframe は _obsidian.scss の obsidian-sealStamp（global）を使用。
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+
+// obsidian-sealStamp と obsidian-fadeIn を local 定義
+@keyframes obsidian-sealStamp {
+  0%   { transform: translate(-50%, -50%) scale(2.4) rotate(-14deg); opacity: 0; }
+  40%  { opacity: 1; }
+  55%  { transform: translate(-50%, -50%) scale(0.92) rotate(-6deg); }
+  70%  { transform: translate(-50%, -50%) scale(1.04) rotate(-6deg); }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(-6deg); opacity: 1; }
+}
+
+@keyframes obsidian-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-sealStamp { 0%, 100% { transform: translate(-50%, -50%); opacity: 1; } }
+  @keyframes obsidian-fadeIn    { from { opacity: 1; } to { opacity: 1; } }
+}
 
 // ----- battle 用: 文字スタンプ -----
 

@@ -1,7 +1,84 @@
 // AttackFx.module.scss
 // 攻撃エフェクト共通コンポーネントのスタイル。
-// battle/style.module.scss の .attackFx / .fxBar* / .fxIcon* 等から移植。
-// keyframes は _obsidian.scss の global (@keyframes atkSlash 等) を直接参照。
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+
+@keyframes atkSlash {
+  0%   { transform: translate(-50%, -50%) rotate(-38deg) scaleX(0); opacity: 0; }
+  20%  { opacity: 1; }
+  60%  { transform: translate(-50%, -50%) rotate(-38deg) scaleX(1); opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes thrustLine {
+  0%   { transform: scaleX(0); opacity: 0; }
+  30%  { transform: scaleX(1.1); opacity: 1; }
+  100% { transform: scaleX(1.4) translateX(30%); opacity: 0; }
+}
+
+@keyframes ringExpand {
+  0%   { transform: scale(0.4); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes atkFire {
+  0%   { transform: scale(0.6); opacity: 0; }
+  30%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1.5) translateY(-8%); opacity: 0; }
+}
+
+@keyframes atkIce {
+  0%   { transform: rotate(45deg) scale(0.5); opacity: 0; }
+  30%  { transform: rotate(45deg) scale(1); opacity: 1; }
+  100% { transform: rotate(135deg) scale(1.3); opacity: 0; }
+}
+
+@keyframes atkVolt {
+  0%   { transform: translateY(-50%) scaleY(0); opacity: 0; }
+  20%  { transform: translateY(0) scaleY(1); opacity: 1; }
+  35%  { opacity: 0.5; }
+  50%  { opacity: 1; }
+  100% { transform: translateY(50%) scaleY(0.8); opacity: 0; }
+}
+
+@keyframes atkMagic {
+  0%   { transform: scale(.3) rotate(0); opacity: 0; }
+  42%  { opacity: 1; }
+  100% { transform: scale(1.5) rotate(165deg); opacity: 0; }
+}
+
+// forgeSpark — bash アイコン用（💥 の弾む入場）
+@keyframes forgeSpark {
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+  40%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+  70%  { transform: translate(-50%, -50%) scale(0.9); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
+}
+
+// glowPulse — almighty アイコン用（✦ のジワジワ点滅）
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 4px rgba(224, 192, 255, 0.6)); }
+  50%       { opacity: 1;   filter: drop-shadow(0 0 10px rgba(224, 192, 255, 1)); }
+}
+
+@keyframes critFlash {
+  0%, 100% { opacity: 0; }
+  20%      { opacity: 1; }
+  60%      { opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes atkSlash   { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes thrustLine { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes ringExpand { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkFire    { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkIce     { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkVolt    { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkMagic   { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes forgeSpark { 0%, 100% { transform: translate(-50%, -50%); opacity: 0; } }
+  @keyframes glowPulse  { 0%, 100% { opacity: 0.6; } }
+  @keyframes critFlash  { 0%, 100% { opacity: 0; } }
+}
 
 // attackFxFadeOut: コンテナ全体を最後の 200ms でフェードアウトする（ぱっと消えを防ぐ）
 // アニメーション長は各 FX keyframe（0.55~0.6s）に合わせ 0.6s。

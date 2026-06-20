@@ -1,5 +1,17 @@
 @use 'variables' as var;
 
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+// obsidian-coinPop は _obsidian.scss に定義がなかったため CoinPopFx.module.scss の coinPopLocal から移植
+@keyframes obsidian-coinPop {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translateY(-26px) scale(1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-coinPop { 0%, 100% { transform: none; opacity: 0; } }
+}
+
 .layout {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,16 @@
 // guild ページ — 黒曜 OBSIDIAN MINIMAL v2（モック忠実化）
 // var(--*) を直接参照。写本テーマの SCSS 変数は使わない。
 
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+@keyframes obsidian-glowPulse {
+  0%, 100% { opacity: 0.4;  transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-glowPulse { 0%, 100% { opacity: 0.6; transform: none; } }
+}
+
 .layout {
   position: relative;
   display: flex;
