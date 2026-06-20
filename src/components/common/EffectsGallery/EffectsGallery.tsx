@@ -12,9 +12,11 @@ import styles from './EffectsGallery.module.scss';
 import './EffectsGallery.keyframes.css';
 
 import { AttackFx } from '@/components/common/AttackFx/AttackFx';
+import { BuffFx } from '@/components/common/effects/BuffFx/BuffFx';
 import { CoinPopFx } from '@/components/common/effects/CoinPopFx';
 import { CookPopFx } from '@/components/common/effects/CookPopFx/CookPopFx';
 import { DashAwayFx } from '@/components/common/effects/DashAwayFx';
+import { DebuffFx } from '@/components/common/effects/DebuffFx/DebuffFx';
 import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
 import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
 import { HealPop } from '@/components/common/effects/HealPop';
@@ -644,6 +646,30 @@ const CATEGORIES: Category[] = [
         preview: (
           <div style={{ position: 'relative', width: 80, height: 80 }}>
             <CookPopFx
+              visible
+              silent
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'buffFx',
+        desc: 'バフ付与演出（緑オーラ pulse 0.4s）',
+        preview: (
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <BuffFx
+              visible
+              silent
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'debuffFx',
+        desc: '状態異常付与演出（赤フラッシュ 0.4s）',
+        preview: (
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <DebuffFx
               visible
               silent
             />

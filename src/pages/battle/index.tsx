@@ -6,7 +6,9 @@ import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
+import { BuffFx } from '@/components/common/effects/BuffFx/BuffFx';
 import { dashAwayClass } from '@/components/common/effects/DashAwayFx';
+import { DebuffFx } from '@/components/common/effects/DebuffFx/DebuffFx';
 import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
 import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
 import { SealStampFx } from '@/components/common/effects/SealStampFx';
@@ -281,6 +283,9 @@ export const Page = ({
   const [sealOut, setSealOut] = useState(false);
   // J/K: 逃走時フラグ
   const [fleeActive, setFleeActive] = useState(false);
+  // L/M: buff / debuff Fx — actor ごとの発火シーケンス番号 Map
+  const [buffFxMap, setBuffFxMap] = useState<Map<string, number>>(new Map());
+  const [debuffFxMap, setDebuffFxMap] = useState<Map<string, number>>(new Map());
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -495,7 +500,18 @@ export const Page = ({
         // ユニオン (SE は RuneSpinFx visible=true 時に発火)
         // 状態異常付与
         else if (t.includes('になった')) {
-          play('debuff');
+          const allActors = [...(state?.allies ?? []), ...(state?.enemies ?? [])];
+          const targetActor = allActors.find((a) => t.startsWith(a.name));
+          if (targetActor) {
+            const targetId = targetActor.id;
+            setDebuffFxMap((prev) => {
+              const next = new Map(prev);
+              next.set(targetId, idx);
+              return next;
+            });
+          } else {
+            play('debuff');
+          }
         }
         // バフ系
         else if (
@@ -504,7 +520,18 @@ export const Page = ({
           t.includes('を引きつけた') ||
           t.includes('の障壁を張った')
         ) {
-          play('buff');
+          const allActors = [...(state?.allies ?? []), ...(state?.enemies ?? [])];
+          const targetActor = allActors.find((a) => t.startsWith(a.name));
+          if (targetActor) {
+            const targetId = targetActor.id;
+            setBuffFxMap((prev) => {
+              const next = new Map(prev);
+              next.set(targetId, idx);
+              return next;
+            });
+          } else {
+            play('buff');
+          }
         }
         // damage/heal SE は HitFx 内で isAllyTarget/variant に応じて発火するため除外
       }
@@ -1048,6 +1075,30 @@ export const Page = ({
               />
             );
           })()}
+        {/* BuffFx — バフ付与演出（緑オーラ pulse 0.4s + SE） */}
+        <BuffFx
+          key={`${a.id}-buff-${buffFxMap.get(a.id) ?? 0}`}
+          visible={buffFxMap.has(a.id)}
+          onDone={() =>
+            setBuffFxMap((prev) => {
+              const n = new Map(prev);
+              n.delete(a.id);
+              return n;
+            })
+          }
+        />
+        {/* DebuffFx — 状態異常付与演出（赤フラッシュ 0.4s + SE） */}
+        <DebuffFx
+          key={`${a.id}-debuff-${debuffFxMap.get(a.id) ?? 0}`}
+          visible={debuffFxMap.has(a.id)}
+          onDone={() =>
+            setDebuffFxMap((prev) => {
+              const n = new Map(prev);
+              n.delete(a.id);
+              return n;
+            })
+          }
+        />
         {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
         {inkSplatters.has(a.id) &&
           (() => {
@@ -1247,6 +1298,30 @@ export const Page = ({
                       />
                     );
                   })()}
+                {/* BuffFx — 敵バフ付与演出（緑オーラ pulse 0.4s + SE） */}
+                <BuffFx
+                  key={`${e.id}-buff-${buffFxMap.get(e.id) ?? 0}`}
+                  visible={buffFxMap.has(e.id)}
+                  onDone={() =>
+                    setBuffFxMap((prev) => {
+                      const n = new Map(prev);
+                      n.delete(e.id);
+                      return n;
+                    })
+                  }
+                />
+                {/* DebuffFx — 敵状態異常付与演出（赤フラッシュ 0.4s + SE） */}
+                <DebuffFx
+                  key={`${e.id}-debuff-${debuffFxMap.get(e.id) ?? 0}`}
+                  visible={debuffFxMap.has(e.id)}
+                  onDone={() =>
+                    setDebuffFxMap((prev) => {
+                      const n = new Map(prev);
+                      n.delete(e.id);
+                      return n;
+                    })
+                  }
+                />
                 {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}
                 {flashIds.has(e.id) && (
                   <div
