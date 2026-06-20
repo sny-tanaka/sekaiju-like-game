@@ -927,6 +927,109 @@
   cursor: pointer;
 }
 
+// ---- ⚠ ボスゲート警告（.fpvWrap 上端に絶対配置） ----
+.bossGateWarn {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #e09180;
+  animation: obsidian-warnBlink 1.6s steps(1) infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+// ---- ☰ メニュー内 autosave インジケータ ----
+.menuAutosave {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 20px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #5d8a6c;
+}
+
+.menuAutosaveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5d8a6c;
+  animation: obsidian-glowPulse 2.5s ease-in-out infinite;
+}
+
+// ---- 帰還の糸：全幅（grid-column: 1 / -1） ----
+.menuGridItemFull {
+  grid-column: 1 / -1;
+}
+
+// ---- サウンド設定モーダル ----
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 20px;
+}
+
+.modalPanel {
+  width: 100%;
+  max-width: 360px;
+  background: #13161e;
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  border-radius: 6px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 16px;
+  color: #f2ede1;
+}
+
+.modalCloseBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: #9a958a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalClose {
+  width: 100%;
+  height: 46px;
+  border-radius: 3px;
+  border: 1px solid rgba(201, 168, 106, 0.5);
+  background: rgba(201, 168, 106, 0.08);
+  color: #c9a86a;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+}
+
 // 消費系操作の確認ダイアログ（誤タップ防止）
 .confirmOverlay {
   position: fixed;

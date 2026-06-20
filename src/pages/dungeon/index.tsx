@@ -9,6 +9,7 @@ import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGaug
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { SkillTree } from '@/components/common/SkillTree/SkillTree';
+import { SoundSettings } from '@/components/common/SoundSettings';
 import { bandThemeFor } from '@/data/bandTheme';
 import { CLASSES } from '@/data/classes';
 import { GATHER_TYPES } from '@/data/gather';
@@ -56,6 +57,8 @@ export const Page = () => {
   const [cookOpen, setCookOpen] = useState(false);
   // メニュー（ステータス/スキル/所持金）の開閉と選択中キャラ
   const [menuOpen, setMenuOpen] = useState(false);
+  // サウンド設定モーダルの開閉
+  const [soundOpen, setSoundOpen] = useState(false);
   const [menuCharId, setMenuCharId] = useState<string | null>(null);
   const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
   // 採集/調理の一時メッセージ
@@ -253,6 +256,9 @@ export const Page = () => {
     return <Redirect to={{ name: 'town' }} />;
   }
 
+  // ボスゲート警告: canAscend=false のとき（ボス階かつ未撃破）
+  const bossGateAhead = !canAscend(save, dive.depth);
+
   const stairKind = stairsAt(save);
   const showStairsCard =
     !!stairKind &&
@@ -282,7 +288,7 @@ export const Page = () => {
             setMenuOpen(true);
           }}
         >
-          ☰ メニュー
+          ☰
         </button>
       </header>
 
@@ -294,6 +300,14 @@ export const Page = () => {
           foes={foes}
           theme={bandThemeFor(dive.depth)}
         />
+        {bossGateAhead && (
+          <div
+            className={styles.bossGateWarn}
+            aria-hidden="true"
+          >
+            ⚠ 奥にボスゲートの気配
+          </div>
+        )}
         {/* 操作ボタンを一人称視点に重ねる（issue #20）。 */}
         <div className={styles.fpvControls}>
           <button
@@ -656,7 +670,8 @@ export const Page = () => {
                           className={styles.menuGridItem}
                           onClick={() => {
                             play('cursor');
-                            setNotice('設定は次バージョンで実装予定');
+                            setMenuOpen(false);
+                            setSoundOpen(true);
                           }}
                         >
                           <span className={styles.menuGridIcon}>⚙</span>
@@ -664,7 +679,7 @@ export const Page = () => {
                         </button>
                         <button
                           type="button"
-                          className={`${styles.menuGridItem} ${styles.menuGridItemThread}`}
+                          className={`${styles.menuGridItem} ${styles.menuGridItemThread} ${styles.menuGridItemFull}`}
                           onClick={() => {
                             if (threadCount === 0) {
                               setNotice('帰還の糸がない');
@@ -682,17 +697,6 @@ export const Page = () => {
                             <div className={styles.menuGridLabel}>帰還の糸</div>
                             <div className={styles.menuGridSub}>町へ戻る ・ 所持{threadCount}</div>
                           </div>
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.menuGridItem}
-                          onClick={() => {
-                            play('cursor');
-                            setNotice('全体マップは次バージョンで実装予定');
-                          }}
-                        >
-                          <span className={styles.menuGridIcon}>🗺</span>
-                          <span className={styles.menuGridLabel}>全体マップ</span>
                         </button>
                       </div>
                     </div>
@@ -745,6 +749,21 @@ export const Page = () => {
                           </button>
                         );
                       })}
+                    </div>
+                    <div
+                      className={styles.menuAutosave}
+                      aria-hidden="true"
+                    >
+                      <span className={styles.menuAutosaveDot} />
+                      {(() => {
+                        if (!save.savedAt) return '自動保存済';
+                        const time = new Date(save.savedAt).toLocaleTimeString('ja-JP', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
+                        });
+                        return `自動保存済 ・ ${time}`;
+                      })()}
                     </div>
                     <div className={styles.menuFooter}>
                       <button
@@ -871,6 +890,48 @@ export const Page = () => {
                 {confirm.okLabel}
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* サウンド設定モーダル（☰ メニューの「設定」から開く） */}
+      {soundOpen ? (
+        <div
+          className={styles.modalBackdrop}
+          onClick={() => {
+            play('cursor');
+            setSoundOpen(false);
+          }}
+        >
+          <div
+            className={styles.modalPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <span>設定</span>
+              <button
+                type="button"
+                className={styles.modalCloseBtn}
+                aria-label="閉じる"
+                onClick={() => {
+                  play('cursor');
+                  setSoundOpen(false);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <SoundSettings />
+            <button
+              type="button"
+              className={styles.modalClose}
+              onClick={() => {
+                play('cursor');
+                setSoundOpen(false);
+              }}
+            >
+              とじる
+            </button>
           </div>
         </div>
       ) : null}
