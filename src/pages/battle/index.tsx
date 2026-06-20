@@ -413,8 +413,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   }, [state?.outcome]);
 
   // 1ターン解決して逐次再生を開始する（issue #18）。入力状態をクリアする。
+  // actorOrder: UI で確定した行動順の actor id 配列。指定時は resolveTurn に渡し、
+  // 表示と解決が一致することを保証する（省略時は従来通り内部で AGI ソート）。
   const runTurn = useCallback(
-    (list: BattleCommand[]) => {
+    (list: BattleCommand[], actorOrder?: string[]) => {
       if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
       const baseSnapshot = snapshotOf(state);
       // TP 表示用ベースライン: anim 再生中はターン開始時の TP 実値を表示する
@@ -423,7 +425,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         tpSnap[c.id] = c.tp ?? 0;
       }
       tpBaseRef.current = tpSnap;
-      const final = resolveTurn(state, list, rngRef.current);
+      const final = resolveTurn(state, list, rngRef.current, actorOrder);
       const flatEvts = flattenEvents(final.events);
       setState(final);
       setCommands({});
@@ -917,7 +919,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         targetId: enemyTargeted ? tgt : unionCmd.targetId,
       });
     }
-    runTurn(list);
+    runTurn(
+      list,
+      turnOrderPreview.map((c) => c.id)
+    );
   }, [
     state,
     commands,
@@ -929,6 +934,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     runTurn,
     play,
     buildCommandList,
+    turnOrderPreview,
   ]);
 
   const handleFlee = useCallback(() => {
@@ -970,7 +976,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       // めいれいキャラなし → 自動コマンドリストを直接組んで即実行
       const list = buildCommandList(autoFilled, autoTargets, aliveAllies, targetId);
       play('decide');
-      runTurn(list);
+      runTurn(
+        list,
+        turnOrderPreview.map((c) => c.id)
+      );
     } else {
       // めいれいキャラあり → 個別UIへ
       setCommands(autoFilled);
@@ -978,7 +987,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       setUiMode({ kind: 'individual' });
       setActiveId(meireiAllies[0].id);
     }
-  }, [state, save, aliveAllies, buildCommandList, targetId, runTurn, play]);
+  }, [state, save, aliveAllies, buildCommandList, targetId, runTurn, play, turnOrderPreview]);
 
   /** 作戦変更（issue #61）。applySave で即時反映。 */
   const changeStrategy = useCallback(

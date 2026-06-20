@@ -6,6 +6,7 @@ import {
   startBattle,
 } from '@/domain/battle';
 import type { BattleEvent, NormalAttackEvent, SkillEvent, TickEvent } from '@/domain/battleEvent';
+import { previewTurnOrder } from '@/domain/combat';
 import { startDive } from '@/domain/dive';
 import { addItem, itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
@@ -1064,5 +1065,69 @@ describe('battle events: ターン終了 TickEvent（毒）', () => {
       expect(tickEvt.effectType).toBe('poison');
       expect(tickEvt.amount).toBeGreaterThan(0);
     }
+  });
+});
+
+/** actorId を持つ BattleEvent かどうかをナロー */
+function hasActorId(e: BattleEvent): e is BattleEvent & { actorId: string } {
+  return 'actorId' in e && typeof (e as Record<string, unknown>).actorId === 'string';
+}
+
+describe('battle: predefinedActorOrder', () => {
+  test('predefinedActorOrder を渡すと先頭 actor が events[0].actorId になる', () => {
+    const state = startBattle(diveSave(), ['enemy_slime']);
+    const ally = state.allies[0];
+    const enemy = state.enemies[0];
+    // 敵を先頭に固定する
+    const order = [enemy.id, ally.id];
+    const after = resolveTurn(
+      state,
+      [{ kind: 'attack', actorId: ally.id, targetId: enemy.id }],
+      createRng(1),
+      order
+    );
+    // 敵が先頭に来るはずなので、最初の actorId 持ちイベントは敵の行動
+    const firstActorEvt = after.events.find(hasActorId);
+    expect(firstActorEvt).toBeDefined();
+    expect(firstActorEvt?.actorId).toBe(enemy.id);
+  });
+
+  test('predefinedActorOrder を使った結果と previewTurnOrder の順序が一致する', () => {
+    const state = startBattle(diveSave(), ['enemy_slime']);
+    const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
+    const preview = previewTurnOrder(state, epRng);
+    const order = preview.map((c) => c.id);
+    const ally = state.allies[0];
+    const enemy = state.enemies[0];
+    const after = resolveTurn(
+      state,
+      [{ kind: 'attack', actorId: ally.id, targetId: enemy.id }],
+      createRng(1),
+      order
+    );
+    // events の actorId 列が preview の id 集合に含まれることを確認
+    const eventActorIds = after.events
+      .filter(hasActorId)
+      .map((e) => e.actorId)
+      .filter((id, i, arr) => arr.indexOf(id) === i); // 重複除去（反応イベントを除く）
+    for (const id of eventActorIds) {
+      expect(order).toContain(id);
+    }
+    // 先頭の行動 actor が preview の先頭と一致する（最初のアクションイベント）
+    const firstActionEvt = after.events.find(hasActorId);
+    if (firstActionEvt && order.length > 0) {
+      expect(firstActionEvt.actorId).toBe(order[0]);
+    }
+  });
+
+  test('predefinedActorOrder を省略すると従来と同じ結果になる（互換性）', () => {
+    const state = startBattle(diveSave(), ['enemy_slime']);
+    const cmds = [
+      { kind: 'attack' as const, actorId: state.allies[0].id, targetId: state.enemies[0].id },
+    ];
+    const r1 = resolveTurn(state, cmds, createRng(42));
+    const r2 = resolveTurn(state, cmds, createRng(42), undefined);
+    expect(r1.enemies[0].hp).toBe(r2.enemies[0].hp);
+    expect(r1.allies[0].hp).toBe(r2.allies[0].hp);
   });
 });
