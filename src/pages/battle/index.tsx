@@ -4,16 +4,15 @@ import styles from './style.module.scss';
 
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
-import { AttackFx } from '@/components/common/AttackFx/AttackFx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
-import { DamagePop } from '@/components/common/DamagePop/DamagePop';
 import { dashAwayClass } from '@/components/common/effects/DashAwayFx';
 import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
 import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
 import { SealStampFx } from '@/components/common/effects/SealStampFx';
 import { summonAppearClass } from '@/components/common/effects/SummonAppearFx';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
+import { HitFx } from '@/components/common/HitFx/HitFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
@@ -249,13 +248,19 @@ export const Page = ({
   const tpBaseRef = useRef<Record<string, number>>({});
   // ダメージを受けたカードの点滅対象 ID（issue #18）。
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
-  // InkSplatter: ID → { value, variant } のマップ（Phase 2）。
-  // ログ行が表示されるたびに被弾者のダメージ量を記録し、アニメ終了後に削除。
+  // hits: damage/heal/crit ヒット演出の Map（HitFx で描画）。gold は inkSplatters で別管理。
+  type Hit = {
+    value: number | string;
+    variant: 'damage' | 'heal' | 'crit';
+    element?: import('@/domain/types').Element;
+    isCrit?: boolean;
+    isAllyTarget?: boolean;
+    seq: number;
+  };
+  const [hits, setHits] = useState<Map<string, Hit>>(new Map());
+  // InkSplatter: gold 専用（撃破演出）。damage/heal/crit は hits Map に移行済み。
   const [inkSplatters, setInkSplatters] = useState<
-    Map<
-      string,
-      { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold'; seq?: number }
-    >
+    Map<string, { value: number | string; variant: 'gold'; seq?: number }>
   >(new Map());
   // 勝利演出の gold InkSplatter（Phase 2）。
   const [showVictoryGold, setShowVictoryGold] = useState(false);
@@ -403,6 +408,7 @@ export const Page = ({
       setUnionSetup(null);
       setActiveId(null);
       setFlashIds(new Set());
+      setHits(new Map());
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
       setAnim(final.log.length > 0 ? { base, revealed: 0, actorIds } : null);
@@ -427,6 +433,7 @@ export const Page = ({
       const t = setTimeout(() => {
         setAnim(null);
         setFlashIds(new Set());
+        setHits(new Map());
         setInkSplatters(new Map());
       }, 200);
       return () => clearTimeout(t);
@@ -440,37 +447,42 @@ export const Page = ({
     const DAMAGE_AT = 180;
     const tDmg = setTimeout(() => {
       const fl = new Set<string>();
-      const nextSplatters = new Map<
-        string,
-        { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold'; seq?: number }
-      >();
+      const nextHits = new Map<string, Hit>();
       if (cur) {
         for (const id of Object.keys(cur)) {
           const p = prev?.[id];
           if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) {
             fl.add(id);
-            // InkSplatter: HP 差をダメージ値として表示
             const dmg = Math.round(p.hp - cur[id].hp);
             const logText = state.log[idx]?.text ?? '';
             const isCrit = logText.includes('（会心）');
             const isHeal = logText.includes('回復') && cur[id].hp > p.hp;
-            nextSplatters.set(id, {
+            const element = state.log[idx]?.element;
+            nextHits.set(id, {
               value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
               variant: isHeal ? 'heal' : isCrit ? 'crit' : 'damage',
+              element,
+              isCrit,
+              isAllyTarget: allyIdSetRef.current.has(id),
               seq: idx,
             });
           } else if (p && cur[id].hp > p.hp) {
             // HP 回復
             const healed = Math.round(cur[id].hp - p.hp);
-            nextSplatters.set(id, { value: healed, variant: 'heal', seq: idx });
+            nextHits.set(id, {
+              value: healed,
+              variant: 'heal',
+              isAllyTarget: allyIdSetRef.current.has(id),
+              seq: idx,
+            });
           }
         }
       }
       setFlashIds(fl);
-      setInkSplatters(nextSplatters);
+      setHits(nextHits);
+      // gold InkSplatter は勝利演出 useEffect 経由で setInkSplatters → 既存ロジック維持
 
-      // SE 発火: エフェクトマウントと同フレームで鳴らす
-      // attack / critical は AttackFx コンポーネントのマウント時 useEffect で発火するため除外
+      // SE 発火: attack/critical/damage/heal は HitFx マウント時 useEffect で集約発火するため除外
       const line = state.log[idx];
       if (line) {
         const t = line.text;
@@ -481,10 +493,6 @@ export const Page = ({
         // 戦闘不能
         else if (t.includes('は倒れた')) {
           play('down');
-        }
-        // 回復魔法
-        else if (t.includes('は回復魔法を使った')) {
-          play('heal');
         }
         // スキル発動
         else if (
@@ -510,25 +518,7 @@ export const Page = ({
         ) {
           play('buff');
         }
-        // ダメージ命中: 被弾者が味方のときのみ damage SE を鳴らす
-        // attack / critical は AttackFx のマウント時に発火するためここでは鳴らさない
-        else if (/ に \d+ ダメージ/.test(t)) {
-          const snap = line.snapshot;
-          const prevSnap = anim.base;
-          let allyHit = false;
-          if (snap) {
-            for (const [id, c] of Object.entries(snap)) {
-              if (allyIdSetRef.current.has(id)) {
-                const p = prevSnap?.[id];
-                if (p && c.hp < p.hp) {
-                  allyHit = true;
-                  break;
-                }
-              }
-            }
-          }
-          if (allyHit) play('damage');
-        }
+        // damage/heal SE は HitFx 内で isAllyTarget/variant に応じて発火するため除外
       }
     }, DAMAGE_AT);
 
@@ -1048,46 +1038,51 @@ export const Page = ({
           }
         }}
       >
-        {/* DamagePop — 被弾/回復時に重ね描画（splatA/splatB keyframe 統一） */}
-        {inkSplatters.has(a.id) &&
+        {/* HitFx — 被弾/回復時に重ね描画（AttackFx + DamagePop + SE を統合） */}
+        {hits.has(a.id) &&
           (() => {
-            const splat = inkSplatters.get(a.id)!;
-            // gold は InkSplatter（墨だまり演出）のまま残す
-            if (splat.variant === 'gold') {
-              return (
-                <div
-                  className={styles.inkOverlay}
-                  aria-hidden="true"
-                >
-                  <InkSplatter
-                    key={`${a.id}-${splat.seq ?? 0}`}
-                    value={splat.value}
-                    variant="gold"
-                    size={64}
-                    onDone={() =>
-                      setInkSplatters((prev) => {
-                        const next = new Map(prev);
-                        next.delete(a.id);
-                        return next;
-                      })
-                    }
-                  />
-                </div>
-              );
-            }
+            const hit = hits.get(a.id)!;
             return (
-              <DamagePop
-                key={`${a.id}-${splat.seq ?? 0}`}
-                value={splat.variant === 'heal' ? `+${splat.value}` : splat.value}
-                variant={splat.variant}
+              <HitFx
+                key={`${a.id}-${hit.seq}`}
+                element={undefined}
+                variant={hit.variant}
+                value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
+                isCrit={hit.isCrit}
+                isAllyTarget
                 onDone={() =>
-                  setInkSplatters((prev) => {
+                  setHits((prev) => {
                     const next = new Map(prev);
                     next.delete(a.id);
                     return next;
                   })
                 }
               />
+            );
+          })()}
+        {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
+        {inkSplatters.has(a.id) &&
+          (() => {
+            const splat = inkSplatters.get(a.id)!;
+            return (
+              <div
+                className={styles.inkOverlay}
+                aria-hidden="true"
+              >
+                <InkSplatter
+                  key={`${a.id}-${splat.seq ?? 0}`}
+                  value={splat.value}
+                  variant="gold"
+                  size={64}
+                  onDone={() =>
+                    setInkSplatters((prev) => {
+                      const next = new Map(prev);
+                      next.delete(a.id);
+                      return next;
+                    })
+                  }
+                />
+              </div>
             );
           })()}
         {/* C. runeSpin — 魔法スキル詠唱中の ✦ オーバーレイ */}
@@ -1242,17 +1237,25 @@ export const Page = ({
                 disabled={e.isDown || !!anim || isAllyTargeting}
                 onClick={() => setTargetId(e.id)}
               >
-                {/* v5: 攻撃 FX レイヤー（属性別 DOM 要素・モック v3 準拠） */}
-                {flashIds.has(e.id) &&
+                {/* HitFx — 敵への命中時（AttackFx + DamagePop + SE を統合） */}
+                {hits.has(e.id) &&
                   (() => {
-                    const entry = state.log[anim?.revealed ? anim.revealed - 1 : 0];
-                    const element = entry?.element ?? 'slash';
-                    const isCrit = (entry?.text ?? '').includes('（会心）');
+                    const hit = hits.get(e.id)!;
                     return (
-                      <AttackFx
-                        key={`${e.id}-${anim?.revealed ?? 0}`}
-                        element={element}
-                        isCrit={isCrit}
+                      <HitFx
+                        key={`${e.id}-${hit.seq}`}
+                        element={hit.element ?? 'slash'}
+                        variant={hit.variant}
+                        value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
+                        isCrit={hit.isCrit}
+                        isAllyTarget={false}
+                        onDone={() =>
+                          setHits((prev) => {
+                            const next = new Map(prev);
+                            next.delete(e.id);
+                            return next;
+                          })
+                        }
                       />
                     );
                   })()}
@@ -1263,48 +1266,29 @@ export const Page = ({
                     aria-hidden="true"
                   />
                 )}
-                {/* DamagePop — 敵への命中時（splatA/splatB keyframe 統一） */}
+                {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
                 {inkSplatters.has(e.id) &&
                   (() => {
                     const splat = inkSplatters.get(e.id)!;
-                    // gold は InkSplatter（墨だまり演出）のまま残す
-                    if (splat.variant === 'gold') {
-                      return (
-                        <div
-                          className={styles.inkOverlay}
-                          aria-hidden="true"
-                        >
-                          <InkSplatter
-                            key={`${e.id}-${splat.seq ?? 0}`}
-                            value={splat.value}
-                            variant="gold"
-                            size={56}
-                            onDone={() =>
-                              setInkSplatters((prev) => {
-                                const next = new Map(prev);
-                                next.delete(e.id);
-                                return next;
-                              })
-                            }
-                          />
-                        </div>
-                      );
-                    }
-                    const elemEntry = state.log[anim?.revealed ? anim.revealed - 1 : 0];
                     return (
-                      <DamagePop
-                        key={`${e.id}-${splat.seq ?? 0}`}
-                        value={splat.variant === 'heal' ? `+${splat.value}` : splat.value}
-                        variant={splat.variant}
-                        element={elemEntry?.element}
-                        onDone={() =>
-                          setInkSplatters((prev) => {
-                            const next = new Map(prev);
-                            next.delete(e.id);
-                            return next;
-                          })
-                        }
-                      />
+                      <div
+                        className={styles.inkOverlay}
+                        aria-hidden="true"
+                      >
+                        <InkSplatter
+                          key={`${e.id}-${splat.seq ?? 0}`}
+                          value={splat.value}
+                          variant="gold"
+                          size={56}
+                          onDone={() =>
+                            setInkSplatters((prev) => {
+                              const next = new Map(prev);
+                              next.delete(e.id);
+                              return next;
+                            })
+                          }
+                        />
+                      </div>
                     );
                   })()}
                 {isLarge ? (
@@ -1457,6 +1441,7 @@ export const Page = ({
             onClick={() => {
               setAnim(null);
               setFlashIds(new Set());
+              setHits(new Map());
             }}
           >
             ▶▶ スキップ

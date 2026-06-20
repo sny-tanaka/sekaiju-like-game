@@ -21,6 +21,7 @@ import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
 import { SealStampFx } from '@/components/common/effects/SealStampFx';
 import { SummonAppearFx } from '@/components/common/effects/SummonAppearFx';
 import { WarpScanFx } from '@/components/common/effects/WarpScanFx';
+import { HitFx } from '@/components/common/HitFx/HitFx';
 
 interface EffectDef {
   name: string;
@@ -964,6 +965,86 @@ const CATEGORIES: Category[] = [
             <span style={{ fontSize: 34 }}>👹</span>
             <AttackFx
               element="volt"
+              silent
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'hitFxDamage',
+        desc: 'HitFx — 斬撃ダメージ（AttackFx + DamagePop 統合）',
+        preview: (
+          <div
+            style={{
+              position: 'relative',
+              width: 100,
+              height: 70,
+              background: '#0c0d11',
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            <span style={{ fontSize: 34 }}>👹</span>
+            <HitFx
+              element="slash"
+              variant="damage"
+              value={123}
+              silent
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'hitFxCrit',
+        desc: 'HitFx — 火属性会心（AttackFx + DamagePop 統合・会心光）',
+        preview: (
+          <div
+            style={{
+              position: 'relative',
+              width: 100,
+              height: 70,
+              background: '#0c0d11',
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            <span style={{ fontSize: 34 }}>👹</span>
+            <HitFx
+              element="fire"
+              variant="crit"
+              value={999}
+              isCrit
+              silent
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'hitFxHeal',
+        desc: 'HitFx — 回復（DamagePop のみ・AttackFx なし）',
+        preview: (
+          <div
+            style={{
+              position: 'relative',
+              width: 80,
+              height: 70,
+              background: '#0c0d11',
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'visible',
+            }}
+          >
+            <HitFx
+              variant="heal"
+              value="+50"
               silent
             />
           </div>
