@@ -13,6 +13,8 @@ type Props = {
   gainedExp: number;
   /** true になるとアニメーションを開始する（レベルアップ演出後に開始させる用途）。 */
   start: boolean;
+  /** true のとき、バートラックのみに shimmer を当てる。Lv ラベル等には波打ちが出ない。 */
+  shimmer?: boolean;
   /** バーの色。 */
   color?: string;
   /** アニメーション総時間(ms)。既定 1000。 */
@@ -41,6 +43,7 @@ export const BattleExpBar = ({
   fromExp,
   gainedExp,
   start,
+  shimmer = false,
   color = '#B89255', // $illumination-gold
   durationMs = 1000,
 }: Props) => {
@@ -72,7 +75,7 @@ export const BattleExpBar = ({
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.track}>
+      <div className={`${styles.track}${shimmer ? ' ' + styles.trackShimmer : ''}`}>
         <div
           className={styles.fill}
           style={{ width: `${fill * 100}%`, backgroundColor: color }}
