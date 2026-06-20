@@ -1241,7 +1241,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             return (
               <HitFx
                 key={`${a.id}-${hit.seq}`}
-                element={undefined}
+                element={hit.variant === 'heal' ? undefined : (hit.element ?? 'slash')}
                 variant={hit.variant}
                 value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
                 isCrit={hit.isCrit}
