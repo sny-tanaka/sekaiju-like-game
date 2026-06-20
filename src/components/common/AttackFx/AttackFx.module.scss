@@ -3,6 +3,15 @@
 // battle/style.module.scss の .attackFx / .fxBar* / .fxIcon* 等から移植。
 // keyframes は _obsidian.scss の global (@keyframes atkSlash 等) を直接参照。
 
+// attackFxFadeOut: コンテナ全体を最後の 200ms でフェードアウトする（ぱっと消えを防ぐ）
+// アニメーション長は各 FX keyframe（0.55~0.6s）に合わせ 0.6s。
+// 最初の 0.4s（66.7%）は opacity: 1 を維持し、後半 0.2s でなめらかに 0 へ。
+@keyframes attackFxFadeOut {
+  0%    { opacity: 1; }
+  66.7% { opacity: 1; }
+  100%  { opacity: 0; }
+}
+
 .attackFx {
   position: absolute;
   inset: 0;
@@ -11,6 +20,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: attackFxFadeOut 0.6s ease-out forwards;
 }
 
 // slash — 白光バー（-38deg、gold shadow）

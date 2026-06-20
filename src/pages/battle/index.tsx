@@ -190,7 +190,11 @@ type UnionCmd = {
 type UiMode = { kind: 'global' } | { kind: 'individual' } | { kind: 'strategy' };
 
 /** 逐次再生の状態（issue #18）。base=ターン開始時HP、revealed=表示済みログ行数。 */
-type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: number };
+type Anim = {
+  base: Record<string, { hp: number; isDown: boolean }>;
+  revealed: number;
+  actingId?: string;
+};
 
 export interface BattlePageProps {
   /** Storybook 専用: 初期 BattleState の log を擬似的に埋める。本番経路では未使用。 */
@@ -234,6 +238,8 @@ export const Page = ({
   );
   // 行動の逐次再生（issue #18）。再生中はコマンド入力/結果を隠す。
   const [anim, setAnim] = useState<Anim | null>(null);
+  // TP の表示基準値（anim 再生中はターン開始時の実値を保持し、anim が null になったら更新）。
+  const tpBaseRef = useRef<Record<string, number>>({});
   // ダメージを受けたカードの点滅対象 ID（issue #18）。
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
   // InkSplatter: ID → { value, variant } のマップ（Phase 2）。
@@ -367,7 +373,15 @@ export const Page = ({
     (list: BattleCommand[]) => {
       if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
       const base = snapshotOf(state);
+      // TP 表示用ベースライン: anim 再生中はターン開始時の TP 実値を表示する
+      const tpSnap: Record<string, number> = {};
+      for (const c of [...state.allies, ...state.enemies, ...state.summons]) {
+        tpSnap[c.id] = c.tp ?? 0;
+      }
+      tpBaseRef.current = tpSnap;
       const final = resolveTurn(state, list, rngRef.current);
+      // 行動順の最初のアクター ID（前進アニメ用）
+      const firstActorId = list[0]?.actorId ?? undefined;
       setState(final);
       setCommands({});
       setCommandTargets({});
@@ -380,7 +394,7 @@ export const Page = ({
       setFlashIds(new Set());
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
-      setAnim(final.log.length > 0 ? { base, revealed: 0 } : null);
+      setAnim(final.log.length > 0 ? { base, revealed: 0, actingId: firstActorId } : null);
     },
     [state]
   );
@@ -993,6 +1007,10 @@ export const Page = ({
 
   const renderCard = (a: Combatant) => {
     const d = dispOf(a);
+    // anim 再生中は TP をターン開始時の実値（tpBaseRef）から取得し、消費前の値を表示する
+    const dispTp = anim ? (tpBaseRef.current[a.id] ?? a.tp) : a.tp;
+    // 行動者前進アニメ: anim.revealed が 0 （最初のログ表示前の 280ms 期間）に行動者カードを前進させる
+    const isAdvancing = !!anim && anim.revealed === 0 && anim.actingId === a.id;
     // 味方対象選択中: そのキャラが選ばれているか
     const isAllyTargeted =
       isAllyTargeting && activeId !== null && commandTargets[activeId] === a.id;
@@ -1010,6 +1028,7 @@ export const Page = ({
           commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
           flashIds.has(a.id) ? styles.flash : '',
           fleeActive ? styles.dashAwayCard : '',
+          isAdvancing ? styles.cardAdvancing : '',
         ].join(' ')}
         disabled={
           state.outcome !== 'ongoing' ||
@@ -1122,13 +1141,13 @@ export const Page = ({
           showValue={false}
         />
         <StatBar
-          value={a.tp}
+          value={dispTp}
           max={a.maxTp}
           color="#B89255" // $illumination-gold
           showValue={false}
         />
         <div className={styles.cardNums}>
-          HP {Math.max(0, d.hp)} · TP {a.tp}
+          HP {Math.max(0, d.hp)} · TP {dispTp}
         </div>
         {/* ユニオンゲージ（issue #18）。100% で発動可。 */}
         <div className={styles.gaugeRow}>
@@ -1211,11 +1230,12 @@ export const Page = ({
             const masterEnemyId = e.enemyId as EnemyId | undefined;
             const master = masterEnemyId ? ENEMIES[masterEnemyId] : undefined;
             const isLarge = master?.kind === 'boss' || master?.kind === 'foe';
+            const isEnemyAdvancing = !!anim && anim.revealed === 0 && anim.actingId === e.id;
             return (
               <button
                 type="button"
                 key={e.id}
-                className={`${styles.enemy} ${d.isDown ? styles.down + ' ' + styles.dissolving : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash + ' ' + styles.shakeBOverlay : ''}`}
+                className={`${styles.enemy} ${d.isDown ? styles.down + ' ' + styles.dissolving : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash + ' ' + styles.shakeBOverlay : ''} ${isEnemyAdvancing ? styles.enemyAdvancing : ''}`}
                 disabled={e.isDown || !!anim || isAllyTargeting}
                 onClick={() => setTargetId(e.id)}
               >
@@ -1452,25 +1472,26 @@ export const Page = ({
               <span>獲得経験値</span>
               <span className={styles.resultExpGain}>+{rewards.exp} EXP</span>
             </div>
-            <div className={styles.resultExpBarShimmer}>
-              <div className={styles.expList}>
-                {expResults.map((r) => (
-                  <div
-                    key={r.charId}
-                    className={styles.expRow}
-                  >
-                    <span className={styles.expName}>
-                      <span className={styles.expNameText}>{r.name}</span>
-                      <span className={styles.expLv}>
-                        {r.toLevel > r.fromLevel ? (
-                          <span className={styles.expUp}>
-                            Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
-                          </span>
-                        ) : (
-                          <>Lv{r.toLevel}</>
-                        )}
-                      </span>
+            <div className={styles.expList}>
+              {expResults.map((r) => (
+                <div
+                  key={r.charId}
+                  className={styles.expRow}
+                >
+                  <span className={styles.expName}>
+                    <span className={styles.expNameText}>{r.name}</span>
+                    <span className={styles.expLv}>
+                      {r.toLevel > r.fromLevel ? (
+                        <span className={styles.expUp}>
+                          Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
+                        </span>
+                      ) : (
+                        <>Lv{r.toLevel}</>
+                      )}
                     </span>
+                  </span>
+                  {/* shimmer ラッパーはバー本体のみを囲む（EXP バー以外に波打ちエフェクトが掛からないよう） */}
+                  <div className={styles.expBarShimmerWrap}>
                     <BattleExpBar
                       fromLevel={r.fromLevel}
                       fromExp={r.fromExp}
@@ -1478,8 +1499,8 @@ export const Page = ({
                       start={expAnimStart}
                     />
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
 

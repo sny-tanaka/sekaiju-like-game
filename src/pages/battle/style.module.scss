@@ -1182,6 +1182,29 @@
   font-variant-numeric: tabular-nums;
 }
 
+// バー本体のみに shimmer を当てるラッパー（EXP バー修正: 背景や文字に波打ちが出ないよう）
+.expBarShimmerWrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.expBarShimmerWrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+  background-size: 40px 40px;
+  animation: barShimmer 1.2s linear infinite;
+  pointer-events: none;
+  border-radius: 0;
+}
+
 // ---- 行動の逐次再生（issue #18） ----
 .playback {
   display: flex;
@@ -2078,6 +2101,29 @@
   animation: dashAway 0.8s ease-in forwards;
 }
 
+// ---- 行動者前進アニメ（モック v3 §9d）: 味方は右、敵は左 ----
+@keyframes allyAdvance {
+  0%   { transform: translateX(0); }
+  35%  { transform: translateX(12px); }
+  70%  { transform: translateX(12px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes enemyAdvance {
+  0%   { transform: translateX(0); }
+  35%  { transform: translateX(-12px); }
+  70%  { transform: translateX(-12px); }
+  100% { transform: translateX(0); }
+}
+
+.cardAdvancing {
+  animation: allyAdvance 0.28s ease-in-out forwards;
+}
+
+.enemyAdvancing {
+  animation: enemyAdvance 0.28s ease-in-out forwards;
+}
+
 // ---- K. dustRise — 逃走時の足元砂塵 ----
 @keyframes dustRise {
   0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
@@ -2118,6 +2164,8 @@
   .sealStampInner,
   .sealStampInnerOut,
   .dashAwayCard,
+  .cardAdvancing,
+  .enemyAdvancing,
   .dustParticle {
     animation: none;
   }
