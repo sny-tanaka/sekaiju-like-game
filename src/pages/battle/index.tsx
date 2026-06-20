@@ -1107,7 +1107,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     const isAllySelectable = isAllyTargeting && (reviveTargeting ? a.isDown : !a.isDown);
     return (
       <ActionButton
-        nostyle
         key={a.id}
         className={[
           styles.card,
@@ -1362,7 +1361,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             const isEnemyAdvancing = advancingActorId === e.id;
             return (
               <ActionButton
-                nostyle
                 key={e.id}
                 className={[
                   styles.enemy,
@@ -1604,7 +1602,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         <div className={styles.playback}>
           <span className={styles.playbackHint}>戦況を再生中…</span>
           <ActionButton
-            nostyle
             className={styles.skip}
             label="▶▶ スキップ"
             sfx={null}
@@ -1720,7 +1717,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       </div>
                       <div className={styles.resultLevelUpOk}>
                         <ActionButton
-                          nostyle
                           className={styles.resultLevelUpOkBtn}
                           label="OK"
                           onClick={() => setLevelQueue((q) => q.slice(1))}
@@ -1770,7 +1766,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
 
           {/* 探索へ戻るボタン */}
           <ActionButton
-            nostyle
             className={styles.resultPrimary}
             disabled={busy || levelQueue.length > 0 || (expAnimStart && !expDone)}
             label="探索へ戻る"
@@ -1798,7 +1793,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             ))}
           </div>
           <ActionButton
-            nostyle
             className={styles.defeatBtn}
             disabled={busy}
             label="拠点へ戻る"
@@ -1831,7 +1825,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           </div>
           <div className={styles.fleeTitle}>逃走成功</div>
           <ActionButton
-            nostyle
             className={styles.resultPrimary}
             disabled={busy}
             label="探索へ戻る"
@@ -1867,7 +1860,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         <div className={styles.unionBannerHead}>
                           ⚡ ユニオン予約: {def?.name}
                           <ActionButton
-                            nostyle
                             className={styles.unionCancel}
                             label="取消"
                             sfx="cancel"
@@ -1894,21 +1886,18 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                 : null}
               <div className={styles.menu}>
                 <ActionButton
-                  nostyle
                   className={`${styles.menuBtn} ${styles.menuPrimary}`}
                   label="たたかう"
                   onClick={onClickFight}
                 />
                 <div className={styles.menuRow}>
                   <ActionButton
-                    nostyle
                     className={`${styles.menuBtn} ${styles.menuStrategy}`}
                     label="さくせん"
                     sfx="cursor"
                     onClick={() => setUiMode({ kind: 'strategy' })}
                   />
                   <ActionButton
-                    nostyle
                     className={`${styles.menuBtn} ${styles.menuFlee}`}
                     label="にげる"
                     sfx="cancel"
@@ -1930,7 +1919,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         <div className={styles.unionBannerHead}>
                           ⚡ ユニオン予約: {def?.name}
                           <ActionButton
-                            nostyle
                             className={styles.unionCancel}
                             label="取消"
                             sfx="cancel"
@@ -1970,7 +1958,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       </div>
                       {allyTargetCandidates.map((a) => (
                         <ActionButton
-                          nostyle
                           key={a.id}
                           className={[
                             styles.skillBtn,
@@ -1992,7 +1979,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         </ActionButton>
                       ))}
                       <ActionButton
-                        nostyle
                         className={styles.menuBack}
                         label="もどる"
                         sfx="cancel"
@@ -2013,7 +1999,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         <div className={styles.skillList}>
                           {learnedSkillsList(active).map(({ id: sid, usable }) => (
                             <ActionButton
-                              nostyle
                               key={sid}
                               className={[styles.skillBtn, !usable ? styles.skillBtnDisabled : '']
                                 .filter(Boolean)
@@ -2047,7 +2032,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         <div className={styles.skillScrollHint}>← 横スクロール（2段）→</div>
                       </div>
                       <ActionButton
-                        nostyle
                         className={styles.menuBack}
                         label="もどる"
                         sfx="cancel"
@@ -2058,7 +2042,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                     <div className={styles.skillList}>
                       {battleItems().map(({ id, remaining }) => (
                         <ActionButton
-                          nostyle
                           key={id}
                           className={styles.skillBtn}
                           sfx="cursor"
@@ -2080,7 +2063,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         <div className={styles.empty}>使える道具がない</div>
                       ) : null}
                       <ActionButton
-                        nostyle
                         className={styles.menuBack}
                         label="もどる"
                         sfx="cancel"
@@ -2110,7 +2092,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         .filter((a) => a.id !== unionSetup.actorId)
                         .map((a) => (
                           <ActionButton
-                            nostyle
                             key={a.id}
                             className={styles.skillBtn}
                             sfx="cursor"
@@ -2131,7 +2112,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         <div className={styles.empty}>協力できる味方がいない</div>
                       ) : null}
                       <ActionButton
-                        nostyle
                         className={styles.menuBack}
                         label="もどる"
                         sfx="cancel"
@@ -2158,13 +2138,11 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       })()}
                       <div className={styles.individualCmdRow1}>
                         <ActionButton
-                          nostyle
                           className={`${styles.menuBtn} ${styles.cmdPrimary}`}
                           label="攻撃"
                           onClick={() => assign(active.id, { kind: 'attack' })}
                         />
                         <ActionButton
-                          nostyle
                           className={`${styles.menuBtn} ${styles.cmdSub}`}
                           disabled={learnedSkillsList(active).length === 0}
                           label="スキル"
@@ -2174,7 +2152,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       </div>
                       <div className={styles.individualCmdRow2}>
                         <ActionButton
-                          nostyle
                           className={`${styles.menuBtn} ${styles.cmdTertiary}`}
                           disabled={battleItems().length === 0}
                           label="どうぐ"
@@ -2182,13 +2159,11 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                           onClick={() => setItemMenu(true)}
                         />
                         <ActionButton
-                          nostyle
                           className={`${styles.menuBtn} ${styles.cmdTertiary}`}
                           label="防御"
                           onClick={() => assign(active.id, { kind: 'guard' })}
                         />
                         <ActionButton
-                          nostyle
                           className={`${styles.menuBtn} ${styles.cmdBack}`}
                           label="もどる"
                           sfx="cancel"
@@ -2200,7 +2175,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         if (!def || active.unionGauge < 100 || unionCmd) return null;
                         return (
                           <ActionButton
-                            nostyle
                             className={`${styles.menuBtn} ${styles.unionBtn}`}
                             label="⚡ユニオン"
                             onClick={() => onUnionPressed(active, def)}
@@ -2213,14 +2187,12 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               ) : (
                 <div className={styles.execRow}>
                   <ActionButton
-                    nostyle
                     className={styles.redo}
                     label="やり直す"
                     sfx="cancel"
                     onClick={resetInput}
                   />
                   <ActionButton
-                    nostyle
                     className={styles.primary}
                     disabled={!allAssigned}
                     label="実行"
@@ -2258,7 +2230,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         {STRATEGY_LIST.map((s) => (
                           <ActionButton
                             key={s.id}
-                            nostyle
                             className={cur === s.id ? styles.strategyOn : styles.strategyOff}
                             label={s.label}
                             sfx="cursor"
@@ -2270,7 +2241,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   );
                 })}
                 <ActionButton
-                  nostyle
                   className={styles.menuBack}
                   label="もどる"
                   sfx="cancel"
@@ -2295,7 +2265,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             <div className={styles.logOverlayHeader}>
               <span>❦ 戦闘ログ</span>
               <ActionButton
-                nostyle
                 className={styles.logOverlayClose}
                 label="✕"
                 sfx={null}
