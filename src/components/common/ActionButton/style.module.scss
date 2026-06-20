@@ -5,23 +5,36 @@
 // ==========================================================
 
 .actionButton {
+  // ブラウザデフォルトのボタンスタイルをリセット（nostyle=true でも適用される）
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+
+  // 最小共通スタイル（nostyle=true でも残す）
   cursor: pointer;
   font-family: inherit;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
   transition:
-    background var(--motion-quick, 0.15s ease),
+    background-color var(--motion-quick, 0.15s ease),
     opacity var(--motion-quick, 0.15s ease),
-    transform var(--motion-quick, 0.15s ease);
+    transform var(--motion-quick, 0.1s ease);
 
   &:active:not(:disabled) {
-    transform: translateY(1px);
-    filter: brightness(0.93);
+    transform: scale(0.98);
   }
 
   &:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var.$illumination-gold;
+    outline-offset: 2px;
   }
 }
 

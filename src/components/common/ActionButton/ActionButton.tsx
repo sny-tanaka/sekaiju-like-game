@@ -45,6 +45,13 @@ type ActionButtonProps = {
    * - 'large': 確認ダイアログ等の重要ボタン向け（min-height: 64px）
    */
   size?: 'small' | 'medium' | 'large';
+  /**
+   * true のとき、variant の base スタイル (border / background / padding / min-height /
+   * width / text-align など) を全て無効化する。className で旧 bare button スタイルを
+   * 完全復活したい場合に使う。
+   * SE / disabled / focus / a11y / hover の transition だけ残す。
+   */
+  nostyle?: boolean;
   disabled?: boolean;
   /** button 要素の aria-label 属性に渡す（a11y 対応）。 */
   ariaLabel?: string;
@@ -73,6 +80,7 @@ export const ActionButton = ({
   description,
   variant = 'default',
   size = 'medium',
+  nostyle = false,
   disabled = false,
   ariaLabel,
   type = 'button',
@@ -96,8 +104,8 @@ export const ActionButton = ({
       type={type}
       className={[
         styles.actionButton,
-        styles[variant],
-        usesSize ? styles[size] : '',
+        nostyle ? '' : styles[variant],
+        nostyle || !usesSize ? '' : styles[size],
         className ?? '',
       ]
         .filter(Boolean)

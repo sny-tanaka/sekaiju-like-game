@@ -229,6 +229,51 @@ export const WithAriaLabel: StoryObj<T> = {
 };
 
 // ==========================================================
+// nostyle prop（完全カスタム例）
+// ==========================================================
+
+export const NoStyle: StoryObj<T> = {
+  name: 'nostyle: 完全カスタム（戦闘カード風）',
+  args: {
+    nostyle: true,
+    className: undefined,
+    children: (
+      <span
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 2,
+          padding: '10px 14px',
+          background: 'rgba(30, 20, 10, 0.85)',
+          border: '1px solid rgba(180, 140, 60, 0.5)',
+          borderRadius: 4,
+          color: '#e8d8a0',
+          width: 140,
+          fontSize: 13,
+          fontWeight: 700,
+          lineHeight: 1.3,
+        }}
+      >
+        <span>アルフィン</span>
+        <span style={{ fontSize: 11, opacity: 0.75, fontWeight: 400 }}>HP 84 / 120</span>
+      </span>
+    ),
+  },
+};
+
+export const NoStyleWithVariantIgnored: StoryObj<T> = {
+  name: 'nostyle: variant=primary でも base スタイルが無効化される',
+  args: {
+    label: 'カスタムボタン',
+    nostyle: true,
+    variant: 'primary',
+    size: 'large',
+    className: undefined,
+  },
+};
+
+// ==========================================================
 // type=submit
 // ==========================================================
 

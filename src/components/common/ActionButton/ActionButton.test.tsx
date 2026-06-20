@@ -338,3 +338,59 @@ describe('ActionButton: size クラス適用可否', () => {
     expect(classCount(screen.getByRole('button'))).toBe(2);
   });
 });
+
+// ==========================================================
+// nostyle prop のテスト
+// ==========================================================
+
+describe('ActionButton: nostyle prop', () => {
+  /** ボタンの class 名トークン（空白分割）の個数を返す */
+  const classCount = (el: HTMLElement) => el.className.trim().split(/\s+/).filter(Boolean).length;
+
+  test('nostyle=true のとき variant class と size class が付かず class 数が 1 になる', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(
+      <ActionButton
+        label="カスタム"
+        variant="primary"
+        size="large"
+        nostyle
+      />,
+      { wrapper }
+    );
+    // actionButton のみ（variant: primary, size: large は付かない）
+    expect(classCount(screen.getByRole('button'))).toBe(1);
+  });
+
+  test('nostyle=true でも className は付与される', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(
+      <ActionButton
+        label="カスタム"
+        nostyle
+        className="myCustomClass"
+      />,
+      { wrapper }
+    );
+    // actionButton + myCustomClass の 2 class
+    expect(classCount(screen.getByRole('button'))).toBe(2);
+    expect(screen.getByRole('button').className).toContain('myCustomClass');
+  });
+
+  test('nostyle 省略時（デフォルト false）は既存と同一の class 数になる', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(
+      <ActionButton
+        label="通常"
+        variant="default"
+        size="medium"
+      />,
+      { wrapper }
+    );
+    // actionButton + default + medium の 3 class（nostyle 影響なし）
+    expect(classCount(screen.getByRole('button'))).toBe(3);
+  });
+});
