@@ -95,7 +95,10 @@ export const mockPostBoss: SaveData = (() => {
         deepestReached: 5,
         highestBossDefeated: 5,
         totalDives: 2,
-        bossDefeatLog: [{ depth: 5, at: Date.now() }],
+        bossDefeatLog: [
+          { depth: 5, at: Date.now(), enemyId: 'enemy_boss_gatekeeper' },
+          { depth: 10, at: Date.now() - 3600_000 }, // enemyId なし（後方互換確認用）
+        ],
       },
       bossGates: {
         ...save.towerState.bossGates,

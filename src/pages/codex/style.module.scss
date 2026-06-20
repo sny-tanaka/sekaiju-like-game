@@ -108,6 +108,30 @@
   color: var(--text-mute);
 }
 
+.ringWrap {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 6px auto 0;
+}
+
+.ringSvg {
+  width: 60px;
+  height: 60px;
+  display: block;
+}
+
+.ringText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--gold);
+}
+
 .h2Caption {
   font-size: 11px;
   font-weight: 700;

@@ -762,12 +762,19 @@ export interface WarpState {
   unlockedCheckpoints: number[]; // [10, 20, 30, ...]
 }
 
+/** ボス撃破履歴 1 件。`enemyId` は v5 で追加（後方互換のため optional）。 */
+export interface BossDefeatLogEntry {
+  depth: number;
+  at: number;
+  enemyId?: EnemyId;
+}
+
 /** 最高到達階などのベスト記録（[06 §7]）。 */
 export interface TowerRecord {
   deepestReached: number; // 最深踏破階
   highestBossDefeated: number; // 最高撃破ボス階
   totalDives: number; // 挑戦回数
-  bossDefeatLog: { depth: number; at: number }[]; // 撃破履歴
+  bossDefeatLog: BossDefeatLogEntry[]; // 撃破履歴
 }
 
 export interface TowerState {

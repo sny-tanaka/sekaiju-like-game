@@ -93,9 +93,37 @@ export const Page = () => {
             </div>
             <div className={styles.statCard}>
               <div className={styles.statCardLabel}>図鑑達成率</div>
-              <div className={styles.statCardNum}>
-                {sum.completionPct}
-                <span className={styles.statCardUnit}>%</span>
+              <div
+                className={styles.ringWrap}
+                aria-label={`図鑑達成率 ${sum.completionPct}%`}
+              >
+                <svg
+                  viewBox="0 0 60 60"
+                  className={styles.ringSvg}
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="25"
+                    fill="none"
+                    stroke="rgba(255,255,255,.1)"
+                    strokeWidth="5"
+                  />
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="25"
+                    fill="none"
+                    stroke="var(--gold)"
+                    strokeWidth="5"
+                    strokeDasharray={Math.PI * 2 * 25}
+                    strokeDashoffset={Math.PI * 2 * 25 * (1 - sum.completionPct / 100)}
+                    transform="rotate(-90 30 30)"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className={styles.ringText}>{sum.completionPct}%</span>
               </div>
             </div>
           </div>
@@ -106,15 +134,11 @@ export const Page = () => {
           ) : (
             <ul className={styles.bossLog}>
               {[...rec.bossDefeatLog].reverse().map((b, i) => {
-                const enemyId = (b as { enemyId?: EnemyId }).enemyId;
-                const enemyMaster = enemyId ? ENEMIES[enemyId] : null;
+                const enemyMaster = b.enemyId ? ENEMIES[b.enemyId] : null;
                 const name = enemyMaster?.name ?? `${b.depth}F のボス`;
-                const at =
-                  (b as { at?: number; defeatedAt?: number }).at ??
-                  (b as { defeatedAt?: number }).defeatedAt;
                 const timeText =
-                  typeof at === 'number'
-                    ? new Date(at).toLocaleTimeString('ja-JP', {
+                  typeof b.at === 'number'
+                    ? new Date(b.at).toLocaleTimeString('ja-JP', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })
@@ -125,9 +149,9 @@ export const Page = () => {
                     className={styles.bossRow}
                   >
                     <div className={styles.bossRowSprite}>
-                      {enemyId ? (
+                      {b.enemyId ? (
                         <EnemySprite
-                          enemyId={enemyId}
+                          enemyId={b.enemyId}
                           size="sm"
                         />
                       ) : (

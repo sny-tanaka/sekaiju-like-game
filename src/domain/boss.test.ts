@@ -2,7 +2,7 @@ import { canAscend, defeatBoss, goDeeper, resolveFoeBattle, startDive } from '@/
 import { generateFloor } from '@/domain/generateFloor';
 import { createRng } from '@/domain/rng';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
-import type { SaveData } from '@/domain/types';
+import type { EnemyId, SaveData } from '@/domain/types';
 
 function saveWithParty(): SaveData {
   let save = createInitialSaveData('ボス団');
@@ -43,6 +43,13 @@ describe('canAscend / defeatBoss（[06 §4-5・§7]）', () => {
     expect(next.towerState.warp.unlockedCheckpoints).toContain(10);
     expect(next.towerState.record.highestBossDefeated).toBe(10);
     expect(next.towerState.record.bossDefeatLog.some((b) => b.depth === 10)).toBe(true);
+  });
+
+  test('defeatBoss は enemyId を撃破履歴に記録する', () => {
+    const save = createInitialSaveData('g');
+    const next = defeatBoss(save, 10, 1234, 'enemy_boss_gatekeeper' as EnemyId);
+    expect(next.towerState.record.bossDefeatLog[0].enemyId).toBe('enemy_boss_gatekeeper');
+    expect(next.towerState.record.bossDefeatLog[0].at).toBe(1234);
   });
 
   test('同じボスを再撃破してもログ・チェックポイントが重複しない', () => {
