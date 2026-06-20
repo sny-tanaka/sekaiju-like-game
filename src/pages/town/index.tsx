@@ -64,9 +64,9 @@ export const Page = () => {
     setWarpScanActive(true);
     await new Promise((r) => setTimeout(r, 900));
     setWarpScanActive(false);
-    // Step 2: sealStamp 封蝋演出を発火 (暗転 320ms)
+    // Step 2: sealStamp 封蝋演出を発火 (暗転 800ms)
     setSealActive(true);
-    await new Promise((r) => setTimeout(r, 320));
+    await new Promise((r) => setTimeout(r, 800));
     navigate({ name: 'dungeon' });
   };
 

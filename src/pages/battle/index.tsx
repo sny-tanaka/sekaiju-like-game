@@ -568,7 +568,22 @@ export const Page = ({
       // HitFx / BuffFx / DebuffFx の onDone が呼ばれないケースでループを進める
       const hasAnyFx = nextHits.size > 0 || didSetBuffOrDebuff;
       if (!hasAnyFx) {
-        setTimeout(() => completeAction(), 400);
+        // 次のログの actorId が同じ（連続行動＝スキル詠唱→実ダメージ）→ 前進キープのまま次へ
+        const nextIdx = idx + 1;
+        const nextActor = anim.actorIds[nextIdx];
+        const isContinuation = currentActor && nextActor === currentActor;
+
+        if (isContinuation) {
+          // 前進キープ: setAdvancingActorId(null) を呼ばず、revealed+1 のみ進める
+          setTimeout(() => {
+            if (actionCompletedRef.current) return;
+            actionCompletedRef.current = true;
+            setAnim((prev) => (prev ? { ...prev, revealed: prev.revealed + 1 } : null));
+          }, 200); // 短めの待機（詠唱表現）
+        } else {
+          // 次に同 actor が行動しない（防御・待機・別 actor の連続 etc.）: 通常フォールバック
+          setTimeout(() => completeAction(), 400);
+        }
       }
     }, DAMAGE_AT);
 
@@ -993,9 +1008,16 @@ export const Page = ({
 
   // 逐次再生中はログ行に紐づく HP スナップショットを表示する（issue #18）。再生外は実値。
   const dispMap: Record<string, { hp: number; isDown: boolean }> | null = anim
-    ? anim.revealed > 0
-      ? (state.log[anim.revealed - 1]?.snapshot ?? anim.base)
-      : anim.base
+    ? (() => {
+        // hits が反映されている = DAMAGE_AT 後 → 現ログの snapshot を参照（HP バーをダメージ Fx と同期）
+        if (hits.size > 0) {
+          return state.log[anim.revealed]?.snapshot ?? anim.base;
+        }
+        // hits 未反映 = DAMAGE_AT 前 → 前ログの snapshot（HP は前の状態を維持）
+        return anim.revealed > 0
+          ? (state.log[anim.revealed - 1]?.snapshot ?? anim.base)
+          : anim.base;
+      })()
     : null;
   const dispOf = (c: Combatant): { hp: number; isDown: boolean } =>
     dispMap?.[c.id] ?? { hp: c.hp, isDown: c.isDown };
