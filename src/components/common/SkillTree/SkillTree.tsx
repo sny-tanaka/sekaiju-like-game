@@ -233,7 +233,6 @@ export const SkillTree = ({ nodes, char, onLearn }: Props) => {
               ) : null}
               <ActionButton
                 label={label}
-                size="large"
                 className={styles.learnBtn}
                 disabled={!canDo}
                 onClick={() => onLearn(detail.id)}

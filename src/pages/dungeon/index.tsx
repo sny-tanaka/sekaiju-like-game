@@ -295,7 +295,6 @@ export const Page = () => {
         </div>
         <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
         <ActionButton
-          variant="icon"
           ariaLabel="メニューを開く"
           sfx="cursor"
           className={styles.menuBtn}
@@ -327,8 +326,6 @@ export const Page = () => {
         {/* 操作ボタンを一人称視点に重ねる（issue #20）。 */}
         <div className={styles.fpvControls}>
           <ActionButton
-            variant="default"
-            size="small"
             ariaLabel="左を向く"
             sfx={null}
             className={styles.fpvTurn}
@@ -337,16 +334,12 @@ export const Page = () => {
             ↰
           </ActionButton>
           <ActionButton
-            variant="default"
-            size="small"
             label="▲ 前進"
             sfx={null}
             className={styles.fpvForward}
             onClick={() => doMove(dive.dir)}
           />
           <ActionButton
-            variant="default"
-            size="small"
             ariaLabel="右を向く"
             sfx={null}
             className={styles.fpvTurn}
@@ -356,8 +349,6 @@ export const Page = () => {
           </ActionButton>
         </div>
         <ActionButton
-          variant="default"
-          size="small"
           ariaLabel="振り向く"
           sfx={null}
           className={styles.fpvBack}
@@ -408,7 +399,6 @@ export const Page = () => {
           <div className={styles.stairsCardActions}>
             <ActionButton
               label="やめる"
-              size="small"
               sfx="cancel"
               className={styles.stairsCancel}
               onClick={() =>
@@ -423,7 +413,6 @@ export const Page = () => {
                     ? '拠点へ戻る'
                     : '前階へ戻る'
               }
-              size="small"
               className={styles.stairsOk}
               onClick={() => void handleStairs()}
             />
@@ -433,7 +422,6 @@ export const Page = () => {
 
       {gatherPoint && (
         <ActionButton
-          variant="card"
           className={`${styles.gatherCard} ${isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint) ? styles.gatherCardDisabled : ''}`}
           disabled={isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint)}
           onClick={handleGather}
@@ -499,9 +487,7 @@ export const Page = () => {
                     </div>
                     {isReturn ? (
                       <ActionButton
-                        variant="primary"
                         label="使う"
-                        size="small"
                         className={styles.itemUse}
                         onClick={() =>
                           setConfirm({
@@ -535,9 +521,7 @@ export const Page = () => {
                                 </span>
                               </div>
                               <ActionButton
-                                variant="primary"
                                 label="使う"
-                                size="small"
                                 className={styles.itemTargetUseBtn}
                                 onClick={() =>
                                   setConfirm({
@@ -602,9 +586,7 @@ export const Page = () => {
                       </span>
                     </div>
                     <ActionButton
-                      variant="primary"
                       label="作る"
-                      size="small"
                       className={styles.itemUse}
                       disabled={!ok}
                       onClick={() =>
@@ -673,7 +655,6 @@ export const Page = () => {
                     <div className={styles.menuActions}>
                       <div className={styles.menuGrid}>
                         <ActionButton
-                          variant="card"
                           sfx="cursor"
                           className={`${styles.menuGridItem} ${styles.menuGridItemActive}`}
                           onClick={() => {
@@ -685,7 +666,6 @@ export const Page = () => {
                           <span className={styles.menuGridLabel}>道具を使う</span>
                         </ActionButton>
                         <ActionButton
-                          variant="card"
                           sfx="cursor"
                           className={styles.menuGridItem}
                           onClick={() => {
@@ -697,7 +677,6 @@ export const Page = () => {
                           <span className={styles.menuGridLabel}>設定</span>
                         </ActionButton>
                         <ActionButton
-                          variant="card"
                           sfx={null}
                           className={`${styles.menuGridItem} ${styles.menuGridItemThread} ${styles.menuGridItemFull}`}
                           onClick={() => {
@@ -729,8 +708,6 @@ export const Page = () => {
                         return (
                           <ActionButton
                             key={p.charId}
-                            variant="default"
-                            size="small"
                             sfx="cursor"
                             className={`${styles.menuMember} ${idx === 0 ? styles.menuMemberLeader : ''}`}
                             onClick={() => {
@@ -839,7 +816,6 @@ export const Page = () => {
                     {(['class', 'race', 'title'] as const).map((t) => (
                       <ActionButton
                         key={t}
-                        variant="tab"
                         label={t === 'class' ? '職業' : t === 'race' ? '種族' : '称号'}
                         sfx="cursor"
                         className={`${styles.skillTab} ${skillTab === t ? styles.skillTabOn : ''}`}

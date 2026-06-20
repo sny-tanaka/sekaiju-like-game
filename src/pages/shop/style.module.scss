@@ -53,22 +53,22 @@
   margin-bottom: 12px;
 }
 
-// tab variant: variant base が flex:1 / min-height:36px / border / bg:transparent を提供する
-// → activeTab で上書き。tab 固有の min-height/border 重複は削除済み
-
-// カテゴリ絞り込みチップの独自サイズ（tab variant base の min-height を上書き）
-.chip {
-  min-height: 34px;
-  padding: 0 12px;
-  font-size: 13px;
+.tab {
+  flex: 1;
+  min-height: 44px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-// tab/chip の active 状態（variant="tab" + className={styles.activeTab}）
-.activeTab {
-  background-color: var.$verdant;
+.tabActive {
   border-color: var.$verdant;
-  color: var.$white;
-  font-weight: 700;
+  background-color: var.$parchment;
+  color: var.$verdant;
 }
 
 // カテゴリ絞り込み＋並び替え
@@ -83,6 +83,24 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.chip {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var.$ink;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chipActive {
+  border-color: var.$verdant;
+  background-color: var.$parchment;
+  color: var.$verdant;
 }
 
 .sortRow {
@@ -150,11 +168,22 @@
   color: var.$ink-faint;
 }
 
-// primary variant base が bg/color/border/font-weight を提供する
-// → white-space と独自 padding のみ残す
 .action {
-  white-space: nowrap;
+  min-height: 40px;
   padding: 0 14px;
+  border: none;
+  border-radius: 0;
+  background-color: var.$verdant;
+  color: var.$parchment;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 .empty {
@@ -198,11 +227,15 @@
   border-top: 0.75px solid var.$rule;
 }
 
-// secondary variant base が border/bg:transparent/color を提供する
-// → width:100% と min-height のみ残す
 .back {
   width: 100%;
   min-height: 44px;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background-color: transparent;
+  color: var.$ink;
+  font-size: 14px;
+  cursor: pointer;
 }
 
 // 売買の確認ダイアログ（誤タップ防止）
@@ -242,13 +275,26 @@
   gap: 8px;
 }
 
-// secondary / primary variant base が border/bg/color/font-weight を提供する
-// → flex:1 と min-height のみ残す
 .confirmCancel,
 .confirmOk {
   flex: 1;
   min-height: 48px;
+  border: none;
+  border-radius: 0;
   font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirmCancel {
+  border: 0.75px solid var.$rule;
+  background-color: transparent;
+  color: var.$ink;
+}
+
+.confirmOk {
+  background-color: var.$verdant;
+  color: var.$parchment;
 }
 
 // 数量ステッパー（#30）— 写本トークンで再塗装
@@ -312,13 +358,18 @@
   color: var.$ink-faint;
 }
 
-// 装備名をタップ可能にするボタン（#31）— ghost variant + 独自テキストスタイル
+// 装備名をタップ可能にするボタン（#31）
 .nameBtn {
-  color: var.$verdant;
-  text-decoration: underline;
-  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
   font-size: 15px;
   font-weight: 700;
+  color: var.$verdant;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
 }
 
 // 装備詳細モーダル（#31）

@@ -192,14 +192,18 @@
   gap: 8px;
 }
 
-// 装備行（variant="default" size="small" base の上の obsidian 固有調整）
 .equipRow {
   display: flex;
   align-items: center;
   gap: 10px;
   background: var(--surface-panel);
-  border-color: var(--rule-soft);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
   padding: 8px 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
   transition: border-color var(--motion-quick);
 }
 
@@ -288,17 +292,20 @@
   padding: 4px 0;
 }
 
-// 候補行（variant="default" size="small" base の上の obsidian 固有調整）
 .candidateRow {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 7px 0;
   border-bottom: 1px solid var(--rule-soft);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
   background: transparent;
   border-left: none;
   border-right: none;
   border-top: none;
+  font-family: var(--font-body);
 
   &:last-child {
     border-bottom: none;
@@ -452,32 +459,38 @@
   gap: 8px;
 }
 
-// 育成ボタン共通（variant="default" size="small" base の上の obsidian 固有調整）
 .growthBtn {
   flex: 1;
   height: 44px;
+  border-radius: 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
+  cursor: pointer;
+  font-family: var(--font-body);
   background: transparent;
   transition: opacity var(--motion-quick);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
-// 各色（転職 / 称号 / 転生）
 .growthBtnTransfer {
-  border-color: var(--rule-base);
+  border: 1px solid var(--rule-base);
   color: var(--text-soft);
 }
 
 .growthBtnTitle {
-  border-color: var(--rule-gold);
+  border: 1px solid var(--rule-gold);
   color: var(--gold);
 }
 
 .growthBtnRebirth {
-  border-color: rgba(212, 103, 79, 0.45);
+  border: 1px solid rgba(212, 103, 79, 0.45);
   color: var(--danger-text);
 }
 
@@ -497,13 +510,17 @@
   padding: 0 20px;
 }
 
-// 戻るボタン（variant="secondary" base の上の obsidian 固有調整）
 .back {
+  width: 100%;
   height: 46px;
-  border-color: var(--rule-base);
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
   color: var(--text-mute);
   font-size: 13px;
   letter-spacing: 0.16em;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
 // ---- bottom sheet（転職 / 称号 / 転生） ----
@@ -580,39 +597,59 @@
   gap: 10px;
 }
 
-// シート primary（variant="primary" base の上の obsidian 固有調整）
 .sheetActPrimary {
   flex: 1;
   height: 48px;
   background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  border: none;
+  border-radius: 3px;
   color: var(--bg-mid);
   font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
-// シート danger（variant="destructive" base の上の obsidian 固有調整）
 .sheetActDanger {
   flex: 1;
   height: 48px;
   background: var(--danger);
+  border: none;
+  border-radius: 3px;
   color: var(--danger-text);
   font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
-// シート cancel（variant="secondary" base の上の obsidian 固有調整）
 .sheetActCancel {
   flex: 1;
   height: 48px;
-  border-color: var(--rule-base);
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
   color: var(--text-mute);
   font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
-// シートとじるボタン（variant="secondary" base の上の obsidian 固有調整）
 .sheetClose {
+  width: 100%;
   height: 44px;
-  border-color: var(--rule-base);
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
   color: var(--text-mute);
   font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
 // 称号オプション
@@ -622,17 +659,21 @@
   gap: 8px;
 }
 
-// 称号オプションボタン（今は variant 未指定のまま＝default。SCSS で個別スタイル維持）
 .titleBtn {
+  width: 100%;
   height: 48px;
   border: 1px solid var(--rule-gold);
+  border-radius: 3px;
   background: transparent;
   color: var(--gold);
   font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
 
   &:disabled {
     opacity: 0.4;
+    cursor: not-allowed;
     border-color: var(--rule-base);
     color: var(--text-faint);
   }
