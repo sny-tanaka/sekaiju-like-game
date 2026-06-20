@@ -57,15 +57,19 @@
   line-height: 1.2;
 }
 
-// ランク別の色（写本パレット正規化）
+// ランク別の色（黒曜パレット）
+// 監査: 金背景 + 暗文字（var.$parchment = #0e0f13）はコントラスト ≈12:1 で読めるが、
+// font-weight が軽いとユーザーには白っぽく見える。bg-deep + 太字で視認性を強化。
 .rank_S {
-  background-color: var.$illumination-gold; // $illumination-gold
-  color: var.$parchment;
+  background-color: var.$illumination-gold; // = obsidian gold #c9a86a
+  color: var(--bg-deep);                    // = #090a0d 最暗で視認強化
+  font-weight: 800;
 }
 
 .rank_A {
-  background-color: var.$verdant; // $verdant
-  color: var.$parchment;
+  background-color: var.$verdant; // = obsidian gold #c9a86a
+  color: var(--bg-deep);
+  font-weight: 800;
 }
 
 .rank_B {
