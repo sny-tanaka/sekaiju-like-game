@@ -812,7 +812,10 @@ const CATEGORIES: Category[] = [
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            <AttackFx element="slash" />
+            <AttackFx
+              element="slash"
+              silent
+            />
           </div>
         ),
       },
@@ -834,7 +837,10 @@ const CATEGORIES: Category[] = [
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            <AttackFx element="bash" />
+            <AttackFx
+              element="bash"
+              silent
+            />
           </div>
         ),
       },
@@ -856,7 +862,10 @@ const CATEGORIES: Category[] = [
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            <AttackFx element="pierce" />
+            <AttackFx
+              element="pierce"
+              silent
+            />
           </div>
         ),
       },
@@ -878,7 +887,10 @@ const CATEGORIES: Category[] = [
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            <AttackFx element="almighty" />
+            <AttackFx
+              element="almighty"
+              silent
+            />
           </div>
         ),
       },
@@ -900,7 +912,10 @@ const CATEGORIES: Category[] = [
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            <AttackFx element="fire" />
+            <AttackFx
+              element="fire"
+              silent
+            />
           </div>
         ),
       },
@@ -922,7 +937,10 @@ const CATEGORIES: Category[] = [
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            <AttackFx element="ice" />
+            <AttackFx
+              element="ice"
+              silent
+            />
           </div>
         ),
       },
@@ -944,7 +962,10 @@ const CATEGORIES: Category[] = [
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            <AttackFx element="volt" />
+            <AttackFx
+              element="volt"
+              silent
+            />
           </div>
         ),
       },

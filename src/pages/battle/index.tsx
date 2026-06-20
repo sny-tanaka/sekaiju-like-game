@@ -468,6 +468,68 @@ export const Page = ({
       }
       setFlashIds(fl);
       setInkSplatters(nextSplatters);
+
+      // SE 発火: エフェクトマウントと同フレームで鳴らす
+      // attack / critical は AttackFx コンポーネントのマウント時 useEffect で発火するため除外
+      const line = state.log[idx];
+      if (line) {
+        const t = line.text;
+        // 逃走成功
+        if (t === 'うまく逃げ切れた！') {
+          play('flee');
+        }
+        // 戦闘不能
+        else if (t.includes('は倒れた')) {
+          play('down');
+        }
+        // 回復魔法
+        else if (t.includes('は回復魔法を使った')) {
+          play('heal');
+        }
+        // スキル発動
+        else if (
+          t.includes('のスキル') ||
+          (/の.+！$/.test(t) && !t.includes('の攻撃！') && !t.includes('ユニオン'))
+        ) {
+          play('skill');
+        }
+        // ユニオン
+        else if (t.startsWith('ユニオン！')) {
+          play('skill');
+        }
+        // 状態異常付与
+        else if (t.includes('になった')) {
+          play('debuff');
+        }
+        // バフ系
+        else if (
+          t.includes('は態勢を整えた') ||
+          t.includes('の構えを取った') ||
+          t.includes('を引きつけた') ||
+          t.includes('の障壁を張った')
+        ) {
+          play('buff');
+        }
+        // ダメージ命中: 被弾者が味方のときのみ damage SE を鳴らす
+        // attack / critical は AttackFx のマウント時に発火するためここでは鳴らさない
+        else if (/ に \d+ ダメージ/.test(t)) {
+          const snap = line.snapshot;
+          const prevSnap = anim.base;
+          let allyHit = false;
+          if (snap) {
+            for (const [id, c] of Object.entries(snap)) {
+              if (allyIdSetRef.current.has(id)) {
+                const p = prevSnap?.[id];
+                if (p && c.hp < p.hp) {
+                  allyHit = true;
+                  break;
+                }
+              }
+            }
+          }
+          if (allyHit) play('damage');
+        }
+      }
     }, DAMAGE_AT);
 
     // Step 2: advance 完了後に revealed を進める（次の actor の advance が始まる）
@@ -480,7 +542,7 @@ export const Page = ({
       clearTimeout(tDmg);
       clearTimeout(tNext);
     };
-  }, [state, anim]);
+  }, [state, anim, play]);
 
   // リザルト用の経験値・レベルアップ結果（issue #18）。勝利時のみ算出。
   const expResults = useMemo(
@@ -554,89 +616,6 @@ export const Page = ({
       allyIdSetRef.current = new Set(state.allies.map((a) => a.id));
     }
   }, [state]);
-
-  const prevRevealedRef = useRef(0);
-  useEffect(() => {
-    if (!state || !anim) {
-      prevRevealedRef.current = 0;
-      return;
-    }
-    const revealed = anim.revealed;
-    if (revealed <= prevRevealedRef.current) return;
-    // 新しく表示されたログ行を処理
-    const newLines = state.log.slice(prevRevealedRef.current, revealed);
-    prevRevealedRef.current = revealed;
-
-    for (const line of newLines) {
-      const t = line.text;
-      // 逃走成功
-      if (t === 'うまく逃げ切れた！') {
-        play('flee');
-        break;
-      }
-      // 戦闘不能（「は倒れた」）
-      if (t.includes('は倒れた')) {
-        play('down');
-        continue;
-      }
-      // 回復魔法
-      if (t.includes('は回復魔法を使った')) {
-        play('heal');
-        continue;
-      }
-      // スキル発動（「の○○！」形式＝スキル名で発動）
-      if (
-        t.includes('のスキル') ||
-        (/の.+！$/.test(t) && !t.includes('の攻撃！') && !t.includes('ユニオン'))
-      ) {
-        play('skill');
-        continue;
-      }
-      // ユニオン
-      if (t.startsWith('ユニオン！')) {
-        play('skill');
-        continue;
-      }
-      // 状態異常付与
-      if (t.includes('になった')) {
-        play('debuff');
-        continue;
-      }
-      // バフ（態勢を整えた = guard/buff系）
-      if (
-        t.includes('は態勢を整えた') ||
-        t.includes('の構えを取った') ||
-        t.includes('を引きつけた') ||
-        t.includes('の障壁を張った')
-      ) {
-        play('buff');
-        continue;
-      }
-      // ダメージ命中（通常攻撃＋スキルの clean ダメージ行・会心チェック）
-      if (/ に \d+ ダメージ/.test(t)) {
-        const isCritical = t.includes('（会心）');
-        // 被弾者が味方かどうかを判定（ログ文字列中の名前から特定は難しいのでsnapshotで判定）
-        const snap = line.snapshot;
-        const prevSnap = anim.base; // ターン開始時
-        let allyHit = false;
-        if (snap) {
-          for (const [id, cur] of Object.entries(snap)) {
-            if (allyIdSetRef.current.has(id)) {
-              const prev = prevSnap?.[id];
-              if (prev && cur.hp < prev.hp) {
-                allyHit = true;
-                break;
-              }
-            }
-          }
-        }
-        if (allyHit) play('damage');
-        play('attack');
-        if (isCritical) play('critical');
-        continue;
-      }
-    }
-  }, [state, anim, play]);
 
   const aliveEnemies = useMemo(() => state?.enemies.filter((e) => !e.isDown) ?? [], [state]);
   const aliveAllies = useMemo(() => state?.allies.filter((a) => !a.isDown) ?? [], [state]);
