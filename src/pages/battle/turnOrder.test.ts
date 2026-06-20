@@ -5,12 +5,7 @@
 
 import { describe, expect, test } from 'vitest';
 
-import {
-  computeCompletedActorIds,
-  computeDisplayedTurnOrder,
-  isActorCompleted,
-  isFirstNonCompletedAt,
-} from './turnOrder';
+import { computeCompletedActorIds, computeDisplayedTurnOrder, isActorCompleted } from './turnOrder';
 
 import type { BattleEvent, NormalAttackEvent, TickEvent } from '@/domain/battleEvent';
 import { previewTurnOrder } from '@/domain/combat';
@@ -195,28 +190,6 @@ describe('isActorCompleted', () => {
 
   test('空のセットは常に false', () => {
     expect(isActorCompleted('A', new Set())).toBe(false);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// isFirstNonCompletedAt
-// ---------------------------------------------------------------------------
-
-describe('isFirstNonCompletedAt', () => {
-  test('index=0 で完了済みでないとき true (次マーカーを付ける)', () => {
-    expect(isFirstNonCompletedAt(0, 'A', new Set())).toBe(true);
-  });
-
-  test('index=0 で完了済みのとき false (slideout を阻害しない)', () => {
-    expect(isFirstNonCompletedAt(0, 'A', new Set(['A']))).toBe(false);
-  });
-
-  test('index=1 のとき常に false (先頭でない)', () => {
-    expect(isFirstNonCompletedAt(1, 'A', new Set())).toBe(false);
-  });
-
-  test('index=1 かつ完了済みでも false', () => {
-    expect(isFirstNonCompletedAt(1, 'B', new Set(['A']))).toBe(false);
   });
 });
 

@@ -1388,9 +1388,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             const isAlly =
               state.allies.some((a) => a.id === c.id) || state.summons.some((s) => s.id === c.id);
             const isCompleted = completedActorIds.has(c.id);
-            // 完了済みは isFirst を外す (.turnOrderFirst の width:30px !important が
-            // .turnOrderIconCompleted の width:0 を上書きして slideout を阻害するため)
-            const isFirst = i === 0 && !isCompleted;
             const allyChar = isAlly ? save.guild.members.find((m) => m.id === c.id) : null;
             const enemyCombatant = !isAlly ? state.enemies.find((e) => e.id === c.id) : null;
             const enemyId = enemyCombatant?.enemyId;
@@ -1400,13 +1397,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                 className={[
                   styles.turnOrderIcon,
                   isAlly ? styles.turnOrderAlly : styles.turnOrderEnemy,
-                  isFirst ? styles.turnOrderFirst : '',
                   isCompleted ? styles.turnOrderIconCompleted : '',
                 ].join(' ')}
                 title={c.name}
-                style={isFirst ? { position: 'relative' } : undefined}
               >
-                {isFirst && <span className={styles.turnOrderFirstLabel}>次</span>}
                 {isAlly && allyChar ? (
                   <CharacterPortrait
                     raceId={allyChar.raceId}

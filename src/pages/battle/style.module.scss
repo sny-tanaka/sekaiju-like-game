@@ -1972,27 +1972,6 @@
   animation: encPulse 4.5s ease-in-out infinite;
 }
 
-// 行動順帯 先頭セル金枠・glow
-.turnOrderFirst {
-  position: relative;
-  width: 30px !important;
-  height: 30px !important;
-  border: 2px solid var(--gold, #c9a86a) !important;
-  box-shadow: 0 0 8px var(--gold-glow, rgba(201, 168, 106, 0.4));
-  animation: obsidian-glowPulse 2.2s ease-in-out infinite;
-}
-
-.turnOrderFirstLabel {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 7px;
-  color: var(--gold, #c9a86a);
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  pointer-events: none;
-}
 
 // 召喚リボン ラベル
 .summonsLabel {
@@ -2269,10 +2248,6 @@
     gap: 3px;
     margin-bottom: 3px;
   }
-  .turnOrderFirst {
-    width: 24px !important;
-    height: 24px !important;
-  }
   .turnOrderIcon {
     width: 18px;
     height: 18px;
@@ -2467,10 +2442,6 @@
   .turnOrderBar {
     gap: 2px;
     margin-bottom: 2px;
-  }
-  .turnOrderFirst {
-    width: 20px !important;
-    height: 20px !important;
   }
   .turnOrderIcon {
     width: 16px;

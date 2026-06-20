@@ -45,16 +45,3 @@ export function computeDisplayedTurnOrder(
 export function isActorCompleted(actorId: string, completedActorIds: Set<string>): boolean {
   return completedActorIds.has(actorId);
 }
-
-/**
- * 行動順帯の先頭（index=0）かつ未完了のとき true を返す。
- * CSS クラス turnOrderFirst（width:30px）の付与判定に使う。
- * 完了済みなら false を返し、slideout アニメーションを阻害しない。
- */
-export function isFirstNonCompletedAt(
-  index: number,
-  actorId: string,
-  completedActorIds: Set<string>
-): boolean {
-  return index === 0 && !completedActorIds.has(actorId);
-}
