@@ -1,0 +1,31 @@
+@use 'variables' as var;
+
+.cookPop {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9000;
+  pointer-events: none;
+  animation: cookPopAnim 0.8s ease-out forwards;
+}
+
+.cookPop img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+}
+
+.icon {
+  font-size: 56px;
+  display: block;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+}
+
+@keyframes cookPopAnim {
+  0%   { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
+  25%  { transform: translate(-50%, -50%) scale(1.2) rotate(120deg); opacity: 1; }
+  60%  { transform: translate(-50%, -50%) scale(1.0) rotate(360deg); opacity: 1; }
+  100% { transform: translate(-50%, -80%) scale(0.9) rotate(360deg); opacity: 0; }
+}

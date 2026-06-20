@@ -13,10 +13,12 @@ import './EffectsGallery.keyframes.css';
 
 import { AttackFx } from '@/components/common/AttackFx/AttackFx';
 import { CoinPopFx } from '@/components/common/effects/CoinPopFx';
+import { CookPopFx } from '@/components/common/effects/CookPopFx/CookPopFx';
 import { DashAwayFx } from '@/components/common/effects/DashAwayFx';
 import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
 import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
 import { HealPop } from '@/components/common/effects/HealPop';
+import { ItemPopFx } from '@/components/common/effects/ItemPopFx/ItemPopFx';
 import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
 import { SealStampFx } from '@/components/common/effects/SealStampFx';
 import { SummonAppearFx } from '@/components/common/effects/SummonAppearFx';
@@ -582,6 +584,30 @@ const CATEGORIES: Category[] = [
             >
               会心
             </div>
+          </div>
+        ),
+      },
+      {
+        name: 'itemPop',
+        desc: '採集成功アイテムポップ（中央拡大→上昇フェード）',
+        preview: (
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <ItemPopFx
+              visible
+              silent
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'cookPop',
+        desc: '料理成功ポップ（回転しながら拡大→上昇フェード）',
+        preview: (
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <CookPopFx
+              visible
+              silent
+            />
           </div>
         ),
       },

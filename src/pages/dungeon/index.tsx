@@ -5,6 +5,8 @@ import styles from './style.module.scss';
 import { useSfx } from '@/audio/useSfx';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
+import { CookPopFx } from '@/components/common/effects/CookPopFx/CookPopFx';
+import { ItemPopFx } from '@/components/common/effects/ItemPopFx/ItemPopFx';
 import { EncounterGauge } from '@/components/common/EncounterGauge/EncounterGauge';
 import { FirstPersonView } from '@/components/common/FirstPersonView/FirstPersonView';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
@@ -36,6 +38,7 @@ import { createRng } from '@/domain/rng';
 import { availableSP, learnSkill } from '@/domain/skillTree';
 import { computeBaseStats } from '@/domain/stats';
 import type { Dir, Rng } from '@/domain/types';
+import { itemSpriteUrl } from '@/sprites/itemSpriteUrl';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
@@ -63,6 +66,14 @@ export const Page = () => {
   const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
   // 採集/調理の一時メッセージ
   const [notice, setNotice] = useState<string | null>(null);
+  // 採集成功 Fx
+  const [itemPopFx, setItemPopFx] = useState<{ visible: boolean; iconSrc?: string }>({
+    visible: false,
+  });
+  // 料理成功 Fx
+  const [cookPopFx, setCookPopFx] = useState<{ visible: boolean; iconSrc?: string }>({
+    visible: false,
+  });
   // 消費系操作の確認ダイアログ（タップ1回での誤消費を防ぐ）。
   const [confirm, setConfirm] = useState<{
     message: string;
@@ -127,21 +138,24 @@ export const Page = () => {
       );
       return;
     }
-    play('item');
+    const iconSrc = res.itemId ? (itemSpriteUrl(res.itemId) ?? undefined) : undefined;
+    setItemPopFx({ visible: true, iconSrc });
     void applyAndPersist(() => res.save);
     setNotice(`${res.itemId ? (ITEMS[res.itemId]?.name ?? '素材') : '素材'} を手に入れた`);
-  }, [save, applyAndPersist, play]);
+  }, [save, applyAndPersist]);
 
   const handleCook = useCallback(
     (recipeId: string) => {
       if (!save) return;
       const res = cook(save, recipeId);
       if (!res.ok) return;
-      play('cook');
+      const resultItemId = RECIPES[recipeId]?.result.itemId;
+      const iconSrc = resultItemId ? (itemSpriteUrl(resultItemId) ?? undefined) : undefined;
+      setCookPopFx({ visible: true, iconSrc });
       void applyAndPersist(() => res.save);
       setNotice(`${RECIPES[recipeId]?.name ?? '料理'} を作った`);
     },
-    [save, applyAndPersist, play]
+    [save, applyAndPersist]
   );
 
   const doMove = useCallback(
@@ -893,6 +907,16 @@ export const Page = () => {
           </div>
         </div>
       ) : null}
+
+      {/* 採集/料理成功 Fx（SE とセット） */}
+      <ItemPopFx
+        {...itemPopFx}
+        onDone={() => setItemPopFx({ visible: false })}
+      />
+      <CookPopFx
+        {...cookPopFx}
+        onDone={() => setCookPopFx({ visible: false })}
+      />
 
       {/* サウンド設定モーダル（☰ メニューの「設定」から開く） */}
       {soundOpen ? (
