@@ -253,52 +253,38 @@
   opacity: 0.4;
 }
 
-// ---- 戦闘ログ（インライン 3 行 + タップで全履歴オーバーレイ）----
-// 画面下端の通常フローに常時 3 行表示。タップでフル履歴の overlay を開く。
-.log {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
-  flex-shrink: 0;
-  cursor: pointer;
-}
+// ---- 戦闘ログ（ヘッダ内 1 行プレビュー + タップで全履歴オーバーレイ）----
+// 行動順帯直下に 1 行プレビューを常時表示。タップでフル履歴の overlay を開く。
 
-.logHeader {
+// ヘッダ内 1 行ログプレビュー（モック v3 準拠）
+.logPreview {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 3px 10px;
-  background-color: var.$ink;
-  color: var.$parchment;
-  font-family: 'Kaisei Tokumin', serif;
+  gap: 8px;
+  padding: 4px 8px;
+  border-left: 2px solid var(--gold);
+  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  flex-shrink: 0;
+  color: var(--text-mute);
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 4px;
 }
 
-.logHeaderHint {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  opacity: 0.7;
-}
-
-// インライン表示の 3 行プレビュー（最新を下に表示。古いものは見えない）
-.logBody {
-  padding: 6px 10px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var.$ink;
-  // 3 行ぶんの高さに固定。溢れた古い行は非表示。
-  height: calc(12px * 1.5 * 3 + 12px);
+.logLatestLine {
+  flex: 1;
+  white-space: nowrap;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  text-overflow: ellipsis;
+  color: var(--text-base);
+}
+
+.logTapHint {
+  flex-shrink: 0;
+  color: var(--text-faint);
+  font-size: 9px;
+  letter-spacing: 0.16em;
 }
 
 .logLine {

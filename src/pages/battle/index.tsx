@@ -1183,7 +1183,24 @@ export const Page = ({
           {turnOrderPreview.length > 8 && <span className={styles.turnOrderMore}>…</span>}
         </div>
       )}
-      {/* 戦場（敵 + 召喚 + 味方 + ログ）。上部はこの内側でのみ縦に溢れ、コマンド
+      {/* (B) 1 行ログプレビュー（ヘッダ内 / 行動順帯直下） */}
+      <div
+        className={styles.logPreview}
+        onClick={() => setLogOpen(true)}
+        role="button"
+        tabIndex={0}
+        aria-label="戦闘ログの全履歴を見る"
+      >
+        <span className={styles.logLatestLine}>
+          {(() => {
+            const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
+            if (visible.length === 0) return `てきが あらわれた！（${state.turn} ターン目）`;
+            return visible[visible.length - 1].text;
+          })()}
+        </span>
+        <span className={styles.logTapHint}>タップで全ログ</span>
+      </div>
+      {/* 戦場（敵 + 召喚 + 味方）。上部はこの内側でのみ縦に溢れ、コマンド
           エリア（下端）の表示領域を圧迫しない。極端ケースは内部スクロールで吸収。 */}
       <div className={styles.battlefield}>
         {/* 敵 */}
@@ -1386,38 +1403,6 @@ export const Page = ({
             </>
           )}
         </div>
-
-        {/* 戦闘ログ（インライン 3 行プレビュー / キャラ下・コマンド上）。
-          タップで全履歴オーバーレイ。再生中は revealed 行までを順に表示する。 */}
-        <button
-          type="button"
-          className={styles.log}
-          onClick={() => setLogOpen(true)}
-          aria-label="戦闘ログの全履歴を見る"
-        >
-          <div className={styles.logHeader}>
-            <span>戦闘ログ</span>
-            <span className={styles.logHeaderHint}>タップで全履歴</span>
-          </div>
-          <div className={styles.logBody}>
-            {(() => {
-              const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-              if (visible.length === 0) {
-                return (
-                  <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
-                );
-              }
-              return visible.slice(-3).map((l, i, arr) => (
-                <div
-                  key={visible.length - arr.length + i}
-                  className={`${styles.logLine} ${anim && i === arr.length - 1 ? styles.logLineNew : ''}`}
-                >
-                  {l.text}
-                </div>
-              ));
-            })()}
-          </div>
-        </button>
       </div>
 
       {/* コマンド入力 / 実行 / 結果（再生中は再生コントロールのみ） */}
