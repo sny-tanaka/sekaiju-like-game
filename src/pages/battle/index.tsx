@@ -4,6 +4,7 @@ import styles from './style.module.scss';
 
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { BuffFx } from '@/components/common/effects/BuffFx/BuffFx';
@@ -1080,8 +1081,8 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     // 味方対象選択中: タップで対象選択できる（蘇生は戦闘不能のみ／その他は生存のみ）
     const isAllySelectable = isAllyTargeting && (reviveTargeting ? a.isDown : !a.isDown);
     return (
-      <button
-        type="button"
+      <ActionButton
+        variant="card"
         key={a.id}
         className={[
           styles.card,
@@ -1092,12 +1093,16 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           flashIds.has(a.id) ? styles.flash : '',
           fleeActive ? dashAwayClass : '',
           isAdvancing ? styles.cardAdvancing : '',
-        ].join(' ')}
+        ]
+          .filter(Boolean)
+          .join(' ')}
         disabled={
           state.outcome !== 'ongoing' ||
           !!anim ||
           (a.isDown && !(isAllyTargeting && reviveTargeting))
         }
+        sfx={null}
+        ariaLabel={`${a.name} を選択`}
         onClick={() => {
           if (isAllyTargeting && activeId) {
             // 味方対象選択: クリックで対象確定
@@ -1257,7 +1262,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           <span className={styles.gaugeLabel}>U {a.unionGauge}%</span>
         </div>
         <div className={styles.cardCmd}>{commands[a.id] ? `▶ ${cmdLabel(a)}` : ' '}</div>
-      </button>
+      </ActionButton>
     );
   };
 
@@ -1331,11 +1336,21 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             const isLarge = master?.kind === 'boss' || master?.kind === 'foe';
             const isEnemyAdvancing = advancingActorId === e.id;
             return (
-              <button
-                type="button"
+              <ActionButton
+                variant="card"
                 key={e.id}
-                className={`${styles.enemy} ${d.isDown ? styles.down + ' ' + styles.dissolving : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash + ' ' + styles.shakeBOverlay : ''} ${isEnemyAdvancing ? styles.enemyAdvancing : ''}`}
+                className={[
+                  styles.enemy,
+                  d.isDown ? styles.down + ' ' + styles.dissolving : '',
+                  isTargeted ? styles.targeted : '',
+                  flashIds.has(e.id) ? styles.flash + ' ' + styles.shakeBOverlay : '',
+                  isEnemyAdvancing ? styles.enemyAdvancing : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 disabled={e.isDown || !!anim || isAllyTargeting}
+                sfx={null}
+                ariaLabel={`${e.name} を対象に選択`}
                 onClick={() => setTargetId(e.id)}
               >
                 {/* HitFx — 敵への命中時（AttackFx + DamagePop + SE を統合） */}
@@ -1484,7 +1499,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                     })}
                   </div>
                 )}
-              </button>
+              </ActionButton>
             );
           })}
         </div>
@@ -1563,18 +1578,19 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       {anim ? (
         <div className={styles.playback}>
           <span className={styles.playbackHint}>戦況を再生中…</span>
-          <button
-            type="button"
+          <ActionButton
+            variant="ghost"
+            size="small"
             className={styles.skip}
+            label="▶▶ スキップ"
+            sfx={null}
             onClick={() => {
               setAnim(null);
               setFlashIds(new Set());
               setHits(new Map());
               setAdvancingActorId(null);
             }}
-          >
-            ▶▶ スキップ
-          </button>
+          />
         </div>
       ) : state.outcome === 'win' ? (
         /* v5: 9c 勝利リザルト独立画面 */
@@ -1679,13 +1695,13 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         ))}
                       </div>
                       <div className={styles.resultLevelUpOk}>
-                        <button
-                          type="button"
+                        <ActionButton
+                          variant="primary"
+                          size="medium"
                           className={styles.resultLevelUpOkBtn}
+                          label="OK"
                           onClick={() => setLevelQueue((q) => q.slice(1))}
-                        >
-                          OK
-                        </button>
+                        />
                       </div>
                     </div>
                   </div>
@@ -1730,14 +1746,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           </div>
 
           {/* 探索へ戻るボタン */}
-          <button
-            type="button"
+          <ActionButton
+            variant="primary"
+            size="large"
             className={styles.resultPrimary}
             disabled={busy || levelQueue.length > 0 || (expAnimStart && !expDone)}
+            label="探索へ戻る"
             onClick={() => void finish(state)}
-          >
-            探索へ戻る
-          </button>
+          />
         </div>
       ) : state.outcome === 'lose' ? (
         /* v5: 9g 全滅独立画面 */
@@ -1759,14 +1775,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               </div>
             ))}
           </div>
-          <button
-            type="button"
+          <ActionButton
+            variant="secondary"
+            size="large"
             className={styles.defeatBtn}
             disabled={busy}
+            label="拠点へ戻る"
             onClick={() => void finish(state)}
-          >
-            拠点へ戻る
-          </button>
+          />
           <div className={styles.defeatReach}>
             到達: F{save.diveState?.depth} ・ 撃破: {state.enemies.filter((e) => e.isDown).length}{' '}
             体
@@ -1793,15 +1809,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             />
           </div>
           <div className={styles.fleeTitle}>逃走成功</div>
-          <button
-            type="button"
+          <ActionButton
+            variant="primary"
+            size="large"
             className={styles.resultPrimary}
             disabled={busy}
+            label="探索へ戻る"
             onClick={() => void finish(state)}
-            style={{ maxWidth: '240px' }}
-          >
-            探索へ戻る
-          </button>
+          />
         </div>
       ) : (
         <div className={styles.command}>
@@ -1831,13 +1846,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       <div className={styles.unionBanner}>
                         <div className={styles.unionBannerHead}>
                           ⚡ ユニオン予約: {def?.name}
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="ghost"
+                            size="small"
                             className={styles.unionCancel}
+                            label="取消"
+                            sfx="cancel"
                             onClick={() => setUnionCmd(null)}
-                          >
-                            取消
-                          </button>
+                          />
                         </div>
                         {def ? (
                           <div className={styles.unionBannerDesc}>
@@ -1858,28 +1874,30 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   })()
                 : null}
               <div className={styles.menu}>
-                <button
-                  type="button"
+                <ActionButton
+                  variant="primary"
+                  size="large"
                   className={`${styles.menuBtn} ${styles.menuPrimary}`}
+                  label="たたかう"
                   onClick={onClickFight}
-                >
-                  たたかう
-                </button>
+                />
                 <div className={styles.menuRow}>
-                  <button
-                    type="button"
+                  <ActionButton
+                    variant="secondary"
+                    size="medium"
                     className={`${styles.menuBtn} ${styles.menuStrategy}`}
+                    label="さくせん"
+                    sfx="cursor"
                     onClick={() => setUiMode({ kind: 'strategy' })}
-                  >
-                    さくせん
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <ActionButton
+                    variant="secondary"
+                    size="medium"
                     className={`${styles.menuBtn} ${styles.menuFlee}`}
+                    label="にげる"
+                    sfx="cancel"
                     onClick={handleFlee}
-                  >
-                    にげる
-                  </button>
+                  />
                 </div>
               </div>
             </>
@@ -1895,13 +1913,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       <div className={styles.unionBanner}>
                         <div className={styles.unionBannerHead}>
                           ⚡ ユニオン予約: {def?.name}
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="ghost"
+                            size="small"
                             className={styles.unionCancel}
+                            label="取消"
+                            sfx="cancel"
                             onClick={() => setUnionCmd(null)}
-                          >
-                            取消
-                          </button>
+                          />
                         </div>
                         {def ? (
                           <div className={styles.unionBannerDesc}>
@@ -1935,13 +1954,17 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         </span>
                       </div>
                       {allyTargetCandidates.map((a) => (
-                        <button
-                          type="button"
+                        <ActionButton
+                          variant="default"
+                          size="small"
                           key={a.id}
                           className={[
                             styles.skillBtn,
                             commandTargets[active.id] === a.id ? styles.allyTargetSelected : '',
-                          ].join(' ')}
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          sfx="cursor"
                           onClick={() => {
                             assign(active.id, { kind: 'skill', skillId: allyTargetMenu }, a.id);
                           }}
@@ -1952,11 +1975,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                               HP {Math.max(0, dispOf(a).hp)}/{a.maxHp}
                             </span>
                           </span>
-                        </button>
+                        </ActionButton>
                       ))}
-                      <button
-                        type="button"
+                      <ActionButton
+                        variant="secondary"
+                        size="small"
                         className={styles.menuBack}
+                        label="もどる"
+                        sfx="cancel"
                         onClick={() => {
                           setAllyTargetMenu(null);
                           // 選択中コマンドも未決定に戻す
@@ -1966,23 +1992,22 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                             return next;
                           });
                         }}
-                      >
-                        もどる
-                      </button>
+                      />
                     </div>
                   ) : skillMenu ? (
                     <>
                       <div className={styles.skillListWrap}>
                         <div className={styles.skillList}>
                           {learnedSkillsList(active).map(({ id: sid, usable }) => (
-                            <button
-                              type="button"
+                            <ActionButton
+                              variant="default"
+                              size="small"
                               key={sid}
-                              className={[
-                                styles.skillBtn,
-                                !usable ? styles.skillBtnDisabled : '',
-                              ].join(' ')}
+                              className={[styles.skillBtn, !usable ? styles.skillBtnDisabled : '']
+                                .filter(Boolean)
+                                .join(' ')}
                               disabled={!usable}
+                              sfx="cursor"
                               onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
                             >
                               <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
@@ -2001,7 +2026,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                                   active.skillLevels?.[sid] ?? 1
                                 )}
                               </span>
-                            </button>
+                            </ActionButton>
                           ))}
                           {learnedSkillsList(active).length === 0 ? (
                             <div className={styles.empty}>学んでいるスキルがありません</div>
@@ -2009,21 +2034,24 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         </div>
                         <div className={styles.skillScrollHint}>← 横スクロール（2段）→</div>
                       </div>
-                      <button
-                        type="button"
+                      <ActionButton
+                        variant="secondary"
+                        size="small"
                         className={styles.menuBack}
+                        label="もどる"
+                        sfx="cancel"
                         onClick={() => setSkillMenu(false)}
-                      >
-                        もどる
-                      </button>
+                      />
                     </>
                   ) : itemMenu ? (
                     <div className={styles.skillList}>
                       {battleItems().map(({ id, remaining }) => (
-                        <button
-                          type="button"
+                        <ActionButton
+                          variant="default"
+                          size="small"
                           key={id}
                           className={styles.skillBtn}
+                          sfx="cursor"
                           onClick={() => assign(active.id, { kind: 'item', itemId: id })}
                         >
                           <span className={styles.skillTop}>
@@ -2036,18 +2064,19 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                             </span>
                           </span>
                           <span className={styles.skillDesc}>{ITEMS[id].description}</span>
-                        </button>
+                        </ActionButton>
                       ))}
                       {battleItems().length === 0 ? (
                         <div className={styles.empty}>使える道具がない</div>
                       ) : null}
-                      <button
-                        type="button"
+                      <ActionButton
+                        variant="secondary"
+                        size="small"
                         className={styles.menuBack}
+                        label="もどる"
+                        sfx="cancel"
                         onClick={() => setItemMenu(false)}
-                      >
-                        もどる
-                      </button>
+                      />
                     </div>
                   ) : unionSetup ? (
                     <div className={styles.skillList}>
@@ -2071,10 +2100,12 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       {aliveAllies
                         .filter((a) => a.id !== unionSetup.actorId)
                         .map((a) => (
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="default"
+                            size="small"
                             key={a.id}
                             className={styles.skillBtn}
+                            sfx="cursor"
                             onClick={() =>
                               reserveUnion(unionSetup.actorId, unionSetup.def, [
                                 unionSetup.actorId,
@@ -2086,18 +2117,19 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                               <span className={styles.skillName}>{a.name}</span>
                               <span className={styles.tp}>ゲージ {a.unionGauge}</span>
                             </span>
-                          </button>
+                          </ActionButton>
                         ))}
                       {aliveAllies.filter((a) => a.id !== unionSetup.actorId).length === 0 ? (
                         <div className={styles.empty}>協力できる味方がいない</div>
                       ) : null}
-                      <button
-                        type="button"
+                      <ActionButton
+                        variant="secondary"
+                        size="small"
                         className={styles.menuBack}
+                        label="もどる"
+                        sfx="cancel"
                         onClick={() => setUnionSetup(null)}
-                      >
-                        もどる
-                      </button>
+                      />
                     </div>
                   ) : (
                     <>
@@ -2118,57 +2150,60 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         );
                       })()}
                       <div className={styles.individualCmdRow1}>
-                        <button
-                          type="button"
+                        <ActionButton
+                          variant="primary"
+                          size="medium"
                           className={`${styles.menuBtn} ${styles.cmdPrimary}`}
+                          label="攻撃"
                           onClick={() => assign(active.id, { kind: 'attack' })}
-                        >
-                          攻撃
-                        </button>
-                        <button
-                          type="button"
+                        />
+                        <ActionButton
+                          variant="secondary"
+                          size="medium"
                           className={`${styles.menuBtn} ${styles.cmdSub}`}
                           disabled={learnedSkillsList(active).length === 0}
+                          label="スキル"
+                          sfx="cursor"
                           onClick={() => setSkillMenu(true)}
-                        >
-                          スキル
-                        </button>
+                        />
                       </div>
                       <div className={styles.individualCmdRow2}>
-                        <button
-                          type="button"
+                        <ActionButton
+                          variant="secondary"
+                          size="medium"
                           className={`${styles.menuBtn} ${styles.cmdTertiary}`}
                           disabled={battleItems().length === 0}
+                          label="どうぐ"
+                          sfx="cursor"
                           onClick={() => setItemMenu(true)}
-                        >
-                          どうぐ
-                        </button>
-                        <button
-                          type="button"
+                        />
+                        <ActionButton
+                          variant="secondary"
+                          size="medium"
                           className={`${styles.menuBtn} ${styles.cmdTertiary}`}
+                          label="防御"
                           onClick={() => assign(active.id, { kind: 'guard' })}
-                        >
-                          防御
-                        </button>
-                        <button
-                          type="button"
+                        />
+                        <ActionButton
+                          variant="secondary"
+                          size="medium"
                           className={`${styles.menuBtn} ${styles.cmdBack}`}
+                          label="もどる"
+                          sfx="cancel"
                           onClick={() => setUiMode({ kind: 'global' })}
-                        >
-                          もどる
-                        </button>
+                        />
                       </div>
                       {(() => {
                         const def = unionSkillOf(active);
                         if (!def || active.unionGauge < 100 || unionCmd) return null;
                         return (
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="primary"
+                            size="medium"
                             className={`${styles.menuBtn} ${styles.unionBtn}`}
+                            label="⚡ユニオン"
                             onClick={() => onUnionPressed(active, def)}
-                          >
-                            ⚡ユニオン
-                          </button>
+                          />
                         );
                       })()}
                     </>
@@ -2176,21 +2211,22 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                 </>
               ) : (
                 <div className={styles.execRow}>
-                  <button
-                    type="button"
+                  <ActionButton
+                    variant="secondary"
+                    size="medium"
                     className={styles.redo}
+                    label="やり直す"
+                    sfx="cancel"
                     onClick={resetInput}
-                  >
-                    やり直す
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <ActionButton
+                    variant="primary"
+                    size="large"
                     className={styles.primary}
                     disabled={!allAssigned}
+                    label="実行"
                     onClick={handleResolve}
-                  >
-                    実行
-                  </button>
+                  />
                 </div>
               )}
             </>
@@ -2221,26 +2257,27 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       </div>
                       <div className={styles.strategyButtons}>
                         {STRATEGY_LIST.map((s) => (
-                          <button
+                          <ActionButton
                             key={s.id}
-                            type="button"
+                            variant="tab"
                             className={cur === s.id ? styles.strategyOn : styles.strategyOff}
+                            label={s.label}
+                            sfx="cursor"
                             onClick={() => changeStrategy(a.id, s.id)}
-                          >
-                            {s.label}
-                          </button>
+                          />
                         ))}
                       </div>
                     </div>
                   );
                 })}
-                <button
-                  type="button"
+                <ActionButton
+                  variant="secondary"
+                  size="small"
                   className={styles.menuBack}
+                  label="もどる"
+                  sfx="cancel"
                   onClick={() => setUiMode({ kind: 'global' })}
-                >
-                  もどる
-                </button>
+                />
               </div>
             </>
           )}
@@ -2259,14 +2296,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           >
             <div className={styles.logOverlayHeader}>
               <span>❦ 戦闘ログ</span>
-              <button
-                type="button"
+              <ActionButton
+                variant="icon"
                 className={styles.logOverlayClose}
+                label="✕"
+                sfx={null}
+                ariaLabel="戦闘ログを閉じる"
                 onClick={() => setLogOpen(false)}
-                aria-label="戦闘ログを閉じる"
-              >
-                ✕
-              </button>
+              />
             </div>
             <div className={styles.logOverlayBody}>
               {(() => {
