@@ -238,14 +238,14 @@ $obsidian-info-blue: #a9c3d8;
 }
 
 @keyframes splatA {
-  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  0%   { transform: translateY(0) scale(0.6); opacity: 1; }
   20%  { transform: translateY(-8px) scale(1.15); opacity: 1; }
   80%  { transform: translateY(-22px) scale(1); opacity: 1; }
   100% { transform: translateY(-36px) scale(0.9); opacity: 0; }
 }
 
 @keyframes splatB {
-  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  0%   { transform: translateY(0) scale(0.6); opacity: 1; }
   20%  { transform: translateY(-6px) scale(1.1); opacity: 1; }
   80%  { transform: translateY(-18px) scale(0.95); opacity: 1; }
   100% { transform: translateY(-30px) scale(0.85); opacity: 0; }

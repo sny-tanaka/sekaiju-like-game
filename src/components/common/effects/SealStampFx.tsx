@@ -14,6 +14,11 @@ type Props =
       fadeOut?: boolean;
       /** true のとき SE を鳴らさない（EffectsGallery プレビュー用） */
       silent?: boolean;
+      /**
+       * true のとき position:absolute で親要素に収める（EffectsGallery セル内プレビュー用）。
+       * false/省略時は position:fixed で viewport 全体を覆う（本番動作）。
+       */
+      inline?: boolean;
     }
   | {
       variant: 'seal';
@@ -21,6 +26,11 @@ type Props =
       caption?: string;
       /** true のとき SE を鳴らさない（EffectsGallery プレビュー用） */
       silent?: boolean;
+      /**
+       * true のとき position:absolute で親要素に収める（EffectsGallery セル内プレビュー用）。
+       * false/省略時は position:fixed で viewport 全体を覆う（本番動作）。
+       */
+      inline?: boolean;
     };
 
 /**
@@ -32,7 +42,7 @@ type Props =
  */
 export const SealStampFx = (props: Props) => {
   const play = useSfx();
-  const { variant, silent = false } = props;
+  const { variant, silent = false, inline = false } = props;
 
   useEffect(() => {
     if (silent) return;
@@ -49,7 +59,7 @@ export const SealStampFx = (props: Props) => {
     const { caption = '戦闘', fadeOut = false } = props;
     return (
       <div
-        className={styles.overlay}
+        className={`${styles.overlay}${inline ? ` ${styles.inline}` : ''}`}
         aria-hidden="true"
       >
         <div className={fadeOut ? styles.stampTextOut : styles.stampText}>{caption}</div>
@@ -61,7 +71,7 @@ export const SealStampFx = (props: Props) => {
   const { caption } = props;
   return (
     <div
-      className={styles.sealOverlay}
+      className={`${styles.sealOverlay}${inline ? ` ${styles.inline}` : ''}`}
       aria-hidden="true"
     >
       <div className={styles.seal}>

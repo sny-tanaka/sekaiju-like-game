@@ -575,6 +575,7 @@ const CATEGORIES: Category[] = [
             <SealStampFx
               variant="seal"
               silent
+              inline
             />
           </div>
         ),
