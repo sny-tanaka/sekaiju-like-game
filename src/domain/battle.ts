@@ -28,10 +28,12 @@ import type {
   SkillEvent,
 } from '@/domain/battleEvent';
 import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
+import { initEncounter } from '@/domain/encounter';
 import { enemyLapForDepth } from '@/domain/encounterTable';
 import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computePassiveMods } from '@/domain/passives';
+import { createRng } from '@/domain/rng';
 import { computeSkillTpCost } from '@/domain/skillCost';
 import { computeBaseStats } from '@/domain/stats';
 import type {
@@ -1556,11 +1558,27 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     .filter((s) => !s.isDown && s.summonKind && SUMMONS[s.summonKind]?.persistsAfterBattle)
     .map((s) => ({ summonKind: s.summonKind as SummonKind, ownerId: s.ownerId ?? '', hp: s.hp }));
 
+  // 戦闘後エンカウント再初期化: levelDecay を反映した新しい stepsUntilEncounter を設定する。
+  // これにより過レベル時のエンカウント率低下（減衰）が戦闘後にも正しく反映される。
+  const postBattleAvgLv = partyAverageLevel(save, state);
+  const postBattleDecay = levelDecay(postBattleAvgLv, save.diveState.depth);
+  const postBattleRng = createRng(
+    (save.masterSeed ^ (save.diveState.depth * 0x9e3779b9) ^ (state.turn * 0x6c62272e)) >>> 0
+  );
+  const nextStepsUntilEncounter = initEncounter(postBattleRng, {
+    encounterRateDecay: postBattleDecay,
+  });
+
   let next: SaveData = {
     ...save,
     guild: { ...save.guild, members, gold, bestiary },
     bestiary,
-    diveState: { ...save.diveState, party, persistentSummons },
+    diveState: {
+      ...save.diveState,
+      party,
+      persistentSummons,
+      encounter: { stepsUntilEncounter: nextStepsUntilEncounter },
+    },
   };
 
   // 倉庫: 戦闘で使ったアイテムを減算（勝敗問わず）
