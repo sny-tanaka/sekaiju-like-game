@@ -308,6 +308,9 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   const [advancingActorId, setAdvancingActorId] = useState<string | null>(null);
   // 各 iter での「行動完了済み」フラグ（複数 Fx が同時に onDone を呼んでも 1 回だけ実行）
   const actionCompletedRef = useRef(false);
+  // fxDone / loggerDone: 両方 true になってから tryComplete を実行（設計書 §2.5）
+  const fxDoneRef = useRef(false);
+  const loggerDoneRef = useRef(true);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -442,9 +445,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     }
   }, [state, introFx, runTurn]);
 
-  // tryComplete: Fx の onDone から呼ばれる。後退 + 次イベントへの進行を担う。
-  // actionCompletedRef で重複実行を防ぐ（複数 Fx 同時 onDone でも 1 回のみ）
+  // tryComplete: fxDoneRef + loggerDoneRef の両方が true のときのみ次イベントへ進む（設計書 §2.5）。
+  // actionCompletedRef で重複実行を防ぐ（複数 Fx 同時 onDone でも 1 回のみ）。
   const tryComplete = useCallback(() => {
+    if (!fxDoneRef.current || !loggerDoneRef.current) return; // 両方完了を待つ
     if (actionCompletedRef.current) return;
     actionCompletedRef.current = true;
     setAdvancingActorId(null); // 後退開始（CSS transition 0.18s）
@@ -453,6 +457,19 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       setAnim((prev) => (prev ? { ...prev, eventIdx: prev.eventIdx + 1 } : null));
     }, 200);
   }, []);
+
+  // onFxDone: 各 Fx の onDone callback から呼ぶ共通 helper
+  const onFxDone = useCallback(() => {
+    fxDoneRef.current = true;
+    tryComplete();
+  }, [tryComplete]);
+
+  // logger isIdle 監視: ログ再生完了で loggerDoneRef を更新して tryComplete を試みる
+  // battleLogger.isIdle だけを deps に取り出すことで、battleLogger オブジェクト自体（毎 render で新オブジェクト）を deps に含めるのを回避する
+  useEffect(() => {
+    loggerDoneRef.current = battleLogger.isIdle;
+    if (battleLogger.isIdle) tryComplete();
+  }, [battleLogger.isIdle, tryComplete]);
 
   // 逐次再生（Step 5）: events を1件ずつ再生する。
   // mountFxFor: event 種別に応じて Fx state を発火する
@@ -474,15 +491,16 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
 
     const event = events[eventIdx];
 
-    // 新 iter 開始: 行動完了フラグを reset
+    // 新 iter 開始: 行動完了フラグ / fx / logger ドーン フラグを reset
     actionCompletedRef.current = false;
+    fxDoneRef.current = false;
+    loggerDoneRef.current = battleLogger.isIdle;
 
-    // ログ追記（pre テキスト）
-    if (state) {
-      const { pre, post } = fmt(event, state);
-      if (pre) battleLogger.append(pre);
-      for (const p of post) battleLogger.append(p);
-    }
+    // ログ追記（pre テキスト）— appendLog は stable な useCallback なので deps に入れても安全。
+    // battleLogger オブジェクト自体は deps に入れない（useBattleLogger が毎 render 新オブジェクトを返すため deps に含めると無限ループになる）
+    const appendLog = battleLogger.append;
+    const { pre, post } = fmt(event, state);
+    if (pre) appendLog(pre);
 
     // アクター ID の解決（前進アニメ用）
     const currentActorId = 'actorId' in event ? (event as { actorId: string }).actorId : undefined;
@@ -491,6 +509,9 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     // DAMAGE_AT (200ms) 後: HP 差分から hits/flashIds を計算して Fx を発火
     const DAMAGE_AT = 200;
     const tDmg = setTimeout(() => {
+      // post テキストを append（Fx マウントと同時に表示する）
+      for (const p of post) appendLog(p);
+
       // snapshotAfter（ダメージ適用後）と前 snapshot（適用前）の差分から hits を計算
       const cur = event.snapshotAfter;
       const prevSnap =
@@ -591,14 +612,18 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       // Fx 無し行動（防御・待機など）のフォールバック完了タイマー
       const hasAnyFx = nextHits.size > 0 || didSetBuffOrDebuff;
       if (!hasAnyFx) {
-        setTimeout(() => tryComplete(), 400);
+        setTimeout(() => {
+          fxDoneRef.current = true;
+          tryComplete();
+        }, 400);
       }
     }, DAMAGE_AT);
 
     return () => {
       clearTimeout(tDmg);
     };
-  }, [state, anim, play, tryComplete, battleLogger]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- battleLogger を deps に入れると useBattleLogger が毎 render 新オブジェクトを返すため無限ループになる。appendLog（stable useCallback）は effect 内で変数に束縛して使う
+  }, [state, anim, play, tryComplete]);
 
   // リザルト用の経験値・レベルアップ結果（issue #18）。勝利時のみ算出。
   const expResults = useMemo(
@@ -1082,7 +1107,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     const isAllySelectable = isAllyTargeting && (reviveTargeting ? a.isDown : !a.isDown);
     return (
       <ActionButton
-        variant="card"
+        variant="default"
         key={a.id}
         className={[
           styles.card,
@@ -1133,7 +1158,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                     next.delete(a.id);
                     return next;
                   });
-                  tryComplete();
+                  onFxDone();
                 }}
               />
             );
@@ -1148,7 +1173,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               n.delete(a.id);
               return n;
             });
-            tryComplete();
+            onFxDone();
           }}
         />
         {/* DebuffFx — 状態異常付与演出（赤フラッシュ 0.4s + SE） */}
@@ -1161,7 +1186,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               n.delete(a.id);
               return n;
             });
-            tryComplete();
+            onFxDone();
           }}
         />
         {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
@@ -1337,7 +1362,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             const isEnemyAdvancing = advancingActorId === e.id;
             return (
               <ActionButton
-                variant="card"
+                variant="default"
                 key={e.id}
                 className={[
                   styles.enemy,
@@ -1371,7 +1396,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                             next.delete(e.id);
                             return next;
                           });
-                          tryComplete();
+                          onFxDone();
                         }}
                       />
                     );
@@ -1386,7 +1411,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       n.delete(e.id);
                       return n;
                     });
-                    tryComplete();
+                    onFxDone();
                   }}
                 />
                 {/* DebuffFx — 敵状態異常付与演出（赤フラッシュ 0.4s + SE） */}
@@ -1399,7 +1424,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                       n.delete(e.id);
                       return n;
                     });
-                    tryComplete();
+                    onFxDone();
                   }}
                 />
                 {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}

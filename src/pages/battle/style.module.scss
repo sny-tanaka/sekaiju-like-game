@@ -139,10 +139,16 @@
   max-width: 200px;
   padding: 8px;
   border-radius: 0;
+  border: 0.75px solid var.$rule; // ActionButton variant="default" の base に合わせて明示（Phase 2 前の見た目復活）
+  background-color: var.$parchment-card; // 同上
   box-shadow: 0 1px 3px var.$shadow-ink;
   // (C) disabled 継承を打ち消す: ブラウザのデフォルト（灰色）に上書きされないよう明示
   color: var.$ink;
   transition: transform 0.18s ease-out; // state 駆動の前進/後退アニメ用
+  // ActionButton variant="default" の ::before（左縦帯）は戦闘カードでは不要
+  &::before {
+    display: none;
+  }
 }
 // (C) disabled 状態でも色とコントラストを維持する（.down の opacity:0.4 は維持）
 .enemy:disabled {
@@ -428,9 +434,15 @@
   gap: 2px;
   padding: 5px;
   border-radius: 0;
+  border: 0.75px solid var.$rule; // ActionButton variant="default" の base に合わせて明示（Phase 2 前の見た目復活）
+  background-color: var.$parchment-card; // 同上
   box-shadow: 0 1px 3px var.$shadow-ink;
   text-align: left;
   transition: transform 0.18s ease-out; // state 駆動の前進/後退アニメ用
+  // ActionButton variant="default" の ::before（左縦帯）は戦闘カードでは不要
+  &::before {
+    display: none;
+  }
 }
 
 // ユニオン満タン U! バッジ（職業バッジの左に配置）
