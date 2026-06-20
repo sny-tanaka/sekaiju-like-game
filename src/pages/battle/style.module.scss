@@ -1,15 +1,6 @@
 @use 'variables' as var;
 
 // keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
-@keyframes shakeA {
-  0%   { transform: translateX(0); }
-  20%  { transform: translateX(-6px); }
-  40%  { transform: translateX(5px); }
-  60%  { transform: translateX(-4px); }
-  80%  { transform: translateX(3px); }
-  100% { transform: translateX(0); }
-}
-
 @keyframes barShimmer {
   0%   { background-position: 0 0; }
   100% { background-position: 40px 0; }
@@ -32,7 +23,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  @keyframes shakeA          { 0%, 100% { transform: none; } }
   @keyframes barShimmer      { 0%, 100% { background-position: 0 0; } }
   @keyframes encPulse        { 0%, 100% { opacity: 1; } }
   @keyframes dissolveE       { 0%, 100% { opacity: 0; transform: none; filter: none; } }
@@ -628,29 +618,6 @@
   white-space: nowrap;
 }
 
-// 被弾カードの点滅（issue #18）— 赤値を $vermilion に
-.flash {
-  animation: cardFlash 0.42s ease-out;
-}
-
-@keyframes cardFlash {
-  0% {
-    background-color: rgba(178, 60, 48, 0.22);
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(-3px);
-  }
-  40% {
-    transform: translateX(3px);
-  }
-  60% {
-    transform: translateX(-2px);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
 
 // ---- 召喚体（最前列） ----
 .summons {
@@ -1600,12 +1567,6 @@
 
 // ---- Step 3: 攻撃 FX レイヤー ----
 
-// 被弾 FX の shakeA を .flash に追加
-.flash {
-  animation: shakeA 0.24s ease, cardFlash 0.42s ease-out;
-  animation-fill-mode: both;
-}
-
 // 撃破時の dissolveE
 .dissolving {
   animation: dissolveE 0.5s ease-out forwards;
@@ -2040,34 +2001,6 @@
   animation: runeSpin 1.4s ease-in-out infinite;
 }
 
-// ---- D. hitFlash — 被弾時の赤 flash（enemy card 用） ----
-@keyframes hitFlash {
-  0%, 100% { background-color: rgba(212, 103, 79, 0); }
-  30%       { background-color: rgba(212, 103, 79, 0.4); }
-}
-
-.hitFlashOverlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 8;
-  border-radius: inherit;
-  animation: hitFlash 1s ease-in-out forwards;
-}
-
-// ---- E. shakeB — 敵カードの縦揺れ（shakeA は横揺れ、B は縦方向）----
-@keyframes shakeB {
-  0%, 100% { transform: translateY(0); }
-  20%       { transform: translateY(-5px) rotate(-0.5deg); }
-  40%       { transform: translateY(4px) rotate(0.5deg); }
-  60%       { transform: translateY(-3px); }
-  80%       { transform: translateY(2px); }
-}
-
-.shakeBOverlay {
-  animation: shakeB 0.28s ease both;
-}
-
 // ---- F/G/H. 状態異常エフェクト: poisonWisp / sparkZap / ailDrift ----
 
 // F. poisonWisp — 毒/呪い バッジ浮遊 ☠
@@ -2201,8 +2134,6 @@
   .healRisePop,
   .summonNew,
   .runeCasting,
-  .hitFlashOverlay,
-  .shakeBOverlay,
   .ailBadgePoison,
   .ailBadgeCurse,
   .ailBadgeParalysis,

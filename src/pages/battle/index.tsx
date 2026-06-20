@@ -276,8 +276,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   const [anim, setAnim] = useState<Anim | null>(null);
   // TP の表示基準値（anim 再生中はターン開始時の実値を保持し、anim が null になったら更新）。
   const tpBaseRef = useRef<Record<string, number>>({});
-  // ダメージを受けたカードの点滅対象 ID（issue #18）。
-  const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
   // hits: damage/heal/crit ヒット演出の Map（HitFx で描画）。gold は inkSplatters で別管理。
   type Hit = {
     value: number | string;
@@ -449,7 +447,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       setUnionCmd(null);
       setUnionSetup(null);
       setActiveId(null);
-      setFlashIds(new Set());
       setHits(new Map());
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
@@ -541,7 +538,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     if (eventIdx >= events.length) {
       const t = setTimeout(() => {
         setAnim(null);
-        setFlashIds(new Set());
         setHits(new Map());
         setInkSplatters(new Map());
         setAdvancingActorId(null);
@@ -574,7 +570,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     const currentActorId = 'actorId' in event ? (event as { actorId: string }).actorId : undefined;
     setAdvancingActorId(currentActorId ?? null);
 
-    // DAMAGE_AT (200ms) 後: HP 差分から hits/flashIds を計算して Fx を発火
+    // DAMAGE_AT (200ms) 後: HP 差分から hits を計算して Fx を発火
     const DAMAGE_AT = 200;
     const tDmg = setTimeout(() => {
       // post テキストを append（Fx マウントと同時に表示する）
@@ -585,14 +581,12 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       const prevSnap =
         eventIdx > 0 ? (events[eventIdx - 1].snapshotAfter ?? baseSnapshot) : baseSnapshot;
 
-      const fl = new Set<string>();
       const nextHits = new Map<string, Hit>();
       if (cur) {
         for (const id of Object.keys(cur)) {
           const p = prevSnap?.[id];
           if (!p) continue;
           if (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown)) {
-            fl.add(id);
             const dmg = Math.round(p.hp - cur[id].hp);
             // event から属性を取得
             const element =
@@ -623,7 +617,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           }
         }
       }
-      setFlashIds(fl);
       setHits(nextHits);
 
       // mountFxFor: event 種別に応じた Fx 発火
@@ -1209,7 +1202,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           isAllySelectable ? styles.allySelectable : activeId === a.id ? styles.cardActive : '',
           isAllyTargeted ? styles.allyTargeted : '',
           commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
-          flashIds.has(a.id) ? styles.flash : '',
           fleeActive ? dashAwayClass : '',
           isAdvancing ? styles.cardAdvancing : '',
         ]
@@ -1484,7 +1476,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   styles.enemy,
                   d.isDown ? styles.down + ' ' + styles.dissolving : '',
                   isTargeted ? styles.targeted : '',
-                  flashIds.has(e.id) ? styles.flash + ' ' + styles.shakeBOverlay : '',
                   isEnemyAdvancing ? styles.enemyAdvancing : '',
                 ]
                   .filter(Boolean)
@@ -1522,13 +1513,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   visible={debuffFxMap.has(e.id)}
                   onDone={onFxDone}
                 />
-                {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}
-                {flashIds.has(e.id) && (
-                  <div
-                    className={styles.hitFlashOverlay}
-                    aria-hidden="true"
-                  />
-                )}
                 {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
                 {inkSplatters.has(e.id) &&
                   (() => {
@@ -1663,7 +1647,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               return (
                 <div
                   key={s.id}
-                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''} ${newSummonIds.has(s.id) ? summonAppearClass : ''}`}
+                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${newSummonIds.has(s.id) ? summonAppearClass : ''}`}
                 >
                   <span className={styles.summonName}>🐾 {s.name}</span>
                   <StatBar
@@ -1704,7 +1688,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             sfx={null}
             onClick={() => {
               setAnim(null);
-              setFlashIds(new Set());
               setHits(new Map());
               setAdvancingActorId(null);
             }}
