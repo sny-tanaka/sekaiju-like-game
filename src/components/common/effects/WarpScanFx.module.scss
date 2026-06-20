@@ -1,0 +1,37 @@
+// WarpScanFx.module.scss
+// ワープスキャン演出共通コンポーネントのスタイル。
+// town 画面のダイブ実行時にスキャン線が縦走査する演出。
+// keyframe は _obsidian.scss の obsidian-warpScan（global）を使用。
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  pointer-events: none;
+  overflow: hidden;
+  background: rgba(7, 8, 9, 0.78);
+}
+
+.scanLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 18%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(111, 159, 216, 0.18) 30%,
+    rgba(111, 159, 216, 0.38) 50%,
+    rgba(111, 159, 216, 0.18) 70%,
+    transparent 100%
+  );
+  animation: obsidian-warpScan 0.9s linear forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scanLine {
+    animation: none;
+    opacity: 0;
+  }
+}

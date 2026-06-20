@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { CoinPopFx } from '@/components/common/effects/CoinPopFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ARMOR_TYPE_LABEL, EQUIP_SLOT_LABEL, WEAPON_TYPE_LABEL } from '@/data/equipLabels';
@@ -590,14 +591,7 @@ export const Page = () => {
               )}
             </div>
             {/* coinPop 演出（buy 時のみ）— 5c */}
-            {pending.kind === 'buy' && (
-              <div
-                className={styles.coinPopWrap}
-                aria-hidden="true"
-              >
-                <span className={styles.coinPop}>🪙</span>
-              </div>
-            )}
+            <CoinPopFx visible={pending.kind === 'buy'} />
             {/* 数量ステッパー（sellEquip は数量1固定なので非表示）。 */}
             {pending.kind !== 'sellEquip' && (
               <div className={styles.stepperRow}>

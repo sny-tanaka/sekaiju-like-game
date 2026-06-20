@@ -3,6 +3,8 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { SealStampFx } from '@/components/common/effects/SealStampFx';
+import { WarpScanFx } from '@/components/common/effects/WarpScanFx';
 import { SoundSettings } from '@/components/common/SoundSettings';
 import { startDive } from '@/domain/dive';
 import { useGameState } from '@/store/gameState';
@@ -380,28 +382,13 @@ export const Page = () => {
         </div>
       ) : null}
 
-      {warpScanActive ? (
-        <div
-          className={styles.warpScanOverlay}
-          aria-hidden="true"
-        >
-          <div className={styles.warpScanLine} />
-        </div>
-      ) : null}
+      <WarpScanFx visible={warpScanActive} />
 
       {sealActive ? (
-        <div
-          className={styles.diveSealOverlay}
-          aria-hidden="true"
-        >
-          <div className={styles.diveSeal}>
-            <div className={styles.diveSealOuterRing} />
-            <div className={styles.diveSealInnerRing} />
-            <div className={styles.diveSealRadial} />
-            <div className={styles.diveSealDiamond} />
-          </div>
-          <div className={styles.diveSealCaption}>SEALING… {sealingDepth}F へ</div>
-        </div>
+        <SealStampFx
+          variant="seal"
+          caption={`SEALING… ${sealingDepth}F へ`}
+        />
       ) : null}
     </div>
   );

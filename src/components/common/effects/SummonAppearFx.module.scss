@@ -1,0 +1,19 @@
+// SummonAppearFx.module.scss
+// 召喚体登場エフェクト共通コンポーネントのスタイル。
+// battle 画面で召喚体が新規登場した際に味方カードへ適用。
+
+@keyframes summonAppearLocal {
+  0%   { transform: scale(0.3) translateY(8px); opacity: 0; }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.summonAppear {
+  animation: summonAppearLocal 0.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summonAppear {
+    animation: none;
+  }
+}

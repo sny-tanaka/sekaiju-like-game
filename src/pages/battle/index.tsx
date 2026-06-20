@@ -7,7 +7,12 @@ import { useSfx } from '@/audio/useSfx';
 import { AttackFx } from '@/components/common/AttackFx/AttackFx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
-import { DamagePop } from '@/components/common/DamagePop/DamagePop';
+import { dashAwayClass } from '@/components/common/effects/DashAwayFx';
+import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
+import { HealPop } from '@/components/common/effects/HealPop';
+import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
+import { SealStampFx } from '@/components/common/effects/SealStampFx';
+import { summonAppearClass } from '@/components/common/effects/SummonAppearFx';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
@@ -1028,7 +1033,7 @@ export const Page = ({
           isAllyTargeted ? styles.allyTargeted : '',
           commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
           flashIds.has(a.id) ? styles.flash : '',
-          fleeActive ? styles.dashAwayCard : '',
+          fleeActive ? dashAwayClass : '',
           isAdvancing ? styles.cardAdvancing : '',
         ].join(' ')}
         disabled={
@@ -1048,55 +1053,36 @@ export const Page = ({
           }
         }}
       >
-        {/* DamagePop — 被弾/回復時に重ね描画（splatA/splatB keyframe 統一） */}
+        {/* InkSplatter — 被弾/回復時に重ね描画（Phase 2） */}
         {inkSplatters.has(a.id) &&
           (() => {
             const splat = inkSplatters.get(a.id)!;
-            // gold は InkSplatter（墨だまり演出）のまま残す
-            if (splat.variant === 'gold') {
-              return (
-                <div
-                  className={styles.inkOverlay}
-                  aria-hidden="true"
-                >
-                  <InkSplatter
-                    value={splat.value}
-                    variant="gold"
-                    size={64}
-                    onDone={() =>
-                      setInkSplatters((prev) => {
-                        const next = new Map(prev);
-                        next.delete(a.id);
-                        return next;
-                      })
-                    }
-                  />
-                </div>
-              );
-            }
             return (
-              <DamagePop
-                value={splat.variant === 'heal' ? `+${splat.value}` : splat.value}
-                variant={splat.variant}
-                onDone={() =>
-                  setInkSplatters((prev) => {
-                    const next = new Map(prev);
-                    next.delete(a.id);
-                    return next;
-                  })
-                }
-              />
+              <div
+                className={styles.inkOverlay}
+                aria-hidden="true"
+              >
+                <InkSplatter
+                  value={splat.value}
+                  variant={splat.variant}
+                  size={64}
+                  onDone={() =>
+                    setInkSplatters((prev) => {
+                      const next = new Map(prev);
+                      next.delete(a.id);
+                      return next;
+                    })
+                  }
+                />
+              </div>
             );
           })()}
-        {/* C. runeSpin — 魔法スキル詠唱中の ✦ オーバーレイ */}
-        {isCasting(a) && !anim && (
-          <div
-            className={styles.runeCasting}
-            aria-hidden="true"
-          >
-            ✦
-          </div>
+        {/* A. healRise — 回復値ポップ（HP回復時のみ） */}
+        {inkSplatters.has(a.id) && inkSplatters.get(a.id)!.variant === 'heal' && (
+          <HealPop value={Number(inkSplatters.get(a.id)!.value)} />
         )}
+        {/* C. runeSpin — 魔法スキル詠唱中の ✦ オーバーレイ */}
+        <RuneSpinFx visible={isCasting(a) && !anim} />
         {/* 職業バッジ（右上に固定） */}
         {!a.isSummon ? <span className={styles.jobBadge}>{classInitialOf(a)}</span> : null}
         {/* ユニオン満タン U! バッジ */}
@@ -1267,44 +1253,30 @@ export const Page = ({
                     aria-hidden="true"
                   />
                 )}
-                {/* DamagePop — 敵への命中時（splatA/splatB keyframe 統一） */}
+                {/* InkSplatter — 敵への命中時（Phase 2） */}
                 {inkSplatters.has(e.id) &&
                   (() => {
                     const splat = inkSplatters.get(e.id)!;
-                    // gold は InkSplatter（墨だまり演出）のまま残す
-                    if (splat.variant === 'gold') {
-                      return (
-                        <div
-                          className={styles.inkOverlay}
-                          aria-hidden="true"
-                        >
-                          <InkSplatter
-                            value={splat.value}
-                            variant="gold"
-                            size={56}
-                            onDone={() =>
-                              setInkSplatters((prev) => {
-                                const next = new Map(prev);
-                                next.delete(e.id);
-                                return next;
-                              })
-                            }
-                          />
-                        </div>
-                      );
-                    }
+                    const logText = state.log[anim?.revealed ? anim.revealed - 1 : 0]?.text ?? '';
+                    const isCrit = logText.includes('（会心）');
                     return (
-                      <DamagePop
-                        value={splat.variant === 'heal' ? `+${splat.value}` : splat.value}
-                        variant={splat.variant}
-                        onDone={() =>
-                          setInkSplatters((prev) => {
-                            const next = new Map(prev);
-                            next.delete(e.id);
-                            return next;
-                          })
-                        }
-                      />
+                      <div
+                        className={`${styles.inkOverlay} ${isCrit ? styles.inkCrit : ''}`}
+                        aria-hidden="true"
+                      >
+                        <InkSplatter
+                          value={splat.value}
+                          variant={splat.variant}
+                          size={56}
+                          onDone={() =>
+                            setInkSplatters((prev) => {
+                              const next = new Map(prev);
+                              next.delete(e.id);
+                              return next;
+                            })
+                          }
+                        />
+                      </div>
                     );
                   })()}
                 {isLarge ? (
@@ -1416,7 +1388,7 @@ export const Page = ({
               return (
                 <div
                   key={s.id}
-                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''} ${newSummonIds.has(s.id) ? styles.summonNew : ''}`}
+                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''} ${newSummonIds.has(s.id) ? summonAppearClass : ''}`}
                 >
                   <span className={styles.summonName}>🐾 {s.name}</span>
                   <StatBar
@@ -2185,33 +2157,15 @@ export const Page = ({
 
       {/* I. sealStamp — 戦闘開始時のシール演出 */}
       {showSeal && (
-        <div
-          className={styles.sealStampOverlay}
-          aria-hidden="true"
-        >
-          <div className={sealOut ? styles.sealStampInnerOut : styles.sealStampInner}>戦闘</div>
-        </div>
+        <SealStampFx
+          variant="stamp"
+          caption="戦闘"
+          fadeOut={sealOut}
+        />
       )}
 
       {/* K. dustRise — 逃走時の足元砂塵（fled フェーズのみ） */}
-      {fleeActive && (
-        <div
-          className={styles.dustContainer}
-          aria-hidden="true"
-        >
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className={styles.dustParticle}
-              style={{
-                left: `${20 + i * 30}px`,
-                bottom: `${10 + (i % 3) * 12}px`,
-                animationDelay: `${i * 0.18}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
+      <DustRiseFx visible={fleeActive} />
 
       {/* エンカウント/戦闘終了の暗転エフェクト（issue #18） */}
       {introFx ? <div className={styles.fxIntro} /> : null}

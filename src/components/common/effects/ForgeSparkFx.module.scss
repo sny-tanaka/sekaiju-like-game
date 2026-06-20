@@ -1,0 +1,39 @@
+// ForgeSparkFx.module.scss
+// 鍛冶火花エフェクト共通コンポーネントのスタイル。
+// forge 画面の強化確認ダイアログで ✦ が3箇所スパークする演出。
+// keyframe は _obsidian.scss の forgeSpark（global）を使用。
+
+.spark1 {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  font-size: 16px;
+  color: var(--gold, #c9a86a);
+  animation: forgeSpark 1.3s ease-in-out infinite;
+}
+
+.spark2 {
+  position: absolute;
+  top: 8px;
+  right: -8px;
+  font-size: 13px;
+  color: var(--gold, #c9a86a);
+  animation: forgeSpark 1.3s ease-in-out 0.3s infinite;
+}
+
+.spark3 {
+  position: absolute;
+  bottom: -4px;
+  left: 14px;
+  font-size: 14px;
+  color: var(--gold, #c9a86a);
+  animation: forgeSpark 1.3s ease-in-out 0.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark1,
+  .spark2,
+  .spark3 {
+    animation: none;
+  }
+}

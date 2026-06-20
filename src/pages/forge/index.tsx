@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { FORGE } from '@/data/balance';
@@ -425,9 +426,10 @@ export const Page = () => {
                       size="md"
                     />
                   </div>
-                  <span className={styles.spark1}>✦</span>
-                  <span className={styles.spark2}>✦</span>
-                  <span className={styles.spark3}>✦</span>
+                  <ForgeSparkFx
+                    visible
+                    count={3}
+                  />
                 </div>
 
                 {/* 装備名 */}

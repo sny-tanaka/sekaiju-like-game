@@ -12,7 +12,15 @@ import styles from './EffectsGallery.module.scss';
 import './EffectsGallery.keyframes.css';
 
 import { AttackFx } from '@/components/common/AttackFx/AttackFx';
-import { DamagePop } from '@/components/common/DamagePop/DamagePop';
+import { CoinPopFx } from '@/components/common/effects/CoinPopFx';
+import { DashAwayFx } from '@/components/common/effects/DashAwayFx';
+import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
+import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
+import { HealPop } from '@/components/common/effects/HealPop';
+import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
+import { SealStampFx } from '@/components/common/effects/SealStampFx';
+import { SummonAppearFx } from '@/components/common/effects/SummonAppearFx';
+import { WarpScanFx } from '@/components/common/effects/WarpScanFx';
 
 interface EffectDef {
   name: string;
@@ -257,30 +265,10 @@ const CATEGORIES: Category[] = [
       {
         name: 'warpScan',
         desc: 'ダイブ画面スキャン線（translateY -100%→360%）',
-        // モック: @keyframes 定義のみで本文中に実使用箇所未確認。
-        //         ダイブ/ワープ演出の縦走査ライン。
+        // 共通コンポーネント WarpScanFx を使用（town ダイブ実行時と同一 DOM）
         preview: (
-          <div
-            style={{
-              position: 'relative',
-              width: 80,
-              height: 60,
-              overflow: 'hidden',
-              background: '#070809',
-              borderRadius: 3,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                height: 2,
-                background: 'rgba(93,200,180,.7)',
-                boxShadow: '0 0 6px rgba(93,200,180,.5)',
-                animation: anim('warpScan', '1.8s', 'linear'),
-              }}
-            />
+          <div style={{ position: 'relative', width: 80, height: 60 }}>
+            <WarpScanFx visible />
           </div>
         ),
       },
@@ -376,35 +364,10 @@ const CATEGORIES: Category[] = [
       {
         name: 'dustRise',
         desc: '逃走時の砂埃（translate 0→-26px,-12px、scale .5→1.3）',
-        // モック: width:10px; height:10px; border-radius:50%; background:rgba(180,170,150,.4)
-        //         position:absolute; 逃走成功画面の下部に複数個
+        // 共通コンポーネント DustRiseFx を使用（battle 逃走フェーズと同一 DOM）
         preview: (
           <div style={{ position: 'relative', width: 70, height: 50 }}>
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 4,
-                left: '20%',
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: 'rgba(180,170,150,.5)',
-                animation: anim('dustRise', '1.5s'),
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 4,
-                left: '50%',
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: 'rgba(180,170,150,.4)',
-                animation: anim('dustRise', '1.5s', 'ease-in-out', 'infinite'),
-                animationDelay: '0.4s',
-              }}
-            />
+            <DustRiseFx visible />
           </div>
         ),
       },
@@ -419,76 +382,88 @@ const CATEGORIES: Category[] = [
     effects: [
       {
         name: 'splatA',
-        desc: 'ダメージ数値ポップ（通常攻撃・上昇テキスト）',
-        // DamagePop variant="damage" で splatA keyframe を使用（_obsidian.scss 参照）
+        desc: 'ダメージ数値ポップ（left:50%; translateX(-50%) → 上昇）',
+        // モック: position:absolute; top:0px; left:50%; transform:translateX(-50%)
+        //         font-family:Shippori Mincho; font-weight:800; font-size:30px; color:#ffd9c9
+        //         会心時や敵被弾時のダメージ数字
+        // keyframes: translate(-50%, 0)→translate(-50%, -14px) scale(1.25)→translate(-50%, -50px)
         preview: (
-          <div
-            style={{
-              position: 'relative',
-              width: 80,
-              height: 70,
-              background: '#0c0d11',
-              borderRadius: 4,
-              overflow: 'visible',
-            }}
-          >
-            <span
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            {/* 敵シルエット代わりの背景 */}
+            <div
               style={{
                 position: 'absolute',
-                top: '50%',
+                top: 20,
                 left: '50%',
-                transform: 'translate(-50%, -50%)',
+                transform: 'translateX(-50%)',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: 'rgba(212,103,79,.1)',
+              }}
+            />
+            {/* ダメージ数値 — left:50%; transform-origin で -50%,0 から開始 */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 12,
+                left: '50%',
+                fontFamily: 'Shippori Mincho, serif',
+                fontWeight: 800,
                 fontSize: 22,
+                color: '#ffd9c9',
+                textShadow: '0 0 10px rgba(212,103,79,.8)',
+                whiteSpace: 'nowrap',
+                animation: anim('splatA', '1.6s', 'ease-in-out'),
               }}
             >
-              👹
-            </span>
-            <DamagePop
-              value="231"
-              variant="damage"
-            />
+              231
+            </div>
           </div>
         ),
       },
       {
         name: 'splatB',
-        desc: 'ダメージ数値ポップ（回復・splatB keyframe）',
-        // DamagePop variant="heal" で splatB keyframe を使用
+        desc: 'ダメージ数値ポップ（魔法色・同形）',
+        // モック: splatA と同形の keyframes。魔法被弾時に使用。
+        //         line 1168: popAnim: (odd?'splatA':'splatB')+' .76s ease forwards'
         preview: (
-          <div
-            style={{
-              position: 'relative',
-              width: 80,
-              height: 70,
-              background: '#0c0d11',
-              borderRadius: 4,
-              overflow: 'visible',
-            }}
-          >
-            <span
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <div
               style={{
                 position: 'absolute',
-                top: '50%',
+                top: 20,
                 left: '50%',
-                transform: 'translate(-50%, -50%)',
+                transform: 'translateX(-50%)',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: 'rgba(224,192,255,.1)',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                top: 12,
+                left: '50%',
+                fontFamily: 'Shippori Mincho, serif',
+                fontWeight: 800,
                 fontSize: 22,
+                color: '#e0c0ff',
+                textShadow: '0 0 10px rgba(180,100,255,.8)',
+                whiteSpace: 'nowrap',
+                animation: anim('splatB', '1.6s', 'ease-in-out'),
               }}
             >
-              💚
-            </span>
-            <DamagePop
-              value="+145"
-              variant="heal"
-            />
+              145
+            </div>
           </div>
         ),
       },
       {
         name: 'coinPop',
         desc: '🪙 が left:50% 基準から上に飛ぶ（translateY 0→-26px, scale .6→1）',
-        // モック: position:absolute; left:50%; top:-6px; font-size:18px
-        //         animation:coinPop 1.8s ease-in-out infinite
-        //         ショップ購入確認時に 🪙 が上に飛ぶ
+        // 共通コンポーネント CoinPopFx を使用（shop 購入確認ダイアログと同一 DOM）
         preview: (
           <div style={{ position: 'relative', width: 80, height: 70 }}>
             {/* ショップボタン的な背景 */}
@@ -511,80 +486,24 @@ const CATEGORIES: Category[] = [
             >
               購入
             </div>
-            {/* 🪙 が left:50% から上昇 */}
-            <span
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: 6,
-                fontSize: 20,
-                animation: anim('coinPop', '1.8s', 'ease-in-out'),
-              }}
-            >
-              🪙
-            </span>
+            <CoinPopFx visible />
           </div>
         ),
       },
       {
         name: 'healRise',
         desc: '回復数値「+96」が上昇（translateY 6px→-22px）',
-        // モック: position:absolute; left:50%; top:30%; transform:translateX(-50%)
-        //         font-family:Shippori Mincho; font-size:22px; color:#9ed8b4
-        //         animation:healRise 2s ease-in-out infinite
-        //         回復演出と採集アイテム取得時にも使われる
+        // 共通コンポーネント HealPop を使用（battle 回復値ポップと同一 DOM）
         preview: (
           <div style={{ position: 'relative', width: 70, height: 80 }}>
-            <span
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: 24,
-                transform: 'translateX(-50%)',
-                fontFamily: 'Shippori Mincho, serif',
-                fontSize: 20,
-                color: '#9ed8b4',
-                whiteSpace: 'nowrap',
-                animation: anim('healRise', '2s'),
-              }}
-            >
-              +96
-            </span>
-            <span
-              style={{
-                position: 'absolute',
-                left: '28%',
-                bottom: 10,
-                fontSize: 11,
-                color: '#9ed8b4',
-                animation: anim('healRise', '2s', 'ease-in-out', 'infinite'),
-                animationDelay: '0.5s',
-              }}
-            >
-              ✦
-            </span>
-            <span
-              style={{
-                position: 'absolute',
-                left: '62%',
-                bottom: 10,
-                fontSize: 11,
-                color: '#9ed8b4',
-                animation: anim('healRise', '2s', 'ease-in-out', 'infinite'),
-                animationDelay: '0.9s',
-              }}
-            >
-              ✦
-            </span>
+            <HealPop value={96} />
           </div>
         ),
       },
       {
         name: 'forgeSpark',
         desc: '鍛冶完成 ✦×3 スパーク（scale .5→1.3、opacity 0→1→0）',
-        // モック: 鍛冶確認ダイアログで ✦ が3箇所（top-left, top-right, bottom）
-        //         位置: position:absolute; top:-6px; left:-6px; font-size:16px
-        //         animation:forgeSpark 1.3s ease-in-out infinite (+ delay .3s/.6s)
+        // 共通コンポーネント ForgeSparkFx を使用（forge 強化確認ダイアログと同一 DOM）
         preview: (
           <div style={{ position: 'relative', width: 60, height: 60 }}>
             {/* 武器アイコン的な背景 */}
@@ -599,99 +518,20 @@ const CATEGORIES: Category[] = [
             >
               ⚔
             </div>
-            <span
-              style={{
-                position: 'absolute',
-                top: -2,
-                left: -2,
-                fontSize: 16,
-                color: '#c9a86a',
-                animation: anim('forgeSpark', '1.3s'),
-              }}
-            >
-              ✦
-            </span>
-            <span
-              style={{
-                position: 'absolute',
-                top: 8,
-                right: -4,
-                fontSize: 13,
-                color: '#c9a86a',
-                animation: anim('forgeSpark', '1.3s', 'ease-in-out', 'infinite'),
-                animationDelay: '0.3s',
-              }}
-            >
-              ✦
-            </span>
-            <span
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: '30%',
-                fontSize: 14,
-                color: '#c9a86a',
-                animation: anim('forgeSpark', '1.3s', 'ease-in-out', 'infinite'),
-                animationDelay: '0.6s',
-              }}
-            >
-              ✦
-            </span>
+            <ForgeSparkFx
+              visible
+              count={3}
+            />
           </div>
         ),
       },
       {
         name: 'sealStamp',
         desc: '封蝋シジルが translate(-50%,-50%) でスタンプ落下',
-        // モック: position:absolute; top:50%; left:50%;
-        //         animation:sealStamp 2.6s ease-in-out infinite;
-        //         transform:translate(-50%,-50%) rotate(-6deg)
-        //         ダイブ遷移演出・ギルド名確定時のシジル
+        // 共通コンポーネント SealStampFx (variant='seal') を使用（town ダイブ遷移と同一 DOM）
         preview: (
-          <div
-            style={{
-              position: 'relative',
-              width: 72,
-              height: 72,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, #8a2f2a, #5e1f1c)',
-                boxShadow: '0 0 16px rgba(138,47,42,.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                animation: anim('sealStamp', '2.6s'),
-              }}
-            >
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  border: '1.5px solid rgba(233,201,160,.75)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    background: 'rgba(233,201,160,.9)',
-                    transform: 'rotate(45deg)',
-                  }}
-                />
-              </div>
-            </div>
+          <div style={{ position: 'relative', width: 72, height: 72, overflow: 'hidden' }}>
+            <SealStampFx variant="seal" />
           </div>
         ),
       },
@@ -828,22 +668,12 @@ const CATEGORIES: Category[] = [
       {
         name: 'dashAway',
         desc: '逃走キャラが translateX(0)→(60px) でフェードアウト',
-        // モック: keyframes 定義のみ（本文中では speedLine と組み合わせて使用想定）
+        // 共通コンポーネント DashAwayFx を使用（battle 逃走時味方カード離脱と同一 DOM）
         preview: (
-          <div style={{ overflow: 'hidden', width: 80, height: 50, position: 'relative' }}>
-            <span
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: 0,
-                transform: 'translateY(-50%)',
-                fontSize: 26,
-                animation: anim('dashAway', '1.5s', 'ease-in-out'),
-              }}
-            >
-              🏃
-            </span>
-          </div>
+          <DashAwayFx
+            visible
+            side="ally"
+          />
         ),
       },
       {
@@ -1171,23 +1001,10 @@ const CATEGORIES: Category[] = [
       {
         name: 'runeSpin',
         desc: '魔法陣外輪が rotate 0→180deg + scale .6→1.3',
-        // モック: 魔法セルで width:66px; height:66px; border:1px solid rgba(224,192,255,.7);
-        //         border-radius:50%; animation:runeSpin 1.05s ease-out infinite
+        // 共通コンポーネント RuneSpinFx を使用（battle 詠唱中と同一 DOM）
         preview: (
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              border: '1.5px solid rgba(224,192,255,.8)',
-              boxShadow: '0 0 10px rgba(155,89,182,.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              animation: anim('runeSpin', '1.5s', 'ease-out'),
-            }}
-          >
-            <span style={{ fontSize: 18, color: '#e0c0ff' }}>✦</span>
+          <div style={{ position: 'relative', width: 56, height: 56 }}>
+            <RuneSpinFx visible />
           </div>
         ),
       },
@@ -1294,17 +1111,10 @@ const CATEGORIES: Category[] = [
       {
         name: 'summonAppear',
         desc: '召喚 🔥 が scale .3→1 + translateY 8px→0 で出現',
-        // モック: font-size:34px; animation:summonAppear 2s ease-in-out infinite
-        //         「召喚出現」セルで 🔥 に直接適用
+        // 共通コンポーネント SummonAppearFx を使用（battle 召喚体登場と同一 DOM）
         preview: (
-          <div
-            style={{
-              fontSize: 40,
-              lineHeight: 1,
-              animation: anim('summonAppear', '2s'),
-            }}
-          >
-            🔥
+          <div style={{ position: 'relative', width: 60, height: 60 }}>
+            <SummonAppearFx visible />
           </div>
         ),
       },
