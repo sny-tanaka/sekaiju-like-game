@@ -227,6 +227,8 @@ type Anim = {
   eventIdx: number;
   /** ターン開始時点の HP スナップショット（最初のイベント前状態）。 */
   baseSnapshot: CombatantSnapshot;
+  /** ターン開始時点で確定した行動順 (actor id 配列)。再生中の行動順帯表示で使う。 */
+  actorOrder: string[];
 };
 
 export interface BattlePageProps {
@@ -441,7 +443,11 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
       battleLogger.reset();
-      setAnim(flatEvts.length > 0 ? { events: flatEvts, eventIdx: 0, baseSnapshot } : null);
+      setAnim(
+        flatEvts.length > 0
+          ? { events: flatEvts, eventIdx: 0, baseSnapshot, actorOrder: actorOrder ?? [] }
+          : null
+      );
     },
     [state, battleLogger]
   );
@@ -454,6 +460,22 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
     return previewTurnOrder(state, epRng);
   }, [state]);
+
+  // 行動順帯の表示用: anim 再生中は再生中ターンの actorOrder（runTurn 時に確定）を使う。
+  // state.turn は runTurn 後に進んでしまうため、turnOrderPreview をそのまま使うと
+  // 「再生中のターンの行動順」ではなく「次ターンの予測」が表示されてしまい、
+  // completedActorIds（再生中ターンの events から計算）と一致して全アイコンが slideout する。
+  const displayedTurnOrder = useMemo(() => {
+    if (!state) return [];
+    if (anim && anim.actorOrder.length > 0) {
+      const all = [...state.allies, ...state.enemies, ...state.summons];
+      const lookup = new Map(all.map((c) => [c.id, c]));
+      return anim.actorOrder
+        .map((id) => lookup.get(id))
+        .filter((c): c is (typeof all)[number] => !!c);
+    }
+    return turnOrderPreview;
+  }, [anim, state, turnOrderPreview]);
 
   // 不意打ち: ターン1は味方が動けない。突入演出が晴れてから敵の先手1巡を自動解決する。
   const ambushDone = useRef(false);
@@ -1366,13 +1388,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       <div className={styles.chapterRow}>
         <p className={styles.chapterMark}>❦ 戦闘 ・ F{save.diveState.depth}</p>
       </div>
-      {/* (A) 行動順帯（最大 8 アイコン + …） */}
-      {turnOrderPreview.length > 0 && (
+      {/* (A) 行動順帯（最大 8 アイコン + …）
+        anim 再生中は再生中ターンの行動順を維持、それ以外は次ターン予測。 */}
+      {displayedTurnOrder.length > 0 && (
         <div
           className={styles.turnOrderBar}
-          aria-label="次ターン行動順"
+          aria-label={anim ? '行動順' : '次ターン行動順'}
         >
-          {turnOrderPreview.slice(0, 8).map((c, i) => {
+          {displayedTurnOrder.slice(0, 8).map((c, i) => {
             const isFirst = i === 0;
             const isAlly =
               state.allies.some((a) => a.id === c.id) || state.summons.some((s) => s.id === c.id);
@@ -1413,7 +1436,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               </span>
             );
           })}
-          {turnOrderPreview.length > 8 && <span className={styles.turnOrderMore}>…</span>}
+          {displayedTurnOrder.length > 8 && <span className={styles.turnOrderMore}>…</span>}
         </div>
       )}
       {/* (B) 1 行ログプレビュー（ヘッダ内 / 行動順帯直下） */}
