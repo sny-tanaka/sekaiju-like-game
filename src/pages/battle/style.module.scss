@@ -1526,100 +1526,185 @@
 }
 
 // 攻撃 FX レイヤー（敵カード内に絶対配置）
+// 攻撃 FX — モック v3 §4.4.2 準拠・属性別 DOM 要素による可視化
 .attackFx {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 30;
-  animation-duration: 0.7s;
-  animation-fill-mode: forwards;
-  animation-timing-function: ease-out;
-  border-radius: 2px;
+  z-index: 50; // 敵 sprite の上に確実に出す（30→50）
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-// 属性別 FX — CSS変数でアニメ名と色を切り替え
-.fx_slash {
-  --elem-color: var(--elem-slash);
-  animation-name: atkSlash;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(var(--elem-slash), 0.6) 0%,
-    rgba(var(--elem-slash), 0.2) 50%,
-    transparent 100%
-  );
-}
-
-.fx_pierce {
-  --elem-color: var(--elem-thrust);
-  animation-name: atkThrust;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(var(--elem-thrust), 0.6) 0%,
-    rgba(var(--elem-thrust), 0.2) 50%,
-    transparent 100%
-  );
-}
-
-.fx_bash {
-  --elem-color: var(--elem-blunt);
-  animation-name: atkBlunt;
-  background: radial-gradient(
-    circle at center,
-    rgba(var(--elem-blunt), 0.6) 0%,
-    rgba(var(--elem-blunt), 0.2) 50%,
-    transparent 100%
-  );
-}
-
-.fx_fire {
-  animation-name: atkFire;
-  background: radial-gradient(
-    circle at center bottom,
-    rgba(var(--elem-fire), 0.7) 0%,
-    rgba(var(--elem-fire), 0.3) 50%,
-    transparent 100%
-  );
-}
-
-.fx_ice {
-  animation-name: atkIce;
-  background: radial-gradient(
-    circle at center,
-    rgba(var(--elem-ice), 0.6) 0%,
-    rgba(var(--elem-ice), 0.2) 50%,
-    transparent 100%
-  );
-}
-
-.fx_volt {
-  animation-name: atkVolt;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(var(--elem-volt), 0.7) 0%,
-    rgba(var(--elem-volt), 0.3) 50%,
-    transparent 100%
-  );
-}
-
-.fx_almighty {
-  // 無属性は atkMagic keyframe を使用（モック v3 §4.4.2）
-  animation-name: atkMagic;
-  background: radial-gradient(
-    circle at center,
-    rgba(224, 192, 255, 0.5) 0%,
-    rgba(224, 192, 255, 0.15) 50%,
-    transparent 100%
-  );
-}
-
-// 会心 FX（上記に重畳）
-.fxCrit::after {
-  content: '';
+// slash — 白光バー（-38deg、gold shadow）
+.fxBarSlash {
   position: absolute;
-  inset: -10px;
-  border-radius: 4px;
-  background: radial-gradient(circle at center, var(--crit-glow) 0%, transparent 70%);
-  animation: critFlash 1.2s ease-in-out forwards;
+  top: 50%;
+  left: 50%;
+  width: 94px;
+  height: 4px;
+  margin: -2px 0 0 -47px;
+  background: linear-gradient(90deg, transparent, #fff, #ffd9c9, transparent);
+  border-radius: 3px;
+  box-shadow: 0 0 12px rgba(255, 210, 180, 0.9);
+  transform: rotate(-38deg);
+  animation: atkSlash 0.6s ease-in-out forwards;
+}
+
+// pierce — 横光線
+.fxBarThrust {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 74px;
+  height: 3px;
+  margin: -1px 0 0 -37px;
+  background: linear-gradient(90deg, transparent, #cfe0ff, #fff);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(207, 224, 255, 0.9);
+  transform-origin: left center;
+  animation: thrustLine 0.6s ease-in-out forwards;
+}
+
+// pierce — 矢印アイコン
+.fxArrowThrust {
+  position: absolute;
+  top: 50%;
+  left: 56%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: #cfe0ff;
+  filter: drop-shadow(0 0 5px rgba(207, 224, 255, 0.9));
+  animation: thrustLine 0.6s ease-in-out forwards;
+}
+
+// bash — リング
+.fxRingBash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border: 3px solid #ffe0a0;
+  border-radius: 50%;
+  animation: ringExpand 0.6s ease-out forwards;
+}
+
+// bash — 爆発アイコン
+.fxIconBash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 22px;
+  animation: forgeSpark 0.6s ease-in-out forwards;
+}
+
+// fire — 火球 orb
+.fxOrbFire {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 150, 80, 0.6), rgba(212, 80, 40, 0.2) 55%, transparent 70%);
+  animation: atkFire 0.6s ease-out forwards;
+}
+
+// fire — アイコン
+.fxIconFire {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 22px;
+  animation: atkFire 0.6s ease-out forwards;
+}
+
+// ice — 菱形
+.fxSquareIce {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border: 1px solid rgba(160, 210, 240, 0.85);
+  border-radius: 6px;
+  transform: rotate(45deg);
+  animation: atkIce 0.6s ease-out forwards;
+}
+
+// ice — アイコン
+.fxIconIce {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  color: #a8d4f0;
+  animation: atkIce 0.6s ease-out forwards;
+}
+
+// volt — 縦光線
+.fxBoltVolt {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 72px;
+  margin: -36px 0 0 -7px;
+  background: linear-gradient(180deg, transparent, #fff, #e8d85b, transparent);
+  border-radius: 2px;
+  box-shadow: 0 0 14px rgba(232, 216, 91, 0.9);
+  animation: atkVolt 0.55s ease-in-out forwards;
+}
+
+// volt — アイコン
+.fxIconVolt {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 22px;
+  color: #e8d85b;
+  animation: atkVolt 0.55s ease-in-out forwards;
+}
+
+// almighty — 紫 orb
+.fxOrbMagic {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 192, 255, 0.6), transparent 60%);
+  animation: atkMagic 0.6s ease forwards;
+}
+
+// almighty — アイコン
+.fxIconMagic {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 22px;
+  color: #e0c0ff;
+  animation: glowPulse 1.4s ease-in-out infinite;
+}
+
+// 会心 FX オーバーレイ
+.fxCritFlash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 210, 122, 0.45), transparent 60%);
+  animation: critFlash 0.6s ease-in-out forwards;
   pointer-events: none;
 }
 

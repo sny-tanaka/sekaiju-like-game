@@ -978,47 +978,40 @@ const CATEGORIES: Category[] = [
       {
         name: 'atkSlash',
         desc: '斬撃エフェクト（slash 斬属性。sword 剣 / axe 斧 由来）',
-        // モック: atkBurstAnim: 'atkSlash .7s ease forwards'
-        //         敵カードの top:50%;left:50%; に 94x94px の radial-gradient circle を重ねる
-        //         実際には slashLR でも視覚化（効果エフェクト集の「斬撃」セル）
+        // モック v3 9e (line 1156):
+        //   white bar 108x4px (linear-gradient transparent→#fff→#ffd9c9→transparent)
+        //   + rotate(-38deg) + box-shadow gold + animation: atkSlash .7s ease-in-out infinite
         preview: (
           <div
             style={{
               position: 'relative',
-              width: 70,
+              width: 100,
               height: 70,
               overflow: 'hidden',
               background: '#0c0d11',
               borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
+            <span style={{ fontSize: 34 }}>👹</span>
             <div
               style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                animation: anim('shakeA', '0.8s', 'ease'),
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: 94,
+                height: 4,
+                marginTop: -2,
+                marginLeft: -47,
+                background: 'linear-gradient(90deg, transparent, #fff, #ffd9c9, transparent)',
+                borderRadius: 3,
+                boxShadow: '0 0 12px rgba(255,210,180,.9)',
+                transform: 'rotate(-38deg)',
+                animation: anim('atkSlash', '0.9s', 'ease-in-out'),
               }}
-            >
-              <span style={{ fontSize: 34 }}>👹</span>
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: 68,
-                  height: 68,
-                  marginTop: -34,
-                  marginLeft: -34,
-                  borderRadius: '50%',
-                  background:
-                    'radial-gradient(circle, rgba(255,217,201,.7), rgba(255,217,201,0) 66%)',
-                  animation: anim('atkSlash', '1.2s', 'ease'),
-                }}
-              />
-            </div>
+            />
           </div>
         ),
       },
@@ -1078,13 +1071,14 @@ const CATEGORIES: Category[] = [
       {
         name: 'atkThrust',
         desc: '突きエフェクト（pierce 突属性。spear 槍 / bow 弓 由来）',
-        // モック: 刺突セル: 縦 4px 幅の光線 + 三角矢印が thrustUp .75s で下→上
-        //         atkBurstAnim: 'atkThrust .7s ease forwards'
+        // モック v3 9e (line 1157): pierce セルは thrustLine keyframe を使う
+        //   横 74x3px 光線 (linear-gradient transparent→#cfe0ff→#fff) を transform-origin:left
+        //   ➤ 矢印を右に飛ばす + animation: thrustLine .7s ease-in-out infinite
         preview: (
           <div
             style={{
               position: 'relative',
-              width: 70,
+              width: 100,
               height: 70,
               overflow: 'hidden',
               background: '#0c0d11',
@@ -1094,42 +1088,39 @@ const CATEGORIES: Category[] = [
               justifyContent: 'center',
             }}
           >
-            <div style={{ position: 'relative' }}>
-              <span style={{ fontSize: 34 }}>👹</span>
-              {/* 縦光線 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: 4,
-                  height: 60,
-                  marginTop: -20,
-                  marginLeft: -2,
-                  background: 'linear-gradient(0deg, transparent, #cfe0ff 60%, #fff)',
-                  borderRadius: 2,
-                  boxShadow: '0 0 8px rgba(207,224,255,.9)',
-                  animation: anim('thrustUp', '1s', 'ease-in-out'),
-                }}
-              />
-              {/* 矢印 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: -6,
-                  marginLeft: -6,
-                  width: 0,
-                  height: 0,
-                  borderLeft: '6px solid transparent',
-                  borderRight: '6px solid transparent',
-                  borderBottom: '12px solid #fff',
-                  filter: 'drop-shadow(0 0 5px rgba(207,224,255,.9))',
-                  animation: anim('thrustUp', '1s', 'ease-in-out'),
-                }}
-              />
-            </div>
+            <span style={{ fontSize: 34 }}>👹</span>
+            {/* 横光線 */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                width: 74,
+                height: 3,
+                marginTop: -1,
+                marginLeft: -37,
+                background: 'linear-gradient(90deg, transparent, #cfe0ff, #fff)',
+                borderRadius: 2,
+                boxShadow: '0 0 10px rgba(207,224,255,.9)',
+                transformOrigin: 'left center',
+                animation: anim('thrustLine', '0.9s', 'ease-in-out'),
+              }}
+            />
+            {/* 矢印 ➤ */}
+            <span
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '56%',
+                transform: 'translateY(-50%)',
+                fontSize: 16,
+                color: '#cfe0ff',
+                filter: 'drop-shadow(0 0 5px rgba(207,224,255,.9))',
+                animation: anim('thrustLine', '0.9s', 'ease-in-out'),
+              }}
+            >
+              ➤
+            </span>
           </div>
         ),
       },

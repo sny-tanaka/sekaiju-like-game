@@ -1133,18 +1133,56 @@ export const Page = ({
                 disabled={e.isDown || !!anim || isAllyTargeting}
                 onClick={() => setTargetId(e.id)}
               >
-                {/* v5: 攻撃 FX レイヤー（50ms 遅延で出現・属性別） */}
+                {/* v5: 攻撃 FX レイヤー（属性別 DOM 要素・モック v3 準拠） */}
                 {flashIds.has(e.id) &&
                   (() => {
                     const logText = state.log[anim?.revealed ? anim.revealed - 1 : 0]?.text ?? '';
                     const element = getLogElement(logText);
                     const isCrit = logText.includes('（会心）');
-                    const fxClass = ELEM_FX[element] ?? 'fx_slash';
                     return (
                       <div
-                        className={`${styles.attackFx} ${styles[fxClass] ?? ''} ${isCrit ? styles.fxCrit : ''}`}
+                        className={styles.attackFx}
                         aria-hidden="true"
-                      />
+                      >
+                        {element === 'slash' && <div className={styles.fxBarSlash} />}
+                        {element === 'pierce' && (
+                          <>
+                            <div className={styles.fxBarThrust} />
+                            <span className={styles.fxArrowThrust}>➤</span>
+                          </>
+                        )}
+                        {element === 'bash' && (
+                          <>
+                            <div className={styles.fxRingBash} />
+                            <span className={styles.fxIconBash}>💥</span>
+                          </>
+                        )}
+                        {element === 'fire' && (
+                          <>
+                            <div className={styles.fxOrbFire} />
+                            <span className={styles.fxIconFire}>🔥</span>
+                          </>
+                        )}
+                        {element === 'ice' && (
+                          <>
+                            <div className={styles.fxSquareIce} />
+                            <span className={styles.fxIconIce}>❄</span>
+                          </>
+                        )}
+                        {element === 'volt' && (
+                          <>
+                            <div className={styles.fxBoltVolt} />
+                            <span className={styles.fxIconVolt}>⚡</span>
+                          </>
+                        )}
+                        {element === 'almighty' && (
+                          <>
+                            <div className={styles.fxOrbMagic} />
+                            <span className={styles.fxIconMagic}>✦</span>
+                          </>
+                        )}
+                        {isCrit && <div className={styles.fxCritFlash} />}
+                      </div>
                     );
                   })()}
                 {/* InkSplatter — 敵への命中時（Phase 2） */}
