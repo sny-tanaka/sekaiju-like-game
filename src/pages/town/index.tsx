@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { SealStampFx } from '@/components/common/effects/SealStampFx';
 import { WarpScanFx } from '@/components/common/effects/WarpScanFx';
 import { SoundSettings } from '@/components/common/SoundSettings';
@@ -31,7 +32,6 @@ export const Page = () => {
   const checkpoints = towerState.warp.unlockedCheckpoints;
 
   const handleExit = () => {
-    play('cancel');
     exitToTitle();
     navigate({ name: 'title' });
   };
@@ -43,7 +43,6 @@ export const Page = () => {
       void resumeDive();
       return;
     }
-    play('decide');
     setWarpOpen(true);
   };
 
@@ -73,7 +72,6 @@ export const Page = () => {
   // 2x2 タイル押下
   const goto = (target: 'guild' | 'shop' | 'forge' | 'codex') => () => {
     if (diveState) return;
-    play('decide');
     navigate({ name: target });
   };
 
@@ -104,17 +102,13 @@ export const Page = () => {
             <p className={styles.chapterMark}>❦ 拠点</p>
             <h1 className={styles.guildName}>{guild.name}</h1>
           </div>
-          <button
-            type="button"
+          <ActionButton
+            ariaLabel="設定"
             className={styles.gearBtn}
-            aria-label="設定"
-            onClick={() => {
-              play('decide');
-              setSoundOpen(true);
-            }}
+            onClick={() => setSoundOpen(true)}
           >
             ⚙
-          </button>
+          </ActionButton>
         </div>
         <div className={styles.stats}>
           <span className={styles.statGold}>◇ {guild.gold.toLocaleString()} G</span>
@@ -141,8 +135,7 @@ export const Page = () => {
 
       <main className={styles.menu}>
         {/* ダイブ大カード（grid-column span 2） */}
-        <button
-          type="button"
+        <ActionButton
           className={`${styles.dive} ${diveState ? styles.diveResume : ''}`}
           disabled={!hasMembers}
           onClick={handleDiveClick}
@@ -164,12 +157,11 @@ export const Page = () => {
                   ? `第1階から潜る ・ 解放階(${Math.max(...checkpoints)}F)も選択可`
                   : '第1階から潜る'}
           </span>
-        </button>
+        </ActionButton>
 
         {/* 団員 0 のときはギルド管理を横長ガイドカードに切り替え */}
         {!hasMembers ? (
-          <button
-            type="button"
+          <ActionButton
             className={styles.tileGuide}
             onClick={goto('guild')}
           >
@@ -189,10 +181,9 @@ export const Page = () => {
             >
               ›
             </span>
-          </button>
+          </ActionButton>
         ) : (
-          <button
-            type="button"
+          <ActionButton
             className={styles.tile}
             disabled={!!diveState}
             onClick={goto('guild')}
@@ -207,11 +198,10 @@ export const Page = () => {
               <span className={styles.tileLabel}>ギルド管理</span>
               <span className={styles.tileDesc}>{diveState ? '🔒 潜行中不可' : '編成・作成'}</span>
             </span>
-          </button>
+          </ActionButton>
         )}
 
-        <button
-          type="button"
+        <ActionButton
           className={styles.tile}
           disabled={!!diveState}
           onClick={goto('shop')}
@@ -226,10 +216,9 @@ export const Page = () => {
             <span className={styles.tileLabel}>ショップ</span>
             <span className={styles.tileDesc}>{diveState ? '🔒 潜行中不可' : '装備・売買'}</span>
           </span>
-        </button>
+        </ActionButton>
 
-        <button
-          type="button"
+        <ActionButton
           className={styles.tile}
           disabled={!!diveState}
           onClick={goto('forge')}
@@ -246,10 +235,9 @@ export const Page = () => {
               {diveState ? '🔒 潜行中不可' : '強化・リサイクル'}
             </span>
           </span>
-        </button>
+        </ActionButton>
 
-        <button
-          type="button"
+        <ActionButton
           className={styles.tile}
           disabled={!!diveState}
           onClick={goto('codex')}
@@ -266,7 +254,7 @@ export const Page = () => {
               {diveState ? '🔒 潜行中不可' : '到達記録・図鑑'}
             </span>
           </span>
-        </button>
+        </ActionButton>
       </main>
 
       {hasMembers && !diveState && (
@@ -280,13 +268,12 @@ export const Page = () => {
       )}
 
       <footer className={styles.foot}>
-        <button
-          type="button"
+        <ActionButton
+          label="タイトルへ戻る"
+          sfx="cancel"
           className={styles.exit}
           onClick={handleExit}
-        >
-          タイトルへ戻る
-        </button>
+        />
       </footer>
 
       {warpOpen ? (
@@ -312,8 +299,7 @@ export const Page = () => {
               {sheetFloors.map((d) => {
                 const isDeepest = d === deepestSheetFloor && d !== 1;
                 return (
-                  <button
-                    type="button"
+                  <ActionButton
                     key={d}
                     className={`${styles.sheetItem} ${isDeepest ? styles.sheetItemHilight : ''}`}
                     onClick={() => void handleSelectFloor(d)}
@@ -324,20 +310,16 @@ export const Page = () => {
                         ? `第 ${Math.ceil(d / 10)} 帯・最深チェックポイント`
                         : floorLabel(d)}
                     </span>
-                  </button>
+                  </ActionButton>
                 );
               })}
             </div>
-            <button
-              type="button"
+            <ActionButton
+              label="とじる"
+              sfx="cancel"
               className={styles.sheetClose}
-              onClick={() => {
-                play('cancel');
-                setWarpOpen(false);
-              }}
-            >
-              とじる
-            </button>
+              onClick={() => setWarpOpen(false)}
+            />
           </div>
         </div>
       ) : null}
@@ -356,29 +338,22 @@ export const Page = () => {
           >
             <div className={styles.modalHeader}>
               <span>設定</span>
-              <button
-                type="button"
+              <ActionButton
+                ariaLabel="閉じる"
+                sfx="cursor"
                 className={styles.modalCloseBtn}
-                aria-label="閉じる"
-                onClick={() => {
-                  play('cursor');
-                  setSoundOpen(false);
-                }}
+                onClick={() => setSoundOpen(false)}
               >
                 ✕
-              </button>
+              </ActionButton>
             </div>
             <SoundSettings />
-            <button
-              type="button"
+            <ActionButton
+              label="とじる"
+              sfx="cursor"
               className={styles.modalClose}
-              onClick={() => {
-                play('cursor');
-                setSoundOpen(false);
-              }}
-            >
-              とじる
-            </button>
+              onClick={() => setSoundOpen(false)}
+            />
           </div>
         </div>
       ) : null}

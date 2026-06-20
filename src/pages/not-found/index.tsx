@@ -1,5 +1,6 @@
 import styles from './style.module.scss';
 
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { useGameState } from '@/store/gameState';
 import { useNavigation } from '@/store/navigation';
 
@@ -35,13 +36,11 @@ export const Page = () => {
       </main>
 
       <footer className={styles.foot}>
-        <button
-          type="button"
+        <ActionButton
+          label={save ? '拠点へ戻る' : 'タイトルへ戻る'}
           className={styles.back}
           onClick={handleBack}
-        >
-          {save ? '拠点へ戻る' : 'タイトルへ戻る'}
-        </button>
+        />
       </footer>
     </div>
   );

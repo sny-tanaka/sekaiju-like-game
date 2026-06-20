@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { DungeonMap } from '@/components/common/DungeonMap/DungeonMap';
 import { CookPopFx } from '@/components/common/effects/CookPopFx/CookPopFx';
@@ -293,17 +294,17 @@ export const Page = () => {
           </div>
         </div>
         <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
-        <button
-          type="button"
+        <ActionButton
+          ariaLabel="メニューを開く"
+          sfx="cursor"
           className={styles.menuBtn}
           onClick={() => {
-            play('cursor');
             setMenuCharId(null);
             setMenuOpen(true);
           }}
         >
           ☰
-        </button>
+        </ActionButton>
       </header>
 
       <div className={styles.fpvWrap}>
@@ -324,38 +325,37 @@ export const Page = () => {
         )}
         {/* 操作ボタンを一人称視点に重ねる（issue #20）。 */}
         <div className={styles.fpvControls}>
-          <button
-            type="button"
+          <ActionButton
+            ariaLabel="左を向く"
+            sfx={null}
             className={styles.fpvTurn}
             onClick={() => doTurn(turnLeft(dive.dir))}
-            aria-label="左を向く"
           >
             ↰
-          </button>
-          <button
-            type="button"
+          </ActionButton>
+          <ActionButton
+            label="▲ 前進"
+            sfx={null}
             className={styles.fpvForward}
             onClick={() => doMove(dive.dir)}
-          >
-            ▲ 前進
-          </button>
-          <button
-            type="button"
+          />
+          <ActionButton
+            ariaLabel="右を向く"
+            sfx={null}
             className={styles.fpvTurn}
             onClick={() => doTurn(turnRight(dive.dir))}
-            aria-label="右を向く"
           >
             ↱
-          </button>
+          </ActionButton>
         </div>
-        <button
-          type="button"
+        <ActionButton
+          ariaLabel="振り向く"
+          sfx={null}
           className={styles.fpvBack}
           onClick={() => doTurn(turnBack(dive.dir))}
-          aria-label="振り向く"
         >
           ↻
-        </button>
+        </ActionButton>
       </div>
 
       {/* 中段: マップ + 操作ヒント。上部 (header + fpv) の下、下端の操作ボタン群
@@ -397,33 +397,33 @@ export const Page = () => {
             </span>
           </div>
           <div className={styles.stairsCardActions}>
-            <button
-              type="button"
+            <ActionButton
+              label="やめる"
+              size="small"
+              sfx="cancel"
               className={styles.stairsCancel}
               onClick={() =>
                 setDismissedStairsAt({ depth: dive.depth, x: dive.pos.x, y: dive.pos.y })
               }
-            >
-              やめる
-            </button>
-            <button
-              type="button"
+            />
+            <ActionButton
+              label={
+                stairKind === 'stairsUp'
+                  ? '次階へ進む'
+                  : dive.depth <= 1
+                    ? '拠点へ戻る'
+                    : '前階へ戻る'
+              }
+              size="small"
               className={styles.stairsOk}
               onClick={() => void handleStairs()}
-            >
-              {stairKind === 'stairsUp'
-                ? '次階へ進む'
-                : dive.depth <= 1
-                  ? '拠点へ戻る'
-                  : '前階へ戻る'}
-            </button>
+            />
           </div>
         </div>
       )}
 
       {gatherPoint && (
-        <button
-          type="button"
+        <ActionButton
           className={`${styles.gatherCard} ${isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint) ? styles.gatherCardDisabled : ''}`}
           disabled={isGatherDepleted(save, gatherPoint) || !canGather(save, gatherPoint)}
           onClick={handleGather}
@@ -436,7 +436,7 @@ export const Page = () => {
                 ? `${GATHER_TYPES[gatherPoint.type].name}（スキル要）`
                 : `採集 — ${GATHER_TYPES[gatherPoint.type].name}`}
           </span>
-        </button>
+        </ActionButton>
       )}
 
       {atCookingSpot && (
@@ -488,8 +488,9 @@ export const Page = () => {
                       </div>
                     </div>
                     {isReturn ? (
-                      <button
-                        type="button"
+                      <ActionButton
+                        label="使う"
+                        size="small"
                         className={styles.itemUse}
                         onClick={() =>
                           setConfirm({
@@ -498,9 +499,7 @@ export const Page = () => {
                             onYes: () => handleUseItem(s.itemId),
                           })
                         }
-                      >
-                        使う
-                      </button>
+                      />
                     ) : (
                       <div className={styles.itemTargets}>
                         {dive.party.map((p) => {
@@ -524,8 +523,9 @@ export const Page = () => {
                                   HP {p.hp}/{max.hp}
                                 </span>
                               </div>
-                              <button
-                                type="button"
+                              <ActionButton
+                                label="使う"
+                                size="small"
                                 className={styles.itemTargetUseBtn}
                                 onClick={() =>
                                   setConfirm({
@@ -534,9 +534,7 @@ export const Page = () => {
                                     onYes: () => handleUseItem(s.itemId, p.charId),
                                   })
                                 }
-                              >
-                                使う
-                              </button>
+                              />
                             </div>
                           );
                         })}
@@ -546,13 +544,12 @@ export const Page = () => {
                 );
               });
             })()}
-            <button
-              type="button"
+            <ActionButton
+              label="とじる"
+              sfx="cancel"
               className={styles.itemClose}
               onClick={() => setItemOpen(false)}
-            >
-              とじる
-            </button>
+            />
           </div>
         </div>
       ) : null}
@@ -592,8 +589,9 @@ export const Page = () => {
                         ）
                       </span>
                     </div>
-                    <button
-                      type="button"
+                    <ActionButton
+                      label="作る"
+                      size="small"
                       className={styles.itemUse}
                       disabled={!ok}
                       onClick={() =>
@@ -603,20 +601,17 @@ export const Page = () => {
                           onYes: () => handleCook(r.id),
                         })
                       }
-                    >
-                      作る
-                    </button>
+                    />
                   </div>
                 );
               });
             })()}
-            <button
-              type="button"
+            <ActionButton
+              label="とじる"
+              sfx="cancel"
               className={styles.itemClose}
               onClick={() => setCookOpen(false)}
-            >
-              とじる
-            </button>
+            />
           </div>
         </div>
       ) : null}
@@ -650,49 +645,44 @@ export const Page = () => {
                           {dive.depth}F ・ {bandThemeFor(dive.depth).name}
                         </div>
                       </div>
-                      <button
-                        type="button"
+                      <ActionButton
+                        ariaLabel="とじる"
+                        sfx="cursor"
                         className={styles.menuCloseBtn}
-                        onClick={() => {
-                          play('cursor');
-                          setMenuOpen(false);
-                        }}
-                        aria-label="とじる"
+                        onClick={() => setMenuOpen(false)}
                       >
                         ✕
-                      </button>
+                      </ActionButton>
                     </div>
                     <div className={styles.menuPartyLabel}>
                       パーティ <span className={styles.menuPartyHint}>タップで詳細・スキル</span>
                     </div>
                     <div className={styles.menuActions}>
                       <div className={styles.menuGrid}>
-                        <button
-                          type="button"
+                        <ActionButton
+                          sfx="cursor"
                           className={`${styles.menuGridItem} ${styles.menuGridItemActive}`}
                           onClick={() => {
-                            play('cursor');
                             setMenuOpen(false);
                             setItemOpen(true);
                           }}
                         >
                           <span className={styles.menuGridIcon}>🎒</span>
                           <span className={styles.menuGridLabel}>道具を使う</span>
-                        </button>
-                        <button
-                          type="button"
+                        </ActionButton>
+                        <ActionButton
+                          sfx="cursor"
                           className={styles.menuGridItem}
                           onClick={() => {
-                            play('cursor');
                             setMenuOpen(false);
                             setSoundOpen(true);
                           }}
                         >
                           <span className={styles.menuGridIcon}>⚙</span>
                           <span className={styles.menuGridLabel}>設定</span>
-                        </button>
-                        <button
-                          type="button"
+                        </ActionButton>
+                        <ActionButton
+                          sfx={null}
                           className={`${styles.menuGridItem} ${styles.menuGridItemThread} ${styles.menuGridItemFull}`}
                           onClick={() => {
                             if (threadCount === 0) {
@@ -711,7 +701,7 @@ export const Page = () => {
                             <div className={styles.menuGridLabel}>帰還の糸</div>
                             <div className={styles.menuGridSub}>町へ戻る ・ 所持{threadCount}</div>
                           </div>
-                        </button>
+                        </ActionButton>
                       </div>
                     </div>
                     <div className={styles.menuMemberList}>
@@ -721,9 +711,9 @@ export const Page = () => {
                         const st = computeBaseStats(c);
                         const sp = availableSP(c);
                         return (
-                          <button
-                            type="button"
+                          <ActionButton
                             key={p.charId}
+                            sfx="cursor"
                             className={`${styles.menuMember} ${idx === 0 ? styles.menuMemberLeader : ''}`}
                             onClick={() => {
                               setMenuCharId(p.charId);
@@ -760,7 +750,7 @@ export const Page = () => {
                               </div>
                             </div>
                             <span className={styles.menuMemberArrow}>➜</span>
-                          </button>
+                          </ActionButton>
                         );
                       })}
                     </div>
@@ -780,16 +770,12 @@ export const Page = () => {
                       })()}
                     </div>
                     <div className={styles.menuFooter}>
-                      <button
-                        type="button"
+                      <ActionButton
+                        label="とじる（探索へ戻る）"
+                        sfx="cursor"
                         className={styles.menuCloseAction}
-                        onClick={() => {
-                          play('cursor');
-                          setMenuOpen(false);
-                        }}
-                      >
-                        とじる（探索へ戻る）
-                      </button>
+                        onClick={() => setMenuOpen(false)}
+                      />
                     </div>
                   </>
                 );
@@ -833,15 +819,15 @@ export const Page = () => {
                   </div>
                   <div className={styles.skillTabs}>
                     {(['class', 'race', 'title'] as const).map((t) => (
-                      <button
+                      <ActionButton
                         key={t}
-                        type="button"
+                        label={t === 'class' ? '職業' : t === 'race' ? '種族' : '称号'}
+                        size="small"
+                        sfx="cursor"
                         className={`${styles.skillTab} ${skillTab === t ? styles.skillTabOn : ''}`}
                         onClick={() => setSkillTab(t)}
                         disabled={t === 'title' && !selected.titleId}
-                      >
-                        {t === 'class' ? '職業' : t === 'race' ? '種族' : '称号'}
-                      </button>
+                      />
                     ))}
                   </div>
                   <SkillTree
@@ -860,13 +846,12 @@ export const Page = () => {
                       }));
                     }}
                   />
-                  <button
-                    type="button"
+                  <ActionButton
+                    label="← もどる"
+                    sfx="cancel"
                     className={styles.itemClose}
                     onClick={() => setMenuCharId(null)}
-                  >
-                    ← もどる
-                  </button>
+                  />
                 </>
               );
             })()}
@@ -886,23 +871,20 @@ export const Page = () => {
           >
             <div className={styles.confirmText}>{confirm.message}</div>
             <div className={styles.confirmActions}>
-              <button
-                type="button"
+              <ActionButton
+                label="やめる"
+                sfx="cancel"
                 className={styles.confirmCancel}
                 onClick={() => setConfirm(null)}
-              >
-                やめる
-              </button>
-              <button
-                type="button"
+              />
+              <ActionButton
+                label={confirm.okLabel}
                 className={styles.confirmOk}
                 onClick={() => {
                   confirm.onYes();
                   setConfirm(null);
                 }}
-              >
-                {confirm.okLabel}
-              </button>
+              />
             </div>
           </div>
         </div>
@@ -933,29 +915,22 @@ export const Page = () => {
           >
             <div className={styles.modalHeader}>
               <span>設定</span>
-              <button
-                type="button"
+              <ActionButton
+                ariaLabel="閉じる"
+                sfx="cursor"
                 className={styles.modalCloseBtn}
-                aria-label="閉じる"
-                onClick={() => {
-                  play('cursor');
-                  setSoundOpen(false);
-                }}
+                onClick={() => setSoundOpen(false)}
               >
                 ✕
-              </button>
+              </ActionButton>
             </div>
             <SoundSettings />
-            <button
-              type="button"
+            <ActionButton
+              label="とじる"
+              sfx="cursor"
               className={styles.modalClose}
-              onClick={() => {
-                play('cursor');
-                setSoundOpen(false);
-              }}
-            >
-              とじる
-            </button>
+              onClick={() => setSoundOpen(false)}
+            />
           </div>
         </div>
       ) : null}

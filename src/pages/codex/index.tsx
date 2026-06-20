@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
@@ -45,26 +46,20 @@ export const Page = () => {
       </header>
 
       <div className={styles.tabs}>
-        <button
-          type="button"
+        <ActionButton
+          label="到達記録"
+          size="small"
+          sfx="cursor"
           className={`${styles.tab} ${tab === 'record' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('record');
-          }}
-        >
-          到達記録
-        </button>
-        <button
-          type="button"
+          onClick={() => setTab('record')}
+        />
+        <ActionButton
+          label="図鑑"
+          size="small"
+          sfx="cursor"
           className={`${styles.tab} ${tab === 'codex' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('codex');
-          }}
-        >
-          図鑑
-        </button>
+          onClick={() => setTab('codex')}
+        />
       </div>
 
       {tab === 'record' ? (
@@ -295,13 +290,11 @@ export const Page = () => {
       )}
 
       <footer className={styles.foot}>
-        <button
-          type="button"
+        <ActionButton
+          label="拠点へ戻る"
           className={styles.back}
           onClick={() => navigate({ name: 'town' })}
-        >
-          拠点へ戻る
-        </button>
+        />
       </footer>
     </div>
   );

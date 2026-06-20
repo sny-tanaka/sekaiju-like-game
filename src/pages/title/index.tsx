@@ -4,6 +4,7 @@ import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
 import { AppUpdater } from '@/components/AppUpdater/AppUpdater';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { SaveCard } from '@/components/common/SaveCard/SaveCard';
 import { SoundSettings } from '@/components/common/SoundSettings';
 import type { Character, SaveMeta } from '@/domain/types';
@@ -52,19 +53,17 @@ export const Page = () => {
   }, [save]);
 
   const handleContinue = useCallback(async () => {
-    play('decide');
     setBusy(true);
     const result = await continueGame();
     setBusy(false);
     if (result.ok) navigate({ name: 'town' });
-  }, [continueGame, navigate, play]);
+  }, [continueGame, navigate]);
 
   // 「最初から」: 有効なセーブがあるなら確認、無ければそのままギルド名入力へ
   const handleNewGameStart = useCallback(() => {
-    play('decide');
     setGuildName('');
     setMode(hasValidSave ? 'confirm' : 'guildName');
-  }, [hasValidSave, play]);
+  }, [hasValidSave]);
 
   const confirmCreate = useCallback(async () => {
     play('save');
@@ -93,17 +92,14 @@ export const Page = () => {
           {/* ヘッダー：章マーク + ⚙ */}
           <header className={styles.head}>
             <p className={styles.chapterMark}>❦ 同見の書</p>
-            <button
-              type="button"
+            <ActionButton
+              ariaLabel="サウンド設定"
+              sfx="cursor"
               className={styles.gearBtn}
-              aria-label="サウンド設定"
-              onClick={() => {
-                play('cursor');
-                setSoundOpen(true);
-              }}
+              onClick={() => setSoundOpen(true)}
             >
               ⚙
-            </button>
+            </ActionButton>
           </header>
 
           {/* ヒーロー：エンブレム / タイトル / サブタイトル / 引用 */}
@@ -148,38 +144,33 @@ export const Page = () => {
 
           {/* アクションボタン群 */}
           <div className={styles.actions}>
-            <button
-              type="button"
+            <ActionButton
+              label="つづきから"
+              size="large"
               className={styles.primary}
               disabled={!hasValidSave || busy}
               onClick={() => void handleContinue()}
-            >
-              つづきから
-            </button>
-            <button
-              type="button"
+            />
+            <ActionButton
+              label="最初から"
+              size="large"
               className={hasValidSave ? styles.sub : styles.primary}
               disabled={busy}
               onClick={handleNewGameStart}
-            >
-              最初から
-            </button>
+            />
           </div>
 
           {/* 控えめなフッタ */}
           <footer className={styles.foot}>
             <span className={styles.version}>v{__APP_VERSION__}</span>
-            <button
-              type="button"
+            <ActionButton
+              label={isChecking ? '確認中…' : '更新を確認'}
+              size="small"
+              sfx="cursor"
               className={styles.updateBtn}
               disabled={isChecking}
-              onClick={() => {
-                play('cursor');
-                void checkForUpdate();
-              }}
-            >
-              {isChecking ? '確認中…' : '更新を確認'}
-            </button>
+              onClick={() => void checkForUpdate()}
+            />
           </footer>
         </>
       ) : mode === 'guildName' ? (
@@ -187,17 +178,14 @@ export const Page = () => {
           {/* ヘッダー：章マーク（結成の儀）+ ⚙ */}
           <header className={styles.head}>
             <p className={styles.chapterMark}>❦ 結成の儀</p>
-            <button
-              type="button"
+            <ActionButton
+              ariaLabel="サウンド設定"
+              sfx="cursor"
               className={styles.gearBtn}
-              aria-label="サウンド設定"
-              onClick={() => {
-                play('cursor');
-                setSoundOpen(true);
-              }}
+              onClick={() => setSoundOpen(true)}
             >
               ⚙
-            </button>
+            </ActionButton>
           </header>
 
           {/* ギルド名入力（flex: 1 で中央寄せ） */}
@@ -227,22 +215,22 @@ export const Page = () => {
 
           {/* アクションボタン群 */}
           <div className={styles.actions}>
-            <button
-              type="button"
+            <ActionButton
+              label="はじめる"
+              size="large"
+              sfx={null}
               className={styles.primary}
               disabled={busy}
               onClick={() => void confirmCreate()}
-            >
-              はじめる
-            </button>
-            <button
-              type="button"
+            />
+            <ActionButton
+              label="もどる"
+              size="large"
+              sfx="cancel"
               className={styles.sub}
               disabled={busy}
               onClick={() => setMode('menu')}
-            >
-              もどる
-            </button>
+            />
           </div>
         </>
       ) : (
@@ -256,22 +244,21 @@ export const Page = () => {
               』は上書きされ、元に戻せません。
             </div>
             <div className={styles.modalActions}>
-              <button
-                type="button"
+              <ActionButton
+                label="データを消して始める"
+                size="large"
                 className={styles.danger}
                 disabled={busy}
                 onClick={() => setMode('guildName')}
-              >
-                データを消して始める
-              </button>
-              <button
-                type="button"
+              />
+              <ActionButton
+                label="もどる"
+                size="large"
+                sfx="cancel"
                 className={styles.sub}
                 disabled={busy}
                 onClick={() => setMode('menu')}
-              >
-                もどる
-              </button>
+              />
             </div>
           </div>
         </div>
@@ -296,29 +283,22 @@ export const Page = () => {
           >
             <div className={styles.modalHeader}>
               <span>設定</span>
-              <button
-                type="button"
+              <ActionButton
+                ariaLabel="閉じる"
+                sfx="cursor"
                 className={styles.modalCloseBtn}
-                aria-label="閉じる"
-                onClick={() => {
-                  play('cursor');
-                  setSoundOpen(false);
-                }}
+                onClick={() => setSoundOpen(false)}
               >
                 ✕
-              </button>
+              </ActionButton>
             </div>
             <SoundSettings />
-            <button
-              type="button"
+            <ActionButton
+              label="とじる"
+              sfx="cursor"
               className={styles.modalClose}
-              onClick={() => {
-                play('cursor');
-                setSoundOpen(false);
-              }}
-            >
-              とじる
-            </button>
+              onClick={() => setSoundOpen(false)}
+            />
           </div>
         </div>
       ) : null}

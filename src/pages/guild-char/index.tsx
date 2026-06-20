@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
@@ -221,8 +222,7 @@ export const Page = ({ id }: { id: string }) => {
 
               return (
                 <div key={slot}>
-                  <button
-                    type="button"
+                  <ActionButton
                     className={`${styles.equipRow} ${equipped ? styles.equipRowEquipped : ''} ${isExpanded ? styles.equipRowExpanded : ''}`}
                     onClick={() => {
                       if (!equipped) {
@@ -254,21 +254,29 @@ export const Page = ({ id }: { id: string }) => {
                       {bonusStr ? <span className={styles.equipStats}>{bonusStr}</span> : null}
                     </div>
                     {equipped ? (
-                      <button
-                        type="button"
+                      <span
                         className={`${styles.equipChip} ${styles.equipChipUnequip}`}
+                        role="button"
+                        tabIndex={0}
                         onClick={(e) => {
                           e.stopPropagation();
                           void updateAndUnequip(slot);
                           setExpandedSlot(null);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            void updateAndUnequip(slot);
+                            setExpandedSlot(null);
+                          }
+                        }}
                       >
                         外す
-                      </button>
+                      </span>
                     ) : (
                       <span className={`${styles.equipChip} ${styles.equipChipPick}`}>選ぶ</span>
                     )}
-                  </button>
+                  </ActionButton>
 
                   {/* 展開パネル */}
                   {isExpanded ? (
@@ -279,9 +287,8 @@ export const Page = ({ id }: { id: string }) => {
                         candidates.map((e) => {
                           const cBonusStr = equipStatLabel(e.masterId, e.grade);
                           return (
-                            <button
+                            <ActionButton
                               key={e.id}
-                              type="button"
                               className={styles.candidateRow}
                               onClick={() => {
                                 void applyAndPersist((s) => equipItem(s, id, e.id));
@@ -301,7 +308,7 @@ export const Page = ({ id }: { id: string }) => {
                                 ) : null}
                               </div>
                               <span className={styles.candidateAssign}>装備</span>
-                            </button>
+                            </ActionButton>
                           );
                         })
                       )}
@@ -322,28 +329,28 @@ export const Page = ({ id }: { id: string }) => {
 
           {/* サブタブ */}
           <div className={styles.skillSubTabs}>
-            <button
-              type="button"
+            <ActionButton
+              label="職業"
+              size="small"
+              sfx="cursor"
               className={`${styles.skillSubTab} ${skillTab === 'class' ? styles.skillSubTabActive : ''}`}
               onClick={() => setSkillTab('class')}
-            >
-              職業
-            </button>
-            <button
-              type="button"
+            />
+            <ActionButton
+              label="種族"
+              size="small"
+              sfx="cursor"
               className={`${styles.skillSubTab} ${skillTab === 'race' ? styles.skillSubTabActive : ''}`}
               onClick={() => setSkillTab('race')}
-            >
-              種族
-            </button>
+            />
             {char.titleId ? (
-              <button
-                type="button"
+              <ActionButton
+                label="称号"
+                size="small"
+                sfx="cursor"
                 className={`${styles.skillSubTab} ${skillTab === 'title' ? styles.skillSubTabActive : ''}`}
                 onClick={() => setSkillTab('title')}
-              >
-                称号
-              </button>
+              />
             ) : null}
           </div>
 
@@ -396,55 +403,44 @@ export const Page = ({ id }: { id: string }) => {
         {/* 育成 3列ボタン */}
         <section>
           <div className={styles.growthBtns}>
-            <button
-              type="button"
+            <ActionButton
+              sfx="cursor"
               className={`${styles.growthBtn} ${styles.growthBtnTransfer}`}
-              onClick={() => {
-                play('cursor');
-                setGrowthMode('transfer');
-              }}
+              onClick={() => setGrowthMode('transfer')}
             >
               <span className={styles.growthBtnLabel}>転職</span>
               <span className={styles.growthBtnSub}>
                 Lv-{CLASS_CHANGE_LEVEL_PENALTY}/技リセット
               </span>
-            </button>
-            <button
-              type="button"
+            </ActionButton>
+            <ActionButton
+              sfx="cursor"
               className={`${styles.growthBtn} ${styles.growthBtnTitle}`}
-              onClick={() => {
-                play('cursor');
-                setGrowthMode('title');
-              }}
+              onClick={() => setGrowthMode('title')}
             >
               <span className={styles.growthBtnLabel}>称号</span>
               <span className={styles.growthBtnSub}>{char.titleId ? '習得済み' : '2択選択'}</span>
-            </button>
-            <button
-              type="button"
+            </ActionButton>
+            <ActionButton
+              sfx="cursor"
               className={`${styles.growthBtn} ${styles.growthBtnRebirth}`}
               disabled={!canReincarnate(char)}
-              onClick={() => {
-                play('cursor');
-                setGrowthMode('rebirth');
-              }}
+              onClick={() => setGrowthMode('rebirth')}
             >
               <span className={styles.growthBtnLabel}>転生</span>
               <span className={styles.growthBtnSub}>Lv100→1</span>
-            </button>
+            </ActionButton>
           </div>
         </section>
       </main>
 
       {/* フッタ */}
       <footer className={styles.foot}>
-        <button
-          type="button"
+        <ActionButton
+          label="一覧へ戻る"
           className={styles.back}
           onClick={() => navigate({ name: 'guild' })}
-        >
-          一覧へ戻る
-        </button>
+        />
       </footer>
 
       {/* ===== 育成 bottom sheet ===== */}
@@ -482,25 +478,21 @@ export const Page = ({ id }: { id: string }) => {
                   ))}
                 </select>
                 <div className={styles.sheetActionRow}>
-                  <button
-                    type="button"
+                  <ActionButton
+                    label="もどる"
+                    sfx="cancel"
                     className={styles.sheetActCancel}
                     onClick={() => setGrowthMode(null)}
-                  >
-                    もどる
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <ActionButton
+                    label="転職する"
                     className={styles.sheetActPrimary}
                     disabled={transferTo === char.classId}
                     onClick={() => {
-                      play('decide');
                       void applyAndPersist((s) => transferClassInSave(s, id, transferTo));
                       setGrowthMode(null);
                     }}
-                  >
-                    転職する
-                  </button>
+                  />
                 </div>
               </>
             ) : null}
@@ -518,28 +510,25 @@ export const Page = ({ id }: { id: string }) => {
                 ) : (
                   <div className={styles.titleOpts}>
                     {(CLASSES[char.classId]?.titleOptions ?? []).map((tid) => (
-                      <button
+                      <ActionButton
                         key={tid}
-                        type="button"
+                        label={`${TITLES[tid]?.name}（SP+5）`}
                         className={styles.titleBtn}
                         disabled={!canAcquireTitle(char, tid, deepestReached)}
                         onClick={() => {
                           void updateChar((c) => acquireTitle(c, tid, deepestReached));
                           setGrowthMode(null);
                         }}
-                      >
-                        {TITLES[tid]?.name}（SP+5）
-                      </button>
+                      />
                     ))}
                   </div>
                 )}
-                <button
-                  type="button"
+                <ActionButton
+                  label="とじる"
+                  sfx="cancel"
                   className={styles.sheetClose}
                   onClick={() => setGrowthMode(null)}
-                >
-                  とじる
-                </button>
+                />
               </>
             ) : null}
 
@@ -614,15 +603,15 @@ export const Page = ({ id }: { id: string }) => {
                   </select>
                 </div>
                 <div className={styles.sheetActionRow}>
-                  <button
-                    type="button"
+                  <ActionButton
+                    label="やめる"
+                    sfx="cancel"
                     className={styles.sheetActCancel}
                     onClick={() => setGrowthMode(null)}
-                  >
-                    やめる
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <ActionButton
+                    label="転生を実行"
+                    sfx={null}
                     className={styles.sheetActDanger}
                     onClick={() => {
                       play('create');
@@ -635,9 +624,7 @@ export const Page = ({ id }: { id: string }) => {
                       );
                       setGrowthMode(null);
                     }}
-                  >
-                    転生を実行
-                  </button>
+                  />
                 </div>
               </>
             ) : null}

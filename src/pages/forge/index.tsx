@@ -3,6 +3,7 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
 import { RecycleFx } from '@/components/common/effects/RecycleFx/RecycleFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
@@ -109,7 +110,6 @@ export const Page = () => {
   const clearSelection = () => setSelected(new Set());
 
   const switchTab = (t: 'forge' | 'recycle') => {
-    play('cursor');
     setTab(t);
     clearSelection();
   };
@@ -150,20 +150,20 @@ export const Page = () => {
 
       {/* flat underline タブバー */}
       <div className={styles.tabs}>
-        <button
-          type="button"
+        <ActionButton
+          label="強化"
+          size="small"
+          sfx="cursor"
           className={`${styles.tab} ${tab === 'forge' ? styles.tabActive : ''}`}
           onClick={() => switchTab('forge')}
-        >
-          強化
-        </button>
-        <button
-          type="button"
+        />
+        <ActionButton
+          label="リサイクル"
+          size="small"
+          sfx="cursor"
           className={`${styles.tab} ${tab === 'recycle' ? styles.tabActive : ''}`}
           onClick={() => switchTab('recycle')}
-        >
-          リサイクル
-        </button>
+        />
       </div>
 
       {/* ヒント文 */}
@@ -234,8 +234,9 @@ export const Page = () => {
                     {/* 下段: インゴットボタン or MAX チップのみ */}
                     {!maxed && (
                       <div className={styles.ingotRow}>
-                        <button
-                          type="button"
+                        <ActionButton
+                          label={`銅+${FORGE.INGOT_INC.copper} (${copper})`}
+                          size="small"
                           className={styles.ingotCopper}
                           disabled={copper <= 0}
                           onClick={() =>
@@ -253,11 +254,10 @@ export const Page = () => {
                               masterId: e.masterId,
                             })
                           }
-                        >
-                          銅+{FORGE.INGOT_INC.copper} ({copper})
-                        </button>
-                        <button
-                          type="button"
+                        />
+                        <ActionButton
+                          label={`銀+${FORGE.INGOT_INC.silver} (${silver})`}
+                          size="small"
                           className={styles.ingotSilver}
                           disabled={silver <= 0}
                           onClick={() =>
@@ -275,11 +275,10 @@ export const Page = () => {
                               masterId: e.masterId,
                             })
                           }
-                        >
-                          銀+{FORGE.INGOT_INC.silver} ({silver})
-                        </button>
-                        <button
-                          type="button"
+                        />
+                        <ActionButton
+                          label={`金+${FORGE.INGOT_INC.gold} (${gold})`}
+                          size="small"
                           className={styles.ingotGold}
                           disabled={gold <= 0}
                           onClick={() =>
@@ -297,9 +296,7 @@ export const Page = () => {
                               masterId: e.masterId,
                             })
                           }
-                        >
-                          金+{FORGE.INGOT_INC.gold} ({gold})
-                        </button>
+                        />
                       </div>
                     )}
                   </div>
@@ -331,8 +328,9 @@ export const Page = () => {
                         分解で <span className={styles.fragCount}>断片 ×{fragCount}</span>
                       </span>
                     </div>
-                    <button
-                      type="button"
+                    <ActionButton
+                      label="分解"
+                      size="small"
                       className={styles.recycleChip}
                       onClick={() =>
                         setPending({
@@ -342,9 +340,7 @@ export const Page = () => {
                           masterId: e.masterId,
                         })
                       }
-                    >
-                      分解
-                    </button>
+                    />
                   </div>
                 );
               }
@@ -378,15 +374,16 @@ export const Page = () => {
               .filter((e) => selected.has(e.id))
               .reduce((s, e) => s + recycleFragments(e.masterId), 0)}
           </span>
-          <button
-            type="button"
+          <ActionButton
+            label="解除"
+            size="small"
+            sfx="cancel"
             className={styles.bulkClear}
             onClick={clearSelection}
-          >
-            解除
-          </button>
-          <button
-            type="button"
+          />
+          <ActionButton
+            label="一括分解"
+            size="small"
             className={styles.bulkRecycle}
             onClick={() => {
               const ids = pool.filter((e) => selected.has(e.id)).map((e) => e.id);
@@ -395,21 +392,17 @@ export const Page = () => {
                 .reduce((s, e) => s + recycleFragments(e.masterId), 0);
               setPending({ kind: 'recycleBulk', ids, totalFragments });
             }}
-          >
-            一括分解
-          </button>
+          />
         </div>
       )}
 
       {/* フッタ */}
       <footer className={styles.foot}>
-        <button
-          type="button"
+        <ActionButton
+          label="拠点へ戻る"
           className={styles.back}
           onClick={() => navigate({ name: 'town' })}
-        >
-          拠点へ戻る
-        </button>
+        />
       </footer>
 
       {/* 強化/分解の確認ダイアログ（誤タップ防止）。 */}
@@ -485,23 +478,17 @@ export const Page = () => {
                 })()}
 
                 <div className={styles.confirmActions}>
-                  <button
-                    type="button"
+                  <ActionButton
+                    label="やめる"
+                    sfx="cancel"
                     className={styles.confirmCancel}
-                    onClick={() => {
-                      play('cancel');
-                      setPending(null);
-                    }}
-                  >
-                    やめる
-                  </button>
-                  <button
-                    type="button"
+                    onClick={() => setPending(null)}
+                  />
+                  <ActionButton
+                    label="強化する"
                     className={styles.confirmOk}
                     onClick={confirmPending}
-                  >
-                    強化する
-                  </button>
+                  />
                 </div>
               </>
             ) : pending.kind === 'recycle' ? (
@@ -526,23 +513,17 @@ export const Page = () => {
                   断片 +{recycleFragments(pending.masterId)}（装備は失われます）
                 </div>
                 <div className={styles.confirmActions}>
-                  <button
-                    type="button"
+                  <ActionButton
+                    label="やめる"
+                    sfx="cancel"
                     className={styles.confirmCancel}
-                    onClick={() => {
-                      play('cancel');
-                      setPending(null);
-                    }}
-                  >
-                    やめる
-                  </button>
-                  <button
-                    type="button"
+                    onClick={() => setPending(null)}
+                  />
+                  <ActionButton
+                    label="分解する"
                     className={styles.confirmOkDanger}
                     onClick={confirmPending}
-                  >
-                    分解する
-                  </button>
+                  />
                 </div>
               </>
             ) : (
@@ -555,23 +536,17 @@ export const Page = () => {
                   断片 +{pending.totalFragments}（装備は失われます）
                 </div>
                 <div className={styles.confirmActions}>
-                  <button
-                    type="button"
+                  <ActionButton
+                    label="やめる"
+                    sfx="cancel"
                     className={styles.confirmCancel}
-                    onClick={() => {
-                      play('cancel');
-                      setPending(null);
-                    }}
-                  >
-                    やめる
-                  </button>
-                  <button
-                    type="button"
+                    onClick={() => setPending(null)}
+                  />
+                  <ActionButton
+                    label="一括分解する"
                     className={styles.confirmOkDanger}
                     onClick={confirmPending}
-                  >
-                    一括分解する
-                  </button>
+                  />
                 </div>
               </>
             )}

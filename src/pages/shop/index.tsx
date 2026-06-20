@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import styles from './style.module.scss';
 
-import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { CoinPopFx } from '@/components/common/effects/CoinPopFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
@@ -73,7 +73,6 @@ const itemCategory = (id: string): ShopCat => {
 export const Page = () => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
-  const play = useSfx();
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
   const [pending, setPending] = useState<Pending | null>(null);
   const [pendingQty, setPendingQty] = useState(1);
@@ -223,7 +222,6 @@ export const Page = () => {
   }
 
   const switchTab = (t: 'buy' | 'sell') => {
-    play('cursor');
     setTab(t);
     setFilter('all');
   };
@@ -338,13 +336,12 @@ export const Page = () => {
             <span>{equipDetail.ownedQty}</span>
           </div>
           <div className={styles.confirmActions}>
-            <button
-              type="button"
+            <ActionButton
+              label="閉じる"
+              sfx="cancel"
               className={styles.confirmCancel}
               onClick={() => setEquipDetail(null)}
-            >
-              閉じる
-            </button>
+            />
           </div>
         </div>
       </div>
@@ -359,41 +356,41 @@ export const Page = () => {
       </header>
 
       <div className={styles.tabs}>
-        <button
-          type="button"
+        <ActionButton
+          label="買う"
+          size="small"
+          sfx="cursor"
           className={`${styles.tab} ${tab === 'buy' ? styles.tabActive : ''}`}
           onClick={() => switchTab('buy')}
-        >
-          買う
-        </button>
-        <button
-          type="button"
+        />
+        <ActionButton
+          label="売る"
+          size="small"
+          sfx="cursor"
           className={`${styles.tab} ${tab === 'sell' ? styles.tabActive : ''}`}
           onClick={() => switchTab('sell')}
-        >
-          売る
-        </button>
+        />
       </div>
 
       {/* カテゴリ絞り込み＋並び替え */}
       <div className={styles.controls}>
         <div className={styles.filters}>
-          <button
-            type="button"
+          <ActionButton
+            label="すべて"
+            size="small"
+            sfx="cursor"
             className={`${styles.chip} ${effFilter === 'all' ? styles.chipActive : ''}`}
             onClick={() => setFilter('all')}
-          >
-            すべて
-          </button>
+          />
           {presentCats.map((c) => (
-            <button
+            <ActionButton
               key={c}
-              type="button"
+              label={CAT_LABEL[c]}
+              size="small"
+              sfx="cursor"
               className={`${styles.chip} ${effFilter === c ? styles.chipActive : ''}`}
               onClick={() => setFilter(c)}
-            >
-              {CAT_LABEL[c]}
-            </button>
+            />
           ))}
         </div>
         <label className={styles.sortRow}>
@@ -430,8 +427,9 @@ export const Page = () => {
                 />
                 <div className={styles.info}>
                   {e.kind === 'equip' ? (
-                    <button
-                      type="button"
+                    <ActionButton
+                      label={e.name}
+                      sfx="cursor"
                       className={styles.nameBtn}
                       onClick={() =>
                         setEquipDetail({
@@ -442,9 +440,7 @@ export const Page = () => {
                           mode: 'buy',
                         })
                       }
-                    >
-                      {e.name}
-                    </button>
+                    />
                   ) : (
                     <span className={styles.name}>{e.name}</span>
                   )}
@@ -452,8 +448,9 @@ export const Page = () => {
                     {e.note ? `${e.note} ・ ` : ''}所持 {qty}
                   </span>
                 </div>
-                <button
-                  type="button"
+                <ActionButton
+                  label={`${e.price} G`}
+                  size="small"
                   className={styles.action}
                   disabled={gold < e.price}
                   onClick={() =>
@@ -464,9 +461,7 @@ export const Page = () => {
                       price: e.price,
                     })
                   }
-                >
-                  {e.price} G
-                </button>
+                />
               </div>
             ))
           )
@@ -505,8 +500,9 @@ export const Page = () => {
                 />
                 <div className={styles.info}>
                   {r.kind === 'equip' ? (
-                    <button
-                      type="button"
+                    <ActionButton
+                      label={r.name}
+                      sfx="cursor"
                       className={styles.nameBtn}
                       onClick={() =>
                         setEquipDetail({
@@ -518,9 +514,7 @@ export const Page = () => {
                           grade: r.inst.grade ?? 1,
                         })
                       }
-                    >
-                      {r.name}
-                    </button>
+                    />
                   ) : (
                     <span className={styles.name}>{r.name}</span>
                   )}
@@ -529,8 +523,9 @@ export const Page = () => {
                     {r.kind === 'item' ? ` ・ 所持 ${r.qty}` : ''}
                   </span>
                 </div>
-                <button
-                  type="button"
+                <ActionButton
+                  label={`売却 ${r.price} G`}
+                  size="small"
                   className={styles.action}
                   onClick={() =>
                     openPending(
@@ -546,9 +541,7 @@ export const Page = () => {
                           }
                     )
                   }
-                >
-                  売却 {r.price} G
-                </button>
+                />
               </div>
             );
           })
@@ -556,13 +549,11 @@ export const Page = () => {
       </div>
 
       <footer className={styles.foot}>
-        <button
-          type="button"
+        <ActionButton
+          label="拠点へ戻る"
           className={styles.back}
           onClick={() => navigate({ name: 'town' })}
-        >
-          拠点へ戻る
-        </button>
+        />
       </footer>
 
       {/* 売買の確認ダイアログ（誤タップ防止）。 */}
@@ -595,39 +586,39 @@ export const Page = () => {
             {/* 数量ステッパー（sellEquip は数量1固定なので非表示）。 */}
             {pending.kind !== 'sellEquip' && (
               <div className={styles.stepperRow}>
-                <button
-                  type="button"
+                <ActionButton
+                  label="−"
+                  size="small"
+                  sfx="cursor"
                   className={styles.stepperBtn}
                   disabled={pendingQty <= 1}
                   onClick={() => setPendingQty((q) => Math.max(1, q - 1))}
-                >
-                  −
-                </button>
+                />
                 <span className={styles.stepperVal}>{pendingQty}</span>
-                <button
-                  type="button"
+                <ActionButton
+                  label="＋"
+                  size="small"
+                  sfx="cursor"
                   className={styles.stepperBtn}
                   disabled={pendingQty >= pendingMax}
                   onClick={() => setPendingQty((q) => Math.min(pendingMax, q + 1))}
-                >
-                  ＋
-                </button>
-                <button
-                  type="button"
+                />
+                <ActionButton
+                  label="+10"
+                  size="small"
+                  sfx="cursor"
                   className={styles.stepperBtn}
                   disabled={pendingQty >= pendingMax}
                   onClick={() => setPendingQty((q) => Math.min(pendingMax, q + 10))}
-                >
-                  +10
-                </button>
-                <button
-                  type="button"
+                />
+                <ActionButton
+                  label="最大"
+                  size="small"
+                  sfx="cursor"
                   className={styles.stepperMax}
                   disabled={pendingQty >= pendingMax}
                   onClick={() => setPendingQty(pendingMax)}
-                >
-                  最大
-                </button>
+                />
               </div>
             )}
             {/* 合計金額（sellEquip 以外）。 */}
@@ -637,23 +628,17 @@ export const Page = () => {
               </div>
             )}
             <div className={styles.confirmActions}>
-              <button
-                type="button"
+              <ActionButton
+                label="やめる"
+                sfx="cancel"
                 className={styles.confirmCancel}
-                onClick={() => {
-                  play('cancel');
-                  setPending(null);
-                }}
-              >
-                やめる
-              </button>
-              <button
-                type="button"
+                onClick={() => setPending(null)}
+              />
+              <ActionButton
+                label={pending.kind === 'buy' ? '購入する' : '売却する'}
                 className={styles.confirmOk}
                 onClick={confirmPending}
-              >
-                {pending.kind === 'buy' ? '購入する' : '売却する'}
-              </button>
+              />
             </div>
           </div>
         </div>

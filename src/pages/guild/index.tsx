@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { ClassInfoCard } from '@/components/creation/ClassInfoCard/ClassInfoCard';
 import { RaceInfoCard } from '@/components/creation/RaceInfoCard/RaceInfoCard';
@@ -126,18 +127,17 @@ export const Page = () => {
             banish: '追放',
           };
           return (
-            <button
+            <ActionButton
               key={t}
-              type="button"
+              label={labels[t]}
+              size="small"
+              sfx="cursor"
               className={`${styles.tab} ${tab === t ? styles.tabActive : ''}`}
               onClick={() => {
-                play('cursor');
                 setNotice(null);
                 setTab(t);
               }}
-            >
-              {labels[t]}
-            </button>
+            />
           );
         })}
       </div>
@@ -167,14 +167,11 @@ export const Page = () => {
             <div className={styles.gridLabel}>種族 ・ {raceIds.length}種</div>
             <div className={styles.raceGrid}>
               {raceIds.map((id) => (
-                <button
+                <ActionButton
                   key={id}
-                  type="button"
+                  sfx="cursor"
                   className={`${styles.raceCard} ${raceId === id ? styles.raceCardActive : ''}`}
-                  onClick={() => {
-                    play('cursor');
-                    setRaceId(id);
-                  }}
+                  onClick={() => setRaceId(id)}
                 >
                   <CharacterPortrait
                     raceId={id as RaceId}
@@ -182,7 +179,7 @@ export const Page = () => {
                     size={40}
                   />
                   <span className={styles.raceCardName}>{RACES[id]?.name}</span>
-                </button>
+                </ActionButton>
               ))}
             </div>
 
@@ -195,17 +192,14 @@ export const Page = () => {
             <div className={styles.gridLabel}>職業 ・ {classIds.length}種</div>
             <div className={styles.classChips}>
               {classIds.map((id) => (
-                <button
+                <ActionButton
                   key={id}
-                  type="button"
+                  label={CLASSES[id]?.name}
+                  size="small"
+                  sfx="cursor"
                   className={`${styles.classChip} ${classId === id ? styles.classChipActive : ''}`}
-                  onClick={() => {
-                    play('cursor');
-                    setClassId(id);
-                  }}
-                >
-                  {CLASSES[id]?.name}
-                </button>
+                  onClick={() => setClassId(id)}
+                />
               ))}
             </div>
 
@@ -308,8 +302,7 @@ export const Page = () => {
                   const arrowClass = pos === '控え' ? styles.memberArrowBench : '';
                   return (
                     <li key={m.id}>
-                      <button
-                        type="button"
+                      <ActionButton
                         className={`${styles.memberRow} ${rowClass}`}
                         onClick={() => navigate({ name: 'guildChar', id: m.id })}
                       >
@@ -328,7 +321,7 @@ export const Page = () => {
                           <span className={styles.memberSub}>{memberLine(m)}</span>
                         </div>
                         <span className={`${styles.memberArrow} ${arrowClass}`}>›</span>
-                      </button>
+                      </ActionButton>
                     </li>
                   );
                 })}
@@ -348,14 +341,11 @@ export const Page = () => {
                   const id = slotMemberId('front', idx);
                   const m = id ? members.find((x) => x.id === id) : null;
                   return (
-                    <button
+                    <ActionButton
                       key={`front_${idx}`}
-                      type="button"
+                      sfx="cursor"
                       className={`${styles.slotCard} ${m ? styles.slotCardFront : styles.slotCardEmpty}`}
-                      onClick={() => {
-                        play('cursor');
-                        setPicker({ row: 'front', idx });
-                      }}
+                      onClick={() => setPicker({ row: 'front', idx })}
                     >
                       {m ? (
                         <>
@@ -371,7 +361,7 @@ export const Page = () => {
                       ) : (
                         <span>＋</span>
                       )}
-                    </button>
+                    </ActionButton>
                   );
                 })}
               </div>
@@ -388,14 +378,11 @@ export const Page = () => {
                   const id = slotMemberId('back', idx);
                   const m = id ? members.find((x) => x.id === id) : null;
                   return (
-                    <button
+                    <ActionButton
                       key={`back_${idx}`}
-                      type="button"
+                      sfx="cursor"
                       className={`${styles.slotCard} ${m ? styles.slotCardBack : styles.slotCardEmpty}`}
-                      onClick={() => {
-                        play('cursor');
-                        setPicker({ row: 'back', idx });
-                      }}
+                      onClick={() => setPicker({ row: 'back', idx })}
                     >
                       {m ? (
                         <>
@@ -411,7 +398,7 @@ export const Page = () => {
                       ) : (
                         <span>＋</span>
                       )}
-                    </button>
+                    </ActionButton>
                   );
                 })}
               </div>
@@ -444,13 +431,12 @@ export const Page = () => {
                           <span className={styles.memberName}>{m.name}</span>
                           <span className={styles.memberSub}>{memberLine(m)}</span>
                         </div>
-                        <button
-                          type="button"
+                        <ActionButton
+                          label="追放"
+                          size="small"
                           className={`${styles.banishBtn} ${isHighlight ? styles.banishBtnHighlight : ''}`}
                           onClick={() => setBanishId(m.id)}
-                        >
-                          追放
-                        </button>
+                        />
                       </div>
                     </li>
                   );
@@ -464,22 +450,19 @@ export const Page = () => {
       {/* フッタ */}
       <footer className={styles.foot}>
         {tab === 'create' ? (
-          <button
-            type="button"
+          <ActionButton
+            label={isFull ? '団員が上限です' : '作成する'}
+            size="large"
             className={styles.primary}
             disabled={busy || isFull}
             onClick={() => void handleCreate()}
-          >
-            {isFull ? '団員が上限です' : '作成する'}
-          </button>
+          />
         ) : (
-          <button
-            type="button"
+          <ActionButton
+            label="拠点へ戻る"
             className={styles.sub}
             onClick={() => navigate({ name: 'town' })}
-          >
-            拠点へ戻る
-          </button>
+          />
         )}
       </footer>
 
@@ -498,17 +481,16 @@ export const Page = () => {
               {picker.row === 'front' ? '前衛' : '後衛'}スロットへ配置
             </div>
             {slotMemberId(picker.row, picker.idx) ? (
-              <button
-                type="button"
+              <ActionButton
+                label="この枠を空ける（編成から外す）"
+                sfx="cancel"
                 className={styles.removeRow}
                 onClick={() =>
                   void applyAndPersist((s) => setSlot(s, picker.row, picker.idx, null)).then(() =>
                     setPicker(null)
                   )
                 }
-              >
-                この枠を空ける（編成から外す）
-              </button>
+              />
             ) : null}
             {members.length === 0 ? (
               <p className={styles.empty}>団員がいません。</p>
@@ -531,8 +513,7 @@ export const Page = () => {
                           : styles.posTagBench;
                     return (
                       <li key={m.id}>
-                        <button
-                          type="button"
+                        <ActionButton
                           className={`${styles.pickerItem} ${here ? styles.pickerItemActive : ''}`}
                           disabled={disabled}
                           onClick={() =>
@@ -556,20 +537,19 @@ export const Page = () => {
                             <span className={styles.pickerItemSub}>{memberLine(m)}</span>
                           </div>
                           <span className={styles.pickerItemAssign}>配置</span>
-                        </button>
+                        </ActionButton>
                       </li>
                     );
                   })}
                 </ul>
               </>
             )}
-            <button
-              type="button"
+            <ActionButton
+              label="とじる"
+              sfx="cancel"
               className={styles.sheetClose}
               onClick={() => setPicker(null)}
-            >
-              とじる
-            </button>
+            />
           </div>
         </div>
       ) : null}
@@ -596,25 +576,21 @@ export const Page = () => {
               追放した団員は二度と戻りません。装備は倉庫に返却されます。
             </div>
             <div className={styles.confirmActions}>
-              <button
-                type="button"
+              <ActionButton
+                label="もどる"
+                sfx="cancel"
                 className={styles.confirmCancel}
                 onClick={() => setBanishId(null)}
-              >
-                もどる
-              </button>
-              <button
-                type="button"
+              />
+              <ActionButton
+                label="追放する"
                 className={styles.confirmOk}
                 onClick={() => {
-                  play('cancel');
                   const id = banishTarget.id;
                   void applyAndPersist((s) => removeCharacterFromGuild(s, id));
                   setBanishId(null);
                 }}
-              >
-                追放する
-              </button>
+              />
             </div>
           </div>
         </div>
