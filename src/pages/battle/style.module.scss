@@ -132,6 +132,7 @@
 }
 
 .enemy {
+  display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 120px;
@@ -139,18 +140,15 @@
   max-width: 200px;
   padding: 8px;
   border-radius: 0;
-  border: 0.75px solid var.$rule; // ActionButton variant="default" の base に合わせて明示（Phase 2 前の見た目復活）
-  background-color: var.$parchment-card; // 同上
+  border: 0.75px solid var.$rule;
+  background-color: var.$parchment-card;
   box-shadow: 0 1px 3px var.$shadow-ink;
-  // (C) disabled 継承を打ち消す: ブラウザのデフォルト（灰色）に上書きされないよう明示
   color: var.$ink;
+  cursor: pointer;
   transition: transform 0.18s ease-out; // state 駆動の前進/後退アニメ用
-  // ActionButton variant="default" の ::before（左縦帯）は戦闘カードでは不要
-  &::before {
-    display: none;
-  }
 }
-// (C) disabled 状態でも色とコントラストを維持する（.down の opacity:0.4 は維持）
+// nostyle 化後: .actionButton:disabled { opacity: 0.45 } を打ち消す
+// anim 中に disabled になっても暗転しない（.down の opacity:0.4 は維持）
 .enemy:disabled {
   color: var.$ink;
   opacity: 1;
@@ -373,7 +371,9 @@
 }
 
 .logOverlayClose {
-  color: var.$parchment !important;
+  border: none;
+  background: transparent;
+  color: var.$parchment;
   font-size: 16px;
   line-height: 1;
   padding: 4px 6px;
@@ -430,19 +430,26 @@
   flex: 0 0 calc((100% - 12px) / 3);
   min-width: 0;
   position: relative; // 職業バッジを右上に配置するため
+  display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 5px;
   border-radius: 0;
-  border: 0.75px solid var.$rule; // ActionButton variant="default" の base に合わせて明示（Phase 2 前の見た目復活）
-  background-color: var.$parchment-card; // 同上
+  border: 0.75px solid var.$rule;
+  background-color: var.$parchment-card;
   box-shadow: 0 1px 3px var.$shadow-ink;
   text-align: left;
+  cursor: pointer;
   transition: transform 0.18s ease-out; // state 駆動の前進/後退アニメ用
-  // ActionButton variant="default" の ::before（左縦帯）は戦闘カードでは不要
-  &::before {
-    display: none;
-  }
+}
+
+// nostyle 化後: .actionButton:disabled { opacity: 0.45 } を打ち消す
+// anim 中に disabled になっても全体が暗転しない
+.card:disabled {
+  opacity: 1;
+}
+.card:disabled.down {
+  opacity: 0.4; // 倒れた味方は暗くする（.down が付くケース）
 }
 
 // ユニオン満タン U! バッジ（職業バッジの左に配置）
@@ -715,11 +722,15 @@
 }
 
 .skillBtn {
+  display: flex;
   flex-direction: column;
   gap: 3px;
   padding: 7px 8px;
+  border: 0.75px solid var.$rule;
   border-radius: 0;
+  background-color: var.$parchment-card;
   text-align: left;
+  cursor: pointer;
   color: var.$ink;
 }
 
@@ -856,9 +867,12 @@
 
 .unionCancel {
   padding: 2px 10px;
+  border: 0.75px solid var.$illumination-gold-soft;
   border-radius: 0;
+  background-color: var.$parchment-card;
   color: var.$illumination-gold;
   font-size: 12px;
+  cursor: pointer;
 }
 
 .unionHint {
@@ -928,25 +942,25 @@
   }
 }
 .cmdPrimary {
-  background: linear-gradient(180deg, var.$illumination-gold, var.$ink-faint) !important;
-  color: var.$parchment !important;
-  border: 0 !important;
+  background: linear-gradient(180deg, var.$illumination-gold, var.$ink-faint);
+  color: var.$parchment;
+  border: 0;
 }
 .cmdSub {
-  border: 1px solid rgba(63, 138, 92, 0.5) !important;
-  background: rgba(63, 138, 92, 0.1) !important;
-  color: var.$verdant !important;
+  border: 1px solid rgba(63, 138, 92, 0.5);
+  background: rgba(63, 138, 92, 0.1);
+  color: var.$verdant;
 }
 .cmdTertiary {
-  border: 1px solid rgba(63, 138, 92, 0.3) !important;
-  color: var.$verdant-dark !important;
-  background: transparent !important;
+  border: 1px solid rgba(63, 138, 92, 0.3);
+  color: var.$verdant-dark;
+  background: transparent;
 }
 .cmdBack {
-  flex: 0 0 62px !important;
-  border: 0.75px solid var.$rule !important;
-  color: var.$ink-faint !important;
-  background: transparent !important;
+  flex: 0 0 62px;
+  border: 0.75px solid var.$rule;
+  color: var.$ink-faint;
+  background: transparent;
 }
 
 .cmdHead {
@@ -964,13 +978,13 @@
 
 // (D) たたかう: 大ゴールドプライマリ (h50)
 .menuPrimary {
-  height: 50px !important;
-  min-height: 50px !important;
-  background: linear-gradient(180deg, var.$illumination-gold, var.$ink-faint) !important;
-  color: var.$parchment !important;
-  border: 0 !important;
-  font-size: 18px !important;
-  font-weight: 800 !important;
+  height: 50px;
+  min-height: 50px;
+  background: linear-gradient(180deg, var.$illumination-gold, var.$ink-faint);
+  color: var.$parchment;
+  border: 0;
+  font-size: 18px;
+  font-weight: 800;
 }
 
 // (D) さくせん / にげる の横並び行
@@ -982,25 +996,32 @@
 // (D) さくせん (h44 小)
 .menuStrategy {
   flex: 1;
-  height: 44px !important;
-  min-height: 44px !important;
-  font-size: 14px !important;
+  height: 44px;
+  min-height: 44px;
+  font-size: 14px;
 }
 
 // (D) にげる (h44 小)
 .menuFlee {
   flex: 1;
-  height: 44px !important;
-  min-height: 44px !important;
-  font-size: 14px !important;
+  height: 44px;
+  min-height: 44px;
+  font-size: 14px;
 }
 
 .menuBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
+  min-height: 52px;
+  border: 0.75px solid var.$rule;
   border-radius: 0;
+  background-color: var.$parchment-card;
   color: var.$ink;
   font-size: 16px;
   font-weight: 700;
+  cursor: pointer;
 
   &:disabled {
     opacity: 0.4;
@@ -1016,9 +1037,13 @@
 .menuBack {
   // skillList が2列グリッドのとき、全幅をまたぐ
   grid-column: 1 / -1;
+  min-height: 40px;
+  border: 0.75px solid var.$rule;
   border-radius: 0;
+  background-color: transparent;
   color: var.$ink;
   font-size: 14px;
+  cursor: pointer;
 }
 
 .execRow {
@@ -1027,18 +1052,26 @@
 }
 
 .redo {
+  min-height: 56px;
   padding: 0 18px;
+  border: 0.75px solid var.$rule;
   border-radius: 0;
+  background-color: var.$parchment-card;
   color: var.$ink;
   font-size: 15px;
+  cursor: pointer;
 }
 
 .primary {
   flex: 1;
+  min-height: 56px;
+  border: none;
   border-radius: 0;
+  background-color: var.$verdant;
   color: var.$parchment;
   font-size: 18px;
   font-weight: 800;
+  cursor: pointer;
 
   &:disabled {
     opacity: 0.5;
@@ -1240,11 +1273,15 @@
 }
 
 .skip {
+  min-height: 40px;
   padding: 0 16px;
+  border: 0.75px solid var.$rule;
   border-radius: 0;
+  background-color: var.$parchment-card;
   color: var.$ink;
   font-size: 14px;
   font-weight: 700;
+  cursor: pointer;
 }
 
 // 直近に開いたログ行をフェードインで強調
@@ -1421,19 +1458,21 @@
 }
 
 .strategyOn {
-  background: var.$verdant !important;
-  color: var.$parchment !important;
+  background: var.$verdant;
+  color: var.$parchment;
   padding: 4px 8px;
   border-radius: 0;
-  border: none !important;
+  border: none;
+  cursor: pointer;
 }
 
 .strategyOff {
-  background: var.$ink !important;
-  color: var.$parchment-edge !important;
+  background: var.$ink;
+  color: var.$parchment-edge;
   padding: 4px 8px;
   border-radius: 0;
-  border: 0.75px solid var.$ink-faint !important;
+  border: 0.75px solid var.$ink-faint;
+  cursor: pointer;
 }
 
 // ==========================================================
@@ -1715,11 +1754,12 @@
 
 .resultLevelUpOkBtn {
   padding: 4px 18px;
-  border: 1px solid var(--gold, #c9a86a) !important;
-  background: transparent !important;
-  color: var(--gold, #c9a86a) !important;
+  border: 1px solid var(--gold, #c9a86a);
+  background: transparent;
+  color: var(--gold, #c9a86a);
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
   border-radius: 2px;
 }
 
@@ -1779,17 +1819,19 @@
 .resultPrimary {
   width: 100%;
   height: 50px;
-  background: linear-gradient(180deg, var(--gold, #c9a86a), #7a5e30) !important;
-  color: #1a1200 !important;
+  background: linear-gradient(180deg, var(--gold, #c9a86a), #7a5e30);
+  color: #1a1200;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  border: none !important;
+  border: none;
   border-radius: 2px;
+  cursor: pointer;
   margin-top: auto;
 
   &:disabled {
     opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
@@ -1864,12 +1906,13 @@
 .defeatBtn {
   width: 220px;
   height: 50px;
-  border: 1px solid rgba(201, 168, 106, 0.4) !important;
-  background: rgba(201, 168, 106, 0.08) !important;
-  color: var(--gold, #c9a86a) !important;
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  background: rgba(201, 168, 106, 0.08);
+  color: var(--gold, #c9a86a);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.1em;
+  cursor: pointer;
   border-radius: 2px;
 }
 
