@@ -31,14 +31,42 @@
   letter-spacing: 0.08em;
 }
 
-.resultPreviewBtn {
-  font-size: 9px;
-  color: var.$ink-faint;
-  border: 1px solid rgba(33, 36, 27, 0.2);
+// (A) 行動順帯
+.turnOrderBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.turnOrderBar::-webkit-scrollbar { display: none; }
+
+.turnOrderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   border-radius: 2px;
-  padding: 2px 7px;
-  background: transparent;
-  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.turnOrderAlly {
+  background: var.$verdant;
+  color: var.$parchment;
+}
+.turnOrderEnemy {
+  background: var.$vermilion;
+  color: var.$parchment;
+}
+.turnOrderMore {
+  font-size: 10px;
+  color: var.$ink-faint;
+  flex-shrink: 0;
 }
 
 // ---- 戦場（敵 + 召喚 + 味方 + ログ）を内包するスクロール領域 ----
@@ -77,6 +105,16 @@
   background-color: var.$parchment-card;
   box-shadow: 0 1px 3px var.$shadow-ink;
   cursor: pointer;
+  // (C) disabled 継承を打ち消す: ブラウザのデフォルト（灰色）に上書きされないよう明示
+  color: var.$ink;
+}
+// (C) disabled 状態でも色とコントラストを維持する（.down の opacity:0.4 は維持）
+.enemy:disabled {
+  color: var.$ink;
+  opacity: 1;
+}
+.enemy:disabled.down {
+  opacity: 0.4;
 }
 
 .targeted {
@@ -95,6 +133,7 @@
   align-items: center;
   gap: 6px;
   justify-content: center;
+  color: var.$ink; // (C) disabled 継承を打ち消す
 }
 
 // 雑魚用：インラインスプライトが縮まないよう固定
@@ -108,7 +147,7 @@
   gap: 4px;
   font-size: 14px;
   font-weight: 700;
-  color: var.$ink;
+  color: var.$ink; // (C) disabled 状態でも継承
 }
 
 .enemyNameText {
@@ -117,6 +156,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var.$ink; // (C) disabled 継承を打ち消す
 }
 
 .enemyMarks {
@@ -894,10 +934,44 @@
   color: var.$ink;
 }
 
+// (D) コマンドパネル主従構造: flex column
 .menu {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// (D) たたかう: 大ゴールドプライマリ (h50)
+.menuPrimary {
+  height: 50px !important;
+  min-height: 50px !important;
+  background: linear-gradient(180deg, var.$illumination-gold, var.$ink-faint) !important;
+  color: var.$parchment !important;
+  border: 0 !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+
+// (D) さくせん / にげる の横並び行
+.menuRow {
+  display: flex;
+  gap: 6px;
+}
+
+// (D) さくせん (h44 小)
+.menuStrategy {
+  flex: 1;
+  height: 44px !important;
+  min-height: 44px !important;
+  font-size: 14px !important;
+}
+
+// (D) にげる (h44 小)
+.menuFlee {
+  flex: 1;
+  height: 44px !important;
+  min-height: 44px !important;
+  font-size: 14px !important;
 }
 
 .menuBtn {

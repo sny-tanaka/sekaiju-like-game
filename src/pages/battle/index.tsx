@@ -26,6 +26,7 @@ import {
   startBattle,
 } from '@/domain/battle';
 import type { LevelUpResult } from '@/domain/battle';
+import { previewTurnOrder } from '@/domain/combat';
 import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
 import { itemCount } from '@/domain/inventory';
@@ -236,8 +237,6 @@ export const Page = ({
   const [expDone, setExpDone] = useState(false);
   // 戦闘ログ。インラインで最新 3 行を常時表示、タップで全履歴オーバーレイ。
   const [logOpen, setLogOpen] = useState(false);
-  // リザルト例プレビュー（ヘッダーボタンから開く）。
-  const [showResultPreview, setShowResultPreview] = useState(false);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -569,6 +568,14 @@ export const Page = ({
       return (ch?.strategy ?? 'batchiri') === 'meirei';
     });
   }, [aliveAllies, save]);
+
+  // (A) 行動順帯: ephemeral rng（ターン番号のみに依存）で次ターン行動順を予測する。
+  // rngRef の消費とは完全に分離した別系統の rng を使う。早期 return の前に置くこと（rules-of-hooks）。
+  const turnOrderPreview = useMemo(() => {
+    if (!state || state.outcome !== 'ongoing') return [];
+    const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
+    return previewTurnOrder(state, epRng);
+  }, [state]);
 
   const allAssigned =
     uiMode.kind === 'individual'
@@ -1020,17 +1027,28 @@ export const Page = ({
 
   return (
     <div className={styles.layout}>
-      {/* 章マーカー + リザルト例ボタン */}
+      {/* 章マーカー */}
       <div className={styles.chapterRow}>
-        <p className={styles.chapterMark}>❦ 戦闘</p>
-        <button
-          type="button"
-          className={styles.resultPreviewBtn}
-          onClick={() => setShowResultPreview(true)}
-        >
-          リザルト例 ▸
-        </button>
+        <p className={styles.chapterMark}>❦ 戦闘 ・ F{save.diveState.depth}</p>
       </div>
+      {/* (A) 行動順帯（最大 8 アイコン + …） */}
+      {turnOrderPreview.length > 0 && (
+        <div
+          className={styles.turnOrderBar}
+          aria-label="次ターン行動順"
+        >
+          {turnOrderPreview.slice(0, 8).map((c, i) => (
+            <span
+              key={`${c.id}-${i}`}
+              className={`${styles.turnOrderIcon} ${state.allies.some((a) => a.id === c.id) || state.summons.some((s) => s.id === c.id) ? styles.turnOrderAlly : styles.turnOrderEnemy}`}
+              title={c.name}
+            >
+              {c.name.slice(0, 1)}
+            </span>
+          ))}
+          {turnOrderPreview.length > 8 && <span className={styles.turnOrderMore}>…</span>}
+        </div>
+      )}
       {/* 戦場（敵 + 召喚 + 味方 + ログ）。上部はこの内側でのみ縦に溢れ、コマンド
           エリア（下端）の表示領域を圧迫しない。極端ケースは内部スクロールで吸収。 */}
       <div className={styles.battlefield}>
@@ -1260,20 +1278,6 @@ export const Page = ({
             ▶▶ スキップ
           </button>
         </div>
-      ) : showResultPreview ? (
-        <div className={styles.resultOverlay}>
-          <div className={styles.result}>
-            <div className={styles.resultTitle}>勝利！（プレビュー）</div>
-            <div className={styles.resultBody}>経験値 120 ／ 80 G を獲得</div>
-            <button
-              type="button"
-              className={styles.primary}
-              onClick={() => setShowResultPreview(false)}
-            >
-              閉じる
-            </button>
-          </div>
-        </div>
       ) : state.outcome !== 'ongoing' ? (
         <div className={styles.resultOverlay}>
           <div
@@ -1419,29 +1423,30 @@ export const Page = ({
                     );
                   })()
                 : null}
-              <div className={styles.cmdHead}>全体行動</div>
               <div className={styles.menu}>
                 <button
                   type="button"
-                  className={styles.menuBtn}
+                  className={`${styles.menuBtn} ${styles.menuPrimary}`}
                   onClick={onClickFight}
                 >
                   たたかう
                 </button>
-                <button
-                  type="button"
-                  className={styles.menuBtn}
-                  onClick={() => setUiMode({ kind: 'strategy' })}
-                >
-                  さくせん
-                </button>
-                <button
-                  type="button"
-                  className={styles.menuBtn}
-                  onClick={handleFlee}
-                >
-                  にげる
-                </button>
+                <div className={styles.menuRow}>
+                  <button
+                    type="button"
+                    className={`${styles.menuBtn} ${styles.menuStrategy}`}
+                    onClick={() => setUiMode({ kind: 'strategy' })}
+                  >
+                    さくせん
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.menuBtn} ${styles.menuFlee}`}
+                    onClick={handleFlee}
+                  >
+                    にげる
+                  </button>
+                </div>
               </div>
             </>
           )}
