@@ -252,7 +252,10 @@ export const Page = ({
   // InkSplatter: ID → { value, variant } のマップ（Phase 2）。
   // ログ行が表示されるたびに被弾者のダメージ量を記録し、アニメ終了後に削除。
   const [inkSplatters, setInkSplatters] = useState<
-    Map<string, { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }>
+    Map<
+      string,
+      { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold'; seq?: number }
+    >
   >(new Map());
   // 勝利演出の gold InkSplatter（Phase 2）。
   const [showVictoryGold, setShowVictoryGold] = useState(false);
@@ -439,7 +442,7 @@ export const Page = ({
       const fl = new Set<string>();
       const nextSplatters = new Map<
         string,
-        { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }
+        { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold'; seq?: number }
       >();
       if (cur) {
         for (const id of Object.keys(cur)) {
@@ -454,11 +457,12 @@ export const Page = ({
             nextSplatters.set(id, {
               value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
               variant: isHeal ? 'heal' : isCrit ? 'crit' : 'damage',
+              seq: idx,
             });
           } else if (p && cur[id].hp > p.hp) {
             // HP 回復
             const healed = Math.round(cur[id].hp - p.hp);
-            nextSplatters.set(id, { value: healed, variant: 'heal' });
+            nextSplatters.set(id, { value: healed, variant: 'heal', seq: idx });
           }
         }
       }
@@ -1077,6 +1081,7 @@ export const Page = ({
                   aria-hidden="true"
                 >
                   <InkSplatter
+                    key={`${a.id}-${splat.seq ?? 0}`}
                     value={splat.value}
                     variant="gold"
                     size={64}
@@ -1093,6 +1098,7 @@ export const Page = ({
             }
             return (
               <DamagePop
+                key={`${a.id}-${splat.seq ?? 0}`}
                 value={splat.variant === 'heal' ? `+${splat.value}` : splat.value}
                 variant={splat.variant}
                 onDone={() =>
@@ -1265,6 +1271,7 @@ export const Page = ({
                     const isCrit = (entry?.text ?? '').includes('（会心）');
                     return (
                       <AttackFx
+                        key={`${e.id}-${anim?.revealed ?? 0}`}
                         element={element}
                         isCrit={isCrit}
                       />
@@ -1289,6 +1296,7 @@ export const Page = ({
                           aria-hidden="true"
                         >
                           <InkSplatter
+                            key={`${e.id}-${splat.seq ?? 0}`}
                             value={splat.value}
                             variant="gold"
                             size={56}
@@ -1306,6 +1314,7 @@ export const Page = ({
                     const elemEntry = state.log[anim?.revealed ? anim.revealed - 1 : 0];
                     return (
                       <DamagePop
+                        key={`${e.id}-${splat.seq ?? 0}`}
                         value={splat.variant === 'heal' ? `+${splat.value}` : splat.value}
                         variant={splat.variant}
                         element={elemEntry?.element}
