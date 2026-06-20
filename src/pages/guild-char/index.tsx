@@ -223,6 +223,8 @@ export const Page = ({ id }: { id: string }) => {
               return (
                 <div key={slot}>
                   <ActionButton
+                    variant="default"
+                    size="small"
                     className={`${styles.equipRow} ${equipped ? styles.equipRowEquipped : ''} ${isExpanded ? styles.equipRowExpanded : ''}`}
                     onClick={() => {
                       if (!equipped) {
@@ -289,6 +291,8 @@ export const Page = ({ id }: { id: string }) => {
                           return (
                             <ActionButton
                               key={e.id}
+                              variant="default"
+                              size="small"
                               className={styles.candidateRow}
                               onClick={() => {
                                 void applyAndPersist((s) => equipItem(s, id, e.id));
@@ -404,6 +408,8 @@ export const Page = ({ id }: { id: string }) => {
         <section>
           <div className={styles.growthBtns}>
             <ActionButton
+              variant="default"
+              size="small"
               sfx="cursor"
               className={`${styles.growthBtn} ${styles.growthBtnTransfer}`}
               onClick={() => setGrowthMode('transfer')}
@@ -414,6 +420,8 @@ export const Page = ({ id }: { id: string }) => {
               </span>
             </ActionButton>
             <ActionButton
+              variant="default"
+              size="small"
               sfx="cursor"
               className={`${styles.growthBtn} ${styles.growthBtnTitle}`}
               onClick={() => setGrowthMode('title')}
@@ -422,6 +430,8 @@ export const Page = ({ id }: { id: string }) => {
               <span className={styles.growthBtnSub}>{char.titleId ? '習得済み' : '2択選択'}</span>
             </ActionButton>
             <ActionButton
+              variant="default"
+              size="small"
               sfx="cursor"
               className={`${styles.growthBtn} ${styles.growthBtnRebirth}`}
               disabled={!canReincarnate(char)}
@@ -438,6 +448,7 @@ export const Page = ({ id }: { id: string }) => {
       <footer className={styles.foot}>
         <ActionButton
           label="一覧へ戻る"
+          variant="secondary"
           className={styles.back}
           onClick={() => navigate({ name: 'guild' })}
         />
@@ -480,12 +491,14 @@ export const Page = ({ id }: { id: string }) => {
                 <div className={styles.sheetActionRow}>
                   <ActionButton
                     label="もどる"
+                    variant="secondary"
                     sfx="cancel"
                     className={styles.sheetActCancel}
                     onClick={() => setGrowthMode(null)}
                   />
                   <ActionButton
                     label="転職する"
+                    variant="primary"
                     className={styles.sheetActPrimary}
                     disabled={transferTo === char.classId}
                     onClick={() => {
@@ -525,6 +538,7 @@ export const Page = ({ id }: { id: string }) => {
                 )}
                 <ActionButton
                   label="とじる"
+                  variant="secondary"
                   sfx="cancel"
                   className={styles.sheetClose}
                   onClick={() => setGrowthMode(null)}
@@ -605,12 +619,14 @@ export const Page = ({ id }: { id: string }) => {
                 <div className={styles.sheetActionRow}>
                   <ActionButton
                     label="やめる"
+                    variant="secondary"
                     sfx="cancel"
                     className={styles.sheetActCancel}
                     onClick={() => setGrowthMode(null)}
                   />
                   <ActionButton
                     label="転生を実行"
+                    variant="destructive"
                     sfx={null}
                     className={styles.sheetActDanger}
                     onClick={() => {

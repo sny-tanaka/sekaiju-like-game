@@ -169,6 +169,7 @@ export const Page = () => {
               {raceIds.map((id) => (
                 <ActionButton
                   key={id}
+                  variant="card"
                   sfx="cursor"
                   className={`${styles.raceCard} ${raceId === id ? styles.raceCardActive : ''}`}
                   onClick={() => setRaceId(id)}
@@ -303,6 +304,8 @@ export const Page = () => {
                   return (
                     <li key={m.id}>
                       <ActionButton
+                        variant="default"
+                        size="small"
                         className={`${styles.memberRow} ${rowClass}`}
                         onClick={() => navigate({ name: 'guildChar', id: m.id })}
                       >
@@ -343,6 +346,7 @@ export const Page = () => {
                   return (
                     <ActionButton
                       key={`front_${idx}`}
+                      variant="card"
                       sfx="cursor"
                       className={`${styles.slotCard} ${m ? styles.slotCardFront : styles.slotCardEmpty}`}
                       onClick={() => setPicker({ row: 'front', idx })}
@@ -380,6 +384,7 @@ export const Page = () => {
                   return (
                     <ActionButton
                       key={`back_${idx}`}
+                      variant="card"
                       sfx="cursor"
                       className={`${styles.slotCard} ${m ? styles.slotCardBack : styles.slotCardEmpty}`}
                       onClick={() => setPicker({ row: 'back', idx })}
@@ -433,6 +438,7 @@ export const Page = () => {
                         </div>
                         <ActionButton
                           label="追放"
+                          variant="destructive"
                           size="small"
                           className={`${styles.banishBtn} ${isHighlight ? styles.banishBtnHighlight : ''}`}
                           onClick={() => setBanishId(m.id)}
@@ -452,6 +458,7 @@ export const Page = () => {
         {tab === 'create' ? (
           <ActionButton
             label={isFull ? '団員が上限です' : '作成する'}
+            variant="primary"
             size="large"
             className={styles.primary}
             disabled={busy || isFull}
@@ -460,6 +467,7 @@ export const Page = () => {
         ) : (
           <ActionButton
             label="拠点へ戻る"
+            variant="secondary"
             className={styles.sub}
             onClick={() => navigate({ name: 'town' })}
           />
@@ -483,6 +491,8 @@ export const Page = () => {
             {slotMemberId(picker.row, picker.idx) ? (
               <ActionButton
                 label="この枠を空ける（編成から外す）"
+                variant="secondary"
+                size="small"
                 sfx="cancel"
                 className={styles.removeRow}
                 onClick={() =>
@@ -514,6 +524,8 @@ export const Page = () => {
                     return (
                       <li key={m.id}>
                         <ActionButton
+                          variant="default"
+                          size="small"
                           className={`${styles.pickerItem} ${here ? styles.pickerItemActive : ''}`}
                           disabled={disabled}
                           onClick={() =>
@@ -546,6 +558,7 @@ export const Page = () => {
             )}
             <ActionButton
               label="とじる"
+              variant="secondary"
               sfx="cancel"
               className={styles.sheetClose}
               onClick={() => setPicker(null)}
@@ -578,12 +591,14 @@ export const Page = () => {
             <div className={styles.confirmActions}>
               <ActionButton
                 label="もどる"
+                variant="secondary"
                 sfx="cancel"
                 className={styles.confirmCancel}
                 onClick={() => setBanishId(null)}
               />
               <ActionButton
                 label="追放する"
+                variant="destructive"
                 className={styles.confirmOk}
                 onClick={() => {
                   const id = banishTarget.id;
