@@ -446,15 +446,27 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     [state, battleLogger]
   );
 
+  // (A) 行動順帯: ephemeral rng（ターン番号のみに依存）で次ターン行動順を予測する。
+  // rngRef の消費とは完全に分離した別系統の rng を使う。
+  // 早期 return の前 + ambush/flee/handleResolve より前に置くこと（rules-of-hooks + 参照順）。
+  const turnOrderPreview = useMemo(() => {
+    if (!state || state.outcome !== 'ongoing') return [];
+    const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
+    return previewTurnOrder(state, epRng);
+  }, [state]);
+
   // 不意打ち: ターン1は味方が動けない。突入演出が晴れてから敵の先手1巡を自動解決する。
   const ambushDone = useRef(false);
   useEffect(() => {
     if (!state || !rngRef.current || ambushDone.current || introFx) return;
     if (state.turn === 1 && state.firstStrike === 'ambush' && state.outcome === 'ongoing') {
       ambushDone.current = true;
-      runTurn([]);
+      runTurn(
+        [],
+        turnOrderPreview.map((c) => c.id)
+      );
     }
-  }, [state, introFx, runTurn]);
+  }, [state, introFx, runTurn, turnOrderPreview]);
 
   // tryComplete: fxDoneRef + loggerDoneRef の両方が true のときのみ次イベントへ進む（設計書 §2.5）。
   // actionCompletedRef で重複実行を防ぐ（複数 Fx 同時 onDone でも 1 回のみ）。
@@ -766,14 +778,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     });
   }, [aliveAllies, save]);
 
-  // (A) 行動順帯: ephemeral rng（ターン番号のみに依存）で次ターン行動順を予測する。
-  // rngRef の消費とは完全に分離した別系統の rng を使う。早期 return の前に置くこと（rules-of-hooks）。
-  const turnOrderPreview = useMemo(() => {
-    if (!state || state.outcome !== 'ongoing') return [];
-    const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
-    return previewTurnOrder(state, epRng);
-  }, [state]);
-
   // (A-2) anim 再生中: eventIdx に達したイベントの actorId を完了済みとして収集。
   // 完了済みアクターのアイコンを slideout アニメーションで消す。
   const completedActorIds = useMemo(() => {
@@ -941,8 +945,11 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
     const a = aliveAllies[0];
     if (!a) return;
-    runTurn([{ kind: 'flee', actorId: a.id }]);
-  }, [state, aliveAllies, runTurn]);
+    runTurn(
+      [{ kind: 'flee', actorId: a.id }],
+      turnOrderPreview.map((c) => c.id)
+    );
+  }, [state, aliveAllies, runTurn, turnOrderPreview]);
 
   /**
    * 「たたかう」ボタン押下: おまかせ戦闘（issue #61）。
