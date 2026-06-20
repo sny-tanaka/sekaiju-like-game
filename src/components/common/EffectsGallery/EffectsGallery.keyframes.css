@@ -82,13 +82,6 @@
   100% { opacity: 0; transform: scaleX(1.25) skewX(-26deg); }
 }
 
-@keyframes gallery-slashLR {
-  0%  { transform: scaleX(0) rotate(-6deg); opacity: 1; }
-  35% { transform: scaleX(1) rotate(-6deg); opacity: 1; }
-  72% { opacity: 1; }
-  100%{ transform: scaleX(1) rotate(-6deg); opacity: 0; }
-}
-
 @keyframes gallery-atkBlunt {
   0%   { transform: scale(.3); opacity: 1; }
   100% { transform: scale(1.7); opacity: 0; }
@@ -118,12 +111,12 @@
   100% { transform: scale(1.45) rotate(24deg); opacity: 0; }
 }
 
-@keyframes gallery-atkThunder {
-  0%   { transform: scaleY(.2); opacity: 0; }
-  18%  { opacity: 1; }
-  38%  { opacity: .35; }
-  58%  { opacity: 1; }
-  100% { transform: scaleY(1.6); opacity: 0; }
+@keyframes gallery-atkVolt {
+  0%   { opacity: 0; transform: scaleY(.3); }
+  20%  { opacity: 1; }
+  45%  { opacity: .35; }
+  68%  { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1.1); }
 }
 
 @keyframes gallery-thrustLine {
@@ -131,39 +124,6 @@
   40%  { opacity: 1; }
   60%  { transform: translateX(0) scaleX(1); opacity: 1; }
   100% { transform: translateX(8px) scaleX(1); opacity: 0; }
-}
-
-@keyframes gallery-thrustDown {
-  0%   { transform: translateY(-34px); opacity: 0; }
-  38%  { opacity: 1; }
-  66%  { transform: translateY(0); }
-  100% { transform: translateY(8px); opacity: 0; }
-}
-
-@keyframes gallery-thrustUp {
-  0%   { transform: translateY(40px); opacity: 0; }
-  38%  { opacity: 1; }
-  66%  { transform: translateY(0); }
-  100% { transform: translateY(-10px); opacity: 0; }
-}
-
-@keyframes gallery-flameFlick {
-  0%, 100% { transform: scaleY(1) scaleX(1); opacity: .9; }
-  30%        { transform: scaleY(1.18) scaleX(.92); opacity: 1; }
-  55%        { transform: scaleY(.92) scaleX(1.08); opacity: .85; }
-  75%        { transform: scaleY(1.1) scaleX(.96); opacity: 1; }
-}
-
-@keyframes gallery-boltFlash {
-  0%, 100%    { opacity: .25; }
-  10%, 30%, 55% { opacity: 1; }
-  20%, 42%    { opacity: .4; }
-}
-
-@keyframes gallery-crystalSpin {
-  0%   { transform: rotate(0) scale(.6); opacity: 0; }
-  40%  { opacity: 1; }
-  100% { transform: rotate(60deg) scale(1.15); opacity: 0; }
 }
 
 @keyframes gallery-ringExpand {

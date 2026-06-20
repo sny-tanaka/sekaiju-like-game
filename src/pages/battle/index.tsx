@@ -102,7 +102,7 @@ const ELEM_FX: Record<string, string> = {
   fire: 'fx_fire',
   ice: 'fx_ice',
   volt: 'fx_volt',
-  almighty: 'fx_almighty', // 無は火を流用（モック v3 仕様）
+  almighty: 'fx_almighty', // 無属性は atkMagic keyframe を使用（モック v3 §4.4.2）
 };
 
 // v5: ログテキストから属性を推定する純関数（案A: string-match）

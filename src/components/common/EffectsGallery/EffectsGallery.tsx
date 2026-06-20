@@ -1,9 +1,9 @@
 /**
  * EffectsGallery
- * Storybook 専用: モック（案A v2）の全 @keyframes を一覧表示する。
+ * Storybook 専用: モック（案A v3）の全 @keyframes を一覧表示する。
  * ゲームロジックには使わない。
  *
- * プレビュー素材はモック原本（/tmp/sekaiju-design/案A_v2.dc.html）の
+ * プレビュー素材はモック原本（/tmp/sekaiju-design/案A_v3.dc.html）の
  * 各 animation: 使用箇所を grep して、その位置原点・素材・方向を再現している。
  */
 import React from 'react';
@@ -977,7 +977,7 @@ const CATEGORIES: Category[] = [
       },
       {
         name: 'atkSlash',
-        desc: '剣士通常攻撃 skewX(-26deg) 横斬り（scaleX 0→1.25）',
+        desc: '斬撃エフェクト（slash 斬属性。sword 剣 / axe 斧 由来）',
         // モック: atkBurstAnim: 'atkSlash .7s ease forwards'
         //         敵カードの top:50%;left:50%; に 94x94px の radial-gradient circle を重ねる
         //         実際には slashLR でも視覚化（効果エフェクト集の「斬撃」セル）
@@ -1023,53 +1023,8 @@ const CATEGORIES: Category[] = [
         ),
       },
       {
-        name: 'slashLR',
-        desc: '左→右横斬り（エフェクト集の「斬撃」セル）',
-        // モック: position:absolute; top:50%; left:50%; width:120px; height:5px;
-        //         margin:-2px 0 0 -58px;
-        //         background:linear-gradient(90deg,rgba(255,217,201,0),#ffd9c9 55%,#fff)
-        //         transform:rotate(-6deg); transform-origin:left center
-        //         animation:slashLR .45s ease-out infinite
-        preview: (
-          <div
-            style={{
-              position: 'relative',
-              width: 70,
-              height: 70,
-              overflow: 'hidden',
-              background: '#0c0d11',
-              borderRadius: 4,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div style={{ position: 'relative', animation: anim('shakeA', '0.8s', 'ease') }}>
-              <span style={{ fontSize: 34 }}>👹</span>
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: 80,
-                  height: 5,
-                  marginTop: -2,
-                  marginLeft: -40,
-                  background: 'linear-gradient(90deg, rgba(255,217,201,0), #ffd9c9 55%, #fff)',
-                  borderRadius: 3,
-                  boxShadow: '0 0 10px rgba(255,210,180,.9)',
-                  transform: 'rotate(-6deg)',
-                  transformOrigin: 'left center',
-                  animation: anim('slashLR', '0.9s', 'ease-out'),
-                }}
-              />
-            </div>
-          </div>
-        ),
-      },
-      {
         name: 'atkBlunt',
-        desc: '打撃 ringExpand + 💥（scale .3→1.7）',
+        desc: '打撃エフェクト（bash 壊属性。fist 素手 / staff 杖 由来）',
         // モック: 打撃セル: shakeB で敵揺れ + ringExpand (.9s) で衝撃波 + forgeSpark (.9s) で 💥
         //         atkBurstAnim: 'atkBlunt .7s ease forwards'（radial gradient burst）
         preview: (
@@ -1122,7 +1077,7 @@ const CATEGORIES: Category[] = [
       },
       {
         name: 'atkThrust',
-        desc: '刺突 縦光線+矢印が下から上（thrustUp + atkThrust）',
+        desc: '突きエフェクト（pierce 突属性。spear 槍 / bow 弓 由来）',
         // モック: 刺突セル: 縦 4px 幅の光線 + 三角矢印が thrustUp .75s で下→上
         //         atkBurstAnim: 'atkThrust .7s ease forwards'
         preview: (
@@ -1180,7 +1135,7 @@ const CATEGORIES: Category[] = [
       },
       {
         name: 'atkMagic',
-        desc: '魔法陣 scale .3→1.5 + rotate 165deg（+ runeSpin）',
+        desc: '無属性魔法エフェクト（almighty 万能属性）',
         // モック: 魔法セル: atkMagic .95s（radial gradient） + runeSpin 1.05s（外輪） + glowPulse（✦）
         //         atkBurstAnim: 'atkMagic .7s ease forwards'
         preview: (
@@ -1249,7 +1204,7 @@ const CATEGORIES: Category[] = [
       },
       {
         name: 'atkFire',
-        desc: '炎 SVG が scale .4→1.65 translateY 6px→-8px で拡大上昇',
+        desc: '火属性エフェクト（fire）',
         // モック: 火セル: shakeB で敵揺れ + 炎 SVG が flameFlick .5s
         //         atkBurstAnim: 'atkFire .7s ease forwards'
         preview: (
@@ -1335,7 +1290,7 @@ const CATEGORIES: Category[] = [
       },
       {
         name: 'atkIce',
-        desc: '氷結晶 SVG が scale .3→1.45 + rotate -24deg→24deg',
+        desc: '氷属性エフェクト（ice）',
         // モック: 氷セル: crystalSpin 1s で六角形結晶
         //         atkBurstAnim: 'atkIce .7s ease forwards'
         preview: (
@@ -1422,10 +1377,9 @@ const CATEGORIES: Category[] = [
         ),
       },
       {
-        name: 'atkThunder',
-        desc: '雷 SVG が boltFlash + scaleY .2→1.6 点滅拡大',
-        // モック: 雷セル: boltFlash .6s steps(1) で雷SVG点滅 + atkThunder burst
-        //         atkBurstAnim: 'atkThunder .7s ease forwards'
+        name: 'atkVolt',
+        desc: '雷属性エフェクト（volt）',
+        // モック v3: atkVolt は scaleY .3→1.1 + opacity 点滅（0→1→.35→1→0）で雷撃感
         preview: (
           <div
             style={{
@@ -1454,7 +1408,6 @@ const CATEGORIES: Category[] = [
                   marginLeft: -27,
                   borderRadius: '50%',
                   background: 'radial-gradient(circle, rgba(255,235,120,.3), transparent 65%)',
-                  animation: anim('boltFlash', '0.8s', 'steps(1)'),
                 }}
               />
               {/* 雷 SVG */}
@@ -1468,7 +1421,7 @@ const CATEGORIES: Category[] = [
                   left: '50%',
                   marginTop: -35,
                   marginLeft: -13,
-                  animation: anim('atkThunder', '1.2s', 'ease'),
+                  animation: anim('atkVolt', '1.2s', 'ease'),
                   filter: 'drop-shadow(0 0 8px rgba(255,232,120,.95))',
                 }}
               >
@@ -1514,237 +1467,6 @@ const CATEGORIES: Category[] = [
               }}
             />
           </div>
-        ),
-      },
-      {
-        name: 'thrustDown',
-        desc: '縦突き 上→下（translateY -34px→8px）',
-        // モック: thrustDown は縦突きの上からの軌跡。thrustUp の逆方向。
-        preview: (
-          <div
-            style={{
-              position: 'relative',
-              width: 70,
-              height: 70,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span style={{ fontSize: 36 }}>👹</span>
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: 4,
-                height: 60,
-                marginLeft: -2,
-                marginTop: -40,
-                background: 'linear-gradient(180deg, #fff, #cfe0ff 60%, transparent)',
-                borderRadius: 2,
-                boxShadow: '0 0 8px rgba(207,224,255,.9)',
-                animation: anim('thrustDown', '1.2s', 'ease-in-out'),
-              }}
-            />
-          </div>
-        ),
-      },
-      {
-        name: 'thrustUp',
-        desc: '縦突き 下→上（translateY 40px→-10px）',
-        // モック: 刺突セルで実際に使用。height:80px の縦線 + 三角矢印 が thrustUp で上昇。
-        preview: (
-          <div
-            style={{
-              position: 'relative',
-              width: 70,
-              height: 70,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span style={{ fontSize: 36 }}>👹</span>
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: 4,
-                height: 60,
-                marginLeft: -2,
-                marginTop: -20,
-                background: 'linear-gradient(0deg, transparent, #cfe0ff 60%, #fff)',
-                borderRadius: 2,
-                boxShadow: '0 0 8px rgba(207,224,255,.9)',
-                animation: anim('thrustUp', '1s', 'ease-in-out'),
-              }}
-            />
-          </div>
-        ),
-      },
-      {
-        name: 'flameFlick',
-        desc: '炎 SVG の揺らめき（scaleY .92→1.18 の繰り返し）',
-        // モック: 炎セルで flameFlick .5s ease-in-out infinite を炎SVGに直接適用
-        //         transform-origin:center bottom で根元を軸に揺れる
-        preview: (
-          <svg
-            width="36"
-            height="46"
-            viewBox="0 0 46 58"
-            style={{
-              transformOrigin: 'center bottom',
-              animation: anim('flameFlick', '0.8s'),
-              filter: 'drop-shadow(0 0 8px rgba(255,140,60,.85))',
-            }}
-          >
-            <defs>
-              <linearGradient
-                id="flmEG2"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop
-                  offset="0"
-                  stopColor="#ffd24a"
-                />
-                <stop
-                  offset=".5"
-                  stopColor="#ff7a2a"
-                />
-                <stop
-                  offset="1"
-                  stopColor="#d4342a"
-                />
-              </linearGradient>
-            </defs>
-            <path
-              d="M23 2 C30 16 40 22 36 38 C34 50 28 56 23 56 C18 56 12 50 10 38 C6 22 16 16 23 2 Z"
-              fill="url(#flmEG2)"
-            />
-            <path
-              d="M23 22 C27 30 30 34 28 42 C27 49 25 53 23 53 C21 53 19 49 18 42 C16 34 19 30 23 22 Z"
-              fill="#ffe6a0"
-            />
-          </svg>
-        ),
-      },
-      {
-        name: 'boltFlash',
-        desc: '雷 SVG が steps(1) で点滅（opacity .25↔1）',
-        // モック: 雷セルで雷SVGと背景 glow の両方に boltFlash .6s steps(1) infinite
-        preview: (
-          <svg
-            width="26"
-            height="70"
-            viewBox="0 0 30 86"
-            style={{
-              animation: anim('boltFlash', '0.8s', 'steps(1)'),
-              filter: 'drop-shadow(0 0 10px rgba(255,232,120,.95))',
-            }}
-          >
-            <polygon
-              points="18,1 2,45 12,45 8,85 29,33 16,33"
-              fill="#fff3b0"
-              stroke="#ffe878"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ),
-      },
-      {
-        name: 'crystalSpin',
-        desc: '氷結晶が rotate 0→60deg + scale .6→1.15 で出現',
-        // モック: 氷セルで crystalSpin 1s ease-out infinite を六角形結晶SVGに適用
-        //         混乱状態にも crystalSpin 1.4s linear infinite を適用
-        preview: (
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 62 62"
-            style={{
-              animation: anim('crystalSpin', '1.5s', 'ease-out'),
-              filter: 'drop-shadow(0 0 8px rgba(150,210,255,.9))',
-            }}
-          >
-            <g
-              stroke="#cfeaff"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-            >
-              <line
-                x1="31"
-                y1="5"
-                x2="31"
-                y2="57"
-              />
-              <line
-                x1="9"
-                y1="18"
-                x2="53"
-                y2="44"
-              />
-              <line
-                x1="53"
-                y1="18"
-                x2="9"
-                y2="44"
-              />
-              <line
-                x1="31"
-                y1="12"
-                x2="25"
-                y2="18"
-              />
-              <line
-                x1="31"
-                y1="12"
-                x2="37"
-                y2="18"
-              />
-              <line
-                x1="31"
-                y1="50"
-                x2="25"
-                y2="44"
-              />
-              <line
-                x1="31"
-                y1="50"
-                x2="37"
-                y2="44"
-              />
-              <line
-                x1="13"
-                y1="22"
-                x2="13"
-                y2="29"
-              />
-              <line
-                x1="49"
-                y1="22"
-                x2="49"
-                y2="29"
-              />
-              <line
-                x1="13"
-                y1="40"
-                x2="13"
-                y2="33"
-              />
-              <line
-                x1="49"
-                y1="40"
-                x2="49"
-                y2="33"
-              />
-            </g>
-          </svg>
         ),
       },
       {

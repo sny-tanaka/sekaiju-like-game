@@ -1602,12 +1602,12 @@
 }
 
 .fx_almighty {
-  // 無属性は火を流用（モック v3 仕様）
-  animation-name: atkFire;
+  // 無属性は atkMagic keyframe を使用（モック v3 §4.4.2）
+  animation-name: atkMagic;
   background: radial-gradient(
     circle at center,
-    rgba(var(--elem-fire), 0.5) 0%,
-    rgba(var(--elem-fire), 0.15) 50%,
+    rgba(224, 192, 255, 0.5) 0%,
+    rgba(224, 192, 255, 0.15) 50%,
     transparent 100%
   );
 }

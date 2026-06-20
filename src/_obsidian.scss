@@ -290,3 +290,16 @@ $obsidian-info-blue: #a9c3d8;
   --seq-dissolve:    660ms;
   --seq-end:         800ms;
 }
+
+// atkMagic keyframe（無属性 almighty 用）— モック v3 line 17–63 より転記
+@keyframes atkMagic {
+  0%   { transform: scale(.3) rotate(0); opacity: 0; }
+  42%  { opacity: 1; }
+  100% { transform: scale(1.5) rotate(165deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes atkMagic {
+    0%, 100% { transform: none; opacity: 0; }
+  }
+}
