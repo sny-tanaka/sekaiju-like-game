@@ -23,6 +23,20 @@
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
 }
 
+// EffectsGallery プレビュー用: セル内の position:absolute に収める
+.inline {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: auto !important;
+  left: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @keyframes cookPopAnim {
   0%   { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 0; }
   25%  { transform: translate(-50%, -50%) scale(1.2) rotate(120deg); opacity: 1; }

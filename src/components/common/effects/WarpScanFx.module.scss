@@ -12,6 +12,14 @@
   background: rgba(7, 8, 9, 0.78);
 }
 
+// EffectsGallery プレビュー用: セル内の position:absolute に収め、黒背景を除去する
+.inline {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: auto !important;
+  background: transparent !important;
+}
+
 .scanLine {
   position: absolute;
   left: 0;

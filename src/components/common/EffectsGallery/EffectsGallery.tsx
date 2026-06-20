@@ -277,6 +277,7 @@ const CATEGORIES: Category[] = [
             <WarpScanFx
               visible
               silent
+              inline
             />
           </div>
         ),
@@ -379,6 +380,7 @@ const CATEGORIES: Category[] = [
             <DustRiseFx
               visible
               silent
+              inline
             />
           </div>
         ),
@@ -637,6 +639,7 @@ const CATEGORIES: Category[] = [
             <ItemPopFx
               visible
               silent
+              inline
             />
           </div>
         ),
@@ -649,6 +652,7 @@ const CATEGORIES: Category[] = [
             <CookPopFx
               visible
               silent
+              inline
             />
           </div>
         ),

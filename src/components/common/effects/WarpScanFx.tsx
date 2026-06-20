@@ -9,6 +9,8 @@ type Props = {
   visible: boolean;
   /** true のとき SE を鳴らさない（EffectsGallery プレビュー用） */
   silent?: boolean;
+  /** true のとき position:absolute に切り替え、EffectsGallery のセル内に収める */
+  inline?: boolean;
 };
 
 /**
@@ -18,7 +20,7 @@ type Props = {
  * EffectsGallery の warpScan セルでも同じ DOM を参照し、一致を保証する。
  * visible が false → true になる瞬間に warp SE を発火する。
  */
-export const WarpScanFx = ({ visible, silent = false }: Props) => {
+export const WarpScanFx = ({ visible, silent = false, inline = false }: Props) => {
   const play = useSfx();
   const prevVisibleRef = useRef(false);
   useEffect(() => {
@@ -32,7 +34,7 @@ export const WarpScanFx = ({ visible, silent = false }: Props) => {
   if (!visible) return null;
   return (
     <div
-      className={styles.overlay}
+      className={`${styles.overlay}${inline ? ` ${styles.inline}` : ''}`}
       aria-hidden="true"
     >
       <div className={styles.scanLine} />

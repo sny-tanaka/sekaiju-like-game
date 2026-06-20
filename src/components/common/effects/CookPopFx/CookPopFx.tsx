@@ -11,6 +11,8 @@ export interface CookPopFxProps {
   iconSrc?: string;
   silent?: boolean;
   onDone?: () => void;
+  /** true のとき position:absolute に切り替え、EffectsGallery のセル内に収める */
+  inline?: boolean;
 }
 
 /**
@@ -18,9 +20,15 @@ export interface CookPopFxProps {
  * 料理成功時の演出コンポーネント。
  * 料理画像が回転しながら拡大 → フェード消失する Pop アニメ。
  * visible false→true のエッジで 'cook' SE を発火する（silent=true で抑制）。
- * EffectsGallery プレビューは silent=true で表示する。
+ * EffectsGallery プレビューは silent=true inline=true で表示する。
  */
-export const CookPopFx = ({ visible, iconSrc, silent = false, onDone }: CookPopFxProps) => {
+export const CookPopFx = ({
+  visible,
+  iconSrc,
+  silent = false,
+  onDone,
+  inline = false,
+}: CookPopFxProps) => {
   const play = useSfx();
   const prevVisibleRef = useRef(false);
 
@@ -40,7 +48,7 @@ export const CookPopFx = ({ visible, iconSrc, silent = false, onDone }: CookPopF
   if (!visible) return null;
   return (
     <div
-      className={styles.cookPop}
+      className={`${styles.cookPop}${inline ? ` ${styles.inline}` : ''}`}
       aria-hidden="true"
     >
       {iconSrc ? (

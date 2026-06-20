@@ -9,6 +9,8 @@ type Props = {
   visible: boolean;
   /** true のとき SE を鳴らさない（EffectsGallery プレビュー用） */
   silent?: boolean;
+  /** true のとき position:absolute に切り替え、EffectsGallery のセル内に収める */
+  inline?: boolean;
 };
 
 /**
@@ -18,7 +20,7 @@ type Props = {
  * EffectsGallery の dustRise セルでも同じ DOM を参照し、一致を保証する。
  * visible が false → true になる瞬間に flee SE を発火する。
  */
-export const DustRiseFx = ({ visible, silent = false }: Props) => {
+export const DustRiseFx = ({ visible, silent = false, inline = false }: Props) => {
   const play = useSfx();
   const prevVisibleRef = useRef(false);
   useEffect(() => {
@@ -32,7 +34,7 @@ export const DustRiseFx = ({ visible, silent = false }: Props) => {
   if (!visible) return null;
   return (
     <div
-      className={styles.dustContainer}
+      className={`${styles.dustContainer}${inline ? ` ${styles.inline}` : ''}`}
       aria-hidden="true"
     >
       {[0, 1, 2, 3, 4].map((i) => (

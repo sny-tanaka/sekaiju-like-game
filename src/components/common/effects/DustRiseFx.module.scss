@@ -19,6 +19,18 @@
   z-index: 25;
 }
 
+// EffectsGallery プレビュー用: セル内の position:absolute に収める
+.inline {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .dustParticle {
   position: absolute;
   width: 10px;

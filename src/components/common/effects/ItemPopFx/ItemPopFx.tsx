@@ -11,6 +11,8 @@ export interface ItemPopFxProps {
   iconSrc?: string;
   silent?: boolean;
   onDone?: () => void;
+  /** true のとき position:absolute に切り替え、EffectsGallery のセル内に収める */
+  inline?: boolean;
 }
 
 /**
@@ -18,9 +20,15 @@ export interface ItemPopFxProps {
  * 採集成功時の演出コンポーネント。
  * アイテム画像/アイコンが中央から拡大 → 縮小 → フェード消失する Pop アニメ。
  * visible false→true のエッジで 'item' SE を発火する（silent=true で抑制）。
- * EffectsGallery プレビューは silent=true で表示する。
+ * EffectsGallery プレビューは silent=true inline=true で表示する。
  */
-export const ItemPopFx = ({ visible, iconSrc, silent = false, onDone }: ItemPopFxProps) => {
+export const ItemPopFx = ({
+  visible,
+  iconSrc,
+  silent = false,
+  onDone,
+  inline = false,
+}: ItemPopFxProps) => {
   const play = useSfx();
   const prevVisibleRef = useRef(false);
 
@@ -40,7 +48,7 @@ export const ItemPopFx = ({ visible, iconSrc, silent = false, onDone }: ItemPopF
   if (!visible) return null;
   return (
     <div
-      className={styles.itemPop}
+      className={`${styles.itemPop}${inline ? ` ${styles.inline}` : ''}`}
       aria-hidden="true"
     >
       {iconSrc ? (
