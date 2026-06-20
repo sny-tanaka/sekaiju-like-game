@@ -428,44 +428,54 @@ export const Page = ({
       }, 200);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(
-      () => {
-        const idx = anim.revealed;
-        const cur = state.log[idx]?.snapshot;
-        const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
-        const fl = new Set<string>();
-        const nextSplatters = new Map<
-          string,
-          { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }
-        >();
-        if (cur) {
-          for (const id of Object.keys(cur)) {
-            const p = prev?.[id];
-            if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) {
-              fl.add(id);
-              // InkSplatter: HP 差をダメージ値として表示
-              const dmg = Math.round(p.hp - cur[id].hp);
-              const logText = state.log[idx]?.text ?? '';
-              const isCrit = logText.includes('（会心）');
-              const isHeal = logText.includes('回復') && cur[id].hp > p.hp;
-              nextSplatters.set(id, {
-                value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
-                variant: isHeal ? 'heal' : isCrit ? 'crit' : 'damage',
-              });
-            } else if (p && cur[id].hp > p.hp) {
-              // HP 回復
-              const healed = Math.round(cur[id].hp - p.hp);
-              nextSplatters.set(id, { value: healed, variant: 'heal' });
-            }
+
+    const idx = anim.revealed;
+    const cur = state.log[idx]?.snapshot;
+    const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
+
+    // Step 1: advance のピーク中（~180ms）でダメージ表示
+    const DAMAGE_AT = 180;
+    const tDmg = setTimeout(() => {
+      const fl = new Set<string>();
+      const nextSplatters = new Map<
+        string,
+        { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }
+      >();
+      if (cur) {
+        for (const id of Object.keys(cur)) {
+          const p = prev?.[id];
+          if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) {
+            fl.add(id);
+            // InkSplatter: HP 差をダメージ値として表示
+            const dmg = Math.round(p.hp - cur[id].hp);
+            const logText = state.log[idx]?.text ?? '';
+            const isCrit = logText.includes('（会心）');
+            const isHeal = logText.includes('回復') && cur[id].hp > p.hp;
+            nextSplatters.set(id, {
+              value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
+              variant: isHeal ? 'heal' : isCrit ? 'crit' : 'damage',
+            });
+          } else if (p && cur[id].hp > p.hp) {
+            // HP 回復
+            const healed = Math.round(cur[id].hp - p.hp);
+            nextSplatters.set(id, { value: healed, variant: 'heal' });
           }
         }
-        setFlashIds(fl);
-        setInkSplatters(nextSplatters);
-        setAnim({ ...anim, revealed: anim.revealed + 1 });
-      },
-      anim.revealed === 0 ? 380 : 900
-    );
-    return () => clearTimeout(t);
+      }
+      setFlashIds(fl);
+      setInkSplatters(nextSplatters);
+    }, DAMAGE_AT);
+
+    // Step 2: advance 完了後に revealed を進める（次の actor の advance が始まる）
+    const NEXT_AT = anim.revealed === 0 ? 780 : 900;
+    const tNext = setTimeout(() => {
+      setAnim({ ...anim, revealed: anim.revealed + 1 });
+    }, NEXT_AT);
+
+    return () => {
+      clearTimeout(tDmg);
+      clearTimeout(tNext);
+    };
   }, [state, anim]);
 
   // リザルト用の経験値・レベルアップ結果（issue #18）。勝利時のみ算出。
