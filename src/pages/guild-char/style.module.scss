@@ -71,6 +71,38 @@
   line-height: 1.5;
 }
 
+// EXP 進捗ブロック（v5: 案A v3）
+.headExp {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.headExpLabel {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+}
+
+.headExpValue {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.headExpValueMax {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
 // ---- body（唯一の可変スクロール領域） ----
 .body {
   flex: 1 1 auto;

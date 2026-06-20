@@ -7,7 +7,7 @@ import { CharacterPortrait } from '@/components/common/CharacterPortrait/Charact
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { SkillTree } from '@/components/common/SkillTree/SkillTree';
-import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
+import { canGainExp, expToNext, CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
 import { RACES } from '@/data/races';
@@ -140,6 +140,21 @@ export const Page = ({ id }: { id: string }) => {
           </span>
           {pos ? <span className={styles.posTag}>{pos}</span> : null}
         </div>
+
+        {/* EXP 進捗ブロック（v5: 案A v3 取り込み）。Lv キャップ到達済みは MAX 表示。 */}
+        {canGainExp(char.level) ? (
+          <div className={styles.headExp}>
+            <span className={styles.headExpLabel}>EXP</span>
+            <span className={styles.headExpValue}>
+              {Math.round(((char.exp ?? 0) / expToNext(char.level)) * 100)}%
+            </span>
+          </div>
+        ) : (
+          <div className={styles.headExp}>
+            <span className={styles.headExpLabel}>EXP</span>
+            <span className={styles.headExpValueMax}>MAX</span>
+          </div>
+        )}
       </header>
 
       {/* body（スクロール領域） */}
