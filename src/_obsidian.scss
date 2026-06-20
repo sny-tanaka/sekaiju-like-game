@@ -323,15 +323,14 @@ $obsidian-info-blue: #a9c3d8;
   @keyframes glowPulse  { 0%, 100% { opacity: 0.6; } }
 }
 
-// obsidian-coinPop — shop 購入確認ダイアログ内のコイン演出
-@keyframes obsidian-coinPop {
-  0%   { transform: translateX(-50%) translateY(0)    scale(0.6); opacity: 0; }
-  20%  { transform: translateX(-50%) translateY(-8px) scale(1.2); opacity: 1; }
-  50%  { transform: translateX(-50%) translateY(-4px) scale(1.0); opacity: 1; }
-  80%  { transform: translateX(-50%) translateY(-6px) scale(1.1); opacity: 1; }
-  100% { transform: translateX(-50%) translateY(0)    scale(0.6); opacity: 0; }
+// ==========================================================
+// town — warpScan（ワープ実行時スキャン線）
+// ==========================================================
+@keyframes obsidian-warpScan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(360%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  @keyframes obsidian-coinPop { 0%, 100% { transform: translateX(-50%); opacity: 0; } }
+  @keyframes obsidian-warpScan { 0%, 100% { transform: translateY(0); opacity: 0; } }
 }

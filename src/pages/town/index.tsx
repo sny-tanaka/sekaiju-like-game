@@ -19,6 +19,7 @@ export const Page = () => {
   const [soundOpen, setSoundOpen] = useState(false);
   const [sealActive, setSealActive] = useState(false);
   const [sealingDepth, setSealingDepth] = useState<number>(1);
+  const [warpScanActive, setWarpScanActive] = useState(false);
 
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
@@ -51,13 +52,19 @@ export const Page = () => {
   };
 
   // bottom-sheet から階を選択 → ダイブ実行
+  // フロー: warpScan 演出 (0.9s) → sealStamp 演出 (700ms) → dungeon 遷移
   const handleSelectFloor = async (depth: number) => {
     play('warp');
     setWarpOpen(false);
     await applyAndPersist((s) => startDive(s, depth));
     setSealingDepth(depth);
+    // Step 1: warpScan スキャン線を発火
+    setWarpScanActive(true);
+    await new Promise((r) => setTimeout(r, 900));
+    setWarpScanActive(false);
+    // Step 2: sealStamp 封蝋演出を発火
     setSealActive(true);
-    await new Promise((r) => setTimeout(r, 320));
+    await new Promise((r) => setTimeout(r, 700));
     navigate({ name: 'dungeon' });
   };
 
@@ -371,6 +378,15 @@ export const Page = () => {
               とじる
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {warpScanActive ? (
+        <div
+          className={styles.warpScanOverlay}
+          aria-hidden="true"
+        >
+          <div className={styles.warpScanLine} />
         </div>
       ) : null}
 

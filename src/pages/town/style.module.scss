@@ -508,6 +508,33 @@
   color: #5d5a52;
 }
 
+// ---- ワープスキャン演出 ----
+.warpScanOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  pointer-events: none;
+  overflow: hidden;
+  background: rgba(7, 8, 9, 0.78);
+}
+
+.warpScanLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 18%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(111, 159, 216, 0.18) 30%,
+    rgba(111, 159, 216, 0.38) 50%,
+    rgba(111, 159, 216, 0.18) 70%,
+    transparent 100%
+  );
+  animation: obsidian-warpScan 0.9s linear forwards;
+}
+
 // ---- 短画面対応 ----
 @media (max-height: 720px) {
   .head    { padding: 14px 20px 12px; }
