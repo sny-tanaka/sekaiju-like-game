@@ -494,6 +494,12 @@ export interface BattleState {
   /** 召喚体（[03 §8]）。最前列の壁/攻撃役。最大3体。味方の全滅判定には数えない。 */
   summons: Combatant[];
   log: BattleLogEntry[];
+  /**
+   * 構造化イベントリスト（[battle-event-redesign.md §2.2]）。
+   * 戦闘ロジックが生成し、UI がアニメーション再生に使う。
+   * log（BattleLogEntry[]）と並存する（log 削除は Step 5 で別タスク）。
+   */
+  events: import('./battleEvent').BattleEvent[];
   outcome: BattleOutcome;
   /** 突入時の先手（[03 §10]）。FOE接触時に preemptive/ambush になる。 */
   firstStrike: FirstStrike;

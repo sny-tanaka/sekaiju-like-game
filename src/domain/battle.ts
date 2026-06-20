@@ -230,6 +230,7 @@ export function startBattle(
     enemies,
     summons,
     log: [],
+    events: [],
     outcome: 'ongoing',
     firstStrike,
     drops: [],
@@ -808,7 +809,7 @@ function resolveUnion(
 export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: Rng): BattleState {
   if (state.outcome !== 'ongoing') return state;
   // ディープコピー（純粋性のため）
-  const next: BattleState = structuredClone({ ...state, log: [] });
+  const next: BattleState = structuredClone({ ...state, log: [], events: [] });
   // ログ行ごとに「その時点の全戦闘員 HP」を記録する（issue #18 の逐次再生用）。
   // すべての効果ヘルパは next.log.push でログを積むため、push をラップして自動採取する。
   const origPush = next.log.push.bind(next.log);
@@ -1381,6 +1382,7 @@ export function buildSimBattleState(
     enemies,
     summons: [],
     log: [],
+    events: [],
     outcome: 'ongoing',
     firstStrike: 'none',
     drops: [],
