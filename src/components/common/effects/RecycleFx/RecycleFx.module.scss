@@ -1,0 +1,66 @@
+// RecycleFx.module.scss
+// 装備分解時の灰色パーティクル拡散エフェクト。
+// forge 画面の分解確認ダイアログでアイテム周囲にパーティクルが拡散する演出。
+
+.recycleFx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.particle1,
+.particle2,
+.particle3 {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(200, 200, 220, 0.95),
+    rgba(120, 120, 140, 0)
+  );
+  animation: recycleScatterAnim 0.6s ease-out forwards;
+}
+
+.particle1 {
+  top: 40%;
+  left: 30%;
+  animation-delay: 0s;
+}
+
+.particle2 {
+  top: 50%;
+  left: 50%;
+  animation-delay: 0.1s;
+}
+
+.particle3 {
+  top: 35%;
+  left: 60%;
+  animation-delay: 0.2s;
+}
+
+@keyframes recycleScatterAnim {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-4px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4) translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .particle1,
+  .particle2,
+  .particle3 {
+    animation: none;
+  }
+}

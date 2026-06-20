@@ -4,6 +4,7 @@ import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
 import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
+import { RecycleFx } from '@/components/common/effects/RecycleFx/RecycleFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { FORGE } from '@/data/balance';
@@ -84,6 +85,8 @@ export const Page = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   // 強化成功演出（Phase 2）: 確定後に gold InkSplatter を一時表示。
   const [forgeSuccessLabel, setForgeSuccessLabel] = useState<string | null>(null);
+  // 分解演出: RecycleFx 表示フラグ（分解確定時に true → onDone で false）。
+  const [recycleFxVisible, setRecycleFxVisible] = useState(false);
 
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
@@ -115,15 +118,17 @@ export const Page = () => {
   const confirmPending = () => {
     if (!pending) return;
     // forge SE は ForgeSparkFx visible=true 時（ダイアログ表示時）に発火するため削除
-    if (pending.kind !== 'forge') play('recycle');
+    // recycle SE は RecycleFx mount 時に発火するため削除
     if (pending.kind === 'forge') {
       void applyAndPersist((s) => forgeWithIngot(s, pending.instanceId, pending.ingot).save);
       // 強化成功演出（Phase 2）: gold InkSplatter で「+N」を表示
       const inc = FORGE.INGOT_INC[pending.ingot];
       setForgeSuccessLabel(`+${inc}`);
     } else if (pending.kind === 'recycle') {
+      setRecycleFxVisible(true);
       void applyAndPersist((s) => recycle(s, pending.id).save);
     } else {
+      setRecycleFxVisible(true);
       void applyAndPersist((s) => recycleMany(s, pending.ids).save);
       clearSelection();
     }
@@ -509,6 +514,10 @@ export const Page = () => {
                       size="md"
                     />
                   </div>
+                  <RecycleFx
+                    visible={recycleFxVisible}
+                    onDone={() => setRecycleFxVisible(false)}
+                  />
                 </div>
                 <div className={styles.dialogTitle}>{pending.name}</div>
                 <div className={styles.dialogText}>

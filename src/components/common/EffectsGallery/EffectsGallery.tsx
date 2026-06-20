@@ -19,6 +19,7 @@ import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
 import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
 import { HealPop } from '@/components/common/effects/HealPop';
 import { ItemPopFx } from '@/components/common/effects/ItemPopFx/ItemPopFx';
+import { RecycleFx } from '@/components/common/effects/RecycleFx/RecycleFx';
 import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
 import { SealStampFx } from '@/components/common/effects/SealStampFx';
 import { SummonAppearFx } from '@/components/common/effects/SummonAppearFx';
@@ -533,6 +534,31 @@ const CATEGORIES: Category[] = [
             <ForgeSparkFx
               visible
               count={3}
+              silent
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'recycleFx',
+        desc: '装備分解 灰色パーティクル×3 拡散 (scale .6→1.4、opacity 0→1→0)',
+        // 共通コンポーネント RecycleFx を使用（forge 分解確認ダイアログと同一 DOM）
+        preview: (
+          <div style={{ position: 'relative', width: 60, height: 60 }}>
+            {/* 装備アイコン的な背景 */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: 24,
+              }}
+            >
+              🛡
+            </div>
+            <RecycleFx
+              visible
               silent
             />
           </div>
