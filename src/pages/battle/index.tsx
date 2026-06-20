@@ -94,6 +94,41 @@ const AILMENT_LABEL: Record<string, string> = {
   legBind: '脚封じ',
 };
 
+// v5: 属性 → 攻撃 FX keyframe 名マッピング（モック v3 §4.4.2）
+const ELEM_FX: Record<string, string> = {
+  slash: 'fx_slash',
+  pierce: 'fx_pierce',
+  bash: 'fx_bash',
+  fire: 'fx_fire',
+  ice: 'fx_ice',
+  volt: 'fx_volt',
+  almighty: 'fx_almighty', // 無は火を流用（モック v3 仕様）
+};
+
+// v5: ログテキストから属性を推定する純関数（案A: string-match）
+function getLogElement(text: string): keyof typeof ELEM_FX {
+  if (text.includes('火') || text.includes('炎')) return 'fire';
+  if (text.includes('氷')) return 'ice';
+  if (text.includes('雷')) return 'volt';
+  if (text.includes('突')) return 'pierce';
+  if (text.includes('壊') || text.includes('打')) return 'bash';
+  return 'slash'; // デフォルト（slash / 通常攻撃 fallback）
+}
+
+// v5: 状態異常角バッジ 10 種（モック v3 §4.6.1 準拠）
+const AILMENT_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
+  poison: { label: '毒', bg: '#5a3a6e', fg: '#e7d2f5' },
+  paralysis: { label: '麻', bg: '#5e5a28', fg: '#e8d85b' },
+  sleep: { label: '眠', bg: '#33425e', fg: '#9fb6e0' },
+  blind: { label: '盲', bg: '#2e3340', fg: '#aab0bc' },
+  confusion: { label: '乱', bg: '#5e3a4e', fg: '#e6aecb' },
+  curse: { label: '呪', bg: '#3a2a4a', fg: '#c0a8e0' },
+  instantDeath: { label: '死', bg: '#4a1f1f', fg: '#e89080' },
+  headBind: { label: '頭', bg: '#5e3636', fg: '#e0a0a0' },
+  armBind: { label: '腕', bg: '#5e3636', fg: '#e0a0a0' },
+  legBind: { label: '脚', bg: '#5e3636', fg: '#e0a0a0' },
+};
+
 function effectLabel(e: SkillEffectDef, lv: number): string {
   switch (e.kind) {
     case 'damage':
@@ -970,6 +1005,25 @@ export const Page = ({
         {!a.isSummon ? <span className={styles.jobBadge}>{classInitialOf(a)}</span> : null}
         {/* ユニオン満タン U! バッジ */}
         {a.unionGauge >= 100 ? <span className={styles.unionReadyBadge}>U!</span> : null}
+        {/* v5: 味方状態異常角バッジ 10 種（左肩） */}
+        {a.ailments.length > 0 && (
+          <div className={styles.allyAilBadgeRow}>
+            {a.ailments.map((ail) => {
+              const m = AILMENT_BADGE[ail.type];
+              if (!m) return null;
+              return (
+                <span
+                  key={ail.type}
+                  className={styles.allyAilBadge}
+                  style={{ background: m.bg, color: m.fg }}
+                  title={`${m.label} 残り${ail.remainingTurns}T`}
+                >
+                  {m.label}
+                </span>
+              );
+            })}
+          </div>
+        )}
         {/* 立ち絵 + 名前 + 作戦短縮（横並び） */}
         <div className={styles.cardHeader}>
           {!a.isSummon &&
@@ -1037,15 +1091,26 @@ export const Page = ({
           className={styles.turnOrderBar}
           aria-label="次ターン行動順"
         >
-          {turnOrderPreview.slice(0, 8).map((c, i) => (
-            <span
-              key={`${c.id}-${i}`}
-              className={`${styles.turnOrderIcon} ${state.allies.some((a) => a.id === c.id) || state.summons.some((s) => s.id === c.id) ? styles.turnOrderAlly : styles.turnOrderEnemy}`}
-              title={c.name}
-            >
-              {c.name.slice(0, 1)}
-            </span>
-          ))}
+          {turnOrderPreview.slice(0, 8).map((c, i) => {
+            const isFirst = i === 0;
+            const isAlly =
+              state.allies.some((a) => a.id === c.id) || state.summons.some((s) => s.id === c.id);
+            return (
+              <span
+                key={`${c.id}-${i}`}
+                className={[
+                  styles.turnOrderIcon,
+                  isAlly ? styles.turnOrderAlly : styles.turnOrderEnemy,
+                  isFirst ? styles.turnOrderFirst : '',
+                ].join(' ')}
+                title={c.name}
+                style={isFirst ? { position: 'relative' } : undefined}
+              >
+                {isFirst && <span className={styles.turnOrderFirstLabel}>次</span>}
+                {c.name.slice(0, 1)}
+              </span>
+            );
+          })}
           {turnOrderPreview.length > 8 && <span className={styles.turnOrderMore}>…</span>}
         </div>
       )}
@@ -1064,17 +1129,33 @@ export const Page = ({
               <button
                 type="button"
                 key={e.id}
-                className={`${styles.enemy} ${d.isDown ? styles.down : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
+                className={`${styles.enemy} ${d.isDown ? styles.down + ' ' + styles.dissolving : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
                 disabled={e.isDown || !!anim || isAllyTargeting}
                 onClick={() => setTargetId(e.id)}
               >
+                {/* v5: 攻撃 FX レイヤー（50ms 遅延で出現・属性別） */}
+                {flashIds.has(e.id) &&
+                  (() => {
+                    const logText = state.log[anim?.revealed ? anim.revealed - 1 : 0]?.text ?? '';
+                    const element = getLogElement(logText);
+                    const isCrit = logText.includes('（会心）');
+                    const fxClass = ELEM_FX[element] ?? 'fx_slash';
+                    return (
+                      <div
+                        className={`${styles.attackFx} ${styles[fxClass] ?? ''} ${isCrit ? styles.fxCrit : ''}`}
+                        aria-hidden="true"
+                      />
+                    );
+                  })()}
                 {/* InkSplatter — 敵への命中時（Phase 2） */}
                 {inkSplatters.has(e.id) &&
                   (() => {
                     const splat = inkSplatters.get(e.id)!;
+                    const logText = state.log[anim?.revealed ? anim.revealed - 1 : 0]?.text ?? '';
+                    const isCrit = logText.includes('（会心）');
                     return (
                       <div
-                        className={styles.inkOverlay}
+                        className={`${styles.inkOverlay} ${isCrit ? styles.inkCrit : ''}`}
                         aria-hidden="true"
                       >
                         <InkSplatter
@@ -1138,26 +1219,25 @@ export const Page = ({
                       </span>
                     ))}
                 </div>
-                {/* 状態異常の角バッジ */}
-                {e.ailments.length > 0 &&
-                  (() => {
-                    const ail = e.ailments[0];
-                    const kindMap: Record<string, string> = {
-                      poison: '毒',
-                      paralysis: '麻',
-                      sleep: '眠',
-                      blind: '盲',
-                      headBind: '頭',
-                      armBind: '腕',
-                      legBind: '脚',
-                    };
-                    return (
-                      <span className={styles.enemyAilBadge}>
-                        {kindMap[ail.type] ?? '?'}
-                        {ail.remainingTurns}
-                      </span>
-                    );
-                  })()}
+                {/* v5: 状態異常角バッジ 10 種・全件横並び */}
+                {e.ailments.length > 0 && (
+                  <div className={styles.enemyAilBadgeRow}>
+                    {e.ailments.map((ail) => {
+                      const m = AILMENT_BADGE[ail.type];
+                      if (!m) return null;
+                      return (
+                        <span
+                          key={ail.type}
+                          className={styles.enemyAilBadge}
+                          style={{ background: m.bg, color: m.fg }}
+                          title={`${m.label} 残り${ail.remainingTurns}T`}
+                        >
+                          {m.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </button>
             );
           })}
@@ -1195,6 +1275,8 @@ export const Page = ({
         {/* 召喚体（最前列）。生存中のみ表示。 */}
         {state.summons.length > 0 ? (
           <div className={styles.summons}>
+            {/* v5: 召喚リボン ラベル（モック line 1034） */}
+            <span className={styles.summonsLabel}>召喚 {state.summons.length}/3</span>
             {state.summons.map((s) => {
               const d = dispOf(s);
               return (
@@ -1278,96 +1360,232 @@ export const Page = ({
             ▶▶ スキップ
           </button>
         </div>
-      ) : state.outcome !== 'ongoing' ? (
-        <div className={styles.resultOverlay}>
-          <div
-            className={`${styles.result} ${state.outcome === 'lose' ? styles.resultLose : state.outcome === 'fled' ? styles.resultFlee : ''}`}
-          >
-            {state.outcome === 'lose' ? (
-              <div className={styles.defeatTitle}>全滅</div>
-            ) : state.outcome === 'fled' ? (
-              <>
-                <div
-                  className={styles.fleeLines}
-                  aria-hidden="true"
-                >
-                  <div
-                    className={styles.fleeSpeedLine}
-                    style={{ top: '24px', width: '120px' }}
-                  />
-                  <div
-                    className={styles.fleeSpeedLine}
-                    style={{ top: '38px', width: '90px', animationDelay: '0.2s' }}
-                  />
-                  <div
-                    className={styles.fleeSpeedLine}
-                    style={{ top: '52px', width: '110px', animationDelay: '0.35s' }}
-                  />
-                </div>
-                <div className={styles.fleeTitle}>逃走成功</div>
-              </>
-            ) : (
-              <div className={styles.resultTitle}>勝利！</div>
-            )}
-            {/* 勝利時 gold InkSplatter（Phase 2） */}
-            {showVictoryGold ? (
-              <div
-                className={styles.victoryGold}
-                aria-hidden="true"
-              >
-                <InkSplatter
-                  value={`${rewards.gold}G`}
-                  variant="gold"
-                  size={72}
-                />
-              </div>
-            ) : null}
-            {state.outcome === 'win' ? (
-              <>
-                <div className={styles.resultBody}>
-                  経験値 {rewards.exp} ／ {rewards.gold} G を獲得
-                </div>
-                {/* 各キャラの次レベルまでの経験値バー（issue #50） */}
-                <div className={styles.expList}>
-                  {expResults.map((r) => (
-                    <div
-                      key={r.charId}
-                      className={styles.expRow}
-                    >
-                      <span className={styles.expName}>
-                        <span className={styles.expNameText}>{r.name}</span>
-                        <span className={styles.expLv}>
-                          {r.toLevel > r.fromLevel ? (
-                            <span className={styles.expUp}>
-                              Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
-                            </span>
-                          ) : (
-                            <>Lv{r.toLevel}</>
-                          )}
-                        </span>
-                      </span>
-                      <BattleExpBar
-                        fromLevel={r.fromLevel}
-                        fromExp={r.fromExp}
-                        gainedExp={r.gainedExp}
-                        start={expAnimStart}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : state.outcome === 'lose' ? (
-              <div className={styles.resultBody}>拠点へ帰還する</div>
-            ) : null}
-            <button
-              type="button"
-              className={styles.primary}
-              disabled={busy || levelQueue.length > 0 || (expAnimStart && !expDone)}
-              onClick={() => void finish(state)}
-            >
-              つづける
-            </button>
+      ) : state.outcome === 'win' ? (
+        /* v5: 9c 勝利リザルト独立画面 */
+        <div className={styles.resultPage}>
+          {/* ヘッダ */}
+          <div className={styles.resultPageHeader}>
+            <div className={styles.resultPageTitle}>勝利</div>
+            <div className={styles.resultPageSub}>
+              F{save.diveState?.depth} ・ {state.enemies[0]?.name ?? '敵'}
+              {state.enemies.length > 1 ? ` ほか ${state.enemies.length - 1} 体` : ''} を撃破
+            </div>
           </div>
+
+          {/* 勝利時 gold InkSplatter（Phase 2・既存維持） */}
+          {showVictoryGold ? (
+            <div
+              className={styles.victoryGold}
+              aria-hidden="true"
+            >
+              <InkSplatter
+                value={`${rewards.gold}G`}
+                variant="gold"
+                size={72}
+              />
+            </div>
+          ) : null}
+
+          {/* EXP バー（各キャラ） */}
+          <div className={styles.resultExpBar}>
+            <div className={styles.resultExpLabel}>
+              <span>獲得経験値</span>
+              <span className={styles.resultExpGain}>+{rewards.exp} EXP</span>
+            </div>
+            <div className={styles.resultExpBarShimmer}>
+              <div className={styles.expList}>
+                {expResults.map((r) => (
+                  <div
+                    key={r.charId}
+                    className={styles.expRow}
+                  >
+                    <span className={styles.expName}>
+                      <span className={styles.expNameText}>{r.name}</span>
+                      <span className={styles.expLv}>
+                        {r.toLevel > r.fromLevel ? (
+                          <span className={styles.expUp}>
+                            Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
+                          </span>
+                        ) : (
+                          <>Lv{r.toLevel}</>
+                        )}
+                      </span>
+                    </span>
+                    <BattleExpBar
+                      fromLevel={r.fromLevel}
+                      fromExp={r.fromExp}
+                      gainedExp={r.gainedExp}
+                      start={expAnimStart}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* レベルアップ LIFO カード積み上げ（levelQueue[0] を手前に表示） */}
+          {levelQueue.length > 0 &&
+            (() => {
+              const r = levelQueue[0];
+              return (
+                <div className={styles.resultLevelUps}>
+                  <div className={styles.resultLevelUpStack}>
+                    {/* 後方 2 枚目の影カード */}
+                    {levelQueue.length >= 3 && <div className={styles.resultLevelUpBg2} />}
+                    {/* 後方 1 枚目の影カード */}
+                    {levelQueue.length >= 2 && <div className={styles.resultLevelUpBg1} />}
+                    {/* 手前カード（現在のレベルアップ） */}
+                    <div className={styles.resultLevelUpCard}>
+                      {/* レベルアップ gold InkSplatter（Phase 2・既存維持） */}
+                      <div
+                        className={styles.levelUpGold}
+                        aria-hidden="true"
+                      >
+                        <InkSplatter
+                          value={`Lv${r.toLevel}`}
+                          variant="gold"
+                          size={56}
+                        />
+                      </div>
+                      <div className={styles.resultLevelUpName}>{r.name}</div>
+                      <div className={styles.resultLevelUpLevel}>
+                        Lv{r.fromLevel} →{' '}
+                        <span className={styles.resultLevelUpNew}>Lv{r.toLevel}</span>
+                      </div>
+                      <div className={styles.resultLevelUpStats}>
+                        {Object.entries(r.statGains).map(([k, v]) => (
+                          <span
+                            key={k}
+                            className={styles.resultLevelUpStat}
+                          >
+                            {STAT_LABEL[k] ?? k} +{v}
+                          </span>
+                        ))}
+                      </div>
+                      <div className={styles.resultLevelUpOk}>
+                        <button
+                          type="button"
+                          className={styles.resultLevelUpOkBtn}
+                          onClick={() => setLevelQueue((q) => q.slice(1))}
+                        >
+                          OK
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+          {/* ドロップ一覧（state.drops から取得） */}
+          {state.drops.length > 0 && (
+            <div className={styles.resultLoot}>
+              <div className={styles.resultLootHead}>ドロップ品</div>
+              <div className={styles.resultLootGrid}>
+                {(() => {
+                  // アイテム ID ごとに件数を集計
+                  const countMap = new Map<string, number>();
+                  for (const d of state.drops) {
+                    countMap.set(d.itemId, (countMap.get(d.itemId) ?? 0) + 1);
+                  }
+                  return [...countMap.entries()].map(([itemId, count]) => (
+                    <div
+                      key={itemId}
+                      className={styles.resultLootItem}
+                    >
+                      <ItemSprite
+                        itemId={itemId as import('@/domain/types').ItemId}
+                        size="sm"
+                      />
+                      <span>
+                        {ITEMS[itemId as import('@/domain/types').ItemId]?.name ?? itemId} ×{count}
+                      </span>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* 獲得ゴールド */}
+          <div className={styles.resultGold}>
+            <span className={styles.resultGoldLabel}>獲得ゴールド</span>
+            <span className={styles.resultGoldValue}>◇ +{rewards.gold} G</span>
+          </div>
+
+          {/* 探索へ戻るボタン */}
+          <button
+            type="button"
+            className={styles.resultPrimary}
+            disabled={busy || levelQueue.length > 0 || (expAnimStart && !expDone)}
+            onClick={() => void finish(state)}
+          >
+            探索へ戻る
+          </button>
+        </div>
+      ) : state.outcome === 'lose' ? (
+        /* v5: 9g 全滅独立画面 */
+        <div className={styles.defeatPage}>
+          <div className={styles.defeatTitle}>全滅</div>
+          {/* 隊列の最期 HP/TP（モック line 1217） */}
+          <div className={styles.defeatPartyStatus}>
+            <div className={styles.defeatPartyHead}>隊列の最期 ・ HP/TP</div>
+            {state.allies.map((a) => (
+              <div
+                key={a.id}
+                className={styles.defeatPartyRow}
+              >
+                <span className={styles.defeatPartyName}>{a.name}</span>
+                <div className={styles.defeatPartyBar}>
+                  <div className={styles.defeatPartyHpFill} />
+                </div>
+                <span className={styles.defeatPartyVal}>0</span>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className={styles.defeatBtn}
+            disabled={busy}
+            onClick={() => void finish(state)}
+          >
+            拠点へ戻る
+          </button>
+          <div className={styles.defeatReach}>
+            到達: F{save.diveState?.depth} ・ 撃破: {state.enemies.filter((e) => e.isDown).length}{' '}
+            体
+          </div>
+        </div>
+      ) : state.outcome === 'fled' ? (
+        /* v5: 9h 逃走独立画面 */
+        <div className={styles.fleePage}>
+          <div
+            className={styles.fleeLines}
+            aria-hidden="true"
+          >
+            <div
+              className={styles.fleeSpeedLine}
+              style={{ top: '24px', width: '120px' }}
+            />
+            <div
+              className={styles.fleeSpeedLine}
+              style={{ top: '38px', width: '90px', animationDelay: '0.2s' }}
+            />
+            <div
+              className={styles.fleeSpeedLine}
+              style={{ top: '52px', width: '110px', animationDelay: '0.35s' }}
+            />
+          </div>
+          <div className={styles.fleeTitle}>逃走成功</div>
+          <button
+            type="button"
+            className={styles.resultPrimary}
+            disabled={busy}
+            onClick={() => void finish(state)}
+            style={{ maxWidth: '240px' }}
+          >
+            探索へ戻る
+          </button>
         </div>
       ) : (
         <div className={styles.command}>
@@ -1858,50 +2076,9 @@ export const Page = ({
         </div>
       ) : null}
 
-      {/* レベルアップダイアログ（issue #18）。レベルアップしたキャラを順に表示する。 */}
-      {levelQueue.length > 0
-        ? (() => {
-            const r = levelQueue[0];
-            return (
-              <div className={styles.dialogOverlay}>
-                <div className={styles.dialog}>
-                  {/* レベルアップ gold InkSplatter（Phase 2） */}
-                  <div
-                    className={styles.levelUpGold}
-                    aria-hidden="true"
-                  >
-                    <InkSplatter
-                      value={`Lv${r.toLevel}`}
-                      variant="gold"
-                      size={72}
-                    />
-                  </div>
-                  <div className={styles.dialogTitle}>レベルアップ！</div>
-                  <div className={styles.dialogName}>
-                    {r.name} は Lv{r.fromLevel} → <strong>Lv{r.toLevel}</strong> になった！
-                  </div>
-                  <div className={styles.dialogStats}>
-                    {Object.entries(r.statGains).map(([k, v]) => (
-                      <span
-                        key={k}
-                        className={styles.dialogStat}
-                      >
-                        {STAT_LABEL[k] ?? k} +{v}
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.primary}
-                    onClick={() => setLevelQueue((q) => q.slice(1))}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            );
-          })()
-        : null}
+      {/* レベルアップダイアログ（v5: resultPage 内の LIFO カードに統合済み。
+          ongoing 中に勝利確定していない段階でのダイアログ表示はここでは不要。
+          dialogOverlay / dialog クラスは削除禁止のため SCSS 側で保持する。 */}
 
       {/* エンカウント/戦闘終了の暗転エフェクト（issue #18） */}
       {introFx ? <div className={styles.fxIntro} /> : null}
