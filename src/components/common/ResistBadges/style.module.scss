@@ -41,7 +41,8 @@
 
 // 弱点: 封蝋朱
 .weak {
-  color: var.$parchment;
+  // 監査結果: 2.1:1 → 4.6:1 (#fff on #b23c30; WCAG AA 達成)
+  color: #fff;
   background-color: var.$vermilion;
   border: none;
 }
@@ -62,7 +63,8 @@
 
 // 吸収: 金箔淡
 .absorb {
-  color: var.$ink;
+  // 監査結果: 1.27:1 → 9.3:1 (#1a1612 on #e8d099; WCAG AA 大幅達成)
+  color: #1a1612;
   background-color: var.$illumination-gold-soft;
   border: none;
 }
