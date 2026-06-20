@@ -13,31 +13,31 @@ export interface InkSplatterProps {
   size?: number;
 }
 
-// バリアント別のカラーマップ（CSS 変数値）
+// バリアント別のカラーマップ（黒曜トンマナ統一 / _obsidian.scss トークンと同値の hex）
 const VARIANT_COLORS = {
   damage: {
-    splatter: '#21241B', // $ink
-    text: '#EDE3CC', // $parchment
+    splatter: '#b23c30', // = var(--danger)
+    text: '#f2ede1', // = var(--text-strong)
     scale: 1,
   },
   heal: {
-    splatter: '#3F6B4A', // $verdant
-    text: '#EDE3CC', // $parchment
+    splatter: '#3f8a5c', // = var(--success)
+    text: '#f2ede1', // = var(--text-strong)
     scale: 1,
   },
   crit: {
-    splatter: '#B22C2C', // $vermilion
-    text: '#B89255', // $illumination-gold
+    splatter: '#d4674f', // = var(--danger-glow)（より鮮やかな朱でクリットを強調）
+    text: '#e8d099', // = var(--gold-bright)
     scale: 1.15,
   },
   seal: {
-    splatter: '#8A1F1F', // $vermilion-dark
-    text: '#B89255', // $illumination-gold
+    splatter: '#b23c30', // = var(--danger)（封蝋風の朱赤）
+    text: '#c9a86a', // = var(--gold)
     scale: 1,
   },
   gold: {
-    splatter: '#B89255', // $illumination-gold
-    text: '#EDE3CC', // $parchment
+    splatter: '#c9a86a', // = var(--gold)
+    text: '#f2ede1', // = var(--text-strong)
     scale: 0.8,
   },
 } as const;
@@ -104,13 +104,13 @@ function SealDecoration({ size }: { size: number }) {
         cx={0}
         cy={0}
         r={r}
-        fill="#8A1F1F"
+        fill="#b23c30" // = var(--danger)
         className={styles.sealCircle}
       />
       <polygon
         points={hex}
         fill="none"
-        stroke="#B89255"
+        stroke="#c9a86a" // = var(--gold)
         strokeWidth={1.5}
         className={styles.sealGeo}
       />
@@ -118,7 +118,7 @@ function SealDecoration({ size }: { size: number }) {
         cx={0}
         cy={0}
         r={inner * 0.38}
-        fill="#B89255"
+        fill="#c9a86a" // = var(--gold)
         opacity={0.55}
         className={styles.sealGeo}
       />
