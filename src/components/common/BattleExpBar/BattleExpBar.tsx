@@ -75,9 +75,9 @@ export const BattleExpBar = ({
 
   return (
     <div className={styles.wrap}>
-      <div className={`${styles.track}${shimmer ? ' ' + styles.trackShimmer : ''}`}>
+      <div className={styles.track}>
         <div
-          className={styles.fill}
+          className={`${styles.fill}${shimmer ? ' ' + styles.fillShimmer : ''}`}
           style={{ width: `${fill * 100}%`, backgroundColor: color }}
         />
       </div>
