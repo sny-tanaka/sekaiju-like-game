@@ -483,7 +483,7 @@
 .diveSealOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(6, 7, 10, 0.92);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -491,7 +491,7 @@
   gap: 18px;
   z-index: 200;
   pointer-events: none;
-  animation: obsidian-fadeIn 0.2s ease-out;
+  animation: obsidian-fadeIn 0.32s ease-out;
 }
 
 .diveSeal {
@@ -505,6 +505,7 @@
   align-items: center;
   justify-content: center;
   animation: obsidian-sealStamp 2.6s ease-in-out infinite;
+  animation-delay: 0.15s;
 }
 
 .diveSealOuterRing {
@@ -546,6 +547,7 @@
   letter-spacing: 0.4em;
   color: rgba(233, 201, 160, 0.7);
   text-transform: uppercase;
+  animation: obsidian-fadeIn 0.2s ease-out 0.4s both;
 }
 
 // ---- ワープスキャン演出 ----
