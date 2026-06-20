@@ -4,6 +4,7 @@ import styles from './style.module.scss';
 
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
+import { AttackFx } from '@/components/common/AttackFx/AttackFx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
@@ -94,19 +95,8 @@ const AILMENT_LABEL: Record<string, string> = {
   legBind: '脚封じ',
 };
 
-// v5: 属性 → 攻撃 FX keyframe 名マッピング（モック v3 §4.4.2）
-const ELEM_FX: Record<string, string> = {
-  slash: 'fx_slash',
-  pierce: 'fx_pierce',
-  bash: 'fx_bash',
-  fire: 'fx_fire',
-  ice: 'fx_ice',
-  volt: 'fx_volt',
-  almighty: 'fx_almighty', // 無属性は atkMagic keyframe を使用（モック v3 §4.4.2）
-};
-
 // v5: ログテキストから属性を推定する純関数（案A: string-match）
-function getLogElement(text: string): keyof typeof ELEM_FX {
+function getLogElement(text: string): import('@/domain/types').Element {
   if (text.includes('火') || text.includes('炎')) return 'fire';
   if (text.includes('氷')) return 'ice';
   if (text.includes('雷')) return 'volt';
@@ -1140,49 +1130,10 @@ export const Page = ({
                     const element = getLogElement(logText);
                     const isCrit = logText.includes('（会心）');
                     return (
-                      <div
-                        className={styles.attackFx}
-                        aria-hidden="true"
-                      >
-                        {element === 'slash' && <div className={styles.fxBarSlash} />}
-                        {element === 'pierce' && (
-                          <>
-                            <div className={styles.fxBarThrust} />
-                            <span className={styles.fxArrowThrust}>➤</span>
-                          </>
-                        )}
-                        {element === 'bash' && (
-                          <>
-                            <div className={styles.fxRingBash} />
-                            <span className={styles.fxIconBash}>💥</span>
-                          </>
-                        )}
-                        {element === 'fire' && (
-                          <>
-                            <div className={styles.fxOrbFire} />
-                            <span className={styles.fxIconFire}>🔥</span>
-                          </>
-                        )}
-                        {element === 'ice' && (
-                          <>
-                            <div className={styles.fxSquareIce} />
-                            <span className={styles.fxIconIce}>❄</span>
-                          </>
-                        )}
-                        {element === 'volt' && (
-                          <>
-                            <div className={styles.fxBoltVolt} />
-                            <span className={styles.fxIconVolt}>⚡</span>
-                          </>
-                        )}
-                        {element === 'almighty' && (
-                          <>
-                            <div className={styles.fxOrbMagic} />
-                            <span className={styles.fxIconMagic}>✦</span>
-                          </>
-                        )}
-                        {isCrit && <div className={styles.fxCritFlash} />}
-                      </div>
+                      <AttackFx
+                        element={element}
+                        isCrit={isCrit}
+                      />
                     );
                   })()}
                 {/* InkSplatter — 敵への命中時（Phase 2） */}

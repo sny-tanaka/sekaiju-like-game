@@ -76,48 +76,7 @@
   100% { transform: translate(-40%, -40%) rotate(-42deg) scaleX(1); opacity: 0; }
 }
 
-@keyframes gallery-atkSlash {
-  0%   { transform: scaleX(0) skewX(-26deg); opacity: 0; }
-  28%  { opacity: 1; transform: scaleX(1.25) skewX(-26deg); }
-  100% { opacity: 0; transform: scaleX(1.25) skewX(-26deg); }
-}
-
-@keyframes gallery-atkBlunt {
-  0%   { transform: scale(.3); opacity: 1; }
-  100% { transform: scale(1.7); opacity: 0; }
-}
-
-@keyframes gallery-atkThrust {
-  0%   { transform: scaleY(.2) scaleX(.42); opacity: 0; }
-  30%  { opacity: 1; transform: scaleY(1.85) scaleX(.5); }
-  100% { opacity: 0; transform: scaleY(1.85) scaleX(.5); }
-}
-
-@keyframes gallery-atkMagic {
-  0%   { transform: scale(.3) rotate(0); opacity: 0; }
-  42%  { opacity: 1; }
-  100% { transform: scale(1.5) rotate(165deg); opacity: 0; }
-}
-
-@keyframes gallery-atkFire {
-  0%   { transform: scale(.4) translateY(6px); opacity: 0; }
-  30%  { opacity: 1; }
-  100% { transform: scale(1.65) translateY(-8px); opacity: 0; }
-}
-
-@keyframes gallery-atkIce {
-  0%   { transform: scale(.3) rotate(-24deg); opacity: 0; }
-  40%  { opacity: 1; }
-  100% { transform: scale(1.45) rotate(24deg); opacity: 0; }
-}
-
-@keyframes gallery-atkVolt {
-  0%   { opacity: 0; transform: scaleY(.3); }
-  20%  { opacity: 1; }
-  45%  { opacity: .35; }
-  68%  { opacity: 1; }
-  100% { opacity: 0; transform: scaleY(1.1); }
-}
+/* gallery-atk* keyframes を削除: AttackFx コンポーネントが _obsidian.scss の global keyframes を使用 */
 
 @keyframes gallery-thrustLine {
   0%   { transform: translateX(-40px) scaleX(.3); opacity: 0; }

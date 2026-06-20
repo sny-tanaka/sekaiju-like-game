@@ -11,6 +11,8 @@ import React from 'react';
 import styles from './EffectsGallery.module.scss';
 import './EffectsGallery.keyframes.css';
 
+import { AttackFx } from '@/components/common/AttackFx/AttackFx';
+
 interface EffectDef {
   name: string;
   desc: string;
@@ -978,453 +980,154 @@ const CATEGORIES: Category[] = [
       {
         name: 'atkSlash',
         desc: '斬撃エフェクト（slash 斬属性。sword 剣 / axe 斧 由来）',
-        // モック v3 9e (line 1156):
-        //   white bar 108x4px (linear-gradient transparent→#fff→#ffd9c9→transparent)
-        //   + rotate(-38deg) + box-shadow gold + animation: atkSlash .7s ease-in-out infinite
         preview: (
           <div
             style={{
               position: 'relative',
               width: 100,
               height: 70,
-              overflow: 'hidden',
               background: '#0c0d11',
               borderRadius: 4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: 94,
-                height: 4,
-                marginTop: -2,
-                marginLeft: -47,
-                background: 'linear-gradient(90deg, transparent, #fff, #ffd9c9, transparent)',
-                borderRadius: 3,
-                boxShadow: '0 0 12px rgba(255,210,180,.9)',
-                transform: 'rotate(-38deg)',
-                animation: anim('atkSlash', '0.9s', 'ease-in-out'),
-              }}
-            />
+            <AttackFx element="slash" />
           </div>
         ),
       },
       {
         name: 'atkBlunt',
         desc: '打撃エフェクト（bash 壊属性。fist 素手 / staff 杖 由来）',
-        // モック: 打撃セル: shakeB で敵揺れ + ringExpand (.9s) で衝撃波 + forgeSpark (.9s) で 💥
-        //         atkBurstAnim: 'atkBlunt .7s ease forwards'（radial gradient burst）
         preview: (
           <div
             style={{
               position: 'relative',
               width: 70,
               height: 70,
-              overflow: 'hidden',
               background: '#0c0d11',
               borderRadius: 4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ position: 'relative', animation: anim('shakeB', '0.8s', 'ease') }}>
-              <span style={{ fontSize: 34 }}>👹</span>
-              {/* 衝撃波リング */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: 60,
-                  height: 60,
-                  marginTop: -30,
-                  marginLeft: -30,
-                  border: '3px solid #ffe0a0',
-                  borderRadius: '50%',
-                  animation: anim('ringExpand', '0.9s', 'ease-out'),
-                }}
-              />
-              {/* 💥 */}
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  fontSize: 26,
-                  animation: anim('forgeSpark', '0.9s', 'ease-in-out'),
-                }}
-              >
-                💥
-              </span>
-            </div>
+            <span style={{ fontSize: 34 }}>👹</span>
+            <AttackFx element="bash" />
           </div>
         ),
       },
       {
         name: 'atkThrust',
         desc: '突きエフェクト（pierce 突属性。spear 槍 / bow 弓 由来）',
-        // モック v3 9e (line 1157): pierce セルは thrustLine keyframe を使う
-        //   横 74x3px 光線 (linear-gradient transparent→#cfe0ff→#fff) を transform-origin:left
-        //   ➤ 矢印を右に飛ばす + animation: thrustLine .7s ease-in-out infinite
         preview: (
           <div
             style={{
               position: 'relative',
               width: 100,
               height: 70,
-              overflow: 'hidden',
               background: '#0c0d11',
               borderRadius: 4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
             }}
           >
             <span style={{ fontSize: 34 }}>👹</span>
-            {/* 横光線 */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: 74,
-                height: 3,
-                marginTop: -1,
-                marginLeft: -37,
-                background: 'linear-gradient(90deg, transparent, #cfe0ff, #fff)',
-                borderRadius: 2,
-                boxShadow: '0 0 10px rgba(207,224,255,.9)',
-                transformOrigin: 'left center',
-                animation: anim('thrustLine', '0.9s', 'ease-in-out'),
-              }}
-            />
-            {/* 矢印 ➤ */}
-            <span
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '56%',
-                transform: 'translateY(-50%)',
-                fontSize: 16,
-                color: '#cfe0ff',
-                filter: 'drop-shadow(0 0 5px rgba(207,224,255,.9))',
-                animation: anim('thrustLine', '0.9s', 'ease-in-out'),
-              }}
-            >
-              ➤
-            </span>
+            <AttackFx element="pierce" />
           </div>
         ),
       },
       {
         name: 'atkMagic',
         desc: '無属性魔法エフェクト（almighty 万能属性）',
-        // モック: 魔法セル: atkMagic .95s（radial gradient） + runeSpin 1.05s（外輪） + glowPulse（✦）
-        //         atkBurstAnim: 'atkMagic .7s ease forwards'
         preview: (
           <div
             style={{
               position: 'relative',
               width: 70,
               height: 70,
-              overflow: 'hidden',
               background: '#0c0d11',
               borderRadius: 4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ position: 'relative' }}>
-              <span style={{ fontSize: 34 }}>👹</span>
-              {/* 魔法陣 背景光 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: 60,
-                  height: 60,
-                  marginTop: -30,
-                  marginLeft: -30,
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(224,192,255,.5), transparent 65%)',
-                  animation: anim('atkMagic', '1.2s', 'ease-out'),
-                }}
-              />
-              {/* 外輪 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: 50,
-                  height: 50,
-                  marginTop: -25,
-                  marginLeft: -25,
-                  border: '1px solid rgba(224,192,255,.7)',
-                  borderRadius: '50%',
-                  animation: anim('runeSpin', '1.05s', 'ease-out'),
-                }}
-              />
-              {/* ✦ */}
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  fontSize: 18,
-                  color: '#e0c0ff',
-                  animation: anim('glowPulse', '1s'),
-                }}
-              >
-                ✦
-              </span>
-            </div>
+            <span style={{ fontSize: 34 }}>👹</span>
+            <AttackFx element="almighty" />
           </div>
         ),
       },
       {
         name: 'atkFire',
         desc: '火属性エフェクト（fire）',
-        // モック: 火セル: shakeB で敵揺れ + 炎 SVG が flameFlick .5s
-        //         atkBurstAnim: 'atkFire .7s ease forwards'
         preview: (
           <div
             style={{
               position: 'relative',
               width: 70,
               height: 70,
-              overflow: 'hidden',
               background: '#0c0d11',
               borderRadius: 4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ position: 'relative', animation: anim('shakeB', '0.8s', 'ease') }}>
-              <span style={{ fontSize: 34 }}>👹</span>
-              {/* 炎背景 glow */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: 70,
-                  height: 70,
-                  marginTop: -35,
-                  marginLeft: -35,
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(255,120,40,.3), transparent 68%)',
-                }}
-              />
-              {/* 炎 */}
-              <svg
-                width="36"
-                height="46"
-                viewBox="0 0 46 58"
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: -32,
-                  marginLeft: -18,
-                  transformOrigin: 'center bottom',
-                  animation: anim('atkFire', '1.2s', 'ease'),
-                  filter: 'drop-shadow(0 0 6px rgba(255,140,60,.85))',
-                }}
-              >
-                <defs>
-                  <linearGradient
-                    id="flmEG"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0"
-                      stopColor="#ffd24a"
-                    />
-                    <stop
-                      offset=".5"
-                      stopColor="#ff7a2a"
-                    />
-                    <stop
-                      offset="1"
-                      stopColor="#d4342a"
-                    />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M23 2 C30 16 40 22 36 38 C34 50 28 56 23 56 C18 56 12 50 10 38 C6 22 16 16 23 2 Z"
-                  fill="url(#flmEG)"
-                />
-                <path
-                  d="M23 22 C27 30 30 34 28 42 C27 49 25 53 23 53 C21 53 19 49 18 42 C16 34 19 30 23 22 Z"
-                  fill="#ffe6a0"
-                />
-              </svg>
-            </div>
+            <span style={{ fontSize: 34 }}>👹</span>
+            <AttackFx element="fire" />
           </div>
         ),
       },
       {
         name: 'atkIce',
         desc: '氷属性エフェクト（ice）',
-        // モック: 氷セル: crystalSpin 1s で六角形結晶
-        //         atkBurstAnim: 'atkIce .7s ease forwards'
         preview: (
           <div
             style={{
               position: 'relative',
               width: 70,
               height: 70,
-              overflow: 'hidden',
               background: '#0c0d11',
               borderRadius: 4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ position: 'relative' }}>
-              <span style={{ fontSize: 34 }}>👹</span>
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 62 62"
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: -24,
-                  marginLeft: -24,
-                  animation: anim('atkIce', '1.2s', 'ease-out'),
-                  filter: 'drop-shadow(0 0 8px rgba(150,210,255,.9))',
-                }}
-              >
-                <g
-                  stroke="#cfeaff"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                >
-                  <line
-                    x1="31"
-                    y1="5"
-                    x2="31"
-                    y2="57"
-                  />
-                  <line
-                    x1="9"
-                    y1="18"
-                    x2="53"
-                    y2="44"
-                  />
-                  <line
-                    x1="53"
-                    y1="18"
-                    x2="9"
-                    y2="44"
-                  />
-                  <line
-                    x1="31"
-                    y1="12"
-                    x2="25"
-                    y2="18"
-                  />
-                  <line
-                    x1="31"
-                    y1="12"
-                    x2="37"
-                    y2="18"
-                  />
-                  <line
-                    x1="31"
-                    y1="50"
-                    x2="25"
-                    y2="44"
-                  />
-                  <line
-                    x1="31"
-                    y1="50"
-                    x2="37"
-                    y2="44"
-                  />
-                </g>
-              </svg>
-            </div>
+            <span style={{ fontSize: 34 }}>👹</span>
+            <AttackFx element="ice" />
           </div>
         ),
       },
       {
         name: 'atkVolt',
         desc: '雷属性エフェクト（volt）',
-        // モック v3: atkVolt は scaleY .3→1.1 + opacity 点滅（0→1→.35→1→0）で雷撃感
         preview: (
           <div
             style={{
               position: 'relative',
               width: 70,
               height: 70,
-              overflow: 'hidden',
               background: '#0c0d11',
               borderRadius: 4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ position: 'relative', animation: anim('shakeA', '0.8s', 'ease') }}>
-              <span style={{ fontSize: 34 }}>👹</span>
-              {/* 雷背景 glow */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  width: 55,
-                  height: 55,
-                  marginTop: -27,
-                  marginLeft: -27,
-                  borderRadius: '50%',
-                  background: 'radial-gradient(circle, rgba(255,235,120,.3), transparent 65%)',
-                }}
-              />
-              {/* 雷 SVG */}
-              <svg
-                width="26"
-                height="70"
-                viewBox="0 0 30 86"
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: -35,
-                  marginLeft: -13,
-                  animation: anim('atkVolt', '1.2s', 'ease'),
-                  filter: 'drop-shadow(0 0 8px rgba(255,232,120,.95))',
-                }}
-              >
-                <polygon
-                  points="18,1 2,45 12,45 8,85 29,33 16,33"
-                  fill="#fff3b0"
-                  stroke="#ffe878"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+            <span style={{ fontSize: 34 }}>👹</span>
+            <AttackFx element="volt" />
           </div>
         ),
       },
