@@ -7,6 +7,7 @@ import { useSfx } from '@/audio/useSfx';
 import { AttackFx } from '@/components/common/AttackFx/AttackFx';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
+import { DamagePop } from '@/components/common/DamagePop/DamagePop';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
@@ -193,8 +194,7 @@ type UiMode = { kind: 'global' } | { kind: 'individual' } | { kind: 'strategy' }
 type Anim = {
   base: Record<string, { hp: number; isDown: boolean }>;
   revealed: number;
-  /** 各ログ行に対応する行動者 ID（前進アニメ用）。actorIds[revealed] が現在の行動者。 */
-  actorIds: string[];
+  actingId?: string;
 };
 
 export interface BattlePageProps {
@@ -381,23 +381,8 @@ export const Page = ({
       }
       tpBaseRef.current = tpSnap;
       const final = resolveTurn(state, list, rngRef.current);
-      // 各ログ行の行動者 ID を name→id マップから逆引きする（前進アニメ用）。
-      // ログテキストは "${actor.name} は…" / "${actor.name} の…" の形式で始まる。
-      const nameToId = new Map<string, string>();
-      for (const c of [...state.allies, ...state.enemies, ...state.summons]) {
-        nameToId.set(c.name, c.id);
-      }
-      // 直前の行動者 ID をキャリーして、行動者が特定できないログ行（被弾結果など）にも充てる
-      let lastActorId = '';
-      const actorIds = final.log.map((entry) => {
-        for (const [name, id] of nameToId) {
-          if (entry.text.startsWith(`${name} `)) {
-            lastActorId = id;
-            return id;
-          }
-        }
-        return lastActorId;
-      });
+      // 行動順の最初のアクター ID（前進アニメ用）
+      const firstActorId = list[0]?.actorId ?? undefined;
       setState(final);
       setCommands({});
       setCommandTargets({});
@@ -410,7 +395,7 @@ export const Page = ({
       setFlashIds(new Set());
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
-      setAnim(final.log.length > 0 ? { base, revealed: 0, actorIds } : null);
+      setAnim(final.log.length > 0 ? { base, revealed: 0, actingId: firstActorId } : null);
     },
     [state]
   );
@@ -1025,8 +1010,8 @@ export const Page = ({
     const d = dispOf(a);
     // anim 再生中は TP をターン開始時の実値（tpBaseRef）から取得し、消費前の値を表示する
     const dispTp = anim ? (tpBaseRef.current[a.id] ?? a.tp) : a.tp;
-    // 行動者前進アニメ: 現在のログ行（anim.revealed）に対応する行動者カードを前進させる
-    const isAdvancing = !!anim && anim.actorIds[anim.revealed] === a.id;
+    // 行動者前進アニメ: anim.revealed が 0 （最初のログ表示前の 280ms 期間）に行動者カードを前進させる
+    const isAdvancing = !!anim && anim.revealed === 0 && anim.actingId === a.id;
     // 味方対象選択中: そのキャラが選ばれているか
     const isAllyTargeted =
       isAllyTargeting && activeId !== null && commandTargets[activeId] === a.id;
@@ -1063,39 +1048,46 @@ export const Page = ({
           }
         }}
       >
-        {/* InkSplatter — 被弾/回復時に重ね描画（Phase 2） */}
+        {/* DamagePop — 被弾/回復時に重ね描画（splatA/splatB keyframe 統一） */}
         {inkSplatters.has(a.id) &&
           (() => {
             const splat = inkSplatters.get(a.id)!;
+            // gold は InkSplatter（墨だまり演出）のまま残す
+            if (splat.variant === 'gold') {
+              return (
+                <div
+                  className={styles.inkOverlay}
+                  aria-hidden="true"
+                >
+                  <InkSplatter
+                    value={splat.value}
+                    variant="gold"
+                    size={64}
+                    onDone={() =>
+                      setInkSplatters((prev) => {
+                        const next = new Map(prev);
+                        next.delete(a.id);
+                        return next;
+                      })
+                    }
+                  />
+                </div>
+              );
+            }
             return (
-              <div
-                className={styles.inkOverlay}
-                aria-hidden="true"
-              >
-                <InkSplatter
-                  value={splat.value}
-                  variant={splat.variant}
-                  size={64}
-                  onDone={() =>
-                    setInkSplatters((prev) => {
-                      const next = new Map(prev);
-                      next.delete(a.id);
-                      return next;
-                    })
-                  }
-                />
-              </div>
+              <DamagePop
+                value={splat.variant === 'heal' ? `+${splat.value}` : splat.value}
+                variant={splat.variant}
+                onDone={() =>
+                  setInkSplatters((prev) => {
+                    const next = new Map(prev);
+                    next.delete(a.id);
+                    return next;
+                  })
+                }
+              />
             );
           })()}
-        {/* A. healRise — 回復値ポップ（HP回復時のみ） */}
-        {inkSplatters.has(a.id) && inkSplatters.get(a.id)!.variant === 'heal' && (
-          <div
-            className={styles.healRisePop}
-            aria-hidden="true"
-          >
-            +{inkSplatters.get(a.id)!.value}
-          </div>
-        )}
         {/* C. runeSpin — 魔法スキル詠唱中の ✦ オーバーレイ */}
         {isCasting(a) && !anim && (
           <div
@@ -1246,7 +1238,7 @@ export const Page = ({
             const masterEnemyId = e.enemyId as EnemyId | undefined;
             const master = masterEnemyId ? ENEMIES[masterEnemyId] : undefined;
             const isLarge = master?.kind === 'boss' || master?.kind === 'foe';
-            const isEnemyAdvancing = !!anim && anim.actorIds[anim.revealed] === e.id;
+            const isEnemyAdvancing = !!anim && anim.revealed === 0 && anim.actingId === e.id;
             return (
               <button
                 type="button"
@@ -1275,30 +1267,44 @@ export const Page = ({
                     aria-hidden="true"
                   />
                 )}
-                {/* InkSplatter — 敵への命中時（Phase 2） */}
+                {/* DamagePop — 敵への命中時（splatA/splatB keyframe 統一） */}
                 {inkSplatters.has(e.id) &&
                   (() => {
                     const splat = inkSplatters.get(e.id)!;
-                    const logText = state.log[anim?.revealed ? anim.revealed - 1 : 0]?.text ?? '';
-                    const isCrit = logText.includes('（会心）');
+                    // gold は InkSplatter（墨だまり演出）のまま残す
+                    if (splat.variant === 'gold') {
+                      return (
+                        <div
+                          className={styles.inkOverlay}
+                          aria-hidden="true"
+                        >
+                          <InkSplatter
+                            value={splat.value}
+                            variant="gold"
+                            size={56}
+                            onDone={() =>
+                              setInkSplatters((prev) => {
+                                const next = new Map(prev);
+                                next.delete(e.id);
+                                return next;
+                              })
+                            }
+                          />
+                        </div>
+                      );
+                    }
                     return (
-                      <div
-                        className={`${styles.inkOverlay} ${isCrit ? styles.inkCrit : ''}`}
-                        aria-hidden="true"
-                      >
-                        <InkSplatter
-                          value={splat.value}
-                          variant={splat.variant}
-                          size={56}
-                          onDone={() =>
-                            setInkSplatters((prev) => {
-                              const next = new Map(prev);
-                              next.delete(e.id);
-                              return next;
-                            })
-                          }
-                        />
-                      </div>
+                      <DamagePop
+                        value={splat.variant === 'heal' ? `+${splat.value}` : splat.value}
+                        variant={splat.variant}
+                        onDone={() =>
+                          setInkSplatters((prev) => {
+                            const next = new Map(prev);
+                            next.delete(e.id);
+                            return next;
+                          })
+                        }
+                      />
                     );
                   })()}
                 {isLarge ? (
@@ -1506,14 +1512,15 @@ export const Page = ({
                       )}
                     </span>
                   </span>
-                  {/* shimmer はバートラック（fill 部分）のみに当てる（BattleExpBar の shimmer prop で制御） */}
-                  <BattleExpBar
-                    fromLevel={r.fromLevel}
-                    fromExp={r.fromExp}
-                    gainedExp={r.gainedExp}
-                    start={expAnimStart}
-                    shimmer={expAnimStart}
-                  />
+                  {/* shimmer ラッパーはバー本体のみを囲む（EXP バー以外に波打ちエフェクトが掛からないよう） */}
+                  <div className={styles.expBarShimmerWrap}>
+                    <BattleExpBar
+                      fromLevel={r.fromLevel}
+                      fromExp={r.fromExp}
+                      gainedExp={r.gainedExp}
+                      start={expAnimStart}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

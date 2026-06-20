@@ -12,6 +12,7 @@ import styles from './EffectsGallery.module.scss';
 import './EffectsGallery.keyframes.css';
 
 import { AttackFx } from '@/components/common/AttackFx/AttackFx';
+import { DamagePop } from '@/components/common/DamagePop/DamagePop';
 
 interface EffectDef {
   name: string;
@@ -418,81 +419,67 @@ const CATEGORIES: Category[] = [
     effects: [
       {
         name: 'splatA',
-        desc: 'ダメージ数値ポップ（left:50%; translateX(-50%) → 上昇）',
-        // モック: position:absolute; top:0px; left:50%; transform:translateX(-50%)
-        //         font-family:Shippori Mincho; font-weight:800; font-size:30px; color:#ffd9c9
-        //         会心時や敵被弾時のダメージ数字
-        // keyframes: translate(-50%, 0)→translate(-50%, -14px) scale(1.25)→translate(-50%, -50px)
+        desc: 'ダメージ数値ポップ（通常攻撃・上昇テキスト）',
+        // DamagePop variant="damage" で splatA keyframe を使用（_obsidian.scss 参照）
         preview: (
-          <div style={{ position: 'relative', width: 80, height: 80 }}>
-            {/* 敵シルエット代わりの背景 */}
-            <div
+          <div
+            style={{
+              position: 'relative',
+              width: 80,
+              height: 70,
+              background: '#0c0d11',
+              borderRadius: 4,
+              overflow: 'visible',
+            }}
+          >
+            <span
               style={{
                 position: 'absolute',
-                top: 20,
+                top: '50%',
                 left: '50%',
-                transform: 'translateX(-50%)',
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: 'rgba(212,103,79,.1)',
-              }}
-            />
-            {/* ダメージ数値 — left:50%; transform-origin で -50%,0 から開始 */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 12,
-                left: '50%',
-                fontFamily: 'Shippori Mincho, serif',
-                fontWeight: 800,
+                transform: 'translate(-50%, -50%)',
                 fontSize: 22,
-                color: '#ffd9c9',
-                textShadow: '0 0 10px rgba(212,103,79,.8)',
-                whiteSpace: 'nowrap',
-                animation: anim('splatA', '1.6s', 'ease-in-out'),
               }}
             >
-              231
-            </div>
+              👹
+            </span>
+            <DamagePop
+              value="231"
+              variant="damage"
+            />
           </div>
         ),
       },
       {
         name: 'splatB',
-        desc: 'ダメージ数値ポップ（魔法色・同形）',
-        // モック: splatA と同形の keyframes。魔法被弾時に使用。
-        //         line 1168: popAnim: (odd?'splatA':'splatB')+' .76s ease forwards'
+        desc: 'ダメージ数値ポップ（回復・splatB keyframe）',
+        // DamagePop variant="heal" で splatB keyframe を使用
         preview: (
-          <div style={{ position: 'relative', width: 80, height: 80 }}>
-            <div
+          <div
+            style={{
+              position: 'relative',
+              width: 80,
+              height: 70,
+              background: '#0c0d11',
+              borderRadius: 4,
+              overflow: 'visible',
+            }}
+          >
+            <span
               style={{
                 position: 'absolute',
-                top: 20,
+                top: '50%',
                 left: '50%',
-                transform: 'translateX(-50%)',
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: 'rgba(224,192,255,.1)',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                top: 12,
-                left: '50%',
-                fontFamily: 'Shippori Mincho, serif',
-                fontWeight: 800,
+                transform: 'translate(-50%, -50%)',
                 fontSize: 22,
-                color: '#e0c0ff',
-                textShadow: '0 0 10px rgba(180,100,255,.8)',
-                whiteSpace: 'nowrap',
-                animation: anim('splatB', '1.6s', 'ease-in-out'),
               }}
             >
-              145
-            </div>
+              💚
+            </span>
+            <DamagePop
+              value="+145"
+              variant="heal"
+            />
           </div>
         ),
       },
