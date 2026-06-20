@@ -691,6 +691,25 @@ describe('battle: rewards', () => {
     expect(gold).toBeGreaterThan(0);
   });
 
+  test('partyAvgLv 未指定では減衰なし（後方互換）', () => {
+    const state = startBattle(diveSave(), ['enemy_slime']);
+    const { exp: expNoLv } = battleRewards(state);
+    const { exp: expWithUndef } = battleRewards(state, undefined, undefined);
+    expect(expNoLv).toBe(expWithUndef);
+  });
+
+  test('partyAvgLv = rec + 10 のとき exp が約 0.20 倍になる', () => {
+    // 1F の推奨Lv は APPROPRIATE[10].lv = 12
+    // rec + 10 = 22 → levelDecay(22, 1) = 0.20
+    // decay_band = 1（下層ファームなし）なので exp * 0.20
+    const save = diveSave(); // 1F
+    const state = startBattle(save, ['enemy_slime']);
+    const { exp: expBase } = battleRewards(state);
+    const { exp: expDecayed } = battleRewards(state, undefined, 22); // rec+10 = 22
+    // 0.20 倍に丸め誤差込みで近い（Math.round があるため厳密一致ではなく近似）
+    expect(expDecayed).toBeCloseTo(expBase * 0.2, 0);
+  });
+
   test('applyBattleResult(win) で所持金・図鑑・現在HPが反映される', () => {
     const save = diveSave(); // 同じ save から戦闘を組む（charId を一致させる）
     let state = startBattle(save, ['enemy_slime']);

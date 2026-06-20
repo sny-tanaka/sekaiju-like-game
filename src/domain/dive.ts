@@ -1,4 +1,4 @@
-import { isBossFloor } from '@/data/balance';
+import { isBossFloor, levelDecay, partyAverageLevelFromDive } from '@/data/balance';
 import { initEncounter, onStep } from '@/domain/encounter';
 import { stepFoes } from '@/domain/foe';
 import { findEventCell, generateFloor } from '@/domain/generateFloor';
@@ -121,7 +121,11 @@ function enterFloor(save: SaveData, depth: number, encounterRng: Rng): SaveData 
       dir: facing,
       party: next.diveState?.party ?? buildDiveParty(next),
       persistentSummons: next.diveState?.persistentSummons ?? [],
-      encounter: { stepsUntilEncounter: initEncounter(encounterRng) },
+      encounter: {
+        stepsUntilEncounter: initEncounter(encounterRng, {
+          encounterRateDecay: levelDecay(partyAverageLevelFromDive(next), depth),
+        }),
+      },
       pendingFoeBattle: null,
     },
   };
@@ -351,7 +355,11 @@ export function goShallower(save: SaveData): SaveData {
       depth: prevDepth,
       pos: { x: exit.x, y: exit.y },
       dir: facing,
-      encounter: { stepsUntilEncounter: initEncounter(rng) },
+      encounter: {
+        stepsUntilEncounter: initEncounter(rng, {
+          encounterRateDecay: levelDecay(partyAverageLevelFromDive(next), prevDepth),
+        }),
+      },
       pendingFoeBattle: null,
     },
   };

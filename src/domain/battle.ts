@@ -4,6 +4,7 @@ import {
   encounterTier,
   enemyScale,
   expToNext,
+  levelDecay,
   spGainOnLevelUp,
 } from '@/data/balance';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
@@ -1137,10 +1138,12 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
 /**
  * 勝利報酬（経験値・所持金。出現階でスケール）。
  * deepestReached を渡すと §8.3 の下層ファーム減衰を適用する。
+ * partyAvgLv を渡すとレベル超過減衰を追加適用する（decay_band * decay_lv の積）。
  */
 export function battleRewards(
   state: BattleState,
-  deepestReached?: number
+  deepestReached?: number,
+  partyAvgLv?: number
 ): { exp: number; gold: number } {
   let exp = 0;
   let gold = 0;
@@ -1151,12 +1154,14 @@ export function battleRewards(
     deepBand !== undefined
       ? Math.pow(BALANCE.FARM_EXP_DECAY_PER_BAND, Math.max(0, deepBand - curBand))
       : 1;
+  // レベル超過減衰（decay_band と積算）
+  const decay_lv = partyAvgLv !== undefined ? levelDecay(partyAvgLv, state.depth) : 1;
   for (const e of state.enemies) {
     if (!e.enemyId) continue;
     const master = ENEMIES[e.enemyId];
     const scale = enemyScale(state.depth, master.refDepth);
-    exp += Math.round(master.exp * scale * decay);
-    gold += Math.round(master.gold * scale * decay);
+    exp += Math.round(master.exp * scale * decay * decay_lv);
+    gold += Math.round(master.gold * scale * decay * decay_lv);
   }
   return { exp, gold };
 }
@@ -1183,11 +1188,24 @@ export interface LevelUpResult {
   statGains: Partial<Stats>;
 }
 
+/**
+ * BattleState の生存している味方から guild.members を逆引きしてパーティ平均レベルを返す。
+ * Combatant は level を持たないため Character 側を参照する。
+ */
+function partyAverageLevel(save: SaveData, state: BattleState): number {
+  const aliveIds = new Set(state.allies.filter((a) => !a.isDown).map((a) => a.id));
+  if (aliveIds.size === 0) return 1;
+  const alive = save.guild.members.filter((m) => aliveIds.has(m.id));
+  if (alive.length === 0) return 1;
+  return alive.reduce((acc, m) => acc + m.level, 0) / alive.length;
+}
+
 /** 戦闘勝利時の各メンバーの経験値獲得・レベルアップ結果（リザルト画面用。純粋・副作用なし）。 */
 export function partyExpResults(save: SaveData, state: BattleState): LevelUpResult[] {
   if (state.outcome !== 'win' || !save.diveState) return [];
   const deepestReached = save.towerState.record.deepestReached;
-  const { exp } = battleRewards(state, deepestReached);
+  const avgLv = partyAverageLevel(save, state);
+  const { exp } = battleRewards(state, deepestReached, avgLv);
   const partyIds = new Set(save.diveState.party.map((p) => p.charId));
   const downedIds = new Set(state.allies.filter((a) => a.isDown).map((a) => a.id));
   // 経験値は生存している出撃メンバーのみで分配する（戦闘不能者は取り分なし。issue #50）
@@ -1300,7 +1318,8 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
 
   if (win) {
     const deepestReached = save.towerState.record.deepestReached;
-    const { exp, gold: dropGold } = battleRewards(state, deepestReached);
+    const avgLv = partyAverageLevel(save, state);
+    const { exp, gold: dropGold } = battleRewards(state, deepestReached, avgLv);
     gold += dropGold;
     const partyIds = new Set(party.map((p) => p.charId));
     const downedIds = new Set(state.allies.filter((a) => a.isDown).map((a) => a.id));
