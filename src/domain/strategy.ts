@@ -269,8 +269,7 @@ function pickInochi(
   learnedSkills: Record<SkillId, number>
 ): AutoCmd {
   const skills = usableSkills(actor, learnedSkills);
-  // actor 自身を除外: 自分が最低 HP のとき自分を heal 対象に選ばないようにする
-  const allies = aliveAllies(state).filter((a) => a.id !== actor.id);
+  const allies = aliveAllies(state);
   const downed = downedAllies(state);
 
   // 1. 戦闘不能の味方 ≥ 1 かつ revive 使用可 → 蘇生
