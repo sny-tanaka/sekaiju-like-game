@@ -128,10 +128,6 @@ export const Page = () => {
     setPending(null);
   };
 
-  // 断片→銅インゴット変換（断片10個→銅1個。domain に専用関数なし、recycle の繰り上げロジックを流用）
-  // ※ domain/forge.ts に convertFragmentsToCopper 関数が無いため disabled で配置。
-  const fragmentsEnough = fragments >= FORGE.FRAGMENTS_PER_INGOT;
-
   return (
     <div className={styles.layout}>
       {/* ヘッダー */}
@@ -187,9 +183,8 @@ export const Page = () => {
                 const baseNameOnly = eq?.name ?? e.masterId;
                 const forgeLvText = e.forgeLevel > 0 ? ` +${e.forgeLevel}` : '';
 
-                // ステ予測: 銅ボタン（+1）でのプレビューを基準に表示
+                // 強化後レベル（銅+1 を基準に表示）
                 const nextLevel = Math.min(FORGE.MAX_LEVEL, e.forgeLevel + FORGE.INGOT_INC.copper);
-                const statPrev = buildStatPreview(e.masterId, e.forgeLevel, nextLevel);
                 const slotLabel = eq ? EQUIP_SLOT_LABEL[eq.slot] : '';
 
                 const rowClass = maxed
@@ -219,13 +214,11 @@ export const Page = () => {
                         <span className={styles.statPreview}>
                           {maxed ? (
                             <>{slotLabel} ・ 最大強化</>
-                          ) : statPrev ? (
-                            <>
-                              {slotLabel} ・ {statPrev.label} +{statPrev.curVal} →{' '}
-                              <span className={styles.statNext}>+{statPrev.nextVal}</span>
-                            </>
                           ) : (
-                            slotLabel
+                            <>
+                              {slotLabel} ・ 攻撃強化 +{e.forgeLevel} →{' '}
+                              <span className={styles.statNext}>+{nextLevel}</span>
+                            </>
                           )}
                         </span>
                       </div>
@@ -350,23 +343,19 @@ export const Page = () => {
               }
             })}
 
-            {/* 断片→インゴット変換ヒント（リサイクルタブ末尾） */}
+            {/* 断片自動変換注記（リサイクルタブ末尾）— v3 */}
             {tab === 'recycle' && (
               <div className={styles.convertHint}>
-                <span className={styles.convertLabel}>断片 → インゴット変換</span>
-                {/* domain に convertFragmentsToCopper が無いため disabled で配置 */}
-                <button
-                  type="button"
-                  className={styles.convertBtn}
-                  disabled={!fragmentsEnough}
-                  title={fragmentsEnough ? '断片10個を銅インゴット1個に変換' : '断片が10個未満です'}
-                  onClick={() => {
-                    // 将来実装予定: 断片10→銅1の変換
-                    // 現状は disabled のため到達しないが、実装後ここでロジックを呼ぶ
-                  }}
+                <span
+                  className={styles.convertIcon}
+                  aria-hidden="true"
                 >
-                  断片10→銅1
-                </button>
+                  ♺
+                </span>
+                <span className={styles.convertText}>
+                  断片は 10 個ごとに <span className={styles.convertAccent}>銅インゴット 1</span> へ
+                  <span className={styles.convertDim}>自動変換</span>されます（変換操作は不要）
+                </span>
               </div>
             )}
           </>
