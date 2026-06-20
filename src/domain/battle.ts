@@ -28,10 +28,12 @@ import type {
   SkillEvent,
 } from '@/domain/battleEvent';
 import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
+import { initEncounter } from '@/domain/encounter';
 import { enemyLapForDepth } from '@/domain/encounterTable';
 import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computePassiveMods } from '@/domain/passives';
+import { createRng } from '@/domain/rng';
 import { computeSkillTpCost } from '@/domain/skillCost';
 import { computeBaseStats } from '@/domain/stats';
 import type {
@@ -905,8 +907,17 @@ function resolveUnion(
 /**
  * 1ターンを解決する（純関数）。味方コマンド＋敵AI(通常攻撃) を AGI 順に処理。
  * 乱数は注入。新しい BattleState を返す（入力は変更しない）。
+ *
+ * @param predefinedActorOrder - UI で確定した行動順の actor id 配列。
+ *   指定された場合はその順で行動させ、内部でのタイブレーク rng.next() を空呼びして
+ *   後続ダメージ計算の rng 消費数を合わせる。省略時は従来通り内部で AGI ソート。
  */
-export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: Rng): BattleState {
+export function resolveTurn(
+  state: BattleState,
+  commands: BattleCommand[],
+  rng: Rng,
+  predefinedActorOrder?: string[]
+): BattleState {
   if (state.outcome !== 'ongoing') return state;
   // ディープコピー（純粋性のため）
   const next: BattleState = structuredClone({ ...state, events: [] });
@@ -1053,14 +1064,37 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     }
   }
 
-  // 行動順（生存者のみ、AGI 降順・rng タイブレーク）。先手側のみ行動するターンは片側を除外。
+  // 行動順（生存者のみ）。先手側のみ行動するターンは片側を除外。
   // 召喚体は味方側として扱う（不意打ちターンは行動不可）。
-  const actors = [...next.allies, ...next.enemies, ...next.summons]
-    .filter((c) => !c.isDown)
-    .filter((c) => !(skipEnemies && c.side === 'enemy') && !(skipAllies && c.side === 'ally'))
-    .map((c) => ({ c, agi: c.stats.agi, tie: rng.next() }))
-    .sort((a, b) => b.agi - a.agi || b.tie - a.tie)
-    .map((x) => x.c);
+  // predefinedActorOrder が渡された場合: その id 配列から actor を解決して使用する。
+  // タイブレーク用 rng.next() は同数だけ空呼びして後続の rng 消費を従来と揃える。
+  let actors: Combatant[];
+  if (predefinedActorOrder) {
+    const all = [...next.allies, ...next.enemies, ...next.summons];
+    const lookup = new Map(all.map((c) => [c.id, c]));
+    actors = predefinedActorOrder
+      .map((id) => lookup.get(id))
+      .filter(
+        (c): c is Combatant =>
+          !!c &&
+          !c.isDown &&
+          !(skipEnemies && c.side === 'enemy') &&
+          !(skipAllies && c.side === 'ally')
+      );
+    // 従来と同じ回数 rng.next() を消費して後続のダメージ計算 rng ストリームを合わせる。
+    // （all のうち skip 対象でも down でもない combatant の数 = 従来のタイブレーク消費数）
+    const candidateCount = all.filter(
+      (c) => !c.isDown && !(skipEnemies && c.side === 'enemy') && !(skipAllies && c.side === 'ally')
+    ).length;
+    for (let i = 0; i < candidateCount; i++) rng.next();
+  } else {
+    actors = [...next.allies, ...next.enemies, ...next.summons]
+      .filter((c) => !c.isDown)
+      .filter((c) => !(skipEnemies && c.side === 'enemy') && !(skipAllies && c.side === 'ally'))
+      .map((c) => ({ c, agi: c.stats.agi, tie: rng.next() }))
+      .sort((a, b) => b.agi - a.agi || b.tie - a.tie)
+      .map((x) => x.c);
+  }
 
   for (const actor of actors) {
     if (actor.isDown) continue;
@@ -1556,11 +1590,27 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     .filter((s) => !s.isDown && s.summonKind && SUMMONS[s.summonKind]?.persistsAfterBattle)
     .map((s) => ({ summonKind: s.summonKind as SummonKind, ownerId: s.ownerId ?? '', hp: s.hp }));
 
+  // 戦闘後エンカウント再初期化: levelDecay を反映した新しい stepsUntilEncounter を設定する。
+  // これにより過レベル時のエンカウント率低下（減衰）が戦闘後にも正しく反映される。
+  const postBattleAvgLv = partyAverageLevel(save, state);
+  const postBattleDecay = levelDecay(postBattleAvgLv, save.diveState.depth);
+  const postBattleRng = createRng(
+    (save.masterSeed ^ (save.diveState.depth * 0x9e3779b9) ^ (state.turn * 0x6c62272e)) >>> 0
+  );
+  const nextStepsUntilEncounter = initEncounter(postBattleRng, {
+    encounterRateDecay: postBattleDecay,
+  });
+
   let next: SaveData = {
     ...save,
     guild: { ...save.guild, members, gold, bestiary },
     bestiary,
-    diveState: { ...save.diveState, party, persistentSummons },
+    diveState: {
+      ...save.diveState,
+      party,
+      persistentSummons,
+      encounter: { stepsUntilEncounter: nextStepsUntilEncounter },
+    },
   };
 
   // 倉庫: 戦闘で使ったアイテムを減算（勝敗問わず）

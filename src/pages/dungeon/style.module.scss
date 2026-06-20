@@ -880,7 +880,18 @@
   flex: 1;
 }
 
+.itemStats {
+  display: flex;
+  gap: 8px;
+}
+
 .itemHp {
+  font-size: 10px;
+  font-weight: 400;
+  color: var.$ink-faint;
+}
+
+.itemTp {
   font-size: 10px;
   font-weight: 400;
   color: var.$ink-faint;

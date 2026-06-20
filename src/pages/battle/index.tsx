@@ -8,11 +8,14 @@ import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { BuffFx } from '@/components/common/effects/BuffFx/BuffFx';
+import { CleanseFx } from '@/components/common/effects/CleanseFx/CleanseFx';
 import { dashAwayClass } from '@/components/common/effects/DashAwayFx';
 import { DebuffFx } from '@/components/common/effects/DebuffFx/DebuffFx';
 import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
+import { ItemUseFx } from '@/components/common/effects/ItemUseFx/ItemUseFx';
 import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
 import { SealStampFx } from '@/components/common/effects/SealStampFx';
+import { SkillCastFx } from '@/components/common/effects/SkillCastFx/SkillCastFx';
 import { summonAppearClass } from '@/components/common/effects/SummonAppearFx';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { HitFx } from '@/components/common/HitFx/HitFx';
@@ -306,6 +309,12 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   const [debuffFxMap, setDebuffFxMap] = useState<Map<string, number>>(new Map());
   // state 駆動の前進/後退アニメ: 現在前進中のアクター ID（null で後退 = 元位置に戻る）
   const [advancingActorId, setAdvancingActorId] = useState<string | null>(null);
+  // SkillCastFx: スキル詠唱中のアクター ID
+  const [castingActorId, setCastingActorId] = useState<string | null>(null);
+  // ItemUseFx: アイテム使用中のアクター ID
+  const [itemUseFxActorId, setItemUseFxActorId] = useState<string | null>(null);
+  // CleanseFx: 状態異常解除対象の ID
+  const [cleanseFxTargetId, setCleanseFxTargetId] = useState<string | null>(null);
   // 各 iter での「行動完了済み」フラグ（複数 Fx が同時に onDone を呼んでも 1 回だけ実行）
   const actionCompletedRef = useRef(false);
   // fxDone / loggerDone: 両方 true になってから tryComplete を実行（設計書 §2.5）
@@ -404,8 +413,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   }, [state?.outcome]);
 
   // 1ターン解決して逐次再生を開始する（issue #18）。入力状態をクリアする。
+  // actorOrder: UI で確定した行動順の actor id 配列。指定時は resolveTurn に渡し、
+  // 表示と解決が一致することを保証する（省略時は従来通り内部で AGI ソート）。
   const runTurn = useCallback(
-    (list: BattleCommand[]) => {
+    (list: BattleCommand[], actorOrder?: string[]) => {
       if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
       const baseSnapshot = snapshotOf(state);
       // TP 表示用ベースライン: anim 再生中はターン開始時の TP 実値を表示する
@@ -414,7 +425,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         tpSnap[c.id] = c.tp ?? 0;
       }
       tpBaseRef.current = tpSnap;
-      const final = resolveTurn(state, list, rngRef.current);
+      const final = resolveTurn(state, list, rngRef.current, actorOrder);
       const flatEvts = flattenEvents(final.events);
       setState(final);
       setCommands({});
@@ -501,6 +512,9 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     setHits(new Map());
     setBuffFxMap(new Map());
     setDebuffFxMap(new Map());
+    setCastingActorId(null);
+    setItemUseFxActorId(null);
+    setCleanseFxTargetId(null);
 
     // ログ追記（pre テキスト）— appendLog は stable な useCallback なので deps に入れても安全。
     // battleLogger オブジェクト自体は deps に入れない（useBattleLogger が毎 render 新オブジェクトを返すため deps に含めると無限ループになる）
@@ -591,6 +605,11 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             ? event.hits.filter((h) => h.defeated)
             : [];
         if (defeated.length > 0) play('down');
+        // スキル詠唱 Fx（SkillCastFx）: skill event では常に発火
+        if (event.kind === 'skill') {
+          setCastingActorId(event.actorId);
+          didSetBuffOrDebuff = true; // SkillCastFx が onFxDone を呼ぶので hasAnyFx = true 扱い
+        }
         // バフ付与
         if (event.kind === 'skill' && event.buffs.length > 0) {
           for (const b of event.buffs) {
@@ -612,6 +631,15 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             });
           }
           didSetBuffOrDebuff = true;
+        }
+      } else if (event.kind === 'item-use') {
+        // アイテム使用 Fx（ItemUseFx）: item-use event では常に発火
+        const targetId = event.targetId ?? event.actorId;
+        setItemUseFxActorId(event.actorId);
+        didSetBuffOrDebuff = true; // ItemUseFx が onFxDone を呼ぶので hasAnyFx = true 扱い
+        if (event.effect.kind === 'cure') {
+          // 解除 Fx は対象に表示
+          setCleanseFxTargetId(targetId);
         }
       }
 
@@ -891,7 +919,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         targetId: enemyTargeted ? tgt : unionCmd.targetId,
       });
     }
-    runTurn(list);
+    runTurn(
+      list,
+      turnOrderPreview.map((c) => c.id)
+    );
   }, [
     state,
     commands,
@@ -903,6 +934,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     runTurn,
     play,
     buildCommandList,
+    turnOrderPreview,
   ]);
 
   const handleFlee = useCallback(() => {
@@ -944,7 +976,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       // めいれいキャラなし → 自動コマンドリストを直接組んで即実行
       const list = buildCommandList(autoFilled, autoTargets, aliveAllies, targetId);
       play('decide');
-      runTurn(list);
+      runTurn(
+        list,
+        turnOrderPreview.map((c) => c.id)
+      );
     } else {
       // めいれいキャラあり → 個別UIへ
       setCommands(autoFilled);
@@ -952,7 +987,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       setUiMode({ kind: 'individual' });
       setActiveId(meireiAllies[0].id);
     }
-  }, [state, save, aliveAllies, buildCommandList, targetId, runTurn, play]);
+  }, [state, save, aliveAllies, buildCommandList, targetId, runTurn, play, turnOrderPreview]);
 
   /** 作戦変更（issue #61）。applySave で即時反映。 */
   const changeStrategy = useCallback(
@@ -1108,6 +1143,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   const allyTargetCandidates = reviveTargeting ? state.allies.filter((a) => a.isDown) : aliveAllies;
   const targetName = state.enemies.find((e) => e.id === targetId)?.name ?? '-';
   const rewards = battleRewards(state);
+  // 表示用獲得経験値: levelDecay 込みの合計（expResults の gainedExp を合算）。
+  // battleRewards(state) は avgLv 未渡しで減衰なし生値になるため、リザルト表示には使わない。
+  const displayExp =
+    expResults.length > 0 ? expResults.reduce((acc, r) => acc + r.gainedExp, 0) : rewards.exp;
 
   // 経験値バーは戦況再生が終わったらすぐ開始する（issue #52: バーが伸び切ってからレベルアップ演出）。
   const expAnimStart = state.outcome === 'win' && !anim;
@@ -1210,6 +1249,30 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               </div>
             );
           })()}
+        {/* SkillCastFx — スキル詠唱演出（anim 再生中に actorId が一致するとき） */}
+        <SkillCastFx
+          visible={castingActorId === a.id}
+          onDone={() => {
+            setCastingActorId(null);
+            onFxDone();
+          }}
+        />
+        {/* ItemUseFx — アイテム使用演出（actorId が一致するとき） */}
+        <ItemUseFx
+          visible={itemUseFxActorId === a.id}
+          onDone={() => {
+            setItemUseFxActorId(null);
+            onFxDone();
+          }}
+        />
+        {/* CleanseFx — 状態異常解除演出（targetId が一致するとき） */}
+        <CleanseFx
+          visible={cleanseFxTargetId === a.id}
+          onDone={() => {
+            setCleanseFxTargetId(null);
+            onFxDone();
+          }}
+        />
         {/* C. runeSpin — 魔法スキル詠唱中の ✦ オーバーレイ */}
         <RuneSpinFx visible={isCasting(a) && !anim} />
         {/* 職業バッジ（右上に固定） */}
@@ -1642,7 +1705,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           <div className={styles.resultExpBar}>
             <div className={styles.resultExpLabel}>
               <span>獲得経験値</span>
-              <span className={styles.resultExpGain}>+{rewards.exp} EXP</span>
+              <span className={styles.resultExpGain}>+{displayExp} EXP</span>
             </div>
             <div className={styles.expList}>
               {expResults.map((r) => (

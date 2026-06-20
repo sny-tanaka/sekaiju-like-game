@@ -516,9 +516,14 @@ export const Page = () => {
                               />
                               <div className={styles.itemTargetInfo}>
                                 <span className={styles.itemTargetName}>{c.name}</span>
-                                <span className={styles.itemHp}>
-                                  HP {p.hp}/{max.hp}
-                                </span>
+                                <div className={styles.itemStats}>
+                                  <span className={styles.itemHp}>
+                                    HP {p.hp}/{max.hp}
+                                  </span>
+                                  <span className={styles.itemTp}>
+                                    TP {p.tp}/{max.tp}
+                                  </span>
+                                </div>
                               </div>
                               <ActionButton
                                 label="使う"
