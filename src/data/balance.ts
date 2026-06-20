@@ -196,6 +196,10 @@ export const SKILL_TP = {
  */
 export function getRecommendedLevel(depth: number): number {
   const bossFloor = Math.ceil(depth / BALANCE.BOSS_INTERVAL) * BALANCE.BOSS_INTERVAL;
+  // 無限タワー対応: APPROPRIATE は 10F〜100F の 10 段階のみ。
+  // 100F を超える深層ではプレイヤー側の LEVEL_CAP (=100) に合わせて
+  // 推奨 Lv = 100 で頭打ちにする（Lv100 パーティーは深層で減衰なし）。
+  if (bossFloor > 100) return APPROPRIATE[100].lv;
   return APPROPRIATE[bossFloor]?.lv ?? 1;
 }
 

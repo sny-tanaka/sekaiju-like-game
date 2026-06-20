@@ -17,6 +17,18 @@ describe('getRecommendedLevel', () => {
     expect(getRecommendedLevel(21)).toBe(APPROPRIATE[30].lv);
     expect(getRecommendedLevel(30)).toBe(APPROPRIATE[30].lv);
   });
+
+  test('91〜100F は APPROPRIATE[100].lv を返す', () => {
+    expect(getRecommendedLevel(91)).toBe(APPROPRIATE[100].lv);
+    expect(getRecommendedLevel(100)).toBe(APPROPRIATE[100].lv);
+  });
+
+  test('100F を超える深層は APPROPRIATE[100].lv で頭打ち（無限タワー対応）', () => {
+    expect(getRecommendedLevel(101)).toBe(APPROPRIATE[100].lv);
+    expect(getRecommendedLevel(200)).toBe(APPROPRIATE[100].lv);
+    expect(getRecommendedLevel(500)).toBe(APPROPRIATE[100].lv);
+    expect(getRecommendedLevel(9999)).toBe(APPROPRIATE[100].lv);
+  });
 });
 
 describe('levelDecay', () => {
