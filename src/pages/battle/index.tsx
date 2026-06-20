@@ -288,6 +288,8 @@ export const Page = ({
   const [debuffFxMap, setDebuffFxMap] = useState<Map<string, number>>(new Map());
   // state 駆動の前進/後退アニメ: 現在前進中のアクター ID（null で後退 = 元位置に戻る）
   const [advancingActorId, setAdvancingActorId] = useState<string | null>(null);
+  // 各 iter での「行動完了済み」フラグ（複数 Fx が同時に onDone を呼んでも 1 回だけ実行）
+  const actionCompletedRef = useRef(false);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -433,6 +435,18 @@ export const Page = ({
     }
   }, [state, introFx, runTurn]);
 
+  // 行動完了シグナル: Fx の onDone から呼ばれ、後退 + 次ログへの進行を担う
+  // actionCompletedRef で重複実行を防ぐ（複数 Fx 同時 onDone でも 1 回のみ）
+  const completeAction = useCallback(() => {
+    if (actionCompletedRef.current) return;
+    actionCompletedRef.current = true;
+    setAdvancingActorId(null); // 後退開始（CSS transition 0.18s）
+    // 後退完了後（200ms）に次のログへ
+    setTimeout(() => {
+      setAnim((prev) => (prev ? { ...prev, revealed: prev.revealed + 1 } : null));
+    }, 200);
+  }, []);
+
   // 逐次再生（issue #18）: ログ行を1行ずつ開き、被弾したカードを点滅させる。
   useEffect(() => {
     if (!state || !anim) return;
@@ -451,16 +465,15 @@ export const Page = ({
     const cur = state.log[idx]?.snapshot;
     const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
 
+    // 新 iter 開始: 行動完了フラグを reset
+    actionCompletedRef.current = false;
+
     // Step 0 (即時 0ms): 前進開始 — CSS transition 0.18s が走り始める
     const currentActor = anim.actorIds[idx];
     setAdvancingActorId(currentActor ?? null);
 
     // Step 1 (DAMAGE_AT = 200ms): 前進完了直後にダメージ/回復/バフ/デバフ発生
     const DAMAGE_AT = 200;
-    // Step 2: 行動完了を state で明示してから後退（keyframe の固定時間予約ではなく明示的 clear）
-    const RETRACT_AT = 700;
-    // Step 3: revealed を進める（一律 900ms）
-    const NEXT_AT = 900;
 
     const tDmg = setTimeout(() => {
       const fl = new Set<string>();
@@ -501,6 +514,7 @@ export const Page = ({
 
       // SE 発火: attack/critical/damage/heal は HitFx マウント時 useEffect で集約発火するため除外
       const line = state.log[idx];
+      let didSetBuffOrDebuff = false;
       if (line) {
         const t = line.text;
         // 逃走成功 (SE は DustRiseFx マウント時に発火)
@@ -521,6 +535,7 @@ export const Page = ({
               next.set(targetId, idx);
               return next;
             });
+            didSetBuffOrDebuff = true;
           } else {
             play('debuff');
           }
@@ -541,29 +556,26 @@ export const Page = ({
               next.set(targetId, idx);
               return next;
             });
+            didSetBuffOrDebuff = true;
           } else {
             play('buff');
           }
         }
         // damage/heal SE は HitFx 内で isAllyTarget/variant に応じて発火するため除外
       }
+
+      // Fx 無し行動（防御・構え・待機など）のフォールバック完了タイマー
+      // HitFx / BuffFx / DebuffFx の onDone が呼ばれないケースでループを進める
+      const hasAnyFx = nextHits.size > 0 || didSetBuffOrDebuff;
+      if (!hasAnyFx) {
+        setTimeout(() => completeAction(), 400);
+      }
     }, DAMAGE_AT);
-
-    // 後退: state をクリアすると CSS transition で translateY(0) に戻る
-    const tRetract = setTimeout(() => {
-      setAdvancingActorId(null);
-    }, RETRACT_AT);
-
-    const tNext = setTimeout(() => {
-      setAnim({ ...anim, revealed: anim.revealed + 1 });
-    }, NEXT_AT);
 
     return () => {
       clearTimeout(tDmg);
-      clearTimeout(tRetract);
-      clearTimeout(tNext);
     };
-  }, [state, anim, play]);
+  }, [state, anim, play, completeAction]);
 
   // リザルト用の経験値・レベルアップ結果（issue #18）。勝利時のみ算出。
   const expResults = useMemo(
@@ -1081,13 +1093,14 @@ export const Page = ({
                 value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
                 isCrit={hit.isCrit}
                 isAllyTarget
-                onDone={() =>
+                onDone={() => {
                   setHits((prev) => {
                     const next = new Map(prev);
                     next.delete(a.id);
                     return next;
-                  })
-                }
+                  });
+                  completeAction();
+                }}
               />
             );
           })()}
@@ -1095,25 +1108,27 @@ export const Page = ({
         <BuffFx
           key={`${a.id}-buff-${buffFxMap.get(a.id) ?? 0}`}
           visible={buffFxMap.has(a.id)}
-          onDone={() =>
+          onDone={() => {
             setBuffFxMap((prev) => {
               const n = new Map(prev);
               n.delete(a.id);
               return n;
-            })
-          }
+            });
+            completeAction();
+          }}
         />
         {/* DebuffFx — 状態異常付与演出（赤フラッシュ 0.4s + SE） */}
         <DebuffFx
           key={`${a.id}-debuff-${debuffFxMap.get(a.id) ?? 0}`}
           visible={debuffFxMap.has(a.id)}
-          onDone={() =>
+          onDone={() => {
             setDebuffFxMap((prev) => {
               const n = new Map(prev);
               n.delete(a.id);
               return n;
-            })
-          }
+            });
+            completeAction();
+          }}
         />
         {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
         {inkSplatters.has(a.id) &&
@@ -1304,13 +1319,14 @@ export const Page = ({
                         value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
                         isCrit={hit.isCrit}
                         isAllyTarget={false}
-                        onDone={() =>
+                        onDone={() => {
                           setHits((prev) => {
                             const next = new Map(prev);
                             next.delete(e.id);
                             return next;
-                          })
-                        }
+                          });
+                          completeAction();
+                        }}
                       />
                     );
                   })()}
@@ -1318,25 +1334,27 @@ export const Page = ({
                 <BuffFx
                   key={`${e.id}-buff-${buffFxMap.get(e.id) ?? 0}`}
                   visible={buffFxMap.has(e.id)}
-                  onDone={() =>
+                  onDone={() => {
                     setBuffFxMap((prev) => {
                       const n = new Map(prev);
                       n.delete(e.id);
                       return n;
-                    })
-                  }
+                    });
+                    completeAction();
+                  }}
                 />
                 {/* DebuffFx — 敵状態異常付与演出（赤フラッシュ 0.4s + SE） */}
                 <DebuffFx
                   key={`${e.id}-debuff-${debuffFxMap.get(e.id) ?? 0}`}
                   visible={debuffFxMap.has(e.id)}
-                  onDone={() =>
+                  onDone={() => {
                     setDebuffFxMap((prev) => {
                       const n = new Map(prev);
                       n.delete(e.id);
                       return n;
-                    })
-                  }
+                    });
+                    completeAction();
+                  }}
                 />
                 {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}
                 {flashIds.has(e.id) && (
