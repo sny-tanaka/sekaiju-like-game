@@ -1467,11 +1467,11 @@
 }
 
 .strategyOff {
-  background: var.$ink;
-  color: var.$parchment-edge;
+  background: var.$parchment-card;
+  color: var.$ink-faint;
   padding: 4px 8px;
   border-radius: 0;
-  border: 0.75px solid var.$ink-faint;
+  border: 0.75px solid var.$rule;
   cursor: pointer;
 }
 

@@ -495,6 +495,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     actionCompletedRef.current = false;
     fxDoneRef.current = false;
     loggerDoneRef.current = battleLogger.isIdle;
+    // iter 開始時に前 iter の Fx エントリをクリア（HP フリッカー修正: onDone 内で delete しない）
+    setHits(new Map());
+    setBuffFxMap(new Map());
+    setDebuffFxMap(new Map());
 
     // ログ追記（pre テキスト）— appendLog は stable な useCallback なので deps に入れても安全。
     // battleLogger オブジェクト自体は deps に入れない（useBattleLogger が毎 render 新オブジェクトを返すため deps に含めると無限ループになる）
@@ -1151,14 +1155,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                 value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
                 isCrit={hit.isCrit}
                 isAllyTarget
-                onDone={() => {
-                  setHits((prev) => {
-                    const next = new Map(prev);
-                    next.delete(a.id);
-                    return next;
-                  });
-                  onFxDone();
-                }}
+                onDone={onFxDone}
               />
             );
           })()}
@@ -1166,27 +1163,13 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         <BuffFx
           key={`${a.id}-buff-${buffFxMap.get(a.id) ?? 0}`}
           visible={buffFxMap.has(a.id)}
-          onDone={() => {
-            setBuffFxMap((prev) => {
-              const n = new Map(prev);
-              n.delete(a.id);
-              return n;
-            });
-            onFxDone();
-          }}
+          onDone={onFxDone}
         />
         {/* DebuffFx — 状態異常付与演出（赤フラッシュ 0.4s + SE） */}
         <DebuffFx
           key={`${a.id}-debuff-${debuffFxMap.get(a.id) ?? 0}`}
           visible={debuffFxMap.has(a.id)}
-          onDone={() => {
-            setDebuffFxMap((prev) => {
-              const n = new Map(prev);
-              n.delete(a.id);
-              return n;
-            });
-            onFxDone();
-          }}
+          onDone={onFxDone}
         />
         {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
         {inkSplatters.has(a.id) &&
@@ -1338,11 +1321,13 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       >
         <span className={styles.logLatestLine}>
           {(() => {
-            const renderingText = battleLogger.rendering?.msg.text;
+            if (battleLogger.rendering) {
+              const { msg, progress } = battleLogger.rendering;
+              return msg.text.slice(0, Math.floor(msg.text.length * progress));
+            }
             const lastText = battleLogger.displayed[battleLogger.displayed.length - 1]?.text;
-            const latestText = renderingText ?? lastText;
-            if (!latestText) return `てきが あらわれた！（${state.turn} ターン目）`;
-            return latestText;
+            if (!lastText) return `てきが あらわれた！（${state.turn} ターン目）`;
+            return lastText;
           })()}
         </span>
         <span className={styles.logTapHint}>タップで全ログ</span>
@@ -1388,14 +1373,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                         value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
                         isCrit={hit.isCrit}
                         isAllyTarget={false}
-                        onDone={() => {
-                          setHits((prev) => {
-                            const next = new Map(prev);
-                            next.delete(e.id);
-                            return next;
-                          });
-                          onFxDone();
-                        }}
+                        onDone={onFxDone}
                       />
                     );
                   })()}
@@ -1403,27 +1381,13 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                 <BuffFx
                   key={`${e.id}-buff-${buffFxMap.get(e.id) ?? 0}`}
                   visible={buffFxMap.has(e.id)}
-                  onDone={() => {
-                    setBuffFxMap((prev) => {
-                      const n = new Map(prev);
-                      n.delete(e.id);
-                      return n;
-                    });
-                    onFxDone();
-                  }}
+                  onDone={onFxDone}
                 />
                 {/* DebuffFx — 敵状態異常付与演出（赤フラッシュ 0.4s + SE） */}
                 <DebuffFx
                   key={`${e.id}-debuff-${debuffFxMap.get(e.id) ?? 0}`}
                   visible={debuffFxMap.has(e.id)}
-                  onDone={() => {
-                    setDebuffFxMap((prev) => {
-                      const n = new Map(prev);
-                      n.delete(e.id);
-                      return n;
-                    });
-                    onFxDone();
-                  }}
+                  onDone={onFxDone}
                 />
                 {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}
                 {flashIds.has(e.id) && (
@@ -2274,25 +2238,35 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             </div>
             <div className={styles.logOverlayBody}>
               {(() => {
-                const allLines = [
-                  ...battleLogger.displayed,
-                  ...(battleLogger.rendering ? [battleLogger.rendering.msg] : []),
-                ];
-                if (allLines.length === 0) {
+                if (battleLogger.displayed.length === 0 && !battleLogger.rendering) {
                   return (
                     <div className={styles.logLine}>
                       てきが あらわれた！（{state.turn} ターン目）
                     </div>
                   );
                 }
-                return allLines.map((l) => (
-                  <div
-                    key={l.id}
-                    className={styles.logLine}
-                  >
-                    {l.text}
-                  </div>
-                ));
+                return (
+                  <>
+                    {battleLogger.displayed.map((l) => (
+                      <div
+                        key={l.id}
+                        className={styles.logLine}
+                      >
+                        {l.text}
+                      </div>
+                    ))}
+                    {battleLogger.rendering && (
+                      <div className={styles.logLine}>
+                        {battleLogger.rendering.msg.text.slice(
+                          0,
+                          Math.floor(
+                            battleLogger.rendering.msg.text.length * battleLogger.rendering.progress
+                          )
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
               })()}
             </div>
           </div>
