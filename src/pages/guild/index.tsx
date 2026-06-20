@@ -32,16 +32,6 @@ const SORT_LABEL: Record<SortKey, string> = {
 
 const NO_MEMBERS: Character[] = []; // フォールバックを安定参照にして useMemo の再計算を防ぐ
 
-// 種族カードのシンボル絵文字
-const RACE_SYMBOLS: Record<string, string> = {
-  race_human: '🧑',
-  race_golan: '🪨',
-  race_therian: '🐾',
-  race_pix: '✨',
-  race_undine: '💧',
-  race_draken: '🐉',
-};
-
 function positionOf(save: SaveData, charId: string): Pos {
   if (save.guild.party.front.includes(charId)) return '前衛';
   if (save.guild.party.back.includes(charId)) return '後衛';
@@ -186,7 +176,11 @@ export const Page = () => {
                     setRaceId(id);
                   }}
                 >
-                  <span className={styles.raceCardSymbol}>{RACE_SYMBOLS[id] ?? '🌟'}</span>
+                  <CharacterPortrait
+                    raceId={id as RaceId}
+                    classId="class_warrior"
+                    size={40}
+                  />
                   <span className={styles.raceCardName}>{RACES[id]?.name}</span>
                 </button>
               ))}
