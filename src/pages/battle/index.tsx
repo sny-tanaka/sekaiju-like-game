@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import styles from './style.module.scss';
-import { computeCompletedActorIds, computeDisplayedTurnOrder } from './turnOrder';
+import {
+  computeCompletedActorIds,
+  computeDeadActorIds,
+  computeDisplayedTurnOrder,
+} from './turnOrder';
 
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
@@ -472,10 +476,20 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   // state.turn は runTurn 後に進んでしまうため、turnOrderPreview をそのまま使うと
   // 「再生中のターンの行動順」ではなく「次ターンの予測」が表示されてしまい、
   // completedActorIds（再生中ターンの events から計算）と一致して全アイコンが slideout する。
+  const deadActorIds = useMemo(
+    () => (anim ? computeDeadActorIds(anim.events, anim.eventIdx) : new Set<string>()),
+    [anim]
+  );
+
   const displayedTurnOrder = useMemo(() => {
     if (!state) return [];
-    return computeDisplayedTurnOrder(state, anim?.actorOrder ?? null, turnOrderPreview);
-  }, [anim, state, turnOrderPreview]);
+    return computeDisplayedTurnOrder(
+      state,
+      anim?.actorOrder ?? null,
+      turnOrderPreview,
+      deadActorIds
+    );
+  }, [anim, state, turnOrderPreview, deadActorIds]);
 
   // 不意打ち: ターン1は味方が動けない。突入演出が晴れてから敵の先手1巡を自動解決する。
   const ambushDone = useRef(false);
