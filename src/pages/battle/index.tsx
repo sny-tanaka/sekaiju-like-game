@@ -26,7 +26,6 @@ import {
   startBattle,
 } from '@/domain/battle';
 import type { LevelUpResult } from '@/domain/battle';
-import { resolveTurnOrder } from '@/domain/combat';
 import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
 import { itemCount } from '@/domain/inventory';
@@ -237,6 +236,8 @@ export const Page = ({
   const [expDone, setExpDone] = useState(false);
   // 戦闘ログ。インラインで最新 3 行を常時表示、タップで全履歴オーバーレイ。
   const [logOpen, setLogOpen] = useState(false);
+  // リザルト例プレビュー（ヘッダーボタンから開く）。
+  const [showResultPreview, setShowResultPreview] = useState(false);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -537,15 +538,6 @@ export const Page = ({
 
   const aliveEnemies = useMemo(() => state?.enemies.filter((e) => !e.isDown) ?? [], [state]);
   const aliveAllies = useMemo(() => state?.allies.filter((a) => !a.isDown) ?? [], [state]);
-
-  // 行動順帯: ターン番号・戦闘員リストが変わるたびに ephemeral rng で再計算する。
-  // rngRef（本戦闘用）とは別系統なので既存の rng 消費に影響しない。
-  const turnOrder = useMemo(() => {
-    if (!state) return [];
-    const ephemeralRng = createRng((state.turn * 0x9e3779b9) >>> 0);
-    return resolveTurnOrder([...state.allies, ...state.enemies, ...state.summons], ephemeralRng);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.turn, state?.allies, state?.enemies, state?.summons]);
 
   // 既定ターゲット（最初の生存敵）
   useEffect(() => {
@@ -969,6 +961,8 @@ export const Page = ({
           })()}
         {/* 職業バッジ（右上に固定） */}
         {!a.isSummon ? <span className={styles.jobBadge}>{classInitialOf(a)}</span> : null}
+        {/* ユニオン満タン U! バッジ */}
+        {a.unionGauge >= 100 ? <span className={styles.unionReadyBadge}>U!</span> : null}
         {/* 立ち絵 + 名前 + 作戦短縮（横並び） */}
         <div className={styles.cardHeader}>
           {!a.isSummon &&
@@ -986,10 +980,7 @@ export const Page = ({
           <div className={styles.cardHeaderText}>
             <span className={styles.cardName}>
               <span className={styles.cardNameText}>{a.name}</span>
-              <span className={styles.cardMarks}>
-                {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
-                {ailmentMark(a)}
-              </span>
+              <span className={styles.cardMarks}>{ailmentMark(a)}</span>
             </span>
             <span className={styles.cardStrategy}>{strategyShortLabelOf(a)}</span>
           </div>
@@ -1029,46 +1020,17 @@ export const Page = ({
 
   return (
     <div className={styles.layout}>
-      {/* 章マーカー */}
-      <p className={styles.chapterMark}>❦ 戦闘</p>
-      {/* 行動順帯 */}
-      {turnOrder.length > 0 && (
-        <div className={styles.turnOrderBar}>
-          <span className={styles.turnOrderLabel}>順</span>
-          <div className={styles.turnOrderList}>
-            {turnOrder.slice(0, 8).map((c, i) => {
-              const member =
-                c.side === 'ally' ? save.guild.members.find((m) => m.id === c.id) : null;
-              return (
-                <div
-                  key={c.id}
-                  className={[
-                    styles.turnOrderCell,
-                    i === 0 ? styles.turnOrderCellActive : '',
-                    c.side === 'enemy' ? styles.turnOrderCellEnemy : '',
-                  ].join(' ')}
-                >
-                  {member ? (
-                    <CharacterPortrait
-                      raceId={member.raceId}
-                      classId={member.classId}
-                      size={24}
-                    />
-                  ) : c.enemyId ? (
-                    <EnemySprite
-                      enemyId={c.enemyId as EnemyId}
-                      size="sm"
-                    />
-                  ) : (
-                    <span className={styles.turnOrderCellGlyph}>✦</span>
-                  )}
-                </div>
-              );
-            })}
-            {turnOrder.length > 8 && <span className={styles.turnOrderEllipsis}>…</span>}
-          </div>
-        </div>
-      )}
+      {/* 章マーカー + リザルト例ボタン */}
+      <div className={styles.chapterRow}>
+        <p className={styles.chapterMark}>❦ 戦闘</p>
+        <button
+          type="button"
+          className={styles.resultPreviewBtn}
+          onClick={() => setShowResultPreview(true)}
+        >
+          リザルト例 ▸
+        </button>
+      </div>
       {/* 戦場（敵 + 召喚 + 味方 + ログ）。上部はこの内側でのみ縦に溢れ、コマンド
           エリア（下端）の表示領域を圧迫しない。極端ケースは内部スクロールで吸収。 */}
       <div className={styles.battlefield}>
@@ -1141,21 +1103,75 @@ export const Page = ({
                   color="#B22C2C" // $vermilion
                   showValue={false}
                 />
-                {/* §16: 選択中の敵の耐性コンパクト表示 */}
-                <div className={styles.enemyResist}>
-                  {isTargeted && master ? (
-                    <ResistBadges
-                      elementResist={master.resist}
-                      ailmentResist={
-                        masterEnemyId ? resolveEnemyAilmentResist(masterEnemyId) : undefined
-                      }
-                      compact
-                    />
-                  ) : null}
+                {/* HP バー直下の弱点チップ（常時表示・高さ均一）*/}
+                <div
+                  className={styles.enemyWeakChips}
+                  aria-hidden="true"
+                >
+                  {(['fire', 'ice', 'volt', 'slash', 'pierce', 'bash'] as const)
+                    .filter((el) => (master?.resist?.[el] ?? 1) < 1)
+                    .slice(0, 3)
+                    .map((el) => (
+                      <span
+                        key={el}
+                        className={`${styles.weakChip} ${styles[`weakChip_${el}`] ?? ''}`}
+                      >
+                        {ELEM_LABEL[el]}弱
+                      </span>
+                    ))}
                 </div>
+                {/* 状態異常の角バッジ */}
+                {e.ailments.length > 0 &&
+                  (() => {
+                    const ail = e.ailments[0];
+                    const kindMap: Record<string, string> = {
+                      poison: '毒',
+                      paralysis: '麻',
+                      sleep: '眠',
+                      blind: '盲',
+                      headBind: '頭',
+                      armBind: '腕',
+                      legBind: '脚',
+                    };
+                    return (
+                      <span className={styles.enemyAilBadge}>
+                        {kindMap[ail.type] ?? '?'}
+                        {ail.remainingTurns}
+                      </span>
+                    );
+                  })()}
               </button>
             );
           })}
+        </div>
+
+        {/* 対象情報パネル — 高さ固定で敵カード高に影響を与えない */}
+        <div
+          className={styles.targetInfoPanel}
+          aria-live="polite"
+        >
+          {(() => {
+            const tEnemy = targetId ? state.enemies.find((e) => e.id === targetId) : null;
+            const tMasterEnemyId = tEnemy?.enemyId as EnemyId | undefined;
+            const tMaster = tMasterEnemyId ? ENEMIES[tMasterEnemyId] : null;
+            if (!tEnemy || !tMaster) {
+              return <span className={styles.targetInfoEmpty}>敵をタップで対象選択</span>;
+            }
+            return (
+              <>
+                <span className={styles.targetInfoName}>{tEnemy.name}</span>
+                <div className={styles.targetInfoResist}>
+                  <ResistBadges
+                    elementResist={tMaster.resist}
+                    ailmentResist={
+                      tMasterEnemyId ? resolveEnemyAilmentResist(tMasterEnemyId) : undefined
+                    }
+                    compact
+                  />
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* 召喚体（最前列）。生存中のみ表示。 */}
@@ -1189,7 +1205,9 @@ export const Page = ({
           {back.length > 0 && (
             <>
               <div className={styles.rowTag}>後衛（近接ダメージ -30%）</div>
-              <div className={styles.cardRow}>{back.map(renderCard)}</div>
+              <div className={`${styles.cardRow} ${styles.cardRowBack}`}>
+                {back.map(renderCard)}
+              </div>
             </>
           )}
         </div>
@@ -1242,16 +1260,51 @@ export const Page = ({
             ▶▶ スキップ
           </button>
         </div>
-      ) : state.outcome !== 'ongoing' ? (
+      ) : showResultPreview ? (
         <div className={styles.resultOverlay}>
           <div className={styles.result}>
-            <div className={styles.resultTitle}>
-              {state.outcome === 'win'
-                ? '勝利！'
-                : state.outcome === 'fled'
-                  ? '逃走した'
-                  : '全滅...'}
-            </div>
+            <div className={styles.resultTitle}>勝利！（プレビュー）</div>
+            <div className={styles.resultBody}>経験値 120 ／ 80 G を獲得</div>
+            <button
+              type="button"
+              className={styles.primary}
+              onClick={() => setShowResultPreview(false)}
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      ) : state.outcome !== 'ongoing' ? (
+        <div className={styles.resultOverlay}>
+          <div
+            className={`${styles.result} ${state.outcome === 'lose' ? styles.resultLose : state.outcome === 'fled' ? styles.resultFlee : ''}`}
+          >
+            {state.outcome === 'lose' ? (
+              <div className={styles.defeatTitle}>全滅</div>
+            ) : state.outcome === 'fled' ? (
+              <>
+                <div
+                  className={styles.fleeLines}
+                  aria-hidden="true"
+                >
+                  <div
+                    className={styles.fleeSpeedLine}
+                    style={{ top: '24px', width: '120px' }}
+                  />
+                  <div
+                    className={styles.fleeSpeedLine}
+                    style={{ top: '38px', width: '90px', animationDelay: '0.2s' }}
+                  />
+                  <div
+                    className={styles.fleeSpeedLine}
+                    style={{ top: '52px', width: '110px', animationDelay: '0.35s' }}
+                  />
+                </div>
+                <div className={styles.fleeTitle}>逃走成功</div>
+              </>
+            ) : (
+              <div className={styles.resultTitle}>勝利！</div>
+            )}
             {/* 勝利時 gold InkSplatter（Phase 2） */}
             {showVictoryGold ? (
               <div
@@ -1366,30 +1419,29 @@ export const Page = ({
                     );
                   })()
                 : null}
+              <div className={styles.cmdHead}>全体行動</div>
               <div className={styles.menu}>
                 <button
                   type="button"
-                  className={styles.menuPrimary}
+                  className={styles.menuBtn}
                   onClick={onClickFight}
                 >
                   たたかう
                 </button>
-                <div className={styles.menuRow}>
-                  <button
-                    type="button"
-                    className={styles.menuStrategy}
-                    onClick={() => setUiMode({ kind: 'strategy' })}
-                  >
-                    さくせん
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.menuFlee}
-                    onClick={handleFlee}
-                  >
-                    にげる
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className={styles.menuBtn}
+                  onClick={() => setUiMode({ kind: 'strategy' })}
+                >
+                  さくせん
+                </button>
+                <button
+                  type="button"
+                  className={styles.menuBtn}
+                  onClick={handleFlee}
+                >
+                  にげる
+                </button>
               </div>
             </>
           )}
@@ -1480,40 +1532,44 @@ export const Page = ({
                       </button>
                     </div>
                   ) : skillMenu ? (
-                    <div className={styles.skillList}>
-                      {learnedSkillsList(active).map(({ id: sid, usable }) => (
-                        <button
-                          type="button"
-                          key={sid}
-                          className={[styles.skillBtn, !usable ? styles.skillBtnDisabled : ''].join(
-                            ' '
-                          )}
-                          disabled={!usable}
-                          onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
-                        >
-                          <span className={styles.skillTop}>
-                            <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
-                            <span className={styles.tp}>
-                              TP{' '}
-                              {computeSkillTpCost(
-                                BATTLE_SKILLS[sid],
-                                active.skillLevels?.[sid] ?? 1
-                              )}
-                            </span>
-                          </span>
-                          <span className={styles.skillSummary}>
-                            {skillSummary(
-                              BATTLE_SKILLS[sid].element,
-                              BATTLE_SKILLS[sid].target,
-                              BATTLE_SKILLS[sid].effects,
-                              active.skillLevels?.[sid] ?? 1
-                            )}
-                          </span>
-                        </button>
-                      ))}
-                      {learnedSkillsList(active).length === 0 ? (
-                        <div className={styles.empty}>学んでいるスキルがありません</div>
-                      ) : null}
+                    <>
+                      <div className={styles.skillListWrap}>
+                        <div className={styles.skillList}>
+                          {learnedSkillsList(active).map(({ id: sid, usable }) => (
+                            <button
+                              type="button"
+                              key={sid}
+                              className={[
+                                styles.skillBtn,
+                                !usable ? styles.skillBtnDisabled : '',
+                              ].join(' ')}
+                              disabled={!usable}
+                              onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
+                            >
+                              <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
+                              <span className={styles.skillCostLine}>
+                                TP{' '}
+                                {computeSkillTpCost(
+                                  BATTLE_SKILLS[sid],
+                                  active.skillLevels?.[sid] ?? 1
+                                )}
+                              </span>
+                              <span className={styles.skillTag}>
+                                {skillSummary(
+                                  BATTLE_SKILLS[sid].element,
+                                  BATTLE_SKILLS[sid].target,
+                                  BATTLE_SKILLS[sid].effects,
+                                  active.skillLevels?.[sid] ?? 1
+                                )}
+                              </span>
+                            </button>
+                          ))}
+                          {learnedSkillsList(active).length === 0 ? (
+                            <div className={styles.empty}>学んでいるスキルがありません</div>
+                          ) : null}
+                        </div>
+                        <div className={styles.skillScrollHint}>← 横スクロール（2段）→</div>
+                      </div>
                       <button
                         type="button"
                         className={styles.menuBack}
@@ -1521,7 +1577,7 @@ export const Page = ({
                       >
                         もどる
                       </button>
-                    </div>
+                    </>
                   ) : itemMenu ? (
                     <div className={styles.skillList}>
                       {battleItems().map(({ id, remaining }) => (
@@ -1622,51 +1678,60 @@ export const Page = ({
                           </div>
                         );
                       })()}
-                      <div className={styles.menu}>
+                      <div className={styles.individualCmdRow1}>
                         <button
                           type="button"
-                          className={styles.menuBtn}
+                          className={`${styles.menuBtn} ${styles.cmdPrimary}`}
                           onClick={() => assign(active.id, { kind: 'attack' })}
                         >
                           攻撃
                         </button>
                         <button
                           type="button"
-                          className={styles.menuBtn}
+                          className={`${styles.menuBtn} ${styles.cmdSub}`}
+                          disabled={learnedSkillsList(active).length === 0}
+                          onClick={() => setSkillMenu(true)}
+                        >
+                          スキル
+                        </button>
+                      </div>
+                      <div className={styles.individualCmdRow2}>
+                        <button
+                          type="button"
+                          className={`${styles.menuBtn} ${styles.cmdTertiary}`}
+                          disabled={battleItems().length === 0}
+                          onClick={() => setItemMenu(true)}
+                        >
+                          どうぐ
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.menuBtn} ${styles.cmdTertiary}`}
                           onClick={() => assign(active.id, { kind: 'guard' })}
                         >
                           防御
                         </button>
                         <button
                           type="button"
-                          className={styles.menuBtn}
-                          disabled={learnedSkillsList(active).length === 0}
-                          onClick={() => setSkillMenu(true)}
+                          className={`${styles.menuBtn} ${styles.cmdBack}`}
+                          onClick={() => setUiMode({ kind: 'global' })}
                         >
-                          スキル
+                          もどる
                         </button>
-                        <button
-                          type="button"
-                          className={styles.menuBtn}
-                          disabled={battleItems().length === 0}
-                          onClick={() => setItemMenu(true)}
-                        >
-                          どうぐ
-                        </button>
-                        {(() => {
-                          const def = unionSkillOf(active);
-                          if (!def || active.unionGauge < 100 || unionCmd) return null;
-                          return (
-                            <button
-                              type="button"
-                              className={`${styles.menuBtn} ${styles.unionBtn}`}
-                              onClick={() => onUnionPressed(active, def)}
-                            >
-                              ⚡ユニオン
-                            </button>
-                          );
-                        })()}
                       </div>
+                      {(() => {
+                        const def = unionSkillOf(active);
+                        if (!def || active.unionGauge < 100 || unionCmd) return null;
+                        return (
+                          <button
+                            type="button"
+                            className={`${styles.menuBtn} ${styles.unionBtn}`}
+                            onClick={() => onUnionPressed(active, def)}
+                          >
+                            ⚡ユニオン
+                          </button>
+                        );
+                      })()}
                     </>
                   )}
                 </>
