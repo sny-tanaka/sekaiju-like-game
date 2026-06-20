@@ -5,6 +5,8 @@
  * - sfx={null} で SE が鳴らないこと
  * - disabled で onClick も SE も発火しないこと
  * - type='submit' で submit 属性を持つこと
+ * - 8 variant の class が正しく付くこと
+ * - icon / ghost / card / tab では size class が付かないこと
  */
 
 vi.mock('@/audio/sfxManifest', () => ({
@@ -18,6 +20,7 @@ import { useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 
 import { ActionButton } from './ActionButton';
+import type { ActionButtonVariant } from './ActionButton';
 
 import { SoundContext } from '@/audio/soundContext';
 
@@ -195,5 +198,143 @@ describe('ActionButton: children', () => {
       { wrapper }
     );
     expect(screen.getByTestId('child')).toBeDefined();
+  });
+});
+
+// ==========================================================
+// 8 variant のクラス付与テスト
+// ==========================================================
+
+describe('ActionButton: variant クラス', () => {
+  const VARIANTS: ActionButtonVariant[] = [
+    'default',
+    'primary',
+    'secondary',
+    'destructive',
+    'icon',
+    'ghost',
+    'card',
+    'tab',
+  ];
+
+  test.each(VARIANTS)('variant="%s" のときボタンが存在する', (variant) => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(
+      <ActionButton
+        label="テスト"
+        variant={variant}
+      />,
+      { wrapper }
+    );
+    expect(screen.getByRole('button')).toBeDefined();
+  });
+
+  test('variant 省略時は default variant になる', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(<ActionButton label="デフォルト" />, { wrapper });
+    // ボタンが存在すること（default は actionButton + default クラスが付与される）
+    expect(screen.getByRole('button')).toBeDefined();
+  });
+});
+
+// ==========================================================
+// size 適用 / 非適用の確認
+// size は CSS Modules でハッシュ化されるため、className 文字列に空白区切りのトークンが
+// 増えているかどうか（class 数）で判定する。
+// ==========================================================
+
+describe('ActionButton: size クラス適用可否', () => {
+  /** ボタンの class 名トークン（空白分割）の個数を返す */
+  const classCount = (el: HTMLElement) => el.className.trim().split(/\s+/).filter(Boolean).length;
+
+  test('default variant では size class が付与される（medium > small より class 数が同じ）', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+
+    // default + medium: actionButton / default / medium の 3 class
+    const { unmount } = render(
+      <ActionButton
+        label="A"
+        variant="default"
+        size="medium"
+      />,
+      { wrapper }
+    );
+    const mediumCount = classCount(screen.getByRole('button'));
+    unmount();
+
+    // default + small: actionButton / default / small の 3 class（同数）
+    render(
+      <ActionButton
+        label="B"
+        variant="default"
+        size="small"
+      />,
+      { wrapper }
+    );
+    const smallCount = classCount(screen.getByRole('button'));
+
+    // どちらも size class が付く（同じ class 数 3）
+    expect(mediumCount).toBe(3);
+    expect(smallCount).toBe(3);
+  });
+
+  test('icon variant では size class が付かない（class 数が 2）', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(
+      <ActionButton
+        label="⚙"
+        variant="icon"
+        size="large"
+      />,
+      { wrapper }
+    );
+    // actionButton + icon の 2 class のみ
+    expect(classCount(screen.getByRole('button'))).toBe(2);
+  });
+
+  test('ghost variant では size class が付かない（class 数が 2）', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(
+      <ActionButton
+        label="更新"
+        variant="ghost"
+        size="large"
+      />,
+      { wrapper }
+    );
+    expect(classCount(screen.getByRole('button'))).toBe(2);
+  });
+
+  test('card variant では size class が付かない（class 数が 2）', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(
+      <ActionButton
+        label="アイテム"
+        variant="card"
+        size="large"
+      />,
+      { wrapper }
+    );
+    expect(classCount(screen.getByRole('button'))).toBe(2);
+  });
+
+  test('tab variant では size class が付かない（class 数が 2）', () => {
+    const play = vi.fn();
+    const wrapper = makeWrapper(play);
+    render(
+      <ActionButton
+        label="装備"
+        variant="tab"
+        size="large"
+      />,
+      { wrapper }
+    );
+    expect(classCount(screen.getByRole('button'))).toBe(2);
   });
 });

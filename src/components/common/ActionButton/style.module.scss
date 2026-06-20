@@ -1,6 +1,35 @@
 @use 'variables' as var;
 
+// ==========================================================
+// ActionButton — 共通ベース
+// ==========================================================
+
 .actionButton {
+  cursor: pointer;
+  font-family: inherit;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--motion-quick, 0.15s ease),
+    opacity var(--motion-quick, 0.15s ease),
+    transform var(--motion-quick, 0.15s ease);
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+    filter: brightness(0.93);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+// ==========================================================
+// variant: default（parchment メニューボタン ― 既存挙動維持）
+// ==========================================================
+
+.default {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -12,9 +41,7 @@
   background-color: var.$parchment-card;
   color: var.$ink;
   text-align: left;
-  cursor: pointer;
   box-shadow: 0 1px 3px var.$shadow-ink;
-  transition: transform var(--motion-quick);
 
   // 綴じ装飾: 左 4px の縦帯
   &::before {
@@ -26,19 +53,177 @@
     width: 4px;
     background-color: var.$verdant;
   }
+}
 
-  &:active:not(:disabled) {
-    transform: translateY(1px);
-    filter: brightness(0.95);
+// ==========================================================
+// variant: primary（ゴールドグラデーション CTA）
+// ==========================================================
+
+.primary {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  border: 0.75px solid var.$verdant;
+  border-radius: 0;
+  background: linear-gradient(135deg, var.$illumination-gold, var.$verdant);
+  color: var.$parchment-card;
+  font-weight: 700;
+  text-align: left;
+  box-shadow: 0 1px 3px var.$shadow-ink;
+
+  // 綴じ装飾: primary は金箔帯
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var.$illumination-gold-soft;
   }
 
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, var.$verdant, var.$illumination-gold);
   }
 }
 
-// --- サイズバリアント ---
+// ==========================================================
+// variant: secondary（透明背景 + ボーダー）
+// ==========================================================
+
+.secondary {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  background: transparent;
+  color: var.$ink;
+  text-align: left;
+}
+
+// ==========================================================
+// variant: destructive（危険操作 ― 赤）
+// ==========================================================
+
+.destructive {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  border: 0.75px solid var.$vermilion;
+  border-radius: 0;
+  background-color: var.$vermilion;
+  color: var.$parchment-card;
+  font-weight: 700;
+  text-align: left;
+  opacity: 0.88;
+
+  &:hover:not(:disabled) {
+    opacity: 1;
+  }
+}
+
+// ==========================================================
+// variant: icon（34px 円形）
+// ==========================================================
+
+.icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 0.75px solid var.$illumination-gold;
+  border-radius: 50%;
+  background: transparent;
+  color: var.$ink;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+// ==========================================================
+// variant: ghost（テキストリンク調）
+// ==========================================================
+
+.ghost {
+  width: auto;
+  min-height: 0;
+  padding: 4px 12px;
+  background: transparent;
+  border: none;
+  color: var.$ink-faint;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover:not(:disabled) {
+    color: var.$ink;
+    text-decoration: underline;
+  }
+}
+
+// ==========================================================
+// variant: card（複数行カード）
+// ==========================================================
+
+.card {
+  width: 100%;
+  min-height: 80px;
+  padding: 14px 16px;
+  background-color: var.$parchment-card;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  color: var.$ink;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    background-color: var.$parchment-edge;
+  }
+}
+
+// ==========================================================
+// variant: tab（セグメント/チップ）
+// ==========================================================
+
+.tab {
+  width: auto;
+  flex: 1;
+  min-height: 36px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 0.75px solid var.$rule;
+  border-radius: 0;
+  color: var.$ink-faint;
+  font-size: 13px;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    color: var.$ink;
+  }
+}
+
+// ==========================================================
+// size バリアント（default / primary / secondary / destructive のみ）
+// ==========================================================
 
 .small {
   min-height: 36px;
@@ -48,7 +233,7 @@
 
 .medium {
   min-height: 56px;
-  padding: 12px 16px 12px 20px; // 左側に綴じ装飾の余白
+  padding: 12px 16px 12px 20px;
   font-size: 15px;
 }
 
@@ -58,20 +243,9 @@
   font-size: 17px;
 }
 
-// --- カラーバリアント ---
-
-.primary {
-  background-color: var.$verdant;
-  border-color: var.$verdant;
-  color: var.$parchment;
-
-  // primary 時は綴じ帯を金箔に
-  &::before {
-    background-color: var.$illumination-gold;
-  }
-}
-
-// --- テキスト要素 ---
+// ==========================================================
+// テキスト要素
+// ==========================================================
 
 .label {
   font-weight: 700;
