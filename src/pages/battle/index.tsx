@@ -274,6 +274,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   );
   // 行動の逐次再生（issue #18）。再生中はコマンド入力/結果を隠す。
   const [anim, setAnim] = useState<Anim | null>(null);
+  const [shakeIds, setShakeIds] = useState<Set<string>>(new Set());
   // TP の表示基準値（anim 再生中はターン開始時の実値を保持し、anim が null になったら更新）。
   const tpBaseRef = useRef<Record<string, number>>({});
   // hits: damage/heal/crit ヒット演出の Map（HitFx で描画）。gold は inkSplatters で別管理。
@@ -447,6 +448,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       setUnionCmd(null);
       setUnionSetup(null);
       setActiveId(null);
+      setShakeIds(new Set());
       setHits(new Map());
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
@@ -538,6 +540,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     if (eventIdx >= events.length) {
       const t = setTimeout(() => {
         setAnim(null);
+        setShakeIds(new Set());
         setHits(new Map());
         setInkSplatters(new Map());
         setAdvancingActorId(null);
@@ -554,6 +557,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     loggerDoneRef.current = battleLogger.isIdle;
     // iter 開始時に前 iter の Fx エントリをクリア（HP フリッカー修正: onDone 内で delete しない）
     setHits(new Map());
+    setShakeIds(new Set());
     setBuffFxMap(new Map());
     setDebuffFxMap(new Map());
     setCastingActorId(null);
@@ -582,11 +586,13 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         eventIdx > 0 ? (events[eventIdx - 1].snapshotAfter ?? baseSnapshot) : baseSnapshot;
 
       const nextHits = new Map<string, Hit>();
+      const nextShake = new Set<string>();
       if (cur) {
         for (const id of Object.keys(cur)) {
           const p = prevSnap?.[id];
           if (!p) continue;
           if (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown)) {
+            nextShake.add(id);
             const dmg = Math.round(p.hp - cur[id].hp);
             // event から属性を取得
             const element =
@@ -618,6 +624,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         }
       }
       setHits(nextHits);
+      setShakeIds(nextShake);
 
       // mountFxFor: event 種別に応じた Fx 発火
       let didSetBuffOrDebuff = false;
@@ -1202,6 +1209,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           isAllySelectable ? styles.allySelectable : activeId === a.id ? styles.cardActive : '',
           isAllyTargeted ? styles.allyTargeted : '',
           commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
+          shakeIds.has(a.id) ? styles.shake : '',
           fleeActive ? dashAwayClass : '',
           isAdvancing ? styles.cardAdvancing : '',
         ]
@@ -1476,6 +1484,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   styles.enemy,
                   d.isDown ? styles.down + ' ' + styles.dissolving : '',
                   isTargeted ? styles.targeted : '',
+                  shakeIds.has(e.id) ? styles.shake : '',
                   isEnemyAdvancing ? styles.enemyAdvancing : '',
                 ]
                   .filter(Boolean)
@@ -1647,7 +1656,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               return (
                 <div
                   key={s.id}
-                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${newSummonIds.has(s.id) ? summonAppearClass : ''}`}
+                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${shakeIds.has(s.id) ? styles.shake : ''} ${newSummonIds.has(s.id) ? summonAppearClass : ''}`}
                 >
                   <span className={styles.summonName}>🐾 {s.name}</span>
                   <StatBar
@@ -1688,6 +1697,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             sfx={null}
             onClick={() => {
               setAnim(null);
+              setShakeIds(new Set());
               setHits(new Map());
               setAdvancingActorId(null);
             }}
