@@ -38,6 +38,7 @@ export const Page = () => {
       <footer className={styles.foot}>
         <ActionButton
           label={save ? '拠点へ戻る' : 'タイトルへ戻る'}
+          variant="secondary"
           className={styles.back}
           onClick={handleBack}
         />

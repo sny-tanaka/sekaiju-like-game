@@ -97,6 +97,7 @@ export const Page = () => {
             <p className={styles.chapterMark}>❦ 同見の書</p>
             <ActionButton
               ariaLabel="サウンド設定"
+              variant="icon"
               sfx="cursor"
               className={styles.gearBtn}
               onClick={() => setSoundOpen(true)}
@@ -149,15 +150,15 @@ export const Page = () => {
           <div className={styles.actions}>
             <ActionButton
               label="つづきから"
+              variant="primary"
               size="large"
-              className={styles.primary}
               disabled={!hasValidSave || busy}
               onClick={() => void handleContinue()}
             />
             <ActionButton
               label="最初から"
+              variant={hasValidSave ? 'secondary' : 'primary'}
               size="large"
-              className={hasValidSave ? styles.sub : styles.primary}
               disabled={busy}
               onClick={handleNewGameStart}
             />
@@ -168,9 +169,8 @@ export const Page = () => {
             <span className={styles.version}>v{__APP_VERSION__}</span>
             <ActionButton
               label={isChecking ? '確認中…' : '更新を確認'}
-              size="small"
+              variant="ghost"
               sfx="cursor"
-              className={styles.updateBtn}
               disabled={isChecking}
               onClick={() => void checkForUpdate()}
             />
@@ -183,6 +183,7 @@ export const Page = () => {
             <p className={styles.chapterMark}>❦ 結成の儀</p>
             <ActionButton
               ariaLabel="サウンド設定"
+              variant="icon"
               sfx="cursor"
               className={styles.gearBtn}
               onClick={() => setSoundOpen(true)}
@@ -220,17 +221,17 @@ export const Page = () => {
           <div className={styles.actions}>
             <ActionButton
               label="はじめる"
+              variant="primary"
               size="large"
               sfx={null}
-              className={styles.primary}
               disabled={busy}
               onClick={() => void confirmCreate()}
             />
             <ActionButton
               label="もどる"
+              variant="secondary"
               size="large"
               sfx="cancel"
-              className={styles.sub}
               disabled={busy}
               onClick={() => setMode('menu')}
             />
@@ -249,16 +250,16 @@ export const Page = () => {
             <div className={styles.modalActions}>
               <ActionButton
                 label="データを消して始める"
+                variant="destructive"
                 size="large"
-                className={styles.danger}
                 disabled={busy}
                 onClick={() => setMode('guildName')}
               />
               <ActionButton
                 label="もどる"
+                variant="secondary"
                 size="large"
                 sfx="cancel"
-                className={styles.sub}
                 disabled={busy}
                 onClick={() => setMode('menu')}
               />
@@ -288,8 +289,8 @@ export const Page = () => {
               <span>設定</span>
               <ActionButton
                 ariaLabel="閉じる"
+                variant="icon"
                 sfx="cursor"
-                className={styles.modalCloseBtn}
                 onClick={() => setSoundOpen(false)}
               >
                 ✕
@@ -298,8 +299,9 @@ export const Page = () => {
             <SoundSettings />
             <ActionButton
               label="とじる"
+              variant="secondary"
+              size="small"
               sfx="cursor"
-              className={styles.modalClose}
               onClick={() => setSoundOpen(false)}
             />
           </div>

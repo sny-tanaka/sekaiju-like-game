@@ -128,21 +128,6 @@
   position: absolute;
   right: 0;
   top: 4px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid var(--rule-gold);
-  background: transparent;
-  color: var(--gold);
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.7;
-  }
 }
 
 // ============================================================
@@ -284,79 +269,6 @@
   z-index: 1;
 }
 
-.primary {
-  width: 100%;
-  height: clamp(48px, 13vw, 56px);
-  border-radius: 3px;
-  border: none;
-  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: var(--bg-mid);
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 16px;
-  letter-spacing: 0.16em;
-  box-shadow: 0 6px 20px var(--gold-glow);
-  cursor: pointer;
-  transition: opacity 0.14s;
-
-  &:disabled {
-    background: var(--surface-elev);
-    color: var(--text-mute);
-    box-shadow: none;
-    cursor: default;
-  }
-
-  &:not(:disabled):active {
-    opacity: 0.85;
-  }
-}
-
-.sub {
-  width: 100%;
-  height: clamp(44px, 12vw, 52px);
-  border-radius: 3px;
-  border: 1px solid var(--rule-base);
-  background: var(--surface-elev);
-  color: var(--text-base);
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: 0.16em;
-  cursor: pointer;
-  transition: opacity 0.14s;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  &:not(:disabled):active {
-    opacity: 0.7;
-  }
-}
-
-.danger {
-  width: 100%;
-  height: 52px;
-  border-radius: 3px;
-  border: none;
-  background: var(--danger);
-  color: var(--danger-text);
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
-
-  &:active {
-    opacity: 0.85;
-  }
-}
 
 // ============================================================
 // フッタ（flex item）
@@ -379,22 +291,6 @@
   opacity: 0.6;
 }
 
-.updateBtn {
-  height: 28px;
-  padding: 0 12px;
-  border: 1px solid var(--rule-base);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--text-mute);
-  font-family: var(--font-body);
-  font-size: 11px;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-}
 
 // ============================================================
 // guildNameInput（ritual モード）
@@ -536,40 +432,6 @@
   color: var(--text-strong);
 }
 
-.modalCloseBtn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--rule-base);
-  background: transparent;
-  color: var(--text-mute);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.7;
-  }
-}
-
-.modalClose {
-  width: 100%;
-  height: 44px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-base);
-  background: var(--surface-elev);
-  color: var(--text-base);
-  font-family: var(--font-body);
-  font-size: 14px;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.7;
-  }
-}
 
 // ============================================================
 // @media: 短画面対応（dvh が小さい画面でギャップとフォントを詰める）

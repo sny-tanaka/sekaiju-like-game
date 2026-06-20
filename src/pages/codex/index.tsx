@@ -48,16 +48,16 @@ export const Page = () => {
       <div className={styles.tabs}>
         <ActionButton
           label="到達記録"
-          size="small"
+          variant="tab"
           sfx="cursor"
-          className={`${styles.tab} ${tab === 'record' ? styles.tabActive : ''}`}
+          className={tab === 'record' ? styles.tabActive : ''}
           onClick={() => setTab('record')}
         />
         <ActionButton
           label="図鑑"
-          size="small"
+          variant="tab"
           sfx="cursor"
-          className={`${styles.tab} ${tab === 'codex' ? styles.tabActive : ''}`}
+          className={tab === 'codex' ? styles.tabActive : ''}
           onClick={() => setTab('codex')}
         />
       </div>
@@ -292,7 +292,7 @@ export const Page = () => {
       <footer className={styles.foot}>
         <ActionButton
           label="拠点へ戻る"
-          className={styles.back}
+          variant="secondary"
           onClick={() => navigate({ name: 'town' })}
         />
       </footer>

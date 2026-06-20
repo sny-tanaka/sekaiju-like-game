@@ -105,15 +105,11 @@
 .back {
   width: 200px; // v3: clamp 廃止 → 固定 200px
   height: 50px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-gold-strong);
+  border-color: var(--rule-gold-strong);
   background: var(--gold-tint);
   color: var(--gold);
-  font-family: var(--font-body);
   font-size: 15px;
   letter-spacing: 0.2em;
-  cursor: pointer;
-  transition: background var(--motion-quick, 140ms cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .back:hover {
