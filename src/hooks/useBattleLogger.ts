@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 
-const MESSAGE_DURATION_MS = 500; // 文字進行フェーズ
-const TAIL_MS = 300; // 余韻フェーズ（全文表示のまま待機）
+const MESSAGE_DURATION_MS = 300; // 文字進行フェーズ
+const TAIL_MS = 500; // 余韻フェーズ（全文表示のまま待機）
 
 export type LogMessage = { id: string; text: string };
 
@@ -28,7 +28,7 @@ export const useBattleLogger = (): BattleLoggerApi => {
   const activeRafRef = useRef<number>(0);
   const cancelledRef = useRef(false);
 
-  // 1 件分のメッセージを 500ms 文字進行 + 300ms 余韻 = 800ms サイクルでアニメーション
+  // 1 件分のメッセージを 300ms 文字進行 + 500ms 余韻 = 800ms サイクルでアニメーション
   const playNext = useCallback(() => {
     if (isRunningRef.current) return;
     if (queueRef.current.length === 0) return;

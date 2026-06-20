@@ -2,9 +2,9 @@
  * useBattleLogger のユニットテスト
  *
  * requestAnimationFrame と performance.now をモックして時間を手動制御する。
- * 各メッセージは MESSAGE_DURATION_MS=500ms（文字進行）+ TAIL_MS=300ms（余韻）= 800ms サイクル。
- * - 0-500ms: progress 0→1（文字進行フェーズ）、rendering 非 null、isIdle=false
- * - 500-800ms: progress=1 維持（余韻フェーズ）、rendering 非 null、isIdle=false
+ * 各メッセージは MESSAGE_DURATION_MS=300ms（文字進行）+ TAIL_MS=500ms（余韻）= 800ms サイクル。
+ * - 0-300ms: progress 0→1（文字進行フェーズ）、rendering 非 null、isIdle=false
+ * - 300-800ms: progress=1 維持（余韻フェーズ）、rendering 非 null、isIdle=false
  * - 800ms 完了: displayed に追加、rendering=null、次のメッセージがなければ isIdle=true
  *
  * 動作確認済みパターン:
@@ -106,9 +106,9 @@ describe('useBattleLogger', () => {
   });
 
   // ──────────────────────────────────────────────
-  // 3. 800ms 後に displayed に移動し isIdle=true（500ms時点は余韻中でまだ移動しない）
+  // 3. 800ms 後に displayed に移動し isIdle=true（300ms時点は余韻中でまだ移動しない）
   // ──────────────────────────────────────────────
-  it('500ms 時点では余韻中: rendering 非 null / displayed=[] / isIdle=false', () => {
+  it('300ms 時点では余韻中: rendering 非 null / displayed=[] / isIdle=false', () => {
     const { result } = renderHook(() => useBattleLogger());
 
     act(() => {
@@ -116,7 +116,7 @@ describe('useBattleLogger', () => {
     });
 
     act(() => {
-      runUntilTime(500);
+      runUntilTime(300);
     });
 
     // 文字進行完了だが余韻フェーズ中なので displayed にはまだ入らない
@@ -154,9 +154,9 @@ describe('useBattleLogger', () => {
       result.current.append('msg2');
     });
 
-    // msg1 文字進行中 (0-500ms): displayed=0, isIdle=false
+    // msg1 文字進行中 (0-300ms): displayed=0, isIdle=false
     act(() => {
-      runUntilTime(500);
+      runUntilTime(300);
     });
 
     expect(result.current.displayed).toHaveLength(0); // 余韻中なのでまだ入らない
@@ -164,7 +164,7 @@ describe('useBattleLogger', () => {
 
     // msg1 余韻完了 → displayed に追加 (800ms)
     act(() => {
-      runUntilTime(800, 500);
+      runUntilTime(800, 300);
     });
 
     expect(result.current.displayed).toHaveLength(1);
@@ -200,18 +200,18 @@ describe('useBattleLogger', () => {
     expect(progressAtStart).toBeGreaterThanOrEqual(0);
     expect(progressAtStart).toBeLessThan(1);
 
-    // 250ms 進める（1 フレームのみ flush）→ progress ≈ 0.5
+    // 150ms 進める（1 フレームのみ flush）→ progress ≈ 0.5
     act(() => {
-      flushRafAt(250);
+      flushRafAt(150);
     });
     const progressAtMid = result.current.rendering?.progress ?? -1;
-    // 250 / 500 = 0.5 なので progressAtStart (0) より大きいはず
+    // 150 / 300 = 0.5 なので progressAtStart (0) より大きいはず
     expect(progressAtMid).toBeGreaterThan(progressAtStart);
     expect(progressAtMid).toBeLessThanOrEqual(1);
 
-    // 500ms 時点: 余韻フェーズ（rendering 非 null、progress=1）
+    // 300ms 時点: 余韻フェーズ（rendering 非 null、progress=1）
     act(() => {
-      flushRafAt(500);
+      flushRafAt(300);
     });
 
     expect(result.current.rendering).not.toBeNull();
@@ -220,7 +220,7 @@ describe('useBattleLogger', () => {
 
     // 800ms で余韻完了 → displayed に移行
     act(() => {
-      runUntilTime(800, 500);
+      runUntilTime(800, 300);
     });
 
     expect(result.current.rendering).toBeNull();
@@ -255,7 +255,7 @@ describe('useBattleLogger', () => {
   });
 
   // ──────────────────────────────────────────────
-  // 7. 長短どちらも 800ms で完結する（500ms 文字進行 + 300ms 余韻）
+  // 7. 長短どちらも 800ms で完結する（300ms 文字進行 + 500ms 余韻）
   // ──────────────────────────────────────────────
   it('短いメッセージ ("!") も長いメッセージ ("あ".repeat(100)) も 800ms で displayed に入る', () => {
     // 2 つの独立したフックを 1 テストで検証
@@ -269,15 +269,15 @@ describe('useBattleLogger', () => {
     act(() => {
       shortHook.result.current.append('!');
     });
-    // 500ms 時点はまだ余韻中
+    // 300ms 時点はまだ余韻中
     act(() => {
-      runUntilTime(500);
+      runUntilTime(300);
     });
     expect(shortHook.result.current.displayed).toHaveLength(0);
     expect(shortHook.result.current.isIdle).toBe(false);
     // 800ms で完了
     act(() => {
-      runUntilTime(800, 500);
+      runUntilTime(800, 300);
     });
     expect(shortHook.result.current.displayed).toHaveLength(1);
     expect(shortHook.result.current.isIdle).toBe(true);
@@ -289,15 +289,15 @@ describe('useBattleLogger', () => {
     act(() => {
       longHook.result.current.append('あ'.repeat(100));
     });
-    // 500ms 時点はまだ余韻中
+    // 300ms 時点はまだ余韻中
     act(() => {
-      runUntilTime(500);
+      runUntilTime(300);
     });
     expect(longHook.result.current.displayed).toHaveLength(0);
     expect(longHook.result.current.isIdle).toBe(false);
     // 800ms で完了
     act(() => {
-      runUntilTime(800, 500);
+      runUntilTime(800, 300);
     });
     expect(longHook.result.current.displayed).toHaveLength(1);
     expect(longHook.result.current.isIdle).toBe(true);

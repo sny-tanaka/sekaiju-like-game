@@ -746,6 +746,18 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     return previewTurnOrder(state, epRng);
   }, [state]);
 
+  // (A-2) anim 再生中: eventIdx に達したイベントの actorId を完了済みとして収集。
+  // 完了済みアクターのアイコンを slideout アニメーションで消す。
+  const completedActorIds = useMemo(() => {
+    if (!anim) return new Set<string>();
+    const set = new Set<string>();
+    for (let i = 0; i < anim.eventIdx; i++) {
+      const e = anim.events[i];
+      if ('actorId' in e && typeof e.actorId === 'string') set.add(e.actorId);
+    }
+    return set;
+  }, [anim]);
+
   const allAssigned =
     uiMode.kind === 'individual'
       ? meireiAllies.length > 0 &&
@@ -1294,6 +1306,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             const isFirst = i === 0;
             const isAlly =
               state.allies.some((a) => a.id === c.id) || state.summons.some((s) => s.id === c.id);
+            const isCompleted = completedActorIds.has(c.id);
+            const allyChar = isAlly ? save.guild.members.find((m) => m.id === c.id) : null;
+            const enemyCombatant = !isAlly ? state.enemies.find((e) => e.id === c.id) : null;
+            const enemyId = enemyCombatant?.enemyId;
             return (
               <span
                 key={`${c.id}-${i}`}
@@ -1301,12 +1317,29 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   styles.turnOrderIcon,
                   isAlly ? styles.turnOrderAlly : styles.turnOrderEnemy,
                   isFirst ? styles.turnOrderFirst : '',
+                  isCompleted ? styles.turnOrderIconCompleted : '',
                 ].join(' ')}
                 title={c.name}
                 style={isFirst ? { position: 'relative' } : undefined}
               >
                 {isFirst && <span className={styles.turnOrderFirstLabel}>次</span>}
-                {c.name.slice(0, 1)}
+                {isAlly && allyChar ? (
+                  <CharacterPortrait
+                    raceId={allyChar.raceId}
+                    classId={allyChar.classId}
+                    size={24}
+                    alt={c.name}
+                  />
+                ) : !isAlly && enemyId ? (
+                  <EnemySprite
+                    enemyId={enemyId}
+                    size="sm"
+                    alt={c.name}
+                    className={styles.turnOrderEnemySprite}
+                  />
+                ) : (
+                  c.name.slice(0, 1)
+                )}
               </span>
             );
           })}
