@@ -473,6 +473,12 @@ export interface BattleLogEntry {
   /** 攻撃/スキルの属性。AttackFx に渡すために使う。省略時は UI 側で 'slash' を fallback とする。 */
   element?: Element;
   /**
+   * 行動開始ログ（攻撃発動・スキル発動・防御選択など）の行動者 ID。
+   * UI が前進アニメを適用するキャラを特定するために使う。
+   * 結果ログ（被弾・撃破・ドロップ等）は undefined とする。
+   */
+  actorId?: string;
+  /**
    * このログ行が表示された時点の全戦闘員の HP/戦闘不能状態のスナップショット（issue #18）。
    * UI が行動を1行ずつ再生し、カードの HP バーを段階的に減らす/点滅させるために使う。
    * 戦闘エンジンが resolveTurn 内で各 push 時に記録する（保存しない）。

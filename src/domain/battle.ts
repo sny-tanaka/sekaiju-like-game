@@ -358,7 +358,7 @@ function strikeOnce(
     rng
   );
   if (!res.hit) {
-    state.log.push({ text: `${actor.name} の攻撃は外れた` });
+    state.log.push({ text: `${actor.name} の攻撃は外れた`, actorId: actor.id });
     return { hit: false, dealt: 0 };
   }
   const dealt = consumeBarrier(target, res.damage, state.log);
@@ -372,6 +372,9 @@ function strikeOnce(
         ? `${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`
         : `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
       element: p.element,
+      // clean=true（反撃/連携追撃由来の追加打）はサブ処理なので actorId を付けない。
+      // 通常攻撃の発動ログ（「{name} の攻撃！」）は actor.id を付ける。
+      actorId: opts.clean ? undefined : actor.id,
     });
   }
   // 撃破・起床ログはダメージ本文の後に出す（「ダメージ→倒れた」の順序を保つ）。
@@ -398,7 +401,7 @@ function triggerReactions(
     for (const st of target.states ?? []) {
       if (st.kind !== 'counter') continue;
       if (rng.next() >= st.chance) continue;
-      state.log.push({ text: `${target.name} の反撃！` });
+      state.log.push({ text: `${target.name} の反撃！`, actorId: target.id });
       const el: Element = st.statBase === 'str' ? 'bash' : 'almighty';
       strikeOnce(
         state,
@@ -418,7 +421,7 @@ function triggerReactions(
       for (const st of ch.states ?? []) {
         if (st.kind !== 'chase') continue;
         if (st.element !== element && st.element !== 'almighty' && element !== 'almighty') continue;
-        state.log.push({ text: `${ch.name} の連携追撃！` });
+        state.log.push({ text: `${ch.name} の連携追撃！`, actorId: ch.id });
         strikeOnce(
           state,
           ch,
@@ -558,7 +561,7 @@ function applySkillEffect(
         if (target.isDown) continue;
         target.hp = clamp(target.hp + amount, 0, target.maxHp);
       }
-      state.log.push({ text: `${actor.name} は回復魔法を使った（+${amount}）` });
+      state.log.push({ text: `${actor.name} は回復魔法を使った（+${amount}）`, actorId: actor.id });
       break;
     }
     case 'buff': {
@@ -570,7 +573,7 @@ function applySkillEffect(
           stackGroup: effect.stackGroup,
         });
       }
-      state.log.push({ text: `${actor.name} は態勢を整えた` });
+      state.log.push({ text: `${actor.name} は態勢を整えた`, actorId: actor.id });
       break;
     }
     case 'ailment': {
@@ -598,7 +601,7 @@ function applySkillEffect(
       const id = `summon_${state.turn}_${state.summons.length}`;
       const s = buildSummon(effect.summonKind, state.depth, actor.id, id);
       state.summons.push(s);
-      state.log.push({ text: `${actor.name} は ${s.name} を召喚した！` });
+      state.log.push({ text: `${actor.name} は ${s.name} を召喚した！`, actorId: actor.id });
       break;
     }
     case 'counter': {
@@ -612,7 +615,7 @@ function applySkillEffect(
           remainingTurns: effect.turns,
         });
       }
-      state.log.push({ text: `${actor.name} は反撃の構えを取った` });
+      state.log.push({ text: `${actor.name} は反撃の構えを取った`, actorId: actor.id });
       break;
     }
     case 'chase': {
@@ -626,7 +629,7 @@ function applySkillEffect(
           remainingTurns: effect.turns,
         });
       }
-      state.log.push({ text: `${actor.name} は連携の構えを取った` });
+      state.log.push({ text: `${actor.name} は連携の構えを取った`, actorId: actor.id });
       break;
     }
     case 'decoy': {
@@ -638,7 +641,7 @@ function applySkillEffect(
           remainingTurns: effect.turns,
         });
       }
-      state.log.push({ text: `${actor.name} は敵の注意を引きつけた` });
+      state.log.push({ text: `${actor.name} は敵の注意を引きつけた`, actorId: actor.id });
       break;
     }
     case 'barrier': {
@@ -650,7 +653,7 @@ function applySkillEffect(
           remainingTurns: effect.turns,
         });
       }
-      state.log.push({ text: `${actor.name} は守りの障壁を張った` });
+      state.log.push({ text: `${actor.name} は守りの障壁を張った`, actorId: actor.id });
       break;
     }
     case 'cleanse': {
@@ -684,7 +687,7 @@ function applySkillEffect(
         if (target.isDown) continue;
         addState(target, { kind: 'regen', amount, remainingTurns: effect.turns });
       }
-      state.log.push({ text: `${actor.name} は継続回復を付与した` });
+      state.log.push({ text: `${actor.name} は継続回復を付与した`, actorId: actor.id });
       break;
     }
     case 'restoreTp': {
@@ -698,6 +701,7 @@ function applySkillEffect(
       }
       state.log.push({
         text: `${actor.name} は ${target === 'self' ? 'TP' : '味方のTP'} を回復した`,
+        actorId: actor.id,
       });
       break;
     }
@@ -789,7 +793,7 @@ function resolveUnion(
   for (const p of payers) {
     p.unionGauge = clamp(p.unionGauge - def.gaugeCostPerParticipant, 0, 100);
   }
-  state.log.push({ text: `ユニオン！ ${activator.name} の${def.name}！` });
+  state.log.push({ text: `ユニオン！ ${activator.name} の${def.name}！`, actorId: activator.id });
   const level = activator.skillLevels?.[cmd.unionSkillId] ?? 1;
   const targets = resolveTargets(state, activator, def.target, cmd.targetId);
   for (const effect of def.effects) {
@@ -839,7 +843,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   if (!skipAllies && fleeCmd && next.outcome === 'ongoing') {
     const fleer = find(next, fleeCmd.actorId);
     if (fleer && isLegBound(fleer)) {
-      next.log.push({ text: `${fleer.name} は脚を封じられて逃げられない` });
+      next.log.push({ text: `${fleer.name} は脚を封じられて逃げられない`, actorId: fleer.id });
     } else {
       // §8.1 逃走率: base 0.4、ボス逃走不可、FOE は 0.5倍
       let rate = clamp(
@@ -958,12 +962,12 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (next.outcome !== 'ongoing') break;
     // 睡眠: 行動不能（被ダメで解除。[03 §6]）。
     if (isAsleep(actor)) {
-      next.log.push({ text: `${actor.name} は眠っている` });
+      next.log.push({ text: `${actor.name} は眠っている`, actorId: actor.id });
       continue;
     }
     // 麻痺: 30% で行動不能
     if (isParalyzed(actor) && rng.next() < BALANCE.PARALYSIS_SKIP) {
-      next.log.push({ text: `${actor.name} は麻痺で動けない` });
+      next.log.push({ text: `${actor.name} は麻痺で動けない`, actorId: actor.id });
       continue;
     }
 
@@ -981,7 +985,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (actor.side === 'enemy') {
       // §15.6: 候補が空で動けない場合（部位封じで全行動ブロック）
       if (enemyBoundCannotAct.has(actor.id)) {
-        next.log.push({ text: `${actor.name} は封じられて動けない` });
+        next.log.push({ text: `${actor.name} は封じられて動けない`, actorId: actor.id });
         continue;
       }
       // §3.2 ③効果適用
@@ -995,7 +999,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       } else {
         // スキルアクション適用
         const targets = resolveTargets(next, actor, selectedAction.target, decoyTargetId ?? '');
-        next.log.push({ text: `${actor.name} の${selectedAction.name}！` });
+        next.log.push({ text: `${actor.name} の${selectedAction.name}！`, actorId: actor.id });
         for (const effect of selectedAction.effects) {
           applySkillEffect(
             next,
@@ -1020,7 +1024,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       if (!cmd || cmd.kind === 'guard' || cmd.kind === 'flee') continue;
       if (cmd.kind === 'attack') {
         if (isArmBound(actor)) {
-          next.log.push({ text: `${actor.name} は腕を封じられて攻撃できない` });
+          next.log.push({ text: `${actor.name} は腕を封じられて攻撃できない`, actorId: actor.id });
           continue;
         }
         const target = find(next, cmd.targetId);
@@ -1031,23 +1035,29 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         if (!def) continue;
         // 部位封じでスキル不可（腕系スキル＝armBind / 頭系スキル＝headBind。[03 §6]）
         if (skillUsesArm(def) && isArmBound(actor)) {
-          next.log.push({ text: `${actor.name} は腕を封じられてスキルを使えない` });
+          next.log.push({
+            text: `${actor.name} は腕を封じられてスキルを使えない`,
+            actorId: actor.id,
+          });
           continue;
         }
         if (!skillUsesArm(def) && isHeadBound(actor)) {
-          next.log.push({ text: `${actor.name} は頭を封じられてスキルを使えない` });
+          next.log.push({
+            text: `${actor.name} は頭を封じられてスキルを使えない`,
+            actorId: actor.id,
+          });
           continue;
         }
         const level = actor.skillLevels?.[cmd.skillId] ?? 1;
         const cost = computeSkillTpCost(def, level);
         if (actor.tp < cost) {
-          next.log.push({ text: `${actor.name} は TP が足りない` });
+          next.log.push({ text: `${actor.name} は TP が足りない`, actorId: actor.id });
           continue;
         }
         actor.tp -= cost;
         gainUnion(actor, 10);
         const targets = skillTargets(next, actor, def, cmd.targetId);
-        next.log.push({ text: `${actor.name} の${def.name}！` });
+        next.log.push({ text: `${actor.name} の${def.name}！`, actorId: actor.id });
         for (const effect of def.effects) {
           applySkillEffect(next, actor, effect, def.element, level, targets, rng, def.target);
         }
@@ -1065,7 +1075,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           }
         }
         next.consumedItems.push(cmd.itemId);
-        next.log.push({ text: `${actor.name} は ${item.name} を使った` });
+        next.log.push({ text: `${actor.name} は ${item.name} を使った`, actorId: actor.id });
       }
     }
     // 途中勝敗チェック

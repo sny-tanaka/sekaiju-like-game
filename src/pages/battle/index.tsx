@@ -387,46 +387,9 @@ export const Page = ({
       }
       tpBaseRef.current = tpSnap;
       const final = resolveTurn(state, list, rngRef.current);
-      // 各ログ行の行動者 ID を name→id マップから逆引きする（前進アニメ用）。
-      // 「行動開始ログ」のみに限定し、結果ログ（被弾・倒れた・ドロップ等）では空文字を返す。
-      const nameToId = new Map<string, string>();
-      for (const c of [...state.allies, ...state.enemies, ...state.summons]) {
-        nameToId.set(c.name, c.id);
-      }
-      /** 行動開始ログかどうかを判定する。「{name} の…」または発動系「{name} は…」が対象。 */
-      function isActionStartLog(text: string, name: string): boolean {
-        if (text.startsWith(`${name} の`)) return true;
-        if (
-          text.startsWith(`${name} は`) &&
-          (text.includes('を使った') ||
-            text.includes('を選んだ') ||
-            text.includes('放った') ||
-            text.includes('唱えた') ||
-            text.includes('を召喚した') ||
-            text.includes('の構えを取った') ||
-            text.includes('の注意を引きつけた') ||
-            text.includes('の障壁を張った') ||
-            text.includes('を蘇生した') ||
-            text.includes('を付与した') ||
-            text.includes('を整えた') ||
-            text.includes('眠っている') ||
-            text.includes('麻痺で動けない') ||
-            text.includes('封じられて動けない') ||
-            text.includes('封じられて攻撃できない') ||
-            text.includes('封じられてスキルを使えない') ||
-            text.includes('TP が足りない'))
-        )
-          return true;
-        return false;
-      }
-      const actorIds = final.log.map((entry) => {
-        for (const [name, id] of nameToId) {
-          if (isActionStartLog(entry.text, name)) {
-            return id;
-          }
-        }
-        return ''; // 結果ログ（被弾・倒れた・ドロップ等）は空にして前進アニメを発火させない
-      });
+      // 各ログ行の行動者 ID は BattleLogEntry.actorId から直接読む（前進アニメ用）。
+      // 行動開始ログのみ actorId が設定されており、結果ログ（被弾・撃破・ドロップ等）は undefined。
+      const actorIds = final.log.map((entry) => entry.actorId ?? '');
       setState(final);
       setCommands({});
       setCommandTargets({});
