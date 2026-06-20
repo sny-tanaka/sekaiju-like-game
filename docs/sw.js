@@ -31,7 +31,7 @@ define(['./workbox-1ef09536'], function (s) {
   }),
     s.precacheAndRoute(
       [
-        { url: 'index.html', revision: '5191954a0310278d98583e1ae53bdd3c' },
+        { url: 'index.html', revision: '42c06aa0029d5bc943e3c9cfafa23f3b' },
         { url: 'icon-512.png', revision: 'aea6735f0e3902695c58dbca460dc603' },
         { url: 'icon-192.png', revision: '2abc40b6b11f19c114b43abb7733a687' },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
@@ -103,8 +103,8 @@ define(['./workbox-1ef09536'], function (s) {
         { url: 'assets/item_mat_t0_soft_pelt-B45_Umk6.png', revision: null },
         { url: 'assets/item_mat_t0_faint_ember-mc7xjJJ1.png', revision: null },
         { url: 'assets/item_bat_wing-DSYSFTv5.png', revision: null },
-        { url: 'assets/index-DNb2qIJD.js', revision: null },
-        { url: 'assets/index-1o7LYujA.css', revision: null },
+        { url: 'assets/index-D0SQD6ho.js', revision: null },
+        { url: 'assets/index-CSEeoMFZ.css', revision: null },
         { url: 'assets/equip_t2_light-CoHmd7sL.png', revision: null },
         { url: 'assets/equip_cloth_robe-DNIpUHZ8.png', revision: null },
         { url: 'favicon.ico', revision: 'bf53cfc1c1a7432fa532b35b76682d50' },
