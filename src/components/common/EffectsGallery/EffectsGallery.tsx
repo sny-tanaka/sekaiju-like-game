@@ -13,6 +13,7 @@ import './EffectsGallery.keyframes.css';
 
 import { AttackFx } from '@/components/common/AttackFx/AttackFx';
 import { BuffFx } from '@/components/common/effects/BuffFx/BuffFx';
+import { CleanseFx } from '@/components/common/effects/CleanseFx/CleanseFx';
 import { CoinPopFx } from '@/components/common/effects/CoinPopFx';
 import { CookPopFx } from '@/components/common/effects/CookPopFx/CookPopFx';
 import { DashAwayFx } from '@/components/common/effects/DashAwayFx';
@@ -21,9 +22,11 @@ import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
 import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
 import { HealPop } from '@/components/common/effects/HealPop';
 import { ItemPopFx } from '@/components/common/effects/ItemPopFx/ItemPopFx';
+import { ItemUseFx } from '@/components/common/effects/ItemUseFx/ItemUseFx';
 import { RecycleFx } from '@/components/common/effects/RecycleFx/RecycleFx';
 import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
 import { SealStampFx } from '@/components/common/effects/SealStampFx';
+import { SkillCastFx } from '@/components/common/effects/SkillCastFx/SkillCastFx';
 import { SummonAppearFx } from '@/components/common/effects/SummonAppearFx';
 import { WarpScanFx } from '@/components/common/effects/WarpScanFx';
 import { HitFx } from '@/components/common/HitFx/HitFx';
@@ -677,6 +680,45 @@ const CATEGORIES: Category[] = [
             <DebuffFx
               visible
               silent
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'skillCastFx',
+        desc: 'スキル詠唱演出（回転魔法陣 + 金色オーラ 0.8s）',
+        preview: (
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <SkillCastFx
+              visible
+              silent
+              inline
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'itemUseFx',
+        desc: 'アイテム使用演出（アイコン上昇 + 光粒子 0.6s）',
+        preview: (
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <ItemUseFx
+              visible
+              silent
+              inline
+            />
+          </div>
+        ),
+      },
+      {
+        name: 'cleanseFx',
+        desc: '状態異常解除演出（青オーラ pulse 0.5s）',
+        preview: (
+          <div style={{ position: 'relative', width: 80, height: 80 }}>
+            <CleanseFx
+              visible
+              silent
+              inline
             />
           </div>
         ),
