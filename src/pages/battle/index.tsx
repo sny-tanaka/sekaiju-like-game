@@ -328,9 +328,8 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   useEffect(() => {
     if (state || !save?.diveState) return;
     const depth = save.diveState.depth;
-    // Date.now() を混ぜることで、同一ダイブセッション中・同一階層でも
-    // 戦闘ごとにシードが変わり、rollEncounter が毎回同じ敵グループを返すバグを修正。
-    // Storybook は __storyMockEnemyIds で rollEncounter を bypass するため影響なし。
+    // 同一ダイブ中は depth / totalDives が動かないので、戦闘ごとに動くものとして
+    // Date.now() を混ぜる。短すぎると 1 タップで同じ秒に当たって変わらないので 0.1 秒粒度。
     const seed =
       (save.masterSeed ^
         (depth * 2654435761) ^
