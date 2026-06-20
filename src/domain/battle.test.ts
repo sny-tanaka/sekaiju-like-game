@@ -11,7 +11,13 @@ import { startDive } from '@/domain/dive';
 import { addItem, itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
-import type { ActiveAilment, BattleCommand, BattleState, SaveData } from '@/domain/types';
+import type {
+  ActiveAilment,
+  BattleCommand,
+  BattleState,
+  Character,
+  SaveData,
+} from '@/domain/types';
 
 function diveSave(): SaveData {
   let save = createInitialSaveData('戦闘ギルド');
@@ -1129,5 +1135,58 @@ describe('battle: predefinedActorOrder', () => {
     const r2 = resolveTurn(state, cmds, createRng(42), undefined);
     expect(r1.enemies[0].hp).toBe(r2.enemies[0].hp);
     expect(r1.allies[0].hp).toBe(r2.allies[0].hp);
+  });
+
+  test('REPRO: 「いのちをだいじに」キャラが guard を選び、かつ敵の AGI が高い場合でも events[0] が preview[0] と一致する', () => {
+    // 再現条件:
+    // - inochi 作戦キャラ(薬師 AGI=6) + batchiri キャラ が編成
+    // - 敵: enemy_cave_bat (AGI=9 > キャラ AGI) → preview 先頭は敵になる
+    // - turn 1 で全員 HP 満タン → pickInochi は guard を返す
+    // 修正前: guard の defend イベントがターン冒頭処理ブロックで先行 push され、
+    //         preview 先頭（敵）より前に薬師の defend が events[0] になってしまった。
+    // 修正後: defend イベントはメインアクターループ内で push されるので preview 順と一致する。
+    let save = createInitialSaveData('テストギルド');
+
+    const medic: Character = {
+      ...createCharacter({ raceId: 'race_garon', classId: 'class_medic', name: '薬師' }),
+      strategy: 'inochi',
+    };
+    const warrior: Character = {
+      ...createCharacter({ raceId: 'race_garon', classId: 'class_warrior', name: '戦士' }),
+      strategy: 'batchiri',
+    };
+    save = addCharacterToGuild(save, medic);
+    save = addCharacterToGuild(save, warrior);
+    save = startDive(save, 1);
+
+    // enemy_cave_bat (もりゴブリン) は AGI=9 > キャラ AGI=6 → preview 先頭が敵になる
+    const state = startBattle(save, ['enemy_cave_bat'], 'none');
+
+    // turn 1 の preview (UI が turnOrderPreview として使うのと同じ ephemeral rng)
+    const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
+    const preview = previewTurnOrder(state, epRng);
+    const previewOrder = preview.map((c) => c.id);
+
+    // preview の先頭が敵であることを確認（再現条件）
+    expect(state.enemies.some((e) => e.id === previewOrder[0])).toBe(true);
+
+    // guard コマンドを inochi キャラに、attack を batchiri キャラに設定
+    const inochiAlly = state.allies.find((a) => a.id === medic.id)!;
+    const otherAlly = state.allies.find((a) => a.id === warrior.id)!;
+    const enemy = state.enemies[0];
+
+    const cmds: BattleCommand[] = [
+      { kind: 'guard', actorId: inochiAlly.id },
+      { kind: 'attack', actorId: otherAlly.id, targetId: enemy.id },
+    ];
+
+    const after = resolveTurn(state, cmds, createRng(1), previewOrder);
+
+    // preview[0]（敵）が最初の actorId 持ちイベントと一致するべき
+    // 修正前: defend(薬師) が先頭になってしまい FAIL
+    // 修正後: normal-attack(もりゴブリン) が先頭になり PASS
+    const firstActorEvt = after.events.find(hasActorId);
+    expect(firstActorEvt).toBeDefined();
+    expect(firstActorEvt?.actorId).toBe(previewOrder[0]);
   });
 });

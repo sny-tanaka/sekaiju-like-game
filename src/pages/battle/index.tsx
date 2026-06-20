@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import styles from './style.module.scss';
+import {
+  computeCompletedActorIds,
+  computeDeadActorIds,
+  computeDisplayedTurnOrder,
+} from './turnOrder';
 
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
@@ -227,6 +232,8 @@ type Anim = {
   eventIdx: number;
   /** ターン開始時点の HP スナップショット（最初のイベント前状態）。 */
   baseSnapshot: CombatantSnapshot;
+  /** ターン開始時点で確定した行動順 (actor id 配列)。再生中の行動順帯表示で使う。 */
+  actorOrder: string[];
 };
 
 export interface BattlePageProps {
@@ -267,10 +274,9 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   );
   // 行動の逐次再生（issue #18）。再生中はコマンド入力/結果を隠す。
   const [anim, setAnim] = useState<Anim | null>(null);
+  const [shakeIds, setShakeIds] = useState<Set<string>>(new Set());
   // TP の表示基準値（anim 再生中はターン開始時の実値を保持し、anim が null になったら更新）。
   const tpBaseRef = useRef<Record<string, number>>({});
-  // ダメージを受けたカードの点滅対象 ID（issue #18）。
-  const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
   // hits: damage/heal/crit ヒット演出の Map（HitFx で描画）。gold は inkSplatters で別管理。
   type Hit = {
     value: number | string;
@@ -325,8 +331,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   useEffect(() => {
     if (state || !save?.diveState) return;
     const depth = save.diveState.depth;
+    // 同一ダイブ中は depth / totalDives が動かないので、戦闘ごとに動くものとして
+    // Date.now() を混ぜる。短すぎると 1 タップで同じ秒に当たって変わらないので 0.1 秒粒度。
     const seed =
-      (save.masterSeed ^ (depth * 2654435761) ^ (save.towerState.record.totalDives * 40503)) >>> 0;
+      (save.masterSeed ^
+        (depth * 2654435761) ^
+        (save.towerState.record.totalDives * 40503) ^
+        (Math.floor(Date.now() / 100) >>> 0)) >>>
+      0;
     rngRef.current = createRng(seed);
     // Storybook 専用: 固定の敵 ID 列で開始（rollEncounter / pendingFoeBattle を bypass）。
     if (__storyMockEnemyIds && __storyMockEnemyIds.length > 0) {
@@ -436,15 +448,47 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       setUnionCmd(null);
       setUnionSetup(null);
       setActiveId(null);
-      setFlashIds(new Set());
+      setShakeIds(new Set());
       setHits(new Map());
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
       battleLogger.reset();
-      setAnim(flatEvts.length > 0 ? { events: flatEvts, eventIdx: 0, baseSnapshot } : null);
+      setAnim(
+        flatEvts.length > 0
+          ? { events: flatEvts, eventIdx: 0, baseSnapshot, actorOrder: actorOrder ?? [] }
+          : null
+      );
     },
     [state, battleLogger]
   );
+
+  // (A) 行動順帯: ephemeral rng（ターン番号のみに依存）で次ターン行動順を予測する。
+  // rngRef の消費とは完全に分離した別系統の rng を使う。
+  // 早期 return の前 + ambush/flee/handleResolve より前に置くこと（rules-of-hooks + 参照順）。
+  const turnOrderPreview = useMemo(() => {
+    if (!state || state.outcome !== 'ongoing') return [];
+    const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
+    return previewTurnOrder(state, epRng);
+  }, [state]);
+
+  // 行動順帯の表示用: anim 再生中は再生中ターンの actorOrder（runTurn 時に確定）を使う。
+  // state.turn は runTurn 後に進んでしまうため、turnOrderPreview をそのまま使うと
+  // 「再生中のターンの行動順」ではなく「次ターンの予測」が表示されてしまい、
+  // completedActorIds（再生中ターンの events から計算）と一致して全アイコンが slideout する。
+  const deadActorIds = useMemo(
+    () => (anim ? computeDeadActorIds(anim.events, anim.eventIdx) : new Set<string>()),
+    [anim]
+  );
+
+  const displayedTurnOrder = useMemo(() => {
+    if (!state) return [];
+    return computeDisplayedTurnOrder(
+      state,
+      anim?.actorOrder ?? null,
+      turnOrderPreview,
+      deadActorIds
+    );
+  }, [anim, state, turnOrderPreview, deadActorIds]);
 
   // 不意打ち: ターン1は味方が動けない。突入演出が晴れてから敵の先手1巡を自動解決する。
   const ambushDone = useRef(false);
@@ -452,9 +496,12 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     if (!state || !rngRef.current || ambushDone.current || introFx) return;
     if (state.turn === 1 && state.firstStrike === 'ambush' && state.outcome === 'ongoing') {
       ambushDone.current = true;
-      runTurn([]);
+      runTurn(
+        [],
+        turnOrderPreview.map((c) => c.id)
+      );
     }
-  }, [state, introFx, runTurn]);
+  }, [state, introFx, runTurn, turnOrderPreview]);
 
   // tryComplete: fxDoneRef + loggerDoneRef の両方が true のときのみ次イベントへ進む（設計書 §2.5）。
   // actionCompletedRef で重複実行を防ぐ（複数 Fx 同時 onDone でも 1 回のみ）。
@@ -493,7 +540,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     if (eventIdx >= events.length) {
       const t = setTimeout(() => {
         setAnim(null);
-        setFlashIds(new Set());
+        setShakeIds(new Set());
         setHits(new Map());
         setInkSplatters(new Map());
         setAdvancingActorId(null);
@@ -510,6 +557,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     loggerDoneRef.current = battleLogger.isIdle;
     // iter 開始時に前 iter の Fx エントリをクリア（HP フリッカー修正: onDone 内で delete しない）
     setHits(new Map());
+    setShakeIds(new Set());
     setBuffFxMap(new Map());
     setDebuffFxMap(new Map());
     setCastingActorId(null);
@@ -526,7 +574,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     const currentActorId = 'actorId' in event ? (event as { actorId: string }).actorId : undefined;
     setAdvancingActorId(currentActorId ?? null);
 
-    // DAMAGE_AT (200ms) 後: HP 差分から hits/flashIds を計算して Fx を発火
+    // DAMAGE_AT (200ms) 後: HP 差分から hits を計算して Fx を発火
     const DAMAGE_AT = 200;
     const tDmg = setTimeout(() => {
       // post テキストを append（Fx マウントと同時に表示する）
@@ -537,14 +585,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       const prevSnap =
         eventIdx > 0 ? (events[eventIdx - 1].snapshotAfter ?? baseSnapshot) : baseSnapshot;
 
-      const fl = new Set<string>();
       const nextHits = new Map<string, Hit>();
+      const nextShake = new Set<string>();
       if (cur) {
         for (const id of Object.keys(cur)) {
           const p = prevSnap?.[id];
           if (!p) continue;
           if (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown)) {
-            fl.add(id);
+            nextShake.add(id);
             const dmg = Math.round(p.hp - cur[id].hp);
             // event から属性を取得
             const element =
@@ -575,8 +623,8 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           }
         }
       }
-      setFlashIds(fl);
       setHits(nextHits);
+      setShakeIds(nextShake);
 
       // mountFxFor: event 種別に応じた Fx 発火
       let didSetBuffOrDebuff = false;
@@ -766,24 +814,11 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     });
   }, [aliveAllies, save]);
 
-  // (A) 行動順帯: ephemeral rng（ターン番号のみに依存）で次ターン行動順を予測する。
-  // rngRef の消費とは完全に分離した別系統の rng を使う。早期 return の前に置くこと（rules-of-hooks）。
-  const turnOrderPreview = useMemo(() => {
-    if (!state || state.outcome !== 'ongoing') return [];
-    const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
-    return previewTurnOrder(state, epRng);
-  }, [state]);
-
   // (A-2) anim 再生中: eventIdx に達したイベントの actorId を完了済みとして収集。
   // 完了済みアクターのアイコンを slideout アニメーションで消す。
   const completedActorIds = useMemo(() => {
     if (!anim) return new Set<string>();
-    const set = new Set<string>();
-    for (let i = 0; i < anim.eventIdx; i++) {
-      const e = anim.events[i];
-      if ('actorId' in e && typeof e.actorId === 'string') set.add(e.actorId);
-    }
-    return set;
+    return computeCompletedActorIds(anim.events, anim.eventIdx);
   }, [anim]);
 
   const allAssigned =
@@ -941,8 +976,11 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
     const a = aliveAllies[0];
     if (!a) return;
-    runTurn([{ kind: 'flee', actorId: a.id }]);
-  }, [state, aliveAllies, runTurn]);
+    runTurn(
+      [{ kind: 'flee', actorId: a.id }],
+      turnOrderPreview.map((c) => c.id)
+    );
+  }, [state, aliveAllies, runTurn, turnOrderPreview]);
 
   /**
    * 「たたかう」ボタン押下: おまかせ戦闘（issue #61）。
@@ -1171,7 +1209,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
           isAllySelectable ? styles.allySelectable : activeId === a.id ? styles.cardActive : '',
           isAllyTargeted ? styles.allyTargeted : '',
           commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
-          flashIds.has(a.id) ? styles.flash : '',
+          shakeIds.has(a.id) ? styles.shake : '',
           fleeActive ? dashAwayClass : '',
           isAdvancing ? styles.cardAdvancing : '',
         ]
@@ -1203,7 +1241,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             return (
               <HitFx
                 key={`${a.id}-${hit.seq}`}
-                element={undefined}
+                element={hit.variant === 'heal' ? undefined : (hit.element ?? 'slash')}
                 variant={hit.variant}
                 value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
                 isCrit={hit.isCrit}
@@ -1359,14 +1397,14 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       <div className={styles.chapterRow}>
         <p className={styles.chapterMark}>❦ 戦闘 ・ F{save.diveState.depth}</p>
       </div>
-      {/* (A) 行動順帯（最大 8 アイコン + …） */}
-      {turnOrderPreview.length > 0 && (
+      {/* (A) 行動順帯（最大 8 アイコン + …）
+        anim 再生中は再生中ターンの行動順を維持、それ以外は次ターン予測。 */}
+      {displayedTurnOrder.length > 0 && (
         <div
           className={styles.turnOrderBar}
-          aria-label="次ターン行動順"
+          aria-label={anim ? '行動順' : '次ターン行動順'}
         >
-          {turnOrderPreview.slice(0, 8).map((c, i) => {
-            const isFirst = i === 0;
+          {displayedTurnOrder.slice(0, 8).map((c, i) => {
             const isAlly =
               state.allies.some((a) => a.id === c.id) || state.summons.some((s) => s.id === c.id);
             const isCompleted = completedActorIds.has(c.id);
@@ -1379,13 +1417,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                 className={[
                   styles.turnOrderIcon,
                   isAlly ? styles.turnOrderAlly : styles.turnOrderEnemy,
-                  isFirst ? styles.turnOrderFirst : '',
                   isCompleted ? styles.turnOrderIconCompleted : '',
                 ].join(' ')}
                 title={c.name}
-                style={isFirst ? { position: 'relative' } : undefined}
               >
-                {isFirst && <span className={styles.turnOrderFirstLabel}>次</span>}
                 {isAlly && allyChar ? (
                   <CharacterPortrait
                     raceId={allyChar.raceId}
@@ -1406,7 +1441,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               </span>
             );
           })}
-          {turnOrderPreview.length > 8 && <span className={styles.turnOrderMore}>…</span>}
+          {displayedTurnOrder.length > 8 && <span className={styles.turnOrderMore}>…</span>}
         </div>
       )}
       {/* (B) 1 行ログプレビュー（ヘッダ内 / 行動順帯直下） */}
@@ -1449,7 +1484,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   styles.enemy,
                   d.isDown ? styles.down + ' ' + styles.dissolving : '',
                   isTargeted ? styles.targeted : '',
-                  flashIds.has(e.id) ? styles.flash + ' ' + styles.shakeBOverlay : '',
+                  shakeIds.has(e.id) ? styles.shake : '',
                   isEnemyAdvancing ? styles.enemyAdvancing : '',
                 ]
                   .filter(Boolean)
@@ -1487,13 +1522,6 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   visible={debuffFxMap.has(e.id)}
                   onDone={onFxDone}
                 />
-                {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}
-                {flashIds.has(e.id) && (
-                  <div
-                    className={styles.hitFlashOverlay}
-                    aria-hidden="true"
-                  />
-                )}
                 {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
                 {inkSplatters.has(e.id) &&
                   (() => {
@@ -1628,7 +1656,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               return (
                 <div
                   key={s.id}
-                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''} ${newSummonIds.has(s.id) ? summonAppearClass : ''}`}
+                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${shakeIds.has(s.id) ? styles.shake : ''} ${newSummonIds.has(s.id) ? summonAppearClass : ''}`}
                 >
                   <span className={styles.summonName}>🐾 {s.name}</span>
                   <StatBar
@@ -1669,7 +1697,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
             sfx={null}
             onClick={() => {
               setAnim(null);
-              setFlashIds(new Set());
+              setShakeIds(new Set());
               setHits(new Map());
               setAdvancingActorId(null);
             }}

@@ -1,15 +1,6 @@
 @use 'variables' as var;
 
 // keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
-@keyframes shakeA {
-  0%   { transform: translateX(0); }
-  20%  { transform: translateX(-6px); }
-  40%  { transform: translateX(5px); }
-  60%  { transform: translateX(-4px); }
-  80%  { transform: translateX(3px); }
-  100% { transform: translateX(0); }
-}
-
 @keyframes barShimmer {
   0%   { background-position: 0 0; }
   100% { background-position: 40px 0; }
@@ -32,7 +23,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  @keyframes shakeA          { 0%, 100% { transform: none; } }
   @keyframes barShimmer      { 0%, 100% { background-position: 0 0; } }
   @keyframes encPulse        { 0%, 100% { opacity: 1; } }
   @keyframes dissolveE       { 0%, 100% { opacity: 0; transform: none; filter: none; } }
@@ -628,29 +618,6 @@
   white-space: nowrap;
 }
 
-// 被弾カードの点滅（issue #18）— 赤値を $vermilion に
-.flash {
-  animation: cardFlash 0.42s ease-out;
-}
-
-@keyframes cardFlash {
-  0% {
-    background-color: rgba(178, 60, 48, 0.22);
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(-3px);
-  }
-  40% {
-    transform: translateX(3px);
-  }
-  60% {
-    transform: translateX(-2px);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
 
 // ---- 召喚体（最前列） ----
 .summons {
@@ -1600,12 +1567,6 @@
 
 // ---- Step 3: 攻撃 FX レイヤー ----
 
-// 被弾 FX の shakeA を .flash に追加
-.flash {
-  animation: shakeA 0.24s ease, cardFlash 0.42s ease-out;
-  animation-fill-mode: both;
-}
-
 // 撃破時の dissolveE
 .dissolving {
   animation: dissolveE 0.5s ease-out forwards;
@@ -1972,27 +1933,6 @@
   animation: encPulse 4.5s ease-in-out infinite;
 }
 
-// 行動順帯 先頭セル金枠・glow
-.turnOrderFirst {
-  position: relative;
-  width: 30px !important;
-  height: 30px !important;
-  border: 2px solid var(--gold, #c9a86a) !important;
-  box-shadow: 0 0 8px var(--gold-glow, rgba(201, 168, 106, 0.4));
-  animation: obsidian-glowPulse 2.2s ease-in-out infinite;
-}
-
-.turnOrderFirstLabel {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 7px;
-  color: var(--gold, #c9a86a);
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  pointer-events: none;
-}
 
 // 召喚リボン ラベル
 .summonsLabel {
@@ -2059,34 +1999,6 @@
   pointer-events: none;
   z-index: 12;
   animation: runeSpin 1.4s ease-in-out infinite;
-}
-
-// ---- D. hitFlash — 被弾時の赤 flash（enemy card 用） ----
-@keyframes hitFlash {
-  0%, 100% { background-color: rgba(212, 103, 79, 0); }
-  30%       { background-color: rgba(212, 103, 79, 0.4); }
-}
-
-.hitFlashOverlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 8;
-  border-radius: inherit;
-  animation: hitFlash 1s ease-in-out forwards;
-}
-
-// ---- E. shakeB — 敵カードの縦揺れ（shakeA は横揺れ、B は縦方向）----
-@keyframes shakeB {
-  0%, 100% { transform: translateY(0); }
-  20%       { transform: translateY(-5px) rotate(-0.5deg); }
-  40%       { transform: translateY(4px) rotate(0.5deg); }
-  60%       { transform: translateY(-3px); }
-  80%       { transform: translateY(2px); }
-}
-
-.shakeBOverlay {
-  animation: shakeB 0.28s ease both;
 }
 
 // ---- F/G/H. 状態異常エフェクト: poisonWisp / sparkZap / ailDrift ----
@@ -2218,12 +2130,22 @@
   animation: dustRise 1.1s ease-out infinite;
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-4px); }
+  40%      { transform: translateX(4px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(2px); }
+}
+
+.shake {
+  animation: shake 0.28s ease both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .healRisePop,
   .summonNew,
   .runeCasting,
-  .hitFlashOverlay,
-  .shakeBOverlay,
   .ailBadgePoison,
   .ailBadgeCurse,
   .ailBadgeParalysis,
@@ -2231,7 +2153,8 @@
   .sealStampInner,
   .sealStampInnerOut,
   .dashAwayCard,
-  .dustParticle {
+  .dustParticle,
+  .shake {
     animation: none;
   }
   .cardAdvancing,
@@ -2268,10 +2191,6 @@
   .turnOrderBar {
     gap: 3px;
     margin-bottom: 3px;
-  }
-  .turnOrderFirst {
-    width: 24px !important;
-    height: 24px !important;
   }
   .turnOrderIcon {
     width: 18px;
@@ -2467,10 +2386,6 @@
   .turnOrderBar {
     gap: 2px;
     margin-bottom: 2px;
-  }
-  .turnOrderFirst {
-    width: 20px !important;
-    height: 20px !important;
   }
   .turnOrderIcon {
     width: 16px;

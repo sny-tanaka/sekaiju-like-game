@@ -36,6 +36,7 @@ export const AttackFx = ({ element, isCrit = false, silent = false }: Props) => 
       className={styles.attackFx}
       aria-hidden="true"
     >
+      <div className={styles.hitFlashOverlay} />
       {element === 'slash' && <div className={styles.barSlash} />}
       {element === 'pierce' && (
         <>

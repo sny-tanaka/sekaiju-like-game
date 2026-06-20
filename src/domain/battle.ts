@@ -981,6 +981,8 @@ export function resolveTurn(
   }
 
   // ガード: 防御コマンドは pdef/mdef を一時上昇（このターン）。不意打ちターンは無効。
+  // バフ付与だけをここで行い、defend イベントの pushEvent は行動順ループ内へ移動した。
+  // これにより predefinedActorOrder（turnOrderPreview）の行動順が defend イベントにも適用される。
   if (!skipAllies) {
     for (const c of commands) {
       if (c.kind !== 'guard') continue;
@@ -988,7 +990,6 @@ export function resolveTurn(
       if (!actor || actor.isDown) continue;
       addBuff(actor, { stat: 'pdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
       addBuff(actor, { stat: 'mdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
-      pushEvent({ kind: 'defend', actorId: actor.id });
     }
   }
 
@@ -1188,7 +1189,12 @@ export function resolveTurn(
       }
     } else {
       const cmd = cmdByActor.get(actor.id);
-      if (!cmd || cmd.kind === 'guard' || cmd.kind === 'flee') continue;
+      if (!cmd || cmd.kind === 'flee') continue;
+      // ガード: バフはターン冒頭で付与済み。defend イベントをここで push して行動順を守る。
+      if (cmd.kind === 'guard') {
+        pushEvent({ kind: 'defend', actorId: actor.id });
+        continue;
+      }
       if (cmd.kind === 'attack') {
         if (isArmBound(actor)) {
           continue; // 腕封じで攻撃不可（ログなし）
