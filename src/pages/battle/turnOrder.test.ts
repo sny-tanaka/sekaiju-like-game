@@ -5,9 +5,20 @@
 
 import { describe, expect, test } from 'vitest';
 
-import { computeCompletedActorIds, computeDisplayedTurnOrder, isActorCompleted } from './turnOrder';
+import {
+  computeCompletedActorIds,
+  computeDeadActorIds,
+  computeDisplayedTurnOrder,
+  isActorCompleted,
+} from './turnOrder';
 
-import type { BattleEvent, NormalAttackEvent, TickEvent } from '@/domain/battleEvent';
+import type {
+  BattleEvent,
+  HitResult,
+  NormalAttackEvent,
+  SkillEvent,
+  TickEvent,
+} from '@/domain/battleEvent';
 import { previewTurnOrder } from '@/domain/combat';
 import { createRng } from '@/domain/rng';
 import type { BattleState, Combatant, Stats } from '@/domain/types';
@@ -67,8 +78,38 @@ function makeAttackEvent(actorId: string): NormalAttackEvent {
   return { kind: 'normal-attack', actorId, hits: [], reactions: [] };
 }
 
+function makeAttackEventWithHits(actorId: string, hits: HitResult[]): NormalAttackEvent {
+  return { kind: 'normal-attack', actorId, hits, reactions: [] };
+}
+
+function makeSkillEvent(
+  actorId: string,
+  hits: HitResult[],
+  reactions: BattleEvent[] = []
+): SkillEvent {
+  return {
+    kind: 'skill',
+    actorId,
+    skillId: 'test-skill',
+    targetIds: hits.map((h) => h.targetId),
+    hits,
+    heals: [],
+    buffs: [],
+    debuffs: [],
+    reactions,
+  };
+}
+
+function makeHit(targetId: string, defeated: boolean): HitResult {
+  return { targetId, result: 'hit', damage: 10, defeated };
+}
+
 function makeTickEvent(targetId: string): TickEvent {
   return { kind: 'tick', targetId, effectType: 'poison', amount: 5 };
+}
+
+function makeDefeatingTickEvent(targetId: string): TickEvent {
+  return { kind: 'tick', targetId, effectType: 'poison', amount: 5, defeated: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -258,5 +299,125 @@ describe('倒れた actor は previewTurnOrder から除外される', () => {
     expect(ids).not.toContain('down');
     expect(ids[0]).toBe('fast'); // agi=50 > agi=20
     expect(ids[1]).toBe('slow');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeDeadActorIds
+// ---------------------------------------------------------------------------
+
+describe('computeDeadActorIds', () => {
+  test('eventIdx=0 では誰も死亡していない', () => {
+    const events: BattleEvent[] = [makeAttackEventWithHits('A', [makeHit('e1', true)])];
+    expect(computeDeadActorIds(events, 0)).toEqual(new Set());
+  });
+
+  test('HitResult.defeated=true の targetId が拾われる', () => {
+    const events: BattleEvent[] = [
+      makeAttackEventWithHits('A', [makeHit('e1', true), makeHit('e2', false)]),
+    ];
+    expect(computeDeadActorIds(events, 1)).toEqual(new Set(['e1']));
+  });
+
+  test('defeated=false の hit は含まれない', () => {
+    const events: BattleEvent[] = [makeAttackEventWithHits('A', [makeHit('e1', false)])];
+    expect(computeDeadActorIds(events, 1)).toEqual(new Set());
+  });
+
+  test('TickEvent.defeated=true の targetId が拾われる', () => {
+    const events: BattleEvent[] = [makeDefeatingTickEvent('e1')];
+    expect(computeDeadActorIds(events, 1)).toEqual(new Set(['e1']));
+  });
+
+  test('TickEvent.defeated が undefined / false の tick は含まれない', () => {
+    const events: BattleEvent[] = [makeTickEvent('e1')];
+    expect(computeDeadActorIds(events, 1)).toEqual(new Set());
+  });
+
+  test('reactions (ネスト BattleEvent) 内の死亡も再帰的に拾われる', () => {
+    const reaction = makeAttackEventWithHits('e1', [makeHit('A', true)]);
+    const events: BattleEvent[] = [makeSkillEvent('A', [], [reaction])];
+    expect(computeDeadActorIds(events, 1)).toEqual(new Set(['A']));
+  });
+
+  test('SkillEvent の hits と reactions を両方拾う', () => {
+    const reaction = makeAttackEventWithHits('e1', [makeHit('B', true)]);
+    const events: BattleEvent[] = [makeSkillEvent('A', [makeHit('e1', true)], [reaction])];
+    const dead = computeDeadActorIds(events, 1);
+    expect(dead).toEqual(new Set(['e1', 'B']));
+  });
+
+  test('eventIdx 通過前のイベントは含まれない', () => {
+    const events: BattleEvent[] = [
+      makeAttackEventWithHits('A', [makeHit('e1', true)]),
+      makeAttackEventWithHits('B', [makeHit('e2', true)]),
+    ];
+    // idx=1: 最初のイベントのみ通過
+    expect(computeDeadActorIds(events, 1)).toEqual(new Set(['e1']));
+    // idx=2: 両方通過
+    expect(computeDeadActorIds(events, 2)).toEqual(new Set(['e1', 'e2']));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeDisplayedTurnOrder — dead actor 除外
+// ---------------------------------------------------------------------------
+
+describe('computeDisplayedTurnOrder — dead actor の除外', () => {
+  const a = makeCombatant({ id: 'A', name: 'A', side: 'ally' });
+  const b = makeCombatant({ id: 'B', name: 'B', side: 'ally' });
+  const e1 = makeCombatant({ id: 'e1', name: 'e1', side: 'enemy' });
+
+  test('deadActorIds が空なら全員表示される', () => {
+    const state = makeBattleState({ allies: [a, b], enemies: [e1] });
+    const result = computeDisplayedTurnOrder(state, [a.id, b.id, e1.id], [], new Set());
+    expect(result.map((c) => c.id)).toEqual([a.id, b.id, e1.id]);
+  });
+
+  test('dead actor の id は anim モードで表示配列から除外される', () => {
+    const state = makeBattleState({ allies: [a, b], enemies: [e1] });
+    const result = computeDisplayedTurnOrder(state, [a.id, b.id, e1.id], [], new Set([e1.id]));
+    expect(result.map((c) => c.id)).toEqual([a.id, b.id]);
+  });
+
+  test('dead actor は turnOrderPreview モードでも除外される', () => {
+    const state = makeBattleState({ allies: [a, b], enemies: [e1] });
+    const preview = [a, b, e1];
+    const result = computeDisplayedTurnOrder(state, null, preview, new Set([b.id]));
+    expect(result.map((c) => c.id)).toEqual([a.id, e1.id]);
+  });
+
+  test('eventIdx が死亡 event を通過する前後で行動順帯から消える', () => {
+    // e1 が A の攻撃で倒されるシナリオ
+    const attackEvent = makeAttackEventWithHits('A', [makeHit(e1.id, true)]);
+    const events: BattleEvent[] = [attackEvent];
+    const state = makeBattleState({ allies: [a], enemies: [e1] });
+
+    // idx=0: まだ死亡 event を通過していない → e1 は列に残る
+    const deadBefore = computeDeadActorIds(events, 0);
+    const orderBefore = computeDisplayedTurnOrder(state, [a.id, e1.id], [], deadBefore);
+    expect(orderBefore.map((c) => c.id)).toContain(e1.id);
+
+    // idx=1: 死亡 event を通過した → e1 は列から消える
+    const deadAfter = computeDeadActorIds(events, 1);
+    const orderAfter = computeDisplayedTurnOrder(state, [a.id, e1.id], [], deadAfter);
+    expect(orderAfter.map((c) => c.id)).not.toContain(e1.id);
+  });
+
+  test('完了済み (slideout) と死亡 (除外) が両方走る場合に正しく区別される', () => {
+    // A が行動完了、e1 が死亡
+    const events: BattleEvent[] = [makeAttackEventWithHits('A', [makeHit(e1.id, true)])];
+    const state = makeBattleState({ allies: [a, b], enemies: [e1] });
+
+    const completedIds = computeCompletedActorIds(events, 1); // A が完了
+    const deadIds = computeDeadActorIds(events, 1); // e1 が死亡
+
+    // A は完了済み（slideout 対象）、e1 は死亡（除外対象）、B は何もなし
+    expect(completedIds).toEqual(new Set([a.id]));
+    expect(deadIds).toEqual(new Set([e1.id]));
+
+    // dead を渡した displayedTurnOrder から e1 は消える
+    const order = computeDisplayedTurnOrder(state, [a.id, b.id, e1.id], [], deadIds);
+    expect(order.map((c) => c.id)).toEqual([a.id, b.id]);
   });
 });
