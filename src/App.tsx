@@ -13,7 +13,7 @@ import { useNavigation } from '@/store/navigation';
 
 // 画面遷移（[07 §1]）: タイトル / 拠点 / 探索 / 戦闘。
 // react-router を撤去し、NavigationProvider の screen state で擬似ルーティングする。
-// PageTurn ラッパーが遷移時にページめくりオーバーレイを走らせる（Phase 2）。
+// PageTurn ラッパーが遷移時にフェードインアニメーション（200ms）を走らせる。
 function App() {
   const { screen } = useNavigation();
   const content = (() => {
