@@ -1,27 +1,17 @@
 @use 'variables' as var;
 
 /**
- * ActionButton - ヘッドレス UI のため、button reset + a11y のみ。
- * 見た目は画面側 className が完全に支配する。
+ * ActionButton - ヘッドレス UI。
+ * browser default の <button> 見た目を維持し、画面側 className が完全に上書きする。
+ * CSS reset (text-align/padding/font/background/border) は入れない:
+ * reset すると画面側で全プロパティを明示しないと旧 bare <button> と差分が出るため。
  */
 .actionButton {
-  // ブラウザ button デフォルトをリセット
-  appearance: none;
-  -webkit-appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  font: inherit;
-  color: inherit;
-  text-align: inherit;
   cursor: pointer;
-  box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 
   &:disabled {
     cursor: not-allowed;
-    // opacity は画面側で制御
   }
 
   &:focus-visible {
