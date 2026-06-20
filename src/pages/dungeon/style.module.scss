@@ -101,20 +101,19 @@
   padding: 0 8px;
 }
 
+// fpv 操作ボタン共通: 半透明ダーク背景を上書き（variant="default" の parchment-card を差し替え）
 .fpvTurn,
 .fpvForward,
 .fpvBack {
-  min-height: 48px;
-  border: none;
-  border-radius: 0;
-  background-color: rgba(33, 36, 27, 0.62);
+  background-color: rgba(33, 36, 27, 0.62) !important;
   // 監査結果: 1.1:1 → 12.5:1 (var(--text-strong) = #f2ede1 on rgba(33,36,27,0.62))
-  color: var(--text-strong);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
+  color: var(--text-strong) !important;
+  border: none !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
+// 個別サイズ・位置
 .fpvTurn {
   width: 56px;
 }
@@ -129,28 +128,12 @@
   top: 8px;
   right: 8px;
   width: 44px;
-  min-height: 40px;
-  border: none;
-  border-radius: 0;
-  background-color: rgba(33, 36, 27, 0.62);
-  // 監査結果: 1.1:1 → 12.5:1 (var(--text-strong) = #f2ede1 on rgba(33,36,27,0.62))
-  color: var(--text-strong);
   font-size: 18px;
-  cursor: pointer;
 }
 
-// ヘッダーのメニューボタン（道具・帰還はメニュー内に集約）
+// ヘッダーのメニューボタン（icon variant: 位置調整のみ）
 .menuBtn {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
+  flex-shrink: 0;
 }
 
 // メニュー（所持金・パーティ・ステータス・スキル）
@@ -185,19 +168,13 @@
   letter-spacing: 0.04em;
 }
 
+// メンバー行: variant="default" size="small" の上にカスタムレイアウトを当てる
 .menuMember {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  align-items: center;
-  width: 100%;
-  padding: 8px 10px;
+  flex-direction: row !important;
+  gap: 8px !important;
+  align-items: center !important;
   margin-bottom: 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  text-align: left;
-  cursor: pointer;
+  background-color: transparent !important;
 }
 
 .menuMemberPortrait {
@@ -254,22 +231,15 @@
   margin-bottom: 8px;
 }
 
+// スキルタブ: variant="tab" の上に active 状態のみ上書き
 .skillTab {
   flex: 1;
-  min-height: 36px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .skillTabOn {
-  background-color: var.$verdant;
-  border-color: var.$verdant;
-  color: var.$parchment;
+  background-color: var.$verdant !important;
+  border-color: var.$verdant !important;
+  color: var.$parchment !important;
 }
 
 // 中段（マップ + 操作系）。上端 (header + fpv) と下端の固定ボタン群の間で、
@@ -434,18 +404,19 @@
   flex-shrink: 0;
 }
 
-// 採集カード（緑縁）
+// 採集カード（緑縁）: variant="card" の上に個別色・サイズを当てる
 .gatherCard {
   width: 100%;
   max-width: 360px;
-  background: #0e131a;
-  border: 1px solid rgba(143, 208, 160, 0.3);
-  border-radius: 5px;
-  padding: 14px;
+  background: #0e131a !important;
+  border: 1px solid rgba(143, 208, 160, 0.3) !important;
+  border-radius: 5px !important;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
 .gatherCardDisabled {
@@ -729,17 +700,19 @@
   flex-shrink: 0;
 }
 
+// メニューグリッドアイテム: variant="card" の上に個別カラー・レイアウトを当てる
 .menuGridItem {
   height: 58px;
-  border-radius: 4px;
-  background: #15171f;
-  border: 1px solid var(--rule-soft);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 14px;
-  cursor: pointer;
-  text-align: left;
+  border-radius: 4px !important;
+  background: #15171f !important;
+  border: 1px solid var(--rule-soft) !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 0 14px !important;
+  min-height: unset !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
 .menuGridItemActive {
@@ -905,33 +878,24 @@
   color: #f2ede1;
 }
 
+// アイテム使用ボタン（対象指定行）: variant="primary" size="small" の上に個別配置
 .itemTargetUseBtn {
-  font-size: 10px;
-  color: var(--success, #3f8a5c);
-  border: 1px solid rgba(143, 208, 160, 0.5);
-  border-radius: 2px;
-  padding: 3px 8px;
-  background: transparent;
   flex: none;
-  cursor: pointer;
+  // primary の gold を green に上書き
+  background: transparent !important;
+  color: var(--success, #3f8a5c) !important;
+  border: 1px solid rgba(143, 208, 160, 0.5) !important;
+  font-size: 10px !important;
+  padding: 3px 8px !important;
+  min-height: unset !important;
+  border-radius: 2px !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
+// アイテム使用ボタン（帰還の糸等）: variant="primary" size="small" の上に個別配置
 .itemUse {
   align-self: flex-start;
-  min-height: 40px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
 }
 
 .itemClose {

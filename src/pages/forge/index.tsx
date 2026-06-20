@@ -151,15 +151,15 @@ export const Page = () => {
       {/* flat underline タブバー */}
       <div className={styles.tabs}>
         <ActionButton
+          variant="tab"
           label="強化"
-          size="small"
           sfx="cursor"
           className={`${styles.tab} ${tab === 'forge' ? styles.tabActive : ''}`}
           onClick={() => switchTab('forge')}
         />
         <ActionButton
+          variant="tab"
           label="リサイクル"
-          size="small"
           sfx="cursor"
           className={`${styles.tab} ${tab === 'recycle' ? styles.tabActive : ''}`}
           onClick={() => switchTab('recycle')}
@@ -235,6 +235,7 @@ export const Page = () => {
                     {!maxed && (
                       <div className={styles.ingotRow}>
                         <ActionButton
+                          variant="default"
                           label={`銅+${FORGE.INGOT_INC.copper} (${copper})`}
                           size="small"
                           className={styles.ingotCopper}
@@ -256,6 +257,7 @@ export const Page = () => {
                           }
                         />
                         <ActionButton
+                          variant="default"
                           label={`銀+${FORGE.INGOT_INC.silver} (${silver})`}
                           size="small"
                           className={styles.ingotSilver}
@@ -277,6 +279,7 @@ export const Page = () => {
                           }
                         />
                         <ActionButton
+                          variant="default"
                           label={`金+${FORGE.INGOT_INC.gold} (${gold})`}
                           size="small"
                           className={styles.ingotGold}
@@ -329,6 +332,7 @@ export const Page = () => {
                       </span>
                     </div>
                     <ActionButton
+                      variant="tab"
                       label="分解"
                       size="small"
                       className={styles.recycleChip}
@@ -375,6 +379,7 @@ export const Page = () => {
               .reduce((s, e) => s + recycleFragments(e.masterId), 0)}
           </span>
           <ActionButton
+            variant="secondary"
             label="解除"
             size="small"
             sfx="cancel"
@@ -382,6 +387,7 @@ export const Page = () => {
             onClick={clearSelection}
           />
           <ActionButton
+            variant="destructive"
             label="一括分解"
             size="small"
             className={styles.bulkRecycle}
@@ -399,6 +405,7 @@ export const Page = () => {
       {/* フッタ */}
       <footer className={styles.foot}>
         <ActionButton
+          variant="secondary"
           label="拠点へ戻る"
           className={styles.back}
           onClick={() => navigate({ name: 'town' })}
@@ -479,12 +486,14 @@ export const Page = () => {
 
                 <div className={styles.confirmActions}>
                   <ActionButton
+                    variant="secondary"
                     label="やめる"
                     sfx="cancel"
                     className={styles.confirmCancel}
                     onClick={() => setPending(null)}
                   />
                   <ActionButton
+                    variant="primary"
                     label="強化する"
                     className={styles.confirmOk}
                     onClick={confirmPending}
@@ -514,12 +523,14 @@ export const Page = () => {
                 </div>
                 <div className={styles.confirmActions}>
                   <ActionButton
+                    variant="secondary"
                     label="やめる"
                     sfx="cancel"
                     className={styles.confirmCancel}
                     onClick={() => setPending(null)}
                   />
                   <ActionButton
+                    variant="destructive"
                     label="分解する"
                     className={styles.confirmOkDanger}
                     onClick={confirmPending}
@@ -537,12 +548,14 @@ export const Page = () => {
                 </div>
                 <div className={styles.confirmActions}>
                   <ActionButton
+                    variant="secondary"
                     label="やめる"
                     sfx="cancel"
                     className={styles.confirmCancel}
                     onClick={() => setPending(null)}
                   />
                   <ActionButton
+                    variant="destructive"
                     label="一括分解する"
                     className={styles.confirmOkDanger}
                     onClick={confirmPending}

@@ -77,23 +77,21 @@
   flex-shrink: 0;
 }
 
+// タブ: variant="tab" の上に個別色を当てる
 .tab {
   flex: 1;
   text-align: center;
-  padding: 9px 0;
-  font-size: 12px;
-  color: var(--text-faint);
-  border-radius: 3px 3px 0 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-body);
+  border-radius: 3px 3px 0 0 !important;
+  border: none !important;
+  font-size: 12px !important;
+  color: var(--text-faint) !important;
+  padding: 9px 0 !important;
 }
 
 .tabActive {
-  color: var(--bg-mid);
+  color: var(--bg-mid) !important;
   font-weight: 700;
-  background: var(--gold);
+  background: var(--gold) !important;
 }
 
 // ---- ヒント文 ----
@@ -225,61 +223,41 @@
   gap: 8px;
 }
 
-// 銅ボタン
-.ingotCopper {
-  flex: 1;
-  height: 36px;
-  border-radius: 3px;
-  background: rgba(201, 134, 91, 0.18);
-  border: 1px solid rgba(201, 134, 91, 0.5);
-  color: #e0a87c;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  text-align: center;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-}
-
-// 銀ボタン
-.ingotSilver {
-  flex: 1;
-  height: 36px;
-  border-radius: 3px;
-  background: transparent;
-  border: 1px solid rgba(200, 196, 186, 0.4);
-  color: var(--text-base);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  text-align: center;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-}
-
-// 金ボタン
+// インゴットボタン共通: variant="default" size="small" の上に個別色を当てる
+// （flex / font-size はいずれも上書きのみ、border/bg/cursor は variant 由来をそのまま使う）
+.ingotCopper,
+.ingotSilver,
 .ingotGold {
   flex: 1;
   height: 36px;
-  border-radius: 3px;
-  background: transparent;
-  border: 1px solid var(--rule-soft);
-  color: var(--text-mute);
-  font-family: var(--font-mono);
-  font-size: 11px;
+  min-height: unset !important;
+  border-radius: 3px !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
   text-align: center;
-  cursor: pointer;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
+}
 
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
+// 銅ボタン: 赤銅色の背景・ボーダー
+.ingotCopper {
+  background: rgba(201, 134, 91, 0.18) !important;
+  border: 1px solid rgba(201, 134, 91, 0.5) !important;
+  color: #e0a87c !important;
+}
+
+// 銀ボタン: 銀色ボーダー
+.ingotSilver {
+  background: transparent !important;
+  border: 1px solid rgba(200, 196, 186, 0.4) !important;
+  color: var(--text-base) !important;
+}
+
+// 金ボタン: soft ボーダー
+.ingotGold {
+  background: transparent !important;
+  border: 1px solid var(--rule-soft) !important;
+  color: var(--text-mute) !important;
 }
 
 // ---- リサイクルタブの行（横並び 1 段） ----
@@ -312,17 +290,17 @@
   color: #c98a5b;
 }
 
-// 「分解」チップ
+// 「分解」チップ: variant="tab" size="small" の上に個別色を当てる
 .recycleChip {
-  font-size: 11px;
-  color: #e0a87c;
-  border: 1px solid rgba(201, 134, 91, 0.5);
-  border-radius: 2px;
-  padding: 5px 11px;
-  background: transparent;
-  cursor: pointer;
   flex-shrink: 0;
-  font-family: var(--font-body);
+  flex: none !important;
+  font-size: 11px !important;
+  color: #e0a87c !important;
+  border: 1px solid rgba(201, 134, 91, 0.5) !important;
+  border-radius: 2px !important;
+  padding: 5px 11px !important;
+  background: transparent !important;
+  min-height: unset !important;
 }
 
 // ---- 断片自動変換注記（リサイクルタブ末尾）— v3 ----
@@ -383,29 +361,25 @@
   color: var(--text-soft);
 }
 
+// 一括解除ボタン: variant="secondary" size="small" の上に高さ調整
 .bulkClear {
   height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--rule-base);
-  border-radius: 3px;
-  background: transparent;
-  color: var(--text-mute);
-  font-size: 12px;
-  cursor: pointer;
-  font-family: var(--font-body);
+  min-height: unset !important;
+  padding: 0 12px !important;
+  border-radius: 3px !important;
+  font-size: 12px !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
+// 一括分解ボタン: variant="destructive" size="small" の上に高さ調整
 .bulkRecycle {
   height: 36px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 3px;
-  background: var(--danger);
-  color: var(--danger-text);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: var(--font-body);
+  min-height: unset !important;
+  padding: 0 14px !important;
+  border-radius: 3px !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
 // ---- フッタ ----
@@ -413,17 +387,16 @@
   flex-shrink: 0;
 }
 
+// 戻るボタン: variant="secondary" の上に個別スタイルを当てる
 .back {
   width: 100%;
   height: 46px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-soft);
-  color: var(--text-mute);
-  font-size: 13px;
+  min-height: unset !important;
+  border-radius: 3px !important;
+  font-size: 13px !important;
   letter-spacing: 0.16em;
-  background: transparent;
-  cursor: pointer;
-  font-family: var(--font-body);
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
 // ---- 確認ダイアログ（共通基盤） ----
@@ -563,42 +536,39 @@
   width: 100%;
 }
 
+// 確認キャンセル: variant="secondary" の上に height / font を上書き
 .confirmCancel {
   flex: 1;
   height: 48px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-base);
-  color: #c8c4ba;
-  background: transparent;
-  font-size: 14px;
-  cursor: pointer;
-  font-family: var(--font-body);
+  min-height: unset !important;
+  border-radius: 3px !important;
+  font-size: 14px !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
+// 強化する: variant="primary" の上に height / 個別グラデーションを上書き
 .confirmOk {
   flex: 1;
   height: 48px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
-  color: var(--bg-mid);
-  font-weight: 700;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-body);
+  min-height: unset !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep)) !important;
+  color: var(--bg-mid) !important;
+  font-size: 14px !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
+// 分解する / 一括分解する: variant="destructive" の上に height を上書き
 .confirmOkDanger {
   flex: 1;
   height: 48px;
-  border-radius: 3px;
-  background: var(--danger);
-  color: var(--danger-text);
-  font-weight: 700;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-body);
+  min-height: unset !important;
+  border-radius: 3px !important;
+  font-size: 14px !important;
+  // variant の left strip 装飾を非表示
+  &::before { display: none; }
 }
 
 // ---- 強化成功 gold InkSplatter（Phase 2） ----
