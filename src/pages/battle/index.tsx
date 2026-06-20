@@ -466,17 +466,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
 
   // logger isIdle 監視: ログ再生完了で loggerDoneRef を更新して tryComplete を試みる
   // battleLogger.isIdle だけを deps に取り出すことで、battleLogger オブジェクト自体（毎 render で新オブジェクト）を deps に含めるのを回避する
-  // isIdle になってから 300ms の余韻を置いてから完了通知する（即座に次アクションへ進むとメッセージが読めない）
+  // 余韻は useBattleLogger 内で各メッセージ 300ms 保持するため、ここでは追加遅延なしで即 tryComplete する
   useEffect(() => {
-    if (!battleLogger.isIdle) {
-      loggerDoneRef.current = false;
-      return;
-    }
-    const t = setTimeout(() => {
-      loggerDoneRef.current = true;
-      tryComplete();
-    }, 300);
-    return () => clearTimeout(t);
+    loggerDoneRef.current = battleLogger.isIdle;
+    if (battleLogger.isIdle) tryComplete();
   }, [battleLogger.isIdle, tryComplete]);
 
   // 逐次再生（Step 5）: events を1件ずつ再生する。
@@ -500,10 +493,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     const event = events[eventIdx];
 
     // 新 iter 開始: 行動完了フラグ / fx / logger ドーン フラグを reset
-    // loggerDoneRef は isIdle 監視 useEffect に委ねる（300ms 余韻込み）ため false で初期化
+    // loggerDoneRef は battleLogger.isIdle 起点（isIdle 監視 useEffect に委ねる）
     actionCompletedRef.current = false;
     fxDoneRef.current = false;
-    loggerDoneRef.current = false;
+    loggerDoneRef.current = battleLogger.isIdle;
     // iter 開始時に前 iter の Fx エントリをクリア（HP フリッカー修正: onDone 内で delete しない）
     setHits(new Map());
     setBuffFxMap(new Map());

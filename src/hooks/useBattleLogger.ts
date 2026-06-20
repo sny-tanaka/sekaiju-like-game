@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 
-const MESSAGE_DURATION_MS = 500;
+const MESSAGE_DURATION_MS = 500; // 文字進行フェーズ
+const TAIL_MS = 300; // 余韻フェーズ（全文表示のまま待機）
 
 export type LogMessage = { id: string; text: string };
 
@@ -27,7 +28,7 @@ export const useBattleLogger = (): BattleLoggerApi => {
   const activeRafRef = useRef<number>(0);
   const cancelledRef = useRef(false);
 
-  // 1 件分のメッセージを 500ms かけてアニメーション
+  // 1 件分のメッセージを 500ms 文字進行 + 300ms 余韻 = 800ms サイクルでアニメーション
   const playNext = useCallback(() => {
     if (isRunningRef.current) return;
     if (queueRef.current.length === 0) return;
@@ -45,15 +46,20 @@ export const useBattleLogger = (): BattleLoggerApi => {
         return;
       }
       const elapsed = performance.now() - startedAt;
-      const progress = Math.min(elapsed / MESSAGE_DURATION_MS, 1);
-      setRendering({ msg: next, progress });
-      if (progress < 1) {
+      if (elapsed < MESSAGE_DURATION_MS) {
+        // フェーズ1: 文字進行（progress 0→1）
+        const progress = elapsed / MESSAGE_DURATION_MS;
+        setRendering({ msg: next, progress });
+        activeRafRef.current = requestAnimationFrame(tick);
+      } else if (elapsed < MESSAGE_DURATION_MS + TAIL_MS) {
+        // フェーズ2: 余韻（progress=1 を維持。isRunningRef=true のまま isIdle=false を保つ）
+        setRendering({ msg: next, progress: 1 });
         activeRafRef.current = requestAnimationFrame(tick);
       } else {
+        // 800ms 完全完了 → displayed に追加して次のメッセージへ
         isRunningRef.current = false;
         setRendering(null);
         setDisplayed((d) => [...d, next]);
-        // 次のメッセージへ（直接呼び出しで遅延なく開始）
         playNext();
       }
     };
