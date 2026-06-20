@@ -479,33 +479,73 @@
   font-family: var(--font-body);
 }
 
-// ---- 封蝋スタンプ ----
-.sealOverlay {
+// ---- 封蝋スタンプ (モック準拠シジル) ----
+.diveSealOverlay {
   position: fixed;
   inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 200;
+  pointer-events: none;
+  animation: obsidian-fadeIn 0.2s ease-out;
+}
+
+.diveSeal {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  background: radial-gradient(circle, #8a2f2a, #5e1f1c);
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
-  pointer-events: none;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(138, 47, 42, 0.22),
-    rgba(7, 8, 9, 0.6) 65%,
-    rgba(7, 8, 9, 0.9) 100%
-  );
+  animation: obsidian-sealStamp 2.6s ease-in-out infinite;
 }
 
-.sealCaption {
+.diveSealOuterRing {
   position: absolute;
-  bottom: 60px;
-  left: 0;
-  right: 0;
-  text-align: center;
+  inset: 0;
+  border: 2px solid rgba(233, 201, 160, 0.75);
+  border-radius: 50%;
+}
+
+.diveSealInnerRing {
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(233, 201, 160, 0.55);
+  border-radius: 50%;
+}
+
+.diveSealRadial {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg,
+    rgba(233, 201, 160, 0.55) 0deg 2deg,
+    transparent 2deg 30deg);
+  mask: radial-gradient(transparent 56%, #000 58%);
+  -webkit-mask: radial-gradient(transparent 56%, #000 58%);
+}
+
+.diveSealDiamond {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: rgba(233, 201, 160, 0.9);
+  transform: rotate(45deg);
+}
+
+.diveSealCaption {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  color: #5d5a52;
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  color: rgba(233, 201, 160, 0.7);
+  text-transform: uppercase;
 }
 
 // ---- ワープスキャン演出 ----

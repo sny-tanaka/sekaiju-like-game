@@ -3,7 +3,6 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
-import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { SoundSettings } from '@/components/common/SoundSettings';
 import { startDive } from '@/domain/dive';
 import { useGameState } from '@/store/gameState';
@@ -62,9 +61,9 @@ export const Page = () => {
     setWarpScanActive(true);
     await new Promise((r) => setTimeout(r, 900));
     setWarpScanActive(false);
-    // Step 2: sealStamp 封蝋演出を発火
+    // Step 2: sealStamp 封蝋演出を発火 (暗転 320ms)
     setSealActive(true);
-    await new Promise((r) => setTimeout(r, 700));
+    await new Promise((r) => setTimeout(r, 320));
     navigate({ name: 'dungeon' });
   };
 
@@ -392,16 +391,16 @@ export const Page = () => {
 
       {sealActive ? (
         <div
-          className={styles.sealOverlay}
+          className={styles.diveSealOverlay}
           aria-hidden="true"
         >
-          <InkSplatter
-            value="潜行"
-            variant="seal"
-            size={120}
-            onDone={() => setSealActive(false)}
-          />
-          <div className={styles.sealCaption}>SEALING… {sealingDepth}F へ</div>
+          <div className={styles.diveSeal}>
+            <div className={styles.diveSealOuterRing} />
+            <div className={styles.diveSealInnerRing} />
+            <div className={styles.diveSealRadial} />
+            <div className={styles.diveSealDiamond} />
+          </div>
+          <div className={styles.diveSealCaption}>SEALING… {sealingDepth}F へ</div>
         </div>
       ) : null}
     </div>

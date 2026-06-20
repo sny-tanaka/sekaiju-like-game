@@ -334,3 +334,12 @@ $obsidian-info-blue: #a9c3d8;
 @media (prefers-reduced-motion: reduce) {
   @keyframes obsidian-warpScan { 0%, 100% { transform: translateY(0); opacity: 0; } }
 }
+
+@keyframes obsidian-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-fadeIn { from { opacity: 1; } to { opacity: 1; } }
+}
