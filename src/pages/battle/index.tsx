@@ -328,8 +328,15 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   useEffect(() => {
     if (state || !save?.diveState) return;
     const depth = save.diveState.depth;
+    // Date.now() を混ぜることで、同一ダイブセッション中・同一階層でも
+    // 戦闘ごとにシードが変わり、rollEncounter が毎回同じ敵グループを返すバグを修正。
+    // Storybook は __storyMockEnemyIds で rollEncounter を bypass するため影響なし。
     const seed =
-      (save.masterSeed ^ (depth * 2654435761) ^ (save.towerState.record.totalDives * 40503)) >>> 0;
+      (save.masterSeed ^
+        (depth * 2654435761) ^
+        (save.towerState.record.totalDives * 40503) ^
+        (Math.floor(Date.now() / 100) >>> 0)) >>>
+      0;
     rngRef.current = createRng(seed);
     // Storybook 専用: 固定の敵 ID 列で開始（rollEncounter / pendingFoeBattle を bypass）。
     if (__storyMockEnemyIds && __storyMockEnemyIds.length > 0) {
