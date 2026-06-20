@@ -1,18 +1,5 @@
 // forge/style.module.scss — 黒曜 OBSIDIAN MINIMAL v2（モック忠実化）
 
-// ---- forgeSpark ローカルアニメ ----
-@keyframes forge-spark {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
-}
-
 // ---- ルートレイアウト ----
 .layout {
   position: relative;
@@ -479,7 +466,7 @@
   top: -6px;
   left: -6px;
   font-size: 16px;
-  animation: forge-spark 1.3s ease-in-out infinite;
+  animation: forgeSpark 1.3s ease-in-out infinite;
 }
 
 .spark2 {
@@ -487,7 +474,7 @@
   top: 8px;
   right: -8px;
   font-size: 13px;
-  animation: forge-spark 1.3s ease-in-out 0.3s infinite;
+  animation: forgeSpark 1.3s ease-in-out 0.3s infinite;
 }
 
 .spark3 {
@@ -495,7 +482,7 @@
   bottom: -4px;
   left: 14px;
   font-size: 14px;
-  animation: forge-spark 1.3s ease-in-out 0.6s infinite;
+  animation: forgeSpark 1.3s ease-in-out 0.6s infinite;
 }
 
 // 装備名（分解確認では下スペースなし）
