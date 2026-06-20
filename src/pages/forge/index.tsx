@@ -114,7 +114,8 @@ export const Page = () => {
   // 確認ダイアログで「はい」を押したときだけ実際に強化/分解を確定する。
   const confirmPending = () => {
     if (!pending) return;
-    play(pending.kind === 'forge' ? 'forge' : 'recycle');
+    // forge SE は ForgeSparkFx visible=true 時（ダイアログ表示時）に発火するため削除
+    if (pending.kind !== 'forge') play('recycle');
     if (pending.kind === 'forge') {
       void applyAndPersist((s) => forgeWithIngot(s, pending.instanceId, pending.ingot).save);
       // 強化成功演出（Phase 2）: gold InkSplatter で「+N」を表示

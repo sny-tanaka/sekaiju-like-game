@@ -271,7 +271,10 @@ const CATEGORIES: Category[] = [
         // 共通コンポーネント WarpScanFx を使用（town ダイブ実行時と同一 DOM）
         preview: (
           <div style={{ position: 'relative', width: 80, height: 60 }}>
-            <WarpScanFx visible />
+            <WarpScanFx
+              visible
+              silent
+            />
           </div>
         ),
       },
@@ -370,7 +373,10 @@ const CATEGORIES: Category[] = [
         // 共通コンポーネント DustRiseFx を使用（battle 逃走フェーズと同一 DOM）
         preview: (
           <div style={{ position: 'relative', width: 70, height: 50 }}>
-            <DustRiseFx visible />
+            <DustRiseFx
+              visible
+              silent
+            />
           </div>
         ),
       },
@@ -489,7 +495,10 @@ const CATEGORIES: Category[] = [
             >
               購入
             </div>
-            <CoinPopFx visible />
+            <CoinPopFx
+              visible
+              silent
+            />
           </div>
         ),
       },
@@ -524,6 +533,7 @@ const CATEGORIES: Category[] = [
             <ForgeSparkFx
               visible
               count={3}
+              silent
             />
           </div>
         ),
@@ -534,7 +544,10 @@ const CATEGORIES: Category[] = [
         // 共通コンポーネント SealStampFx (variant='seal') を使用（town ダイブ遷移と同一 DOM）
         preview: (
           <div style={{ position: 'relative', width: 72, height: 72, overflow: 'hidden' }}>
-            <SealStampFx variant="seal" />
+            <SealStampFx
+              variant="seal"
+              silent
+            />
           </div>
         ),
       },
@@ -1132,7 +1145,10 @@ const CATEGORIES: Category[] = [
         // 共通コンポーネント RuneSpinFx を使用（battle 詠唱中と同一 DOM）
         preview: (
           <div style={{ position: 'relative', width: 56, height: 56 }}>
-            <RuneSpinFx visible />
+            <RuneSpinFx
+              visible
+              silent
+            />
           </div>
         ),
       },

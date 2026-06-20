@@ -1,8 +1,14 @@
+import { useEffect, useRef } from 'react';
+
 import styles from './DustRiseFx.module.scss';
+
+import { useSfx } from '@/audio/useSfx';
 
 type Props = {
   /** true のとき砂塵パーティクルを表示 */
   visible: boolean;
+  /** true のとき SE を鳴らさない（EffectsGallery プレビュー用） */
+  silent?: boolean;
 };
 
 /**
@@ -10,8 +16,19 @@ type Props = {
  * 逃走時の砂塵エフェクト共通コンポーネント。
  * battle 画面で逃走成功フェーズに足元砂塵として表示する。
  * EffectsGallery の dustRise セルでも同じ DOM を参照し、一致を保証する。
+ * visible が false → true になる瞬間に flee SE を発火する。
  */
-export const DustRiseFx = ({ visible }: Props) => {
+export const DustRiseFx = ({ visible, silent = false }: Props) => {
+  const play = useSfx();
+  const prevVisibleRef = useRef(false);
+  useEffect(() => {
+    if (silent) return;
+    if (visible && !prevVisibleRef.current) {
+      play('flee');
+    }
+    prevVisibleRef.current = visible;
+  }, [visible, silent, play]);
+
   if (!visible) return null;
   return (
     <div

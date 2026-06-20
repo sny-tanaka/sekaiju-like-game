@@ -237,7 +237,7 @@ export const Page = () => {
   // 確認ダイアログで「はい」を押したときだけ実際に売買を確定する。
   const confirmPending = () => {
     if (!pending) return;
-    play('coin');
+    // coin SE は CoinPopFx visible=true 時に発火するため削除
     if (pending.kind === 'buy') {
       void applyAndPersist((s) => buyMany(s, pending.id, pendingQty));
       // 購入確定演出（Phase 2）: damage（墨インク）InkSplatter

@@ -486,25 +486,13 @@ export const Page = ({
       const line = state.log[idx];
       if (line) {
         const t = line.text;
-        // 逃走成功
-        if (t === 'うまく逃げ切れた！') {
-          play('flee');
-        }
+        // 逃走成功 (SE は DustRiseFx マウント時に発火)
         // 戦闘不能
-        else if (t.includes('は倒れた')) {
+        if (t.includes('は倒れた')) {
           play('down');
         }
-        // スキル発動
-        else if (
-          t.includes('のスキル') ||
-          (/の.+！$/.test(t) && !t.includes('の攻撃！') && !t.includes('ユニオン'))
-        ) {
-          play('skill');
-        }
-        // ユニオン
-        else if (t.startsWith('ユニオン！')) {
-          play('skill');
-        }
+        // スキル発動 (SE は RuneSpinFx visible=true 時に発火)
+        // ユニオン (SE は RuneSpinFx visible=true 時に発火)
         // 状態異常付与
         else if (t.includes('になった')) {
           play('debuff');
@@ -577,7 +565,7 @@ export const Page = ({
     prevOutcomeRef.current = outcome;
     if (outcome === 'win') play('victory');
     else if (outcome === 'lose') play('defeat');
-    else if (outcome === 'fled') play('flee');
+    // fled SE は DustRiseFx マウント時に発火するため削除
   }, [state, anim, play]);
 
   // レベルアップ SE（levelQueue の先頭が表示されるたびに鳴らす）。

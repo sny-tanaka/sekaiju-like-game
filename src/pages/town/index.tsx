@@ -48,6 +48,7 @@ export const Page = () => {
   };
 
   const resumeDive = async () => {
+    // 再潜行（SealStampFx 未表示のフロー）のため play('dive') はここで発火
     play('dive');
     navigate({ name: 'dungeon' });
   };
@@ -55,7 +56,7 @@ export const Page = () => {
   // bottom-sheet から階を選択 → ダイブ実行
   // フロー: warpScan 演出 (0.9s) → sealStamp 演出 (700ms) → dungeon 遷移
   const handleSelectFloor = async (depth: number) => {
-    play('warp');
+    // warp SE は WarpScanFx visible=true 時に発火するため削除
     setWarpOpen(false);
     await applyAndPersist((s) => startDive(s, depth));
     setSealingDepth(depth);
