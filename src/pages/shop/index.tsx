@@ -338,6 +338,7 @@ export const Page = () => {
           <div className={styles.confirmActions}>
             <ActionButton
               label="閉じる"
+              variant="secondary"
               sfx="cancel"
               className={styles.confirmCancel}
               onClick={() => setEquipDetail(null)}
@@ -358,16 +359,16 @@ export const Page = () => {
       <div className={styles.tabs}>
         <ActionButton
           label="買う"
-          size="small"
+          variant="tab"
           sfx="cursor"
-          className={`${styles.tab} ${tab === 'buy' ? styles.tabActive : ''}`}
+          className={tab === 'buy' ? styles.activeTab : ''}
           onClick={() => switchTab('buy')}
         />
         <ActionButton
           label="売る"
-          size="small"
+          variant="tab"
           sfx="cursor"
-          className={`${styles.tab} ${tab === 'sell' ? styles.tabActive : ''}`}
+          className={tab === 'sell' ? styles.activeTab : ''}
           onClick={() => switchTab('sell')}
         />
       </div>
@@ -377,18 +378,18 @@ export const Page = () => {
         <div className={styles.filters}>
           <ActionButton
             label="すべて"
-            size="small"
+            variant="tab"
             sfx="cursor"
-            className={`${styles.chip} ${effFilter === 'all' ? styles.chipActive : ''}`}
+            className={`${styles.chip} ${effFilter === 'all' ? styles.activeTab : ''}`}
             onClick={() => setFilter('all')}
           />
           {presentCats.map((c) => (
             <ActionButton
               key={c}
               label={CAT_LABEL[c]}
-              size="small"
+              variant="tab"
               sfx="cursor"
-              className={`${styles.chip} ${effFilter === c ? styles.chipActive : ''}`}
+              className={`${styles.chip} ${effFilter === c ? styles.activeTab : ''}`}
               onClick={() => setFilter(c)}
             />
           ))}
@@ -429,6 +430,7 @@ export const Page = () => {
                   {e.kind === 'equip' ? (
                     <ActionButton
                       label={e.name}
+                      variant="ghost"
                       sfx="cursor"
                       className={styles.nameBtn}
                       onClick={() =>
@@ -450,6 +452,7 @@ export const Page = () => {
                 </div>
                 <ActionButton
                   label={`${e.price} G`}
+                  variant="primary"
                   size="small"
                   className={styles.action}
                   disabled={gold < e.price}
@@ -502,6 +505,7 @@ export const Page = () => {
                   {r.kind === 'equip' ? (
                     <ActionButton
                       label={r.name}
+                      variant="ghost"
                       sfx="cursor"
                       className={styles.nameBtn}
                       onClick={() =>
@@ -525,6 +529,7 @@ export const Page = () => {
                 </div>
                 <ActionButton
                   label={`売却 ${r.price} G`}
+                  variant="primary"
                   size="small"
                   className={styles.action}
                   onClick={() =>
@@ -551,6 +556,7 @@ export const Page = () => {
       <footer className={styles.foot}>
         <ActionButton
           label="拠点へ戻る"
+          variant="secondary"
           className={styles.back}
           onClick={() => navigate({ name: 'town' })}
         />
@@ -630,12 +636,14 @@ export const Page = () => {
             <div className={styles.confirmActions}>
               <ActionButton
                 label="やめる"
+                variant="secondary"
                 sfx="cancel"
                 className={styles.confirmCancel}
                 onClick={() => setPending(null)}
               />
               <ActionButton
                 label={pending.kind === 'buy' ? '購入する' : '売却する'}
+                variant="primary"
                 className={styles.confirmOk}
                 onClick={confirmPending}
               />

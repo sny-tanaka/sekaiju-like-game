@@ -104,6 +104,7 @@ export const Page = () => {
           </div>
           <ActionButton
             ariaLabel="設定"
+            variant="icon"
             className={styles.gearBtn}
             onClick={() => setSoundOpen(true)}
           >
@@ -136,6 +137,7 @@ export const Page = () => {
       <main className={styles.menu}>
         {/* ダイブ大カード（grid-column span 2） */}
         <ActionButton
+          variant="card"
           className={`${styles.dive} ${diveState ? styles.diveResume : ''}`}
           disabled={!hasMembers}
           onClick={handleDiveClick}
@@ -162,6 +164,7 @@ export const Page = () => {
         {/* 団員 0 のときはギルド管理を横長ガイドカードに切り替え */}
         {!hasMembers ? (
           <ActionButton
+            variant="card"
             className={styles.tileGuide}
             onClick={goto('guild')}
           >
@@ -184,6 +187,7 @@ export const Page = () => {
           </ActionButton>
         ) : (
           <ActionButton
+            variant="card"
             className={styles.tile}
             disabled={!!diveState}
             onClick={goto('guild')}
@@ -202,6 +206,7 @@ export const Page = () => {
         )}
 
         <ActionButton
+          variant="card"
           className={styles.tile}
           disabled={!!diveState}
           onClick={goto('shop')}
@@ -219,6 +224,7 @@ export const Page = () => {
         </ActionButton>
 
         <ActionButton
+          variant="card"
           className={styles.tile}
           disabled={!!diveState}
           onClick={goto('forge')}
@@ -238,6 +244,7 @@ export const Page = () => {
         </ActionButton>
 
         <ActionButton
+          variant="card"
           className={styles.tile}
           disabled={!!diveState}
           onClick={goto('codex')}
@@ -301,6 +308,8 @@ export const Page = () => {
                 return (
                   <ActionButton
                     key={d}
+                    variant="secondary"
+                    size="small"
                     className={`${styles.sheetItem} ${isDeepest ? styles.sheetItemHilight : ''}`}
                     onClick={() => void handleSelectFloor(d)}
                   >
