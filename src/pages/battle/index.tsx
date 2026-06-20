@@ -95,16 +95,6 @@ const AILMENT_LABEL: Record<string, string> = {
   legBind: '脚封じ',
 };
 
-// v5: ログテキストから属性を推定する純関数（案A: string-match）
-function getLogElement(text: string): import('@/domain/types').Element {
-  if (text.includes('火') || text.includes('炎')) return 'fire';
-  if (text.includes('氷')) return 'ice';
-  if (text.includes('雷')) return 'volt';
-  if (text.includes('突')) return 'pierce';
-  if (text.includes('壊') || text.includes('打')) return 'bash';
-  return 'slash'; // デフォルト（slash / 通常攻撃 fallback）
-}
-
 // v5: 状態異常角バッジ 10 種（モック v3 §4.6.1 準拠）
 const AILMENT_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
   poison: { label: '毒', bg: '#5a3a6e', fg: '#e7d2f5' },
@@ -1126,9 +1116,9 @@ export const Page = ({
                 {/* v5: 攻撃 FX レイヤー（属性別 DOM 要素・モック v3 準拠） */}
                 {flashIds.has(e.id) &&
                   (() => {
-                    const logText = state.log[anim?.revealed ? anim.revealed - 1 : 0]?.text ?? '';
-                    const element = getLogElement(logText);
-                    const isCrit = logText.includes('（会心）');
+                    const entry = state.log[anim?.revealed ? anim.revealed - 1 : 0];
+                    const element = entry?.element ?? 'slash';
+                    const isCrit = (entry?.text ?? '').includes('（会心）');
                     return (
                       <AttackFx
                         element={element}

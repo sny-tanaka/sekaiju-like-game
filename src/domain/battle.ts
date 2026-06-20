@@ -370,10 +370,11 @@ function strikeOnce(
       text: opts.clean
         ? `${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`
         : `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
+      element: p.element,
     });
   }
   // 撃破・起床ログはダメージ本文の後に出す（「ダメージ→倒れた」の順序を保つ）。
-  for (const text of dealLogs) state.log.push({ text });
+  for (const text of dealLogs) state.log.push({ text, element: p.element });
   return { hit: true, dealt };
 }
 
@@ -1077,8 +1078,8 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (poison) {
       const dmg = poison.magnitude ?? Math.max(1, Math.floor(c.maxHp * BALANCE.POISON_HP_RATIO));
       const dealLogs = dealDamage(c, dmg);
-      next.log.push({ text: `${c.name} は毒で ${dmg} のダメージ` });
-      for (const text of dealLogs) next.log.push({ text });
+      next.log.push({ text: `${c.name} は毒で ${dmg} のダメージ`, element: 'almighty' });
+      for (const text of dealLogs) next.log.push({ text, element: 'almighty' });
     }
   }
   // リジェネ（継続回復・[issue #41]）。毒の後、残ターン減算の前にHPを回復する。

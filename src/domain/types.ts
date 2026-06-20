@@ -470,6 +470,8 @@ export type FirstStrike = 'none' | 'preemptive' | 'ambush';
 
 export interface BattleLogEntry {
   text: string;
+  /** 攻撃/スキルの属性。AttackFx に渡すために使う。省略時は UI 側で 'slash' を fallback とする。 */
+  element?: Element;
   /**
    * このログ行が表示された時点の全戦闘員の HP/戦闘不能状態のスナップショット（issue #18）。
    * UI が行動を1行ずつ再生し、カードの HP バーを段階的に減らす/点滅させるために使う。
