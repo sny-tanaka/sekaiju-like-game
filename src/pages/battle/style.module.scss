@@ -2101,27 +2101,27 @@
   animation: dashAway 0.8s ease-in forwards;
 }
 
-// ---- 行動者前進アニメ（モック v3 §9d）: 味方は右、敵は左 ----
+// ---- 行動者前進アニメ（モック v3 §9d）: 味方は上、敵は下 ----
 @keyframes allyAdvance {
-  0%   { transform: translateX(0); }
-  35%  { transform: translateX(12px); }
-  70%  { transform: translateX(12px); }
-  100% { transform: translateX(0); }
+  0%   { transform: translateY(0); }
+  20%  { transform: translateY(-16px); }
+  70%  { transform: translateY(-16px); }
+  100% { transform: translateY(0); }
 }
 
 @keyframes enemyAdvance {
-  0%   { transform: translateX(0); }
-  35%  { transform: translateX(-12px); }
-  70%  { transform: translateX(-12px); }
-  100% { transform: translateX(0); }
+  0%   { transform: translateY(0); }
+  20%  { transform: translateY(16px); }
+  70%  { transform: translateY(16px); }
+  100% { transform: translateY(0); }
 }
 
 .cardAdvancing {
-  animation: allyAdvance 0.28s ease-in-out forwards;
+  animation: allyAdvance 0.7s ease-in-out forwards;
 }
 
 .enemyAdvancing {
-  animation: enemyAdvance 0.28s ease-in-out forwards;
+  animation: enemyAdvance 0.7s ease-in-out forwards;
 }
 
 // ---- K. dustRise — 逃走時の足元砂塵 ----
