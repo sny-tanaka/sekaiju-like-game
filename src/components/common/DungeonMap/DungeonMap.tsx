@@ -31,16 +31,16 @@ type Props = {
 };
 
 const COLORS = {
-  fog: '#090a0d', // 未踏 = var(--bg-deep)
-  floor: '#0e0f13', // 踏破済みの床 = var(--bg-mid)
-  wall: '#f2ede1', // 壁線 = var(--text-strong)（暗背景上に白系で描画）
-  grid: '#1c2230', // 床のうっすらした境界 = var(--bg-rise)
-  player: '#c9a86a', // 現在位置 = var(--gold)
-  foe: '#6b6f7a', // 徘徊敵（未感知）= var(--text-quote)
-  foeAlert: '#b23c30', // 徘徊敵（追跡中）= var(--danger)
-  gather: '#c9a86a', // 採集ポイント = var(--gold)
-  gatherDone: '#6b6f7a', // 採集済み（枯渇）= var(--text-quote)（暗めで枯渇感）
-  cooking: '#c9a86a', // 調理地点 = var(--gold)
+  fog: '#D4C7A8', // 未踏 = $parchment-edge
+  floor: '#F2E9D2', // 踏破済みの床 = $parchment-card
+  wall: '#21241B', // 壁線 = $ink
+  grid: '#EDE3CC', // 床のうっすらした境界 = $parchment
+  player: '#B22C2C', // 現在位置 = $vermilion
+  foe: '#5A4F36', // 徘徊敵（未感知）= $ink-faint
+  foeAlert: '#B22C2C', // 徘徊敵（追跡中）= $vermilion
+  gather: '#B89255', // 採集ポイント = $illumination-gold
+  gatherDone: '#D4C7A8', // 採集済み（枯渇）= $parchment-edge
+  cooking: '#B89255', // 調理地点 = $illumination-gold
 };
 
 // 採集種類ごとの絵文字アイコン（issue #20。地図上で種類を見分けやすく）。
@@ -173,7 +173,7 @@ export const DungeonMap = ({
       ctx.beginPath();
       ctx.arc(fx, fy, cell * 0.3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#f2ede1'; // = var(--text-strong)
+      ctx.fillStyle = '#ffffff';
       ctx.font = `bold ${Math.floor(cell * 0.5)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

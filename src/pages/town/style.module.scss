@@ -136,13 +136,13 @@
   cursor: not-allowed;
   animation: none;
   background: #101218;
-  border-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--rule-soft);
 }
 
 .dive[disabled] .diveBadge { color: #7c7a74; }
 .dive[disabled] .diveTitle { color: #7c7a74; }
 .dive[disabled] .diveDesc  { color: #e0917f; }
-.dive[disabled] .diveDecor { color: rgba(255, 255, 255, 0.05); }
+.dive[disabled] .diveDecor { color: var(--rule-soft); }
 
 .diveResume {
   background: linear-gradient(110deg, #203c2e, #12161f 72%);
@@ -203,7 +203,7 @@
 
 .tile[disabled] {
   background: #101218;
-  border-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--rule-soft);
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -343,7 +343,7 @@
   height: 4px;
   margin: 0 auto;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--rule-base);
 }
 
 .sheetHead {

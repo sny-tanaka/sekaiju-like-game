@@ -139,7 +139,7 @@
   align-items: center;
   padding: 6px 0;
   background: #15171f;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--rule-soft);
   border-radius: 3px;
 }
 
@@ -551,7 +551,7 @@
   width: 40px;
   height: 4px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--rule-base);
   margin: 0 auto 4px;
   flex-shrink: 0;
 }
@@ -621,7 +621,7 @@
   background: var(--danger);
   border: none;
   border-radius: 3px;
-  color: #fbeae6;
+  color: var(--danger-text);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;

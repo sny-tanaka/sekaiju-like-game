@@ -41,8 +41,8 @@
 
 // 弱点: 封蝋朱
 .weak {
-  // 監査結果: 2.1:1 → 4.6:1 (#fff on #b23c30; WCAG AA 達成)
-  color: #fff;
+  // 監査結果: 2.1:1 → 4.6:1 (--text-strong on #b23c30; WCAG AA 達成)
+  color: var(--text-strong);
   background-color: var.$vermilion;
   border: none;
 }

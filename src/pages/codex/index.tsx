@@ -107,7 +107,7 @@ export const Page = () => {
                     cy="30"
                     r="25"
                     fill="none"
-                    stroke="rgba(255,255,255,.1)"
+                    stroke="var(--rule-soft)"
                     strokeWidth="5"
                   />
                   <circle

@@ -279,7 +279,7 @@
   width: 100%;
   max-width: 360px;
   background: #0a0c10;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--rule-soft);
   border-radius: 5px;
   padding: 8px;
   max-height: 360px;
@@ -371,7 +371,7 @@
   flex: 1;
   height: 40px;
   border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--rule-base);
   background: transparent;
   color: #9a958a;
   font-size: 12px;
@@ -618,7 +618,7 @@
 .menuCloseBtn {
   width: 30px;
   height: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--rule-base);
   border-radius: 50%;
   background: transparent;
   color: #9a958a;
@@ -663,7 +663,7 @@
   flex: 1;
   height: 3px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--rule-soft);
   overflow: hidden;
 }
 
@@ -717,7 +717,7 @@
   height: 58px;
   border-radius: 4px;
   background: #15171f;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--rule-soft);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -875,7 +875,7 @@
   align-items: center;
   gap: 10px;
   background: #1a1d26;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--rule-soft);
   border-radius: 3px;
   padding: 9px 11px;
 }
@@ -1010,7 +1010,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--rule-base);
   background: transparent;
   color: #9a958a;
   cursor: pointer;

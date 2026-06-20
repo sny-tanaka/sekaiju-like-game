@@ -31,7 +31,7 @@
   display: flex;
   gap: 4px;
   margin: 12px 20px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--rule-soft);
 }
 
 .tab {
@@ -260,7 +260,7 @@
   aspect-ratio: 1;
   border-radius: 3px;
   background: var(--bg-deep);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--rule-soft);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -290,7 +290,7 @@
 
 .cellUnseen {
   background: #101218;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--rule-soft);
 }
 
 .cellUnseen .cellSprite {

@@ -70,7 +70,7 @@
   flex: 1;
   height: 5px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--rule-base);
   cursor: pointer;
 
   &:disabled {

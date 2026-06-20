@@ -286,7 +286,7 @@
   height: clamp(44px, 12vw, 52px);
   border-radius: 3px;
   border: 1px solid var(--rule-base);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-elev);
   color: var(--text-base);
   font-family: var(--font-body);
   font-weight: 600;
@@ -311,7 +311,7 @@
   border-radius: 3px;
   border: none;
   background: var(--danger);
-  color: #fbeae6;
+  color: var(--danger-text);
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 15px;
@@ -529,7 +529,7 @@
   height: 44px;
   border-radius: 3px;
   border: 1px solid var(--rule-base);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-elev);
   color: var(--text-base);
   font-family: var(--font-body);
   font-size: 14px;
