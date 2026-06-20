@@ -451,8 +451,12 @@ export const Page = ({
     const cur = state.log[idx]?.snapshot;
     const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
 
-    // Step 1: advance のピーク中（~180ms）でダメージ表示 + 行動者前進
-    const DAMAGE_AT = 180;
+    // Step 0 (即時 0ms): 前進開始 — CSS transition 0.18s が走り始める
+    const currentActor = anim.actorIds[idx];
+    setAdvancingActorId(currentActor ?? null);
+
+    // Step 1 (DAMAGE_AT = 200ms): 前進完了直後にダメージ/回復/バフ/デバフ発生
+    const DAMAGE_AT = 200;
     // Step 2: 行動完了を state で明示してから後退（keyframe の固定時間予約ではなく明示的 clear）
     const RETRACT_AT = 700;
     // Step 3: revealed を進める（一律 900ms）
@@ -543,10 +547,6 @@ export const Page = ({
         }
         // damage/heal SE は HitFx 内で isAllyTarget/variant に応じて発火するため除外
       }
-
-      // 行動者前進: CSS transition で前進（class 付与 → translateY が適用される）
-      const currentActor = anim.actorIds[idx];
-      setAdvancingActorId(currentActor ?? null);
     }, DAMAGE_AT);
 
     // 後退: state をクリアすると CSS transition で translateY(0) に戻る
