@@ -589,6 +589,15 @@ export const Page = () => {
                 </>
               )}
             </div>
+            {/* coinPop 演出（buy 時のみ）— 5c */}
+            {pending.kind === 'buy' && (
+              <div
+                className={styles.coinPopWrap}
+                aria-hidden="true"
+              >
+                <span className={styles.coinPop}>🪙</span>
+              </div>
+            )}
             {/* 数量ステッパー（sellEquip は数量1固定なので非表示）。 */}
             {pending.kind !== 'sellEquip' && (
               <div className={styles.stepperRow}>

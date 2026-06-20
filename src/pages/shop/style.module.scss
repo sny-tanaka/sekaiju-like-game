@@ -408,3 +408,21 @@
   z-index: 50;
   pointer-events: none;
 }
+
+// coinPop 演出（購入確認ダイアログ内）— 5c
+.coinPopWrap {
+  position: relative;
+  text-align: center;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.coinPop {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  font-size: 18px;
+  line-height: 1;
+  animation: obsidian-coinPop 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
