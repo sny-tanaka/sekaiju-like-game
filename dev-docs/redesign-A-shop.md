@@ -1,16 +1,23 @@
-# フェーズ 2：shop 画面リデザイン（sonnet 用指示書）— **改訂版 v3 — 差分修正**
+# フェーズ 2：shop 画面リデザイン（sonnet 用指示書）— **改訂版 v5 — 案A v3 完全対応**
 
 `dev-docs/redesign-A.md`（特に **§1.5 レイアウト運用ルール**）と
-`dev-docs/redesign-A-title-fix.md`（flex column 化のパターン）を **必ず先に読む**こと。
+`dev-docs/design-source-v3-changelog.md`（**v3 で確定した out-of-spec 整理判断の出典**）を
+**必ず先に読む**こと。
 
-ショップ画面（買う / 売る ＋ カテゴリチップ ＋ 売買確認ダイアログ）の v2 リデザインは適用済みだが、
-ユーザーから「**まだデザインと異なる部分がある**」と指摘あり。本 v3 ではモック原本
-(`/tmp/sekaiju-design/案A_v2.dc.html` line 621〜679) と現状実装を改めて精密に照合し、
-**取りこぼした視覚差分のみを埋める**。
+ショップ画面（買う / 売る ＋ カテゴリチップ ＋ 売買確認ダイアログ）は v3 まででモック忠実化と
+「装備中ロック行（5a）」の追加が完了している。Claude Design から `案A v3` が到着し、
+out-of-spec 要素のうち以下 1 点が **「追加」** 判定として確定した。
+
+本 v5 では v3 のモック原本 `/tmp/sekaiju-design/案A_v3.dc.html`（line 601〜660、`05 shop`）と
+現状実装を改めて照合し、**v3 判定に追随する修正**を行う。
 
 参考:
+- v3 changelog: `dev-docs/design-source-v3-changelog.md` 表 §B「5 shop」行
+  - 5a 装備中・売却不可🔒 → **追加** （**既に v3 で実装済み**。本 v5 では維持を確認するのみ）
+  - 5c coinPop 演出 → **追加**（購入完了 SE + 金貨ポップを購入確認ダイアログに追加）
+- 既存実装: `src/pages/shop/index.tsx`, `src/pages/shop/style.module.scss`
 - 現状スクショ: `/tmp/sekaiju-screenshots-current/pages-shop--default.png`,
-  `/tmp/sekaiju-screenshots-current/pages-shop--sell.png`
+  `/tmp/sekaiju-screenshots-current/pages-shop--sell.png`（v3 直前時点）
 
 > **重要**: 自分で `Edit` / `Write` / `Bash` を使って実装すること。
 > **Agent / Task を spawn しないこと**（孫エージェントへの委譲禁止）。
@@ -23,150 +30,215 @@
 - `src/pages/shop/index.tsx`
 - `src/pages/shop/style.module.scss`
 - `src/pages/shop/Shop.stories.tsx`（必要なら新規ストーリーを追加。既存名は変えない）
+- `src/_obsidian.scss` の **末尾に `@keyframes obsidian-coinPop` を追加するときのみ**触ってよい
+  （既存トークン値・他のキーフレームは絶対に変更しない）
 
 ### 触ってはいけない
 - 共通コンポーネント（`@/components/common/ItemSprite`, `InkSplatter` 等）の API / 内部 / スタイル
 - `@/domain/*`, `@/data/*` の関数・型・戻り値・副作用は変えない
 - `@/store/*`, `@/audio/*` は変えない
+  - `sfxManifest.ts` の `SFX_IDS` には既に `'coin'` がある（line 18）。新規 SE 追加は不要。
 - 他ページ (`src/pages/town`, `src/pages/guild`, `src/pages/guild-char`, `src/pages/forge` 等) は本タスクの範囲外
 - 既存テスト（特に `src/domain/shop.test.ts`）の assert は変えない
 - `src/_obsidian.scss` のグローバルキーフレーム名・既存トークンの値は変えない
+  （追加のみ可。既存の `obsidian-*` は触らない）
 
 ---
 
 ## 2. やってはいけないこと
 
+- **Agent / Task ツールで子エージェントを spawn しない**（このタスクは自分で完結する）
 - 機能仕様 (`dev-docs/claude-design-brief.md` §8 ショップ) の **変更は不可**。
-  - 「装備詳細モーダル」（現状実装の `renderEquipDetail`）はモックに無いが機能優先で残す。
+  - 「装備詳細モーダル」（現状の `renderEquipDetail`）はモックに無いが機能優先で残す。
   - 売却確認・購入数量ステッパー・購入後所持金プレビューはモック通り残す。
+  - **装備中ロック行（5a）は v3 で既に実装済み**。データ走査ロジック (`equipOwnerMap`) を維持。
+- 共通コンポーネント・既存テスト assert を変更しない。
 - 絶対配置で行 / フッタを置かない（§1.5）。
 - ロジック・売買確認フロー・カタログ算出 (`shopCatalog` 等) は変えない。スタイル＋極小の JSX 構造変更にとどめる。
+- 既存の購入確定 InkSplatter (`buyConfirmedFx` + `InkSplatter variant='damage'`) は **残す**。
+  本 v5 の coinPop はそれと **重ねて出す**（モックは coin pop をダイアログの中身に出しているため、
+  既存の墨インク InkSplatter は閉じた後のフルスクリーン演出として併存できる）。
 
 ---
 
-## 3. モックとの差分一覧（v2 → v3 で直すべき箇所）
+## 3. モックとの差分一覧 + out-of-spec 判断の反映
 
-差分の **無い項目は書かない**。差分のあった項目だけ列挙。
+差分の **無い項目は書かない**。v5 で直すべき差分だけ列挙する。
 
-### 3.1 ヘッダー・タブバー
+### 3.1 5a 売るタブ 装備中ロック行 — **★維持 ★**
 
-差分なし。
-- ヘッダー: `<h1>ショップ</h1>` + 右に gold mono `8,420 G` — モック一致。
-- タブバー: 「買う / 売る」 active が gold 塗り角丸 — モック一致。
+| # | 現状実装 | v3 モック | 修正方針 |
+|---|---|---|---|
+| **5a** | `index.tsx` line 145〜200 で `equipOwnerMap` を構築し、`allEquipRows` を `locked: true` / `locked: false` に分岐、`sellRows` 末尾に locked 行を集約済み。JSX (line 477〜493) で `.rowLocked` + `.noteLocked` + `.lockIcon` を描画 | モック (v3 line 636) は `opacity:.6` の装備中行 + 「装備中（ジョンスミス）・ 売却不可」+ 🔒 | **据置**。v3 で既に実装済み。動作確認のみ。 |
 
-### 3.2 カテゴリチップ・ソート行
+確認手順:
+1. `mockWithParty` を decorator で渡したストーリー（または `mockShop`）で「売る」タブを開く。
+2. 党員が装備している装備個体がリスト末尾に **opacity 0.6 + 🔒** で出ているか目視確認。
+3. 個体が無い場合は `__stories__/mockSaves.ts` に preset を追加するか、`mockWithParty` の装備状態を
+   見直す（**`__stories__/mockSaves.ts` は触ってよい**。共通コンポーネントには該当しない）。
 
-| # | 差分 | 修正方針 |
-|---|---|---|
-| **F-1** | カテゴリチップ（すべて / 武器 / 防具 / 装飾 / 道具）モックは 5 種 | 現状実装は 5 種（武器・防具・装飾・道具・素材）。**「素材」はモックに無いが、機能仕様で必要**（売却カタログに素材が含まれるため）。現状の `presentCats` で「実在するカテゴリだけ」表示する仕組みになっているので、素材が無い局面では出ない → モック一致。**差分なし**。 |
-| **F-2** | チップ active 色: モック gold 塗り + `color:#0e0f13; font-weight:700` 非 active 枠線のみ `color:#9a958a` | 現状一致、差分なし。 |
-| **F-3** | ソート行: モックは **テキストのみ**「⇅ 金額が高い順」を右寄せ表示（ドロップダウンではなくラベル風）、現状は `<select>` | モバイル機ネイティブの select 表示は UX 上の利便なので **現状維持**。`appearance: none; border: none; background: transparent; color: var(--text-faint);` でモックの見た目に寄せている。差分なしと判断。 |
+### 3.2 5c 購入確認ダイアログ coinPop 演出 — **★追加 ★**
 
-### 3.3 リスト本体（買うタブ）
+| # | 現状実装 | v3 モック | 修正方針 |
+|---|---|---|---|
+| **5c-1** | 購入確定時に画面全体（オーバーレイ閉じた後）に `InkSplatter variant='damage' value='✓'` がフラッシュ表示される | モック (v3 line 651〜652) は **購入確認ダイアログの中身**、商品ヘッダーとステッパーの間に `🪙` 絵文字が `position:relative; text-align:center; top:-6px;` で `animation: coinPop 1.8s ease-in-out infinite` で配置されている | **追加**: 購入確認ダイアログの **商品ヘッダー直下** に `🪙` ポップ要素を配置する。既存の墨インク `InkSplatter`（`buyConfirmedFx`）は **そのまま残す**（購入確定後の全画面演出として併存）。 |
+| **5c-2** | `play('coin')` は `confirmPending` 内で既に呼ばれている（line 239） | モック ✦ FX は `購入完了 SE + 金貨ポップ` | **据置**。SE は既に鳴る。視覚演出（金貨ポップ）だけを追加する。 |
 
-| # | 差分 | 修正方針 |
-|---|---|---|
-| **L-1** | 先頭行 (`rowHighlight`) 強調: モック `linear-gradient(100deg,#1a2030,#13151c) + border:rgba(201,168,106,.35)` + 価格ボタン gold 塗り (`actionHighlight`) | 現状実装一致、差分なし。 |
-| **L-2** | 通常行: モック `background:#15171f; border:1px solid rgba(255,255,255,.06); border-radius:4px; padding:11px 13px` | 現状一致、差分なし。 |
-| **L-3** | ItemSprite ラッパー: モック 44x44 `background:#0c0d11; border-radius:3px` で 40x40 のアイコン中央 | 現状一致 (`.spriteCard`)、差分なし。 |
-| **L-4** | アイテム名 13px text-strong + 説明 10px faint（「重厚な大剣 ・ ATK +62」） | 現状はアイテム名 + 説明 (`note`) を表示しており、機能上「所持 8」を併記しているのもモック準拠（モックも回復薬で「HP +120 ・ 所持 8」と記載あり）。差分なし。 |
-| **L-5** | 価格ボタン (`action` / `actionHighlight`): mono 12px gold border / gold 塗り | 現状一致、差分なし。 |
-| **L-6** | 装備行のアイテム名がボタン（タップで詳細モーダル） | 機能優先で残す（モックには無いが、装備詳細を見るために必要）。差分なしと扱う。 |
+実装方針:
 
-### 3.4 リスト本体（売るタブ）— ★ **取りこぼし** ★
+#### A. `_obsidian.scss` に `obsidian-coinPop` キーフレームを追加
 
-| # | 差分 | 修正方針 |
-|---|---|---|
-| **SL-1** | **モックには「装備中（誰々）・ 売却不可」のロック行**が含まれている（`opacity:.6; border:1px solid rgba(255,255,255,.05); + 鍵アイコン`）。現状実装は **装備中個体を `sellRows` に含めない**ので、ロック行が表示されない | **追加実装**: 装備中の個体（`save.guild.members[*].equipment.{weapon,armor,accessory}` のいずれかにあるもの）を、`sellRows` 末尾にロック行として **表示用に追加**。<br>**スタイル**: 現状の `.rowLocked` / `.noteName` / `.noteLocked` / `.lockIcon` が **CSS には既に定義されているが JSX で使われていない**。これを使う:<br>```tsx<br><div className={styles.rowLocked}><br>  <div className={styles.spriteCardSm}><ItemSprite ... /></div><br>  <div className={styles.info}><br>    <span className={styles.noteName}>{baseName}{forgeLvSuffix}</span><br>    <span className={styles.noteLocked}>装備中（{ownerName}）・ 売却不可</span><br>  </div><br>  <span className={styles.lockIcon}>🔒</span><br></div><br>```<br>**ロジック**: `save.guild.members` を走査して、装備中のインスタンスと装備者名を Map に集める関数を `sellRows` の組み立てに追加。実際には sell ボタンをクリックできない（pointer-events を切る or disabled の `<button>` でも可）。ドメイン関数の変更は不要、表示用情報の組み立てのみ。<br>**注意**: `domain/shop.test.ts` の assert を変えない範囲で実装。テストは「装備中の個体は売却対象外」を見ているはずなので、表示追加だけなら影響なし。 |
-| **SL-2** | モックの「装備個体プールが空のときは『売れる装備がありません』」ヒント文 (`bottom:80px text-align:center; font-size:11px; color:#5d5a52`) | 現状の `売れる物がありません` 中央表示で実質一致、差分なし。 |
-| **SL-3** | 売るタブの「強化値色付きサフィックス」（`+0` `+1` を `color:#7c7a74`） | 現状実装 (`.forgeLevel`) 一致、差分なし。 |
-| **SL-4** | 「個体 #st_2」のような個体 ID 表示 | モックは `#A2` `#C7` のような短い ID、現状は `.inst.id.slice(-4)` で末尾 4 文字。差分なし（モックも実用上の一意性確保なら同等）。 |
+ファイル末尾に追記する（既存 `obsidian-*` キーフレームと **同じ名前空間** で命名し、
+`prefers-reduced-motion` のブロックも併記する）:
 
-### 3.5 フッタ
+```scss
+@keyframes obsidian-coinPop {
+  0%   { transform: translate(-50%, 0); opacity: 0.6; }
+  20%  { transform: translate(-50%, -14px); opacity: 1; }
+  60%  { transform: translate(-50%, -22px); opacity: 1; }
+  100% { transform: translate(-50%, 0); opacity: 0.6; }
+}
 
-差分なし。「拠点へ戻る」 sub 46px outline でモック一致。
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-coinPop { 0%, 100% { transform: translate(-50%, 0); opacity: 1; } }
+}
+```
 
-### 3.6 売買確認ダイアログ
+挿入位置はファイル末尾の `obsidian-sheetRise` の後、`@media (prefers-reduced-motion)` ブロックも
+同様に末尾に追記する（既存ブロックの中身は変えない）。
 
-| # | 差分 | 修正方針 |
-|---|---|---|
-| **D-1** | ダイアログヘッダー: ItemSprite 56x56 + 名前 + 説明 | 現状一致、差分なし。 |
-| **D-2** | coin pop アニメ位置: モックは商品ヘッダーの直下、ステッパーの上に `position:relative; text-align:center;` で配置（`top:-6px`） | 現状の `.coinPop` は `display: block; text-align: center; font-size: 18px; margin: -4px 0 20px;` で、ほぼ一致。差分なしと判断。 |
-| **D-3** | 数量ステッパー: − / ×N / ＋ / 最大 横並び | 現状一致、差分なし。 |
-| **D-4** | 合計 + 購入後所持金（下境界）| 現状一致、差分なし。 |
-| **D-5** | 2 ボタン（やめる / 購入する） | 現状一致、差分なし。 |
+#### B. `shop/style.module.scss` に `.coinPop` クラスを追加
 
-### 3.7 装備詳細モーダル（機能優先で残すモック非掲載要素）
+ダイアログ内の商品ヘッダーとステッパーの間に配置するための **絶対配置を許容したラッパー** を追加:
 
-差分なし。現状の `renderEquipDetail` をそのまま使う。
-ただし、確認ダイアログと装備詳細モーダルの **2 種類が `.confirmOverlay` `.confirmBox` を共有している** ため、
-重ね時の挙動が気にならないか目視確認すること（基本同時には開かない設計）。
+```scss
+.coinPopWrap {
+  position: relative;
+  text-align: center;
+  height: 14px;       /* 14px 程度の固定高で他要素のレイアウトを動かさない */
+  margin-bottom: 8px;
+}
+
+.coinPop {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  font-size: 18px;
+  line-height: 1;
+  animation: obsidian-coinPop 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+```
+
+ダイアログ内部は **flex column の流れの中で配置するが、`.coinPopWrap` 自体が固定高なので、
+内部の `.coinPop` を `position: absolute` にしてもダイアログ全体のレイアウトには影響しない**
+（§1.5 で禁止しているのは画面全体の絶対配置レイアウトであり、装飾の局所 absolute は許容）。
+
+#### C. `shop/index.tsx` の購入確認ダイアログ JSX に coinPop を追加
+
+`pending.kind === 'buy'` のときだけ、商品ヘッダー（モックでは確認ダイアログのヘッダー部に
+ItemSprite + 名前 + 説明があるが、現状実装はヘッダー部分が無いシンプルなダイアログ）の **直下、
+ステッパーの上** に挿入する:
+
+```tsx
+<div className={styles.confirmText}>
+  {pending.kind === 'buy' ? (
+    <>
+      <strong>{pending.name}</strong> を購入しますか？
+    </>
+  ) : pending.kind === 'sellEquip' ? (
+    /* ...略... */
+  ) : (
+    /* ...略... */
+  )}
+</div>
+
+{/* coinPop 演出（buy 時のみ） */}
+{pending.kind === 'buy' && (
+  <div className={styles.coinPopWrap} aria-hidden="true">
+    <span className={styles.coinPop}>🪙</span>
+  </div>
+)}
+
+{/* 数量ステッパー */}
+{pending.kind !== 'sellEquip' && (
+  <div className={styles.stepperRow}>
+    {/* 既存 */}
+  </div>
+)}
+```
+
+**注意**: 既存の `confirmText` はテキストのみのシンプル構造。モックでは商品ヘッダーに
+`ItemSprite 56x56 + 名前 + 説明` を含むが、現状実装はそこまで作り込んでいない。
+**本 v5 では構造変更は最小に倒し、coinPop の追加だけで OK**（ヘッダー化は別タスク）。
+
+#### D. SE は据置（既に `play('coin')` 済み）
+
+`confirmPending` 内の `play('coin')` (line 239) はそのまま。`sfxManifest.ts` の `'coin'` を使う。
+
+#### E. 既存 `buyConfirmedFx` (InkSplatter) は据置
+
+ダイアログを閉じた後の全画面演出としての `<InkSplatter variant='damage' value='✓' />` は
+**残す**（モックは確認中の演出だが、確定後の確認フィードバックとして既存実装の価値があるため）。
+`buyConfirmed` ステートと `setBuyConfirmed(true)` のフローは触らない。
+
+### 3.3 その他（差分なし）
+
+ヘッダー、タブバー、カテゴリチップ、ソート行、買うタブの全要素、装備詳細モーダル
+（機能優先で残す）、フッタは **v3 時点でモック一致**。v5 では触らない。
 
 ---
 
-## 4. ゴール
+## 4. データ拡張の方針
 
-実装後の見た目で、以下が満たされていること:
-
-1. **売るタブで装備中の個体が「装備中（{名前}）・ 売却不可」ロック行**として表示される
-   （現状の sellRows に該当行が無い問題を修正）。
-2. その他の差分が無い項目はそのまま v2 の見た目を維持する。
-3. iPhone SE / iPhone 16 / iPad mini の 3 視点で「要素が重ならない」「ページ全体スクロール無し」
-   （`.list` だけが縦スクロール）。
+**shop では不要**。`Character` 型・`SaveData` スキーマ・マイグレーション・テストの追加は一切しない。
+ドメイン関数 (`buyMany` / `sell` / `sellEquipment` / `shopCatalog` / `equipSellValue` 等) も触らない。
 
 ---
 
-## 5. 実装ステップ（差分のある部分だけ直す）
+## 5. 実装ステップ
 
-### Step 1 — 装備中の個体を SellRow に追加する（**主たる修正**）
+### Step 1 — `_obsidian.scss` に `obsidian-coinPop` キーフレームを追加
 
-1. **`save.guild.members` を走査して装備者名を引ける Map を作る**:
-   ```ts
-   const equipOwnerMap = new Map<string, string>();
-   for (const m of save.guild.members) {
-     for (const slot of ['weapon', 'armor', 'accessory'] as const) {
-       const eq = m.equipment[slot];
-       if (eq) equipOwnerMap.set(eq.id, m.name);
-     }
-   }
-   ```
-2. **`sellRows` 組み立てを変更**:
-   - 現状: `save.guild.equipment` から `EquipInstance` を全部リスト化
-   - 修正後: 同じく全部リスト化するが、**`equipOwnerMap.has(e.id)` の個体には `locked: true; ownerName: string` を付与**
-3. **`SellRow` の型**にロック情報を追加:
-   ```ts
-   type SellRow =
-     | { ...; kind: 'equip'; locked?: false }
-     | { ...; kind: 'equip'; locked: true; ownerName: string }
-     | { ...; kind: 'item' };
-   ```
-   または `kind: 'equipLocked'` を別 variant で切るのも可。実装しやすい方で。
-4. **JSX 側でロック行を分岐レンダリング**:
-   - `kind === 'equip' && locked` のとき: `.rowLocked` + `.spriteCardSm` + `.noteName` + `.noteLocked` + `.lockIcon` で出す。
-   - クリックしても売却 pending を開かない（onClick を付けない、または `disabled` 風に視覚化）。
-5. **既存の CSS 定義 (`.rowLocked` / `.noteName` / `.noteLocked` / `.lockIcon`) はそのまま使う**（既に書かれている、JSX で参照だけ追加）。
+1. ファイル末尾の `obsidian-sheetRise` の **直後** に `@keyframes obsidian-coinPop` を追加。
+2. `prefers-reduced-motion: reduce` のブロックにも `coinPop` の no-op 版を追記。
+3. **既存の `obsidian-*` キーフレーム / 変数の値は絶対に変えない**（他画面で参照されている）。
 
-### Step 2 — `view()` のソート対象から locked を除外するか維持するか
+### Step 2 — `shop/style.module.scss` に `.coinPopWrap` / `.coinPop` を追加
 
-- モックではロック行が最下段、現状ソートが `priceDesc` の場合 locked 行が中段に紛れると見づらい。
-- **修正**: ロック行を **常にリスト末尾**に置く。`view()` の return を `[...sortedNonLocked, ...locked]` の順にする。
-- 仕様変更ではなく表示順の調整なので、テストへの影響なし。
+1. 既存の `.confirmBox` / `.confirmText` 周りのセクションに、上記 SCSS 差分を追加する。
+2. 既存の `.buyConfirmedFx` 系の SCSS は触らない。
 
-### Step 3 — Storybook で確認
+### Step 3 — `shop/index.tsx` のダイアログに coinPop ラッパーを追加
 
-1. 既存 `Default` / `Sell` ストーリーに `mockShop` を使って装備中個体ありの状態を作る。
-   - `mockShop` で party のメンバーが装備済の状態がない場合、`__stories__/mockSaves.ts` に preset を追加するか、
-     既存の `mockWithParty` のように装備済状態を作っている mock を別途指定する。
-   - **`__stories__/mockSaves.ts` を直接編集可**（共通コンポーネントには該当しない）。
-2. 「売る」タブを開いて、装備中個体がロック行として最下段に並ぶことを確認。
+1. 購入確認ダイアログ（`pending.kind === 'buy'` のとき）に `.coinPopWrap` + `.coinPop` を追加。
+2. 数量ステッパーや合計表示の前に挿入する（モックの配置順に合わせる）。
+3. `play('coin')` の呼び出しは据置。
 
-### Step 4 — スクショ確認
+### Step 4 — 装備中ロック行の動作確認（5a 維持）
 
-`pages-shop--sell` を撮り直し、装備中ロック行が現れるか確認。
+1. Storybook で「売る」タブを開き、ロック行が末尾に出ているか確認。
+2. `mockShop` または `mockWithParty` で装備中個体がある状態を再現できているか確認。
+   出ない場合は `__stories__/mockSaves.ts` の preset を見直す。
+
+### Step 5 — Storybook で確認
+
+1. 既存 `Default` / `Sell` ストーリーに加えて、購入確認ダイアログを開いた状態のストーリーを
+   1 つ追加して撮影してもよい（任意。`mockShop` で gold を多めにして購入確認ダイアログを `initialState` で開くなど）。
+2. `🪙` が商品名直下で上下にゆっくり跳ねていることを目視確認。
+
+### Step 6 — スクショ確認
+
+ヘッドレス Chrome で:
+- `pages-shop--default`
+- `pages-shop--sell` （ロック行が末尾にあること）
+- 購入確認ダイアログ用ストーリー（あれば、coinPop が出ていること）
+
+を撮り、v3 モックと並べて差分が無いことを確認する。
 
 ---
 
-## 6. 検証（必須）
+## 6. 検証
 
 完了前に **すべて緑にする**:
 
@@ -179,15 +251,17 @@ yarn build      # bump-patch-version.mjs → tsc -b → vite build
 特に注意:
 - **`src/domain/shop.test.ts`** が「装備中の装備は売却対象外」をアサートしているはずなので、
   **ドメイン関数 (`sellEquipment` 等) は触らない**。UI 層 (`index.tsx`) で表示用に追加するだけ。
-- 型エラー（`SellRow` の variant 増加）は丁寧に追従させる。
+- 型エラーは丁寧に追従させる（`tsc -b` は vitest / eslint で検出されないので必ず回す）。
+- `yarn build` を実行すると `docs/` と `package.json` のバージョンが更新される。
+  **`docs/` と更新後 `package.json` も同じコミットに含めること**。
 
 ---
 
 ## 7. コミット
 
-- 自分でコミットする（ディレクターがレビュー後に push する）。
-- 規模に応じて 1〜2 個のコミットに分割可（例: ロック行追加／build 成果物）。
+- 自分でコミットする（push はしない。ディレクターがレビュー後に push する）。
+- 規模に応じて 1〜2 個のコミットに分割可（例: SCSS keyframe 追加／JSX 追加／build 成果物）。
 - コミットメッセージ例:
-  - `feat(shop): 売るタブに装備中ロック行を追加してモックに揃える`
-  - `chore(build): rebuild docs/ after shop v3 fixes`
+  - `feat(shop): 案A v3 取り込み（購入確認に coinPop 演出を追加）`
+  - `chore(build): rebuild docs/ after shop v5 fixes`
 - 完了したら **commit SHA を報告**（push はしない）。
