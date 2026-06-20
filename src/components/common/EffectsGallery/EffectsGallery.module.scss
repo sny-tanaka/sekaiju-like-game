@@ -1,0 +1,301 @@
+// EffectsGallery.module.scss
+// gallery- 接頭辞付きの @keyframes はグローバル出力が必要なため
+// EffectsGallery.keyframes.css に分離してある（EffectsGallery.tsx から import）。
+
+// ---------------------------------------------------------------------------
+// レイアウト
+// ---------------------------------------------------------------------------
+
+.root {
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--bg-page-gradient, var(--bg-mid, #0e0f13));
+  padding: 32px 24px 48px;
+  box-sizing: border-box;
+}
+
+.categorySection {
+  margin-bottom: 40px;
+}
+
+.categoryHeading {
+  font-family: var(--font-display, 'Shippori Mincho', serif);
+  font-size: 20px;
+  color: var(--text-strong, #f2ede1);
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule-base, rgba(255, 255, 255, .14));
+  letter-spacing: .06em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--surface-panel, #15171f);
+  border: 1px solid var(--rule-base, rgba(255, 255, 255, .14));
+  border-radius: 4px;
+  overflow: hidden;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview {
+  flex: 0 0 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, .3);
+}
+
+.label {
+  flex: 1;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+
+.labelName {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-strong, #f2ede1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.labelDesc {
+  font-size: 11px;
+  color: var(--text-faint, #6b6f7a);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ---------------------------------------------------------------------------
+// 各エフェクトのプレビュー要素スタイル
+// ---------------------------------------------------------------------------
+
+// 汎用丸
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c9a86a;
+}
+
+.dotBlue {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #a9c3d8;
+}
+
+.dotGreen {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #5fb86a;
+}
+
+// 汎用矩形
+.rect {
+  width: 40px;
+  height: 24px;
+  border-radius: 3px;
+  background: rgba(201, 168, 106, .5);
+}
+
+.rectRed {
+  width: 48px;
+  height: 32px;
+  border-radius: 3px;
+  background: rgba(212, 103, 79, .7);
+}
+
+// 斬撃バー
+.slashBar {
+  width: 56px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #fff 40%, #c9a86a 100%);
+  border-radius: 2px;
+}
+
+// 縦バー（thrust 系）
+.thrustBar {
+  width: 3px;
+  height: 48px;
+  background: linear-gradient(180deg, #fff, #c9a86a 60%, transparent);
+  border-radius: 2px;
+}
+
+// 輪
+.ring {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(201, 168, 106, .8);
+  background: transparent;
+}
+
+// 文字系
+.kanji {
+  font-family: var(--font-display, 'Shippori Mincho', serif);
+  font-size: 28px;
+  color: #c9a86a;
+  line-height: 1;
+}
+
+.kanjiRed {
+  font-family: var(--font-display, 'Shippori Mincho', serif);
+  font-size: 24px;
+  color: #d4674f;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hitOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(212, 103, 79, 0);
+}
+
+// shimmer バー
+.shimmerBar {
+  width: 80px;
+  height: 10px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(201,168,106,.3) 0%, rgba(201,168,106,.8) 20%, rgba(201,168,106,.3) 40%);
+  background-size: 80px 10px;
+}
+
+// warpScan ライン
+.scanLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(93, 200, 180, .6);
+}
+
+// encPulse 用コンテナ
+.encBox {
+  width: 80px;
+  height: 50px;
+  border-radius: 4px;
+  border: 1px solid rgba(120, 20, 30, .4);
+}
+
+// corridorPulse 用
+.corridor {
+  width: 80px;
+  height: 50px;
+  background: linear-gradient(180deg, #0e0f13, #1a1c24);
+  border-radius: 2px;
+}
+
+// forgeSpark 用
+.spark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff8c00;
+  box-shadow: 0 0 6px #ff8c00;
+}
+
+// 毒・霧
+.wisp {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(140, 200, 80, .6);
+  box-shadow: 0 0 8px rgba(140, 200, 80, .6);
+}
+
+// 炎
+.flame {
+  width: 20px;
+  height: 36px;
+  background: radial-gradient(ellipse at 50% 80%, #ff6a00, #ff3300 40%, #ff000000 100%);
+  border-radius: 50% 50% 30% 30%;
+}
+
+// 雷
+.bolt {
+  width: 4px;
+  height: 50px;
+  background: linear-gradient(180deg, #fff 0%, #b0c8ff 50%, transparent 100%);
+  border-radius: 2px;
+  box-shadow: 0 0 8px #8ab4ff;
+}
+
+// 氷結晶
+.crystal {
+  width: 24px;
+  height: 24px;
+  background: conic-gradient(from 0deg, transparent 0deg 30deg, #a9c3d8 30deg 60deg, transparent 60deg 90deg, #a9c3d8 90deg 120deg, transparent 120deg 150deg, #a9c3d8 150deg 180deg, transparent 180deg 210deg, #a9c3d8 210deg 240deg, transparent 240deg 270deg, #a9c3d8 270deg 300deg, transparent 300deg 330deg, #a9c3d8 330deg 360deg);
+  border-radius: 50%;
+}
+
+// 魔法陣
+.rune {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #9b59b6;
+  box-shadow: 0 0 10px rgba(155, 89, 182, .6);
+}
+
+// スピードライン
+.speedLineEl {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
+  border-radius: 1px;
+}
+
+// dissolveE 用文字
+.dissolveChar {
+  font-family: var(--font-display, 'Shippori Mincho', serif);
+  font-size: 32px;
+  color: #f2ede1;
+  opacity: 1;
+}
+
+// summonAppear 用
+.summonIcon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+// steamRise 用
+.steam {
+  width: 16px;
+  height: 20px;
+  border-radius: 50% 50% 30% 30%;
+  background: rgba(200, 200, 220, .4);
+}
+
+// ailDrift 用
+.ailIcon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+// dustRise 用
+.dust {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(160, 140, 100, .5);
+}

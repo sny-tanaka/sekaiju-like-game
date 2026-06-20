@@ -70,9 +70,12 @@
 }
 
 .skillItem {
+  // 監査: #f5f5f5（明灰）+ var.$text-dark（黒曜で白）= 明背景+白文字で読めない
+  //       → 黒曜の暗パネルに置換し、白文字が読めるよう修正
   padding: 6px 8px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
+  background-color: var(--surface-elev);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
 }
 
 .skillHeader {
@@ -94,7 +97,8 @@
 }
 
 .skillDesc {
+  // 監査: 親の text-dark (黒曜で白) を opacity 0.75 で継承。色を明示して安定化
   font-size: 12px;
   line-height: 1.5;
-  opacity: 0.75;
+  color: var(--text-soft);
 }

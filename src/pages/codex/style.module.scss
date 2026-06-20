@@ -1,4 +1,4 @@
-@use 'variables' as var;
+// 写本テーマ排除 — 全色を var(--*) 経由に統一（obsidian テーマ）
 
 .layout {
   display: flex;
@@ -6,56 +6,50 @@
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
-  color: var.$ink;
+  padding: 0 0 max(20px, env(safe-area-inset-bottom, 0px));
+  color: var(--text-base);
   overflow: hidden;
-  background-color: var.$parchment;
+  background-color: var(--bg-deep);
 }
 
 .head {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 0.75px solid var.$rule;
-}
-
-.chapterMark {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: var.$ink-faint;
-  letter-spacing: 0.08em;
-  margin-bottom: 4px;
+  flex: none;
+  padding: 16px 20px 0;
+  margin-bottom: 0;
 }
 
 .title {
   margin: 0;
-  font-size: 24px;
-  font-weight: 900;
-  color: var.$ink;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-strong);
+  letter-spacing: 0;
 }
 
 .tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 4px;
+  margin: 12px 20px 0;
+  border-bottom: 1px solid var(--rule-soft);
 }
 
 .tab {
   flex: 1;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 15px;
-  font-weight: 700;
+  text-align: center;
+  padding: 9px 0;
+  font-size: 12px;
+  color: var(--text-quote);
+  background: transparent;
+  border: 0;
   cursor: pointer;
 }
 
 .tabActive {
-  border-color: var.$verdant;
-  background-color: var.$parchment;
-  color: var.$verdant;
+  background: var(--gold);
+  color: var(--bg-mid);
+  font-weight: 700;
+  border-radius: 3px 3px 0 0;
 }
 
 // ---- 記録 ----
@@ -65,60 +59,77 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  padding: 12px 20px 0;
 }
 
-.statBig {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 16px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  margin-bottom: 12px;
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-top: 16px;
 }
 
-.statNum {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 40px;
-  font-weight: 700;
-  color: var.$illumination-gold;
-  line-height: 1;
+.statCard {
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 14px;
 }
 
-.statLabel {
+.statCardLabel {
+  font-size: 10px;
+  color: var(--text-mute);
+}
+
+.statCardNum {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  color: var(--gold);
+  margin-top: 4px;
+  line-height: 1.1;
+}
+
+.statCardUnit {
   font-size: 13px;
-  color: var.$ink-faint;
+  color: var(--text-mute);
 }
 
-.statList {
-  margin: 0 0 16px;
-}
-
-.statRow {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 4px;
-  border-bottom: 0.75px solid var.$rule;
-  font-size: 14px;
-
-  dt {
-    color: var.$ink-faint;
-  }
-  dd {
-    margin: 0;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    color: var.$ink;
-  }
-}
-
-.h2 {
+.statCardBossName {
+  font-family: var(--font-display);
   font-size: 15px;
-  font-weight: 800;
-  margin: 0 0 8px;
-  color: var.$ink;
+  color: var(--text-strong);
+  margin-top: 6px;
+}
+
+.statCardBossTier {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-mute);
+}
+
+.ringWrap {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 6px auto 0;
+}
+
+.ringSvg {
+  width: 60px;
+  height: 60px;
+  display: block;
+}
+
+.ringText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--gold);
 }
 
 .h2Caption {
@@ -126,7 +137,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   margin: 0 0 8px;
-  color: var.$ink-faint;
+  color: var(--text-mute);
 }
 
 .bossLog {
@@ -139,169 +150,308 @@
 }
 
 .bossRow {
-  padding: 8px 10px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  font-size: 14px;
-  color: var.$ink;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 10px 12px;
 }
 
-// ---- 図鑑エントリ（内部スクロール） ----
+.bossRowSprite {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 3px;
+  background: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  overflow: hidden;
+}
+
+.bossRowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.bossName {
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+.bossMeta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-mute);
+}
+
+.bossStamp {
+  font-size: 18px;
+  color: var(--danger-glow);
+  transform: rotate(-12deg);
+  flex: none;
+}
+
+// ---- 図鑑タブ ----
 .codex {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  padding: 12px 20px 0;
   display: flex;
   flex-direction: column;
 }
 
-.codexSummary {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: var.$ink-faint;
-}
-
-// ---- エントリ一覧 ----
-.entries {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+.codexSummaryRow {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.row {
-  padding: 8px 12px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  display: flex;
-  gap: 8px;
+  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  margin-bottom: 8px;
 }
 
-// スプライトサムネイル（リスト左端）
-.thumb {
-  flex-shrink: 0;
+.codexSummaryText {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-mute);
 }
 
-.unseen {
-  opacity: 0.5;
+.codexSummaryPct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
 }
 
-.info {
+// ---- エントリ一覧（グリッド） ----
+.gridLabel {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.gridLabelText {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+
+.gridLegend {
+  font-size: 9px;
+  color: var(--text-quote);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--bg-deep);
+  border: 1px solid var(--rule-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: default;
+}
+
+.cellSeen {
+  border-color: rgba(143, 208, 160, 0.4);
+  cursor: pointer;
+}
+
+.cellDefeated {
+  border-color: rgba(143, 208, 160, 0.4);
+  background: rgba(143, 208, 160, 0.04);
+  cursor: pointer;
+}
+
+.cellBoss {
+  border: 1px dashed rgba(212, 103, 79, 0.4);
+}
+
+.cellBoss.cellDefeated {
+  border: 1px solid rgba(212, 103, 79, 0.6);
+  background: #1c1316;
+}
+
+.cellUnseen {
+  background: #101218;
+  border: 1px solid var(--rule-soft);
+}
+
+.cellUnseen .cellSprite {
+  filter: brightness(0) opacity(0.5);
+}
+
+.cellSelected {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+.cellSprite {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-mute);
+}
+
+// ---- 詳細カード（bossDetail）----
+.bossDetail {
+  display: flex;
+  gap: 13px;
+  background: linear-gradient(120deg, #231a1c, var(--bg-mid));
+  border: 1px solid rgba(212, 103, 79, 0.4);
+  border-radius: 4px;
+  padding: 13px;
+  margin-bottom: 12px;
+}
+
+.bossDetailSprite {
+  width: 66px;
+  height: 66px;
+  border: 1px solid rgba(212, 103, 79, 0.3);
+  border-radius: 4px;
+  background: var(--bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: none;
+}
+
+.bossDetailInfo {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.name {
+.bossDetailName {
+  font-family: var(--font-display);
   font-size: 15px;
-  font-weight: 700;
-  color: var.$ink;
+  color: var(--text-strong);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.bossDetailMeta {
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 3px;
+}
+
+.bossDetailResist {
+  margin-top: 7px;
 }
 
 .badge {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
-  color: var.$parchment;
-  background-color: var.$vermilion;
-  border-radius: 0;
+  color: var(--bg-mid);
+  background: var(--danger-glow);
+  border-radius: 2px;
   padding: 1px 6px;
 }
 
-.sub {
-  font-size: 12px;
-  color: var.$ink-faint;
+// ---- ドロップ行 ----
+.dropRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.empty {
-  color: var.$ink-faint;
+.dropCell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-deep);
+  border-radius: 3px;
+  padding: 7px 9px;
+}
+
+.dropIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 2px;
+  background: var(--surface-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--text-quote);
   font-size: 14px;
 }
 
-// §16: モンスター行のタップ展開
-.rowClickable {
-  cursor: pointer;
-  user-select: none;
-
-  &:active {
-    background-color: var.$parchment;
-  }
-}
-
-.expand {
+.dropName {
   font-size: 10px;
-  color: var.$ink-faint;
-  margin-left: auto;
 }
 
-// §16: 耐性詳細（展開時）
-.resistDetail {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 0.75px dashed var.$rule;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  // 展開時は行全体の幅を使う
-  width: 100%;
+.dropFound .dropName {
+  color: var(--text-strong);
 }
 
-// 展開詳細内の大きいスプライト（中央寄せ）
-.spriteLarge {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0 4px;
+.dropUnknown .dropName {
+  color: var(--text-quote);
 }
 
+// ---- ResistBadges 区画 ----
 .resistSection {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  margin-top: 4px;
 }
 
 .resistHead {
   font-size: 11px;
   font-weight: 800;
-  color: var.$ink-faint;
+  color: var(--text-mute);
   letter-spacing: 0.04em;
 }
 
+.empty {
+  color: var(--text-mute);
+  font-size: 14px;
+}
+
+// ---- フッター ----
 .foot {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 0.75px solid var.$rule;
+  flex: none;
+  padding: 12px 20px 0;
+  border-top: 0;
 }
 
 .back {
   width: 100%;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 14px;
+  height: 46px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 13px;
+  letter-spacing: 0.16em;
   cursor: pointer;
+
+  &:active {
+    color: var(--text-strong);
+  }
 }

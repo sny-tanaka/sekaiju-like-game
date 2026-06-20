@@ -1,5 +1,6 @@
 import styles from './style.module.scss';
 
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import type { AppUpdateBanner } from '@/hooks/useAppUpdate';
 
 type Props = {
@@ -22,13 +23,12 @@ export const AppUpdater = ({ banner, onApply }: Props) => {
         aria-live="polite"
       >
         <span className={styles.message}>新しいバージョンがあります</span>
-        <button
-          type="button"
+        <ActionButton
+          label="更新"
+          size="small"
           className={styles.button}
           onClick={onApply}
-        >
-          更新
-        </button>
+        />
       </div>
     );
   }

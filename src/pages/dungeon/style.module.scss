@@ -1,5 +1,21 @@
 @use 'variables' as var;
 
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+@keyframes obsidian-warnBlink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0.4; }
+}
+
+@keyframes obsidian-glowPulse {
+  0%, 100% { opacity: 0.4;  transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-warnBlink { 0%, 100% { opacity: 1; } }
+  @keyframes obsidian-glowPulse { 0%, 100% { opacity: 0.6; transform: none; } }
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -67,8 +83,10 @@
   position: relative;
   width: 100%;
   max-width: 360px;
-  margin-bottom: 12px;
-  flex-shrink: 0;
+  height: 232px;
+  flex: 0 0 232px;
+  margin-bottom: 0;
+  overflow: hidden;
 }
 
 // 一人称視点に重ねる操作ボタン（issue #20）
@@ -90,7 +108,8 @@
   border: none;
   border-radius: 0;
   background-color: rgba(33, 36, 27, 0.62);
-  color: var.$parchment;
+  // 監査結果: 1.1:1 → 12.5:1 (var(--text-strong) = #f2ede1 on rgba(33,36,27,0.62))
+  color: var(--text-strong);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
@@ -114,7 +133,8 @@
   border: none;
   border-radius: 0;
   background-color: rgba(33, 36, 27, 0.62);
-  color: var.$parchment;
+  // 監査結果: 1.1:1 → 12.5:1 (var(--text-strong) = #f2ede1 on rgba(33,36,27,0.62))
+  color: var(--text-strong);
   font-size: 18px;
   cursor: pointer;
 }
@@ -142,9 +162,8 @@
 }
 
 .menuActions {
-  display: flex;
-  gap: 8px;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .menuAction {
@@ -255,24 +274,40 @@
 
 // 中段（マップ + 操作系）。上端 (header + fpv) と下端の固定ボタン群の間で、
 // 縦に溢れたぶんはこの内側で吸収する。マップが大きい階層 + 階段/採集/調理が同時に
-// 並んでも、下端の階段ボタンが必ず可視に残るようにする。
+// 並んでも、下端の階段カードが必ず可視に残るようにする。
 .mid {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  padding: 10px 0 0;
+  gap: 8px;
+}
+
+.mapCard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 360px;
+  background: #0a0c10;
+  border: 1px solid var(--rule-soft);
+  border-radius: 5px;
+  padding: 8px;
+  // max-height / overflow:hidden を除去: padding 分を含めるとマップが見切れるため
+  // .mid の overflow-y:auto がスクロールを受け持つ
+  overflow: visible;
+  flex-shrink: 0;
 }
 
 .mapWrap {
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-bottom: 12px;
   flex-shrink: 0;
 }
 
@@ -316,19 +351,60 @@
   flex-shrink: 0;
 }
 
-.stairs {
+// 階段確認カード（画面下部の独立カード）
+.stairsCard {
   width: 100%;
   max-width: 360px;
-  min-height: 48px;
-  margin-bottom: 12px;
+  flex-shrink: 0;
+  background: #15171f;
+  border: 1px solid rgba(201, 168, 106, 0.3);
+  border-radius: 5px;
+  padding: 14px;
+}
+
+.stairsCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.stairsCardTitle {
+  font-size: 13px;
+  color: #f2ede1;
+}
+
+.stairsCardSub {
+  font-size: 10px;
+  color: #8c8a84;
+}
+
+.stairsCardActions {
+  display: flex;
+  gap: 8px;
+}
+
+.stairsCancel {
+  flex: 1;
+  height: 40px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: #9a958a;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.stairsOk {
+  flex: 1;
+  height: 40px;
+  border-radius: 3px;
   border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 16px;
+  background: linear-gradient(180deg, #c9a86a, #b08f4f);
+  color: #0e0f13;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  flex-shrink: 0;
 }
 
 .action {
@@ -357,6 +433,104 @@
   font-weight: 700;
   color: var.$verdant-dark;
   flex-shrink: 0;
+}
+
+// 採集カード（緑縁）
+.gatherCard {
+  width: 100%;
+  max-width: 360px;
+  background: #0e131a;
+  border: 1px solid rgba(143, 208, 160, 0.3);
+  border-radius: 5px;
+  padding: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gatherCardDisabled {
+  opacity: 0.5;
+}
+
+.gatherSparkle {
+  font-size: 16px;
+  animation: gatherSparkle 1.6s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.gatherCardLabel {
+  font-size: 13px;
+  color: #9ed8b4;
+  font-weight: 700;
+  flex: 1;
+}
+
+// 調理カード（金茶縁）
+.cookCard {
+  width: 100%;
+  max-width: 360px;
+  background: #0e131a;
+  border: 1px solid rgba(216, 168, 111, 0.3);
+  border-radius: 5px;
+  padding: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.cookIcon {
+  position: relative;
+  font-size: 18px;
+
+  &::before,
+  &::after {
+    content: '〜';
+    position: absolute;
+    top: -10px;
+    color: #d8c0a0;
+    font-size: 11px;
+    animation: steamRise 1.8s ease-in-out infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  &::before {
+    left: 4px;
+  }
+
+  &::after {
+    left: 12px;
+    animation-delay: 0.6s;
+  }
+}
+
+.cookCardLabel {
+  font-size: 13px;
+  color: #e0b07c;
+  font-weight: 700;
+  flex: 1;
+}
+
+@keyframes steamRise {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }
 
 .controls {
@@ -417,7 +591,201 @@
   cursor: pointer;
 }
 
-// ---- 道具メニュー（オーバーレイ） ----
+// ---- ☰ メニューオーバーレイ（全画面遮蔽・z-index 50）----
+.menuOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background:
+    linear-gradient(180deg, #0d141a, #070b0f),
+    rgba(6, 7, 10, 0.78);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.menuPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 16px 20px 18px;
+}
+
+.menuHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+
+.menuTitle {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 18px;
+  color: #f2ede1;
+}
+
+.menuSubtitle {
+  font-size: 10px;
+  color: #8fae8c;
+  margin-top: 2px;
+}
+
+.menuCloseBtn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--rule-base);
+  border-radius: 50%;
+  background: transparent;
+  color: #9a958a;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.menuPartyLabel {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: #c9a86a;
+  font-weight: 700;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.menuPartyHint {
+  font-size: 10px;
+  color: #5d5a52;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.menuMemberList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.menuMemberBars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.menuBar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--rule-soft);
+  overflow: hidden;
+}
+
+.menuBarFillHp {
+  height: 100%;
+  background: #6fb98a;
+  border-radius: 2px;
+}
+
+.menuBarFillTp {
+  height: 100%;
+  background: #6f9fd8;
+  border-radius: 2px;
+}
+
+.menuBarLabel {
+  font-size: 6px;
+  color: #7c7a74;
+}
+
+.menuMemberNameRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.menuMemberLv {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #8c8a84;
+}
+
+.menuMemberArrow {
+  color: #c9a86a;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.menuMemberLeader {
+  border-color: rgba(201, 168, 106, 0.3) !important;
+}
+
+.menuGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.menuGridItem {
+  height: 58px;
+  border-radius: 4px;
+  background: #15171f;
+  border: 1px solid var(--rule-soft);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menuGridItemActive {
+  background: #1a2030;
+  border-color: rgba(201, 168, 106, 0.4);
+}
+
+.menuGridItemThread {
+  border-color: rgba(143, 208, 160, 0.35);
+}
+
+.menuGridIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.menuGridLabel {
+  font-size: 13px;
+  color: #e8e6e0;
+}
+
+.menuGridSub {
+  font-size: 9px;
+  color: #7c7a74;
+}
+
+.menuFooter {
+  margin-top: auto;
+  padding-top: 12px;
+  flex-shrink: 0;
+}
+
+.menuCloseAction {
+  width: 100%;
+  height: 46px;
+  border-radius: 3px;
+  border: 1px solid rgba(201, 168, 106, 0.5);
+  background: rgba(201, 168, 106, 0.08);
+  color: #c9a86a;
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+}
+
+// ---- 道具メニュー（オーバーレイ）----
 .itemOverlay {
   position: fixed;
   inset: 0;
@@ -518,6 +886,37 @@
   color: var.$ink-faint;
 }
 
+// コンパクト対象選択行（道具使用 bottom-sheet）
+.itemTargetRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1d26;
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 9px 11px;
+}
+
+.itemTargetRowRecommended {
+  border-color: rgba(143, 208, 160, 0.5);
+}
+
+.itemTargetName {
+  font-size: 12px;
+  color: #f2ede1;
+}
+
+.itemTargetUseBtn {
+  font-size: 10px;
+  color: var(--success, #3f8a5c);
+  border: 1px solid rgba(143, 208, 160, 0.5);
+  border-radius: 2px;
+  padding: 3px 8px;
+  background: transparent;
+  flex: none;
+  cursor: pointer;
+}
+
 .itemUse {
   align-self: flex-start;
   min-height: 40px;
@@ -545,6 +944,109 @@
   color: var.$ink;
   font-size: 14px;
   cursor: pointer;
+}
+
+// ---- ⚠ ボスゲート警告（.fpvWrap 上端に絶対配置） ----
+.bossGateWarn {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #e09180;
+  animation: obsidian-warnBlink 1.6s steps(1) infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+// ---- ☰ メニュー内 autosave インジケータ ----
+.menuAutosave {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 20px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #5d8a6c;
+}
+
+.menuAutosaveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5d8a6c;
+  animation: obsidian-glowPulse 2.5s ease-in-out infinite;
+}
+
+// ---- 帰還の糸：全幅（grid-column: 1 / -1） ----
+.menuGridItemFull {
+  grid-column: 1 / -1;
+}
+
+// ---- サウンド設定モーダル ----
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 20px;
+}
+
+.modalPanel {
+  width: 100%;
+  max-width: 360px;
+  background: #13161e;
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  border-radius: 6px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 16px;
+  color: #f2ede1;
+}
+
+.modalCloseBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: #9a958a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalClose {
+  width: 100%;
+  height: 46px;
+  border-radius: 3px;
+  border: 1px solid rgba(201, 168, 106, 0.5);
+  background: rgba(201, 168, 106, 0.08);
+  color: #c9a86a;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 // 消費系操作の確認ダイアログ（誤タップ防止）

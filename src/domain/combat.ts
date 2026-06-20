@@ -1,6 +1,7 @@
 import { BALANCE, enemyScale } from '@/data/balance';
 import type {
   ActiveBuff,
+  BattleState,
   BuffStatTarget,
   Combatant,
   DamageResult,
@@ -165,4 +166,13 @@ export function resolveTurnOrder(combatants: Combatant[], rng: Rng): Combatant[]
     .map((c) => ({ c, agi: c.stats.agi, tie: rng.next() }))
     .sort((a, b) => b.agi - a.agi || b.tie - a.tie)
     .map((x) => x.c);
+}
+
+/**
+ * UI 表示用に、次ターンの行動順を予測して返す（[03 §10] と同じロジック）。
+ * resolveTurn 内部の rng 消費とは別系統の ephemeral rng を呼び出し側が渡す。
+ * 戦闘不能を除いた全戦闘員（味方・敵・召喚体）を AGI 降順に並べて返す。
+ */
+export function previewTurnOrder(state: BattleState, rng: Rng): Combatant[] {
+  return resolveTurnOrder([...state.allies, ...state.enemies, ...state.summons], rng);
 }

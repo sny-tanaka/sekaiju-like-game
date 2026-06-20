@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { ClassInfoCard } from '@/components/creation/ClassInfoCard/ClassInfoCard';
 import { RaceInfoCard } from '@/components/creation/RaceInfoCard/RaceInfoCard';
@@ -26,8 +27,8 @@ type SortKey = 'created' | 'levelDesc' | 'levelAsc';
 
 const SORT_LABEL: Record<SortKey, string> = {
   created: '作成順',
-  levelDesc: 'レベルが高い順',
-  levelAsc: 'レベルが低い順',
+  levelDesc: 'Lv ↓',
+  levelAsc: 'Lv ↑',
 };
 
 const NO_MEMBERS: Character[] = []; // フォールバックを安定参照にして useMemo の再計算を防ぐ
@@ -103,395 +104,389 @@ export const Page = () => {
     (row === 'front' ? save.guild.party.front : save.guild.party.back)[idx] ?? null;
 
   const memberLine = (m: Character) =>
-    `${RACES[m.raceId]?.name} / ${CLASSES[m.classId]?.name} / Lv${m.level}`;
+    `${RACES[m.raceId]?.name} ・ ${CLASSES[m.classId]?.name} ・ Lv${m.level}`;
 
   return (
     <div className={styles.layout}>
+      {/* ヘッダー */}
       <header className={styles.head}>
         <h1 className={styles.title}>ギルド管理</h1>
         <span className={styles.count}>
-          団員 {members.length}
+          {members.length}
           <span className={styles.countLimit}> / {GUILD_MEMBER_LIMIT}</span>
         </span>
       </header>
 
-      {/* タブ */}
+      {/* タブバー */}
       <div className={styles.tabs}>
-        <button
-          type="button"
-          className={`${styles.tab} ${tab === 'create' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setNotice(null);
-            setTab('create');
-          }}
-        >
-          作成
-        </button>
-        <button
-          type="button"
-          className={`${styles.tab} ${tab === 'roster' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('roster');
-          }}
-        >
-          一覧
-        </button>
-        <button
-          type="button"
-          className={`${styles.tab} ${tab === 'party' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('party');
-          }}
-        >
-          編成
-        </button>
-        <button
-          type="button"
-          className={`${styles.tab} ${tab === 'banish' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('banish');
-          }}
-        >
-          追放
-        </button>
+        {(['create', 'roster', 'party', 'banish'] as const).map((t) => {
+          const labels: Record<Tab, string> = {
+            create: '作成',
+            roster: '一覧',
+            party: '編成',
+            banish: '追放',
+          };
+          return (
+            <ActionButton
+              key={t}
+              label={labels[t]}
+              sfx="cursor"
+              className={`${styles.tab} ${tab === t ? styles.tabActive : ''}`}
+              onClick={() => {
+                setNotice(null);
+                setTab(t);
+              }}
+            />
+          );
+        })}
       </div>
 
-      {/* ===== 作成タブ ===== */}
-      {tab === 'create' ? (
-        <section className={styles.create}>
-          <h2 className={styles.sectionTitle}>冒険者を作成</h2>
-          <label className={styles.field}>
-            <span>名前</span>
-            <input
-              type="text"
-              value={name}
-              maxLength={16}
-              placeholder="名もなき冒険者"
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
-          <label className={styles.field}>
-            <span>種族</span>
-            <select
-              value={raceId}
-              onChange={(e) => setRaceId(e.target.value)}
-            >
+      {/* body */}
+      <div className={styles.body}>
+        {/* ===== 作成タブ ===== */}
+        {tab === 'create' ? (
+          <>
+            {/* 名前入力 */}
+            <div className={styles.nameBlock}>
+              <span className={styles.nameLabel}>
+                名前 <span className={styles.nameLabelSub}>（最大16字）</span>
+              </span>
+              <div className={styles.nameInput}>
+                <input
+                  type="text"
+                  value={name}
+                  maxLength={16}
+                  placeholder="名もなき冒険者"
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* 種族グリッド */}
+            <div className={styles.gridLabel}>種族 ・ {raceIds.length}種</div>
+            <div className={styles.raceGrid}>
               {raceIds.map((id) => (
-                <option
+                <ActionButton
                   key={id}
-                  value={id}
+                  sfx="cursor"
+                  className={`${styles.raceCard} ${raceId === id ? styles.raceCardActive : ''}`}
+                  onClick={() => setRaceId(id)}
                 >
-                  {RACES[id].name}
-                </option>
+                  <CharacterPortrait
+                    raceId={id as RaceId}
+                    classId="class_warrior"
+                    size={40}
+                  />
+                  <span className={styles.raceCardName}>{RACES[id]?.name}</span>
+                </ActionButton>
               ))}
-            </select>
-          </label>
-          <RaceInfoCard raceId={raceId} />
-          <label className={styles.field}>
-            <span>職業</span>
-            <select
-              value={classId}
-              onChange={(e) => setClassId(e.target.value)}
-            >
+            </div>
+
+            {/* 種族説明カード */}
+            <div className={styles.raceInfoWrap}>
+              <RaceInfoCard raceId={raceId} />
+            </div>
+
+            {/* 職業チップ */}
+            <div className={styles.gridLabel}>職業 ・ {classIds.length}種</div>
+            <div className={styles.classChips}>
               {classIds.map((id) => (
-                <option
+                <ActionButton
                   key={id}
-                  value={id}
-                >
-                  {CLASSES[id].name}
-                </option>
+                  label={CLASSES[id]?.name}
+                  sfx="cursor"
+                  className={`${styles.classChip} ${classId === id ? styles.classChipActive : ''}`}
+                  onClick={() => setClassId(id)}
+                />
               ))}
-            </select>
-          </label>
-          <ClassInfoCard classId={classId} />
-          <div className={styles.preview}>
-            <span className={styles.previewLabel}>プレビュー</span>
-            <CharacterPortrait
-              raceId={raceId}
-              classId={classId}
-              size={60}
-            />
-            <span className={styles.previewName}>
-              {RACES[raceId]?.name} / {CLASSES[classId]?.name}
-            </span>
-          </div>
-          <button
-            type="button"
+            </div>
+
+            {/* 職業説明カード */}
+            <div className={styles.classInfoWrap}>
+              <ClassInfoCard classId={classId} />
+            </div>
+
+            {/* プレビューカード */}
+            <div className={styles.previewCard}>
+              <CharacterPortrait
+                raceId={raceId}
+                classId={classId}
+                size={52}
+              />
+              <div className={styles.previewMeta}>
+                <span className={styles.previewHelper}>プレビュー</span>
+                <span className={styles.previewName}>{name.trim() || '名もなき冒険者'}</span>
+                <span className={styles.previewRaceClass}>
+                  {RACES[raceId]?.name} ・ {CLASSES[classId]?.name}
+                </span>
+              </div>
+            </div>
+
+            {notice ? <p className={styles.notice}>{notice}</p> : null}
+          </>
+        ) : null}
+
+        {/* ===== 一覧タブ ===== */}
+        {tab === 'roster' ? (
+          <>
+            {/* フィルター */}
+            <div className={styles.filterRow}>
+              <select
+                className={styles.filterSelect}
+                value={raceFilter}
+                onChange={(e) => setRaceFilter(e.target.value)}
+              >
+                <option value="all">種族: すべて</option>
+                {presentRaces.map((id) => (
+                  <option
+                    key={id}
+                    value={id}
+                  >
+                    {RACES[id].name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className={styles.filterSelect}
+                value={classFilter}
+                onChange={(e) => setClassFilter(e.target.value)}
+              >
+                <option value="all">職業: すべて</option>
+                {presentClasses.map((id) => (
+                  <option
+                    key={id}
+                    value={id}
+                  >
+                    {CLASSES[id].name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className={`${styles.filterSelect} ${styles.filterSelectSmall}`}
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortKey)}
+              >
+                {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
+                  <option
+                    key={k}
+                    value={k}
+                  >
+                    {SORT_LABEL[k]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {members.length === 0 ? (
+              <p className={styles.empty}>まだ冒険者がいません。</p>
+            ) : rosterMembers.length === 0 ? (
+              <p className={styles.empty}>条件に合う団員がいません。</p>
+            ) : (
+              <ul className={styles.members}>
+                {rosterMembers.map((m) => {
+                  const pos = positionOf(save, m.id);
+                  const rowClass =
+                    pos === '前衛'
+                      ? styles.memberRowFront
+                      : pos === '控え'
+                        ? styles.memberRowBench
+                        : '';
+                  const tagClass =
+                    pos === '前衛'
+                      ? styles.posTagFront
+                      : pos === '後衛'
+                        ? styles.posTagBack
+                        : styles.posTagBench;
+                  const arrowClass = pos === '控え' ? styles.memberArrowBench : '';
+                  return (
+                    <li key={m.id}>
+                      <ActionButton
+                        className={`${styles.memberRow} ${rowClass}`}
+                        onClick={() => navigate({ name: 'guildChar', id: m.id })}
+                      >
+                        <div className={styles.memberPortrait}>
+                          <CharacterPortrait
+                            raceId={m.raceId}
+                            classId={m.classId}
+                            size={36}
+                          />
+                        </div>
+                        <div className={styles.memberMeta}>
+                          <div className={styles.memberNameRow}>
+                            <span className={styles.memberName}>{m.name}</span>
+                            <span className={`${styles.posTag} ${tagClass}`}>{pos}</span>
+                          </div>
+                          <span className={styles.memberSub}>{memberLine(m)}</span>
+                        </div>
+                        <span className={`${styles.memberArrow} ${arrowClass}`}>›</span>
+                      </ActionButton>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </>
+        ) : null}
+
+        {/* ===== 編成タブ ===== */}
+        {tab === 'party' ? (
+          <>
+            {/* 前衛 */}
+            <div className={styles.partySection}>
+              <div className={styles.partyHeading}>前衛 ・ FRONT</div>
+              <div className={styles.slotGrid}>
+                {Array.from({ length: FORMATION_FRONT_SLOTS }).map((_, idx) => {
+                  const id = slotMemberId('front', idx);
+                  const m = id ? members.find((x) => x.id === id) : null;
+                  return (
+                    <ActionButton
+                      key={`front_${idx}`}
+                      sfx="cursor"
+                      className={`${styles.slotCard} ${m ? styles.slotCardFront : styles.slotCardEmpty}`}
+                      onClick={() => setPicker({ row: 'front', idx })}
+                    >
+                      {m ? (
+                        <>
+                          <div className={styles.slotPortrait}>
+                            <CharacterPortrait
+                              raceId={m.raceId}
+                              classId={m.classId}
+                              size={46}
+                            />
+                          </div>
+                          <span className={styles.slotName}>{m.name}</span>
+                        </>
+                      ) : (
+                        <span>＋</span>
+                      )}
+                    </ActionButton>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 後衛 */}
+            <div className={styles.partySection}>
+              <div className={`${styles.partyHeading} ${styles.partyHeadingBack}`}>
+                後衛 ・ BACK
+                <span className={styles.partyHeadingSub}>近接ダメージ −30%</span>
+              </div>
+              <div className={styles.slotGrid}>
+                {Array.from({ length: FORMATION_BACK_SLOTS }).map((_, idx) => {
+                  const id = slotMemberId('back', idx);
+                  const m = id ? members.find((x) => x.id === id) : null;
+                  return (
+                    <ActionButton
+                      key={`back_${idx}`}
+                      sfx="cursor"
+                      className={`${styles.slotCard} ${m ? styles.slotCardBack : styles.slotCardEmpty}`}
+                      onClick={() => setPicker({ row: 'back', idx })}
+                    >
+                      {m ? (
+                        <>
+                          <div className={styles.slotPortrait}>
+                            <CharacterPortrait
+                              raceId={m.raceId}
+                              classId={m.classId}
+                              size={46}
+                            />
+                          </div>
+                          <span className={styles.slotName}>{m.name}</span>
+                        </>
+                      ) : (
+                        <span>＋</span>
+                      )}
+                    </ActionButton>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        ) : null}
+
+        {/* ===== 追放タブ ===== */}
+        {tab === 'banish' ? (
+          <>
+            {members.length === 0 ? (
+              <p className={styles.empty}>追放できる団員がいません。</p>
+            ) : (
+              <ul className={styles.members}>
+                {members.map((m) => {
+                  const isHighlight = banishId === m.id;
+                  return (
+                    <li key={m.id}>
+                      <div
+                        className={`${styles.banishRow} ${isHighlight ? styles.banishRowHighlight : ''}`}
+                      >
+                        <div className={styles.memberPortrait}>
+                          <CharacterPortrait
+                            raceId={m.raceId}
+                            classId={m.classId}
+                            size={36}
+                          />
+                        </div>
+                        <div className={styles.memberMeta}>
+                          <span className={styles.memberName}>{m.name}</span>
+                          <span className={styles.memberSub}>{memberLine(m)}</span>
+                        </div>
+                        <ActionButton
+                          label="追放"
+                          className={`${styles.banishBtn} ${isHighlight ? styles.banishBtnHighlight : ''}`}
+                          onClick={() => setBanishId(m.id)}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </>
+        ) : null}
+      </div>
+
+      {/* フッタ */}
+      <footer className={styles.foot}>
+        {tab === 'create' ? (
+          <ActionButton
+            label={isFull ? '団員が上限です' : '作成する'}
             className={styles.primary}
             disabled={busy || isFull}
             onClick={() => void handleCreate()}
-          >
-            {isFull ? '団員が上限です' : '作成する'}
-          </button>
-          {notice ? <p className={styles.notice}>{notice}</p> : null}
-        </section>
-      ) : null}
-
-      {/* ===== 一覧タブ ===== */}
-      {tab === 'roster' ? (
-        <section className={styles.list}>
-          <h2 className={styles.sectionTitle}>
-            団員一覧{' '}
-            <span className={styles.count}>
-              （出撃 {formationCount(save)} / {PARTY_MAX}）
-            </span>
-          </h2>
-
-          {/* フィルター/ソート */}
-          <div className={styles.filters}>
-            <select
-              className={styles.filter}
-              value={raceFilter}
-              onChange={(e) => setRaceFilter(e.target.value)}
-            >
-              <option value="all">種族: すべて</option>
-              {presentRaces.map((id) => (
-                <option
-                  key={id}
-                  value={id}
-                >
-                  {RACES[id].name}
-                </option>
-              ))}
-            </select>
-            <select
-              className={styles.filter}
-              value={classFilter}
-              onChange={(e) => setClassFilter(e.target.value)}
-            >
-              <option value="all">職業: すべて</option>
-              {presentClasses.map((id) => (
-                <option
-                  key={id}
-                  value={id}
-                >
-                  {CLASSES[id].name}
-                </option>
-              ))}
-            </select>
-            <select
-              className={styles.filter}
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-            >
-              {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
-                <option
-                  key={k}
-                  value={k}
-                >
-                  {SORT_LABEL[k]}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {members.length === 0 ? (
-            <p className={styles.empty}>まだ冒険者がいません。</p>
-          ) : rosterMembers.length === 0 ? (
-            <p className={styles.empty}>条件に合う団員がいません。</p>
-          ) : (
-            <ul className={styles.members}>
-              {rosterMembers.map((m) => {
-                const pos = positionOf(save, m.id);
-                return (
-                  <li
-                    key={m.id}
-                    className={styles.member}
-                  >
-                    <button
-                      type="button"
-                      className={styles.memberMain}
-                      onClick={() => navigate({ name: 'guildChar', id: m.id })}
-                    >
-                      <CharacterPortrait
-                        raceId={m.raceId}
-                        classId={m.classId}
-                        size={36}
-                        className={styles.memberPortrait}
-                      />
-                      <div className={styles.memberMainText}>
-                        <span className={styles.memberName}>
-                          {m.name}
-                          <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>
-                            {pos}
-                          </span>
-                        </span>
-                        <span className={styles.memberSub}>{memberLine(m)} ›</span>
-                      </div>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-      ) : null}
-
-      {/* ===== 2ページ目: パーティー編成 ===== */}
-      {tab === 'party' ? (
-        <section className={styles.list}>
-          <h2 className={styles.sectionTitle}>
-            パーティー編成{' '}
-            <span className={styles.count}>
-              （出撃 {formationCount(save)} / {PARTY_MAX}）
-            </span>
-          </h2>
-          <p className={styles.hint}>枠をタップして編成する団員を選びます。</p>
-
-          <div className={styles.slotGroup}>
-            <div className={styles.slotGroupLabel}>前衛</div>
-            {Array.from({ length: FORMATION_FRONT_SLOTS }).map((_, idx) => {
-              const id = slotMemberId('front', idx);
-              const m = id ? members.find((x) => x.id === id) : null;
-              return (
-                <button
-                  key={`front_${idx}`}
-                  type="button"
-                  className={`${styles.slot} ${m ? styles.slotFilled : styles.slotEmpty}`}
-                  onClick={() => {
-                    play('cursor');
-                    setPicker({ row: 'front', idx });
-                  }}
-                >
-                  {m ? (
-                    <>
-                      <CharacterPortrait
-                        raceId={m.raceId}
-                        classId={m.classId}
-                        size={40}
-                        className={styles.slotPortrait}
-                      />
-                      <div className={styles.slotText}>
-                        <span className={styles.slotName}>{m.name}</span>
-                        <span className={styles.slotSub}>{memberLine(m)}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <span className={styles.slotPlaceholder}>＋ 前衛{idx + 1}（空き）</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className={styles.slotGroup}>
-            <div className={styles.slotGroupLabel}>後衛（近接ダメージ -30%）</div>
-            {Array.from({ length: FORMATION_BACK_SLOTS }).map((_, idx) => {
-              const id = slotMemberId('back', idx);
-              const m = id ? members.find((x) => x.id === id) : null;
-              return (
-                <button
-                  key={`back_${idx}`}
-                  type="button"
-                  className={`${styles.slot} ${m ? styles.slotFilled : styles.slotEmpty}`}
-                  onClick={() => {
-                    play('cursor');
-                    setPicker({ row: 'back', idx });
-                  }}
-                >
-                  {m ? (
-                    <>
-                      <CharacterPortrait
-                        raceId={m.raceId}
-                        classId={m.classId}
-                        size={40}
-                        className={styles.slotPortrait}
-                      />
-                      <div className={styles.slotText}>
-                        <span className={styles.slotName}>{m.name}</span>
-                        <span className={styles.slotSub}>{memberLine(m)}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <span className={styles.slotPlaceholder}>＋ 後衛{idx + 1}（空き）</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {/* ===== 3ページ目: 団員追放 ===== */}
-      {tab === 'banish' ? (
-        <section className={styles.list}>
-          <h2 className={styles.sectionTitle}>団員追放</h2>
-          <p className={styles.hint}>追放した団員は元に戻せません。</p>
-          {members.length === 0 ? (
-            <p className={styles.empty}>追放できる団員がいません。</p>
-          ) : (
-            <ul className={styles.members}>
-              {members.map((m) => (
-                <li
-                  key={m.id}
-                  className={styles.member}
-                >
-                  <div className={styles.memberMain}>
-                    <CharacterPortrait
-                      raceId={m.raceId}
-                      classId={m.classId}
-                      size={36}
-                      className={styles.memberPortrait}
-                    />
-                    <div className={styles.memberMainText}>
-                      <span className={styles.memberName}>{m.name}</span>
-                      <span className={styles.memberSub}>{memberLine(m)}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.banishBtn}
-                    onClick={() => setBanishId(m.id)}
-                  >
-                    追放
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ) : null}
-
-      <footer className={styles.foot}>
-        <button
-          type="button"
-          className={styles.sub}
-          onClick={() => navigate({ name: 'town' })}
-        >
-          拠点へ戻る
-        </button>
+          />
+        ) : (
+          <ActionButton
+            label="拠点へ戻る"
+            className={styles.sub}
+            onClick={() => navigate({ name: 'town' })}
+          />
+        )}
       </footer>
 
-      {/* 編成スロットの団員ピッカー */}
+      {/* 編成スロットの団員ピッカー（bottom sheet） */}
       {picker ? (
         <div
           className={styles.overlay}
           onClick={() => setPicker(null)}
         >
           <div
-            className={styles.panel}
+            className={styles.sheet}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={styles.panelTitle}>
-              {picker.row === 'front' ? '前衛' : '後衛'}
-              {picker.idx + 1} に編成する団員
+            <div className={styles.sheetHandle} />
+            <div className={styles.sheetTitle}>
+              {picker.row === 'front' ? '前衛' : '後衛'}スロットへ配置
             </div>
             {slotMemberId(picker.row, picker.idx) ? (
-              <button
-                type="button"
+              <ActionButton
+                label="この枠を空ける（編成から外す）"
+                sfx="cancel"
                 className={styles.removeRow}
                 onClick={() =>
                   void applyAndPersist((s) => setSlot(s, picker.row, picker.idx, null)).then(() =>
                     setPicker(null)
                   )
                 }
-              >
-                この枠を空ける（編成から外す）
-              </button>
+              />
             ) : null}
             {members.length === 0 ? (
               <p className={styles.empty}>団員がいません。</p>
@@ -504,13 +499,17 @@ export const Page = () => {
                   {members.map((m) => {
                     const pos = positionOf(save, m.id);
                     const here = slotMemberId(picker.row, picker.idx) === m.id;
-                    // 編成外で満員の場合は配置ボタンを無効化（既に編成内なら移動として許可）
                     const isBenched = pos === '控え';
                     const disabled = isBenched && formationCount(save) >= PARTY_MAX;
+                    const tagClass =
+                      pos === '前衛'
+                        ? styles.posTagFront
+                        : pos === '後衛'
+                          ? styles.posTagBack
+                          : styles.posTagBench;
                     return (
                       <li key={m.id}>
-                        <button
-                          type="button"
+                        <ActionButton
                           className={`${styles.pickerItem} ${here ? styles.pickerItemActive : ''}`}
                           disabled={disabled}
                           onClick={() =>
@@ -519,27 +518,34 @@ export const Page = () => {
                             ).then(() => setPicker(null))
                           }
                         >
-                          <span className={styles.memberName}>
-                            {m.name}
-                            <span className={`${styles.pos} ${styles[`pos_${pos}`] ?? ''}`}>
-                              {pos}
+                          <div className={styles.memberPortrait}>
+                            <CharacterPortrait
+                              raceId={m.raceId}
+                              classId={m.classId}
+                              size={36}
+                            />
+                          </div>
+                          <div className={styles.pickerItemMeta}>
+                            <span className={styles.pickerItemName}>
+                              {m.name}
+                              <span className={`${styles.posTag} ${tagClass}`}>{pos}</span>
                             </span>
-                          </span>
-                          <span className={styles.memberSub}>{memberLine(m)}</span>
-                        </button>
+                            <span className={styles.pickerItemSub}>{memberLine(m)}</span>
+                          </div>
+                          <span className={styles.pickerItemAssign}>配置</span>
+                        </ActionButton>
                       </li>
                     );
                   })}
                 </ul>
               </>
             )}
-            <button
-              type="button"
-              className={styles.panelClose}
+            <ActionButton
+              label="とじる"
+              sfx="cancel"
+              className={styles.sheetClose}
               onClick={() => setPicker(null)}
-            >
-              とじる
-            </button>
+            />
           </div>
         </div>
       ) : null}
@@ -547,37 +553,40 @@ export const Page = () => {
       {/* 追放の確認ダイアログ */}
       {banishTarget ? (
         <div
-          className={styles.overlay}
+          className={styles.dialogOverlay}
           onClick={() => setBanishId(null)}
         >
           <div
             className={styles.confirmBox}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={styles.confirmText}>
-              Lv{banishTarget.level} {banishTarget.name}（{RACES[banishTarget.raceId]?.name}{' '}
-              {CLASSES[banishTarget.classId]?.name}）を追放します。よろしいですか？
+            <div className={styles.confirmSymbol}>
+              <CharacterPortrait
+                raceId={banishTarget.raceId}
+                classId={banishTarget.classId}
+                size={36}
+              />
+            </div>
+            <p className={styles.confirmTitle}>{banishTarget.name} を追放しますか？</p>
+            <div className={styles.confirmWarn}>
+              追放した団員は二度と戻りません。装備は倉庫に返却されます。
             </div>
             <div className={styles.confirmActions}>
-              <button
-                type="button"
+              <ActionButton
+                label="もどる"
+                sfx="cancel"
                 className={styles.confirmCancel}
                 onClick={() => setBanishId(null)}
-              >
-                いいえ
-              </button>
-              <button
-                type="button"
+              />
+              <ActionButton
+                label="追放する"
                 className={styles.confirmOk}
                 onClick={() => {
-                  play('cancel');
                   const id = banishTarget.id;
                   void applyAndPersist((s) => removeCharacterFromGuild(s, id));
                   setBanishId(null);
                 }}
-              >
-                はい
-              </button>
+              />
             </div>
           </div>
         </div>

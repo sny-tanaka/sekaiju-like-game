@@ -1,0 +1,21 @@
+@use 'variables' as var;
+
+/**
+ * ActionButton - ヘッドレス UI。
+ * browser default の <button> 見た目を維持し、画面側 className が完全に上書きする。
+ * CSS reset (text-align/padding/font/background/border) は入れない:
+ * reset すると画面側で全プロパティを明示しないと旧 bare <button> と差分が出るため。
+ */
+.actionButton {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var.$illumination-gold;
+    outline-offset: 2px;
+  }
+}

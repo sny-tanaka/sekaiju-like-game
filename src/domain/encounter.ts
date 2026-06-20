@@ -13,9 +13,16 @@ const MAX_STEPS = 16;
 /** ゲージの段階数（02 §5: 5段階表示）。 */
 export const GAUGE_LEVELS = 5;
 
-/** 区間開始時（戦闘後・階移動・離脱後）の残り歩数を抽選する。 */
-export function initEncounter(rng: Rng): number {
-  return rng.range(MIN_STEPS, MAX_STEPS);
+/**
+ * 区間開始時（戦闘後・階移動・離脱後）の残り歩数を抽選する。
+ * encounterRateDecay を渡すと歩数を decay で割って延長する（過レベル時に敵が出にくくなる）。
+ * decay の下限は 0.25（歩数が 4 倍止まり）。
+ */
+export function initEncounter(rng: Rng, opts?: { encounterRateDecay?: number }): number {
+  const base = rng.range(MIN_STEPS, MAX_STEPS);
+  const decay = opts?.encounterRateDecay ?? 1;
+  const effective = Math.max(0.25, decay);
+  return Math.round(base / effective);
 }
 
 /**

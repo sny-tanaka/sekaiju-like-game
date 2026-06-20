@@ -16,19 +16,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const SAMPLE_LOG = [
-  'てきが あらわれた！（1 ターン目）',
-  'ランス の パワースラッシュ',
-  'もりゴブリン に 42 のダメージ',
-  'セラ の ヒール',
-  'ランス の HP が 18 回復',
-  'オン の ファイアボール',
-  'もりゴブリン に 88 のダメージ（会心）',
-  'もりゴブリン の こん棒攻撃',
-  'ランス に 12 のダメージ',
-  'セラ に 9 のダメージ',
-];
-
 // 「各要素が最大の表示領域を必要とする」雑魚エンカウント想定の敵 ID 列。
 // 6 体並べると .enemies の flex-wrap が複数段にラップする。tier0 帯から
 // 重複しない見た目で 6 種をピック。
@@ -58,7 +45,6 @@ const MAX_BOSS_ENEMY_IDS = [
 export const Default: Story = {
   decorators: [withGameContext(mockBattle, { name: 'battle' })],
   args: {
-    __storyMockLogPreview: SAMPLE_LOG,
     __storyMockEnemyIds: [...MAX_ZAKO_ENEMY_IDS],
   },
 };
@@ -86,15 +72,6 @@ export const SkillMenu: Story = {
   },
 };
 
-const BOSS_SAMPLE_LOG = [
-  'てきが あらわれた！（1 ターン目）',
-  '門番のゴーレム の 大地割り',
-  'ランス に 35 のダメージ',
-  'セラ に 28 のダメージ',
-  'ランス の パワースラッシュ',
-  '門番のゴーレム に 120 のダメージ',
-];
-
 /**
  * F5 ボス戦のレイアウト確認（ボス 1 + 雑魚 3 + 味方 5 名）。
  * スプライトは md サイズで大きく表示され、横にサブ雑魚が並ぶ最大ケース。
@@ -102,7 +79,6 @@ const BOSS_SAMPLE_LOG = [
 export const BossEncounter: Story = {
   decorators: [withGameContext(mockBossBattle, { name: 'battle' })],
   args: {
-    __storyMockLogPreview: BOSS_SAMPLE_LOG,
     __storyMockEnemyIds: [...MAX_BOSS_ENEMY_IDS],
   },
 };

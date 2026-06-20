@@ -1,5 +1,17 @@
 @use 'variables' as var;
 
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+// obsidian-coinPop は _obsidian.scss に定義がなかったため CoinPopFx.module.scss の coinPopLocal から移植
+@keyframes obsidian-coinPop {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translateY(-26px) scale(1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-coinPop { 0%, 100% { transform: none; opacity: 0; } }
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -176,6 +188,36 @@
 
 .empty {
   color: var.$ink-faint;
+  font-size: 14px;
+}
+
+// 装備中ロック行（売却不可）
+.rowLocked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0.75px solid var(--rule-soft);
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.noteName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var.$ink;
+}
+
+.noteLocked {
+  font-size: 11px;
+  color: var.$ink-faint;
+}
+
+.lockIcon {
+  flex-shrink: 0;
+  margin-left: auto;
   font-size: 14px;
 }
 
@@ -376,5 +418,23 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 50;
+  pointer-events: none;
+}
+
+// coinPop 演出（購入確認ダイアログ内）— 5c
+.coinPopWrap {
+  position: relative;
+  text-align: center;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.coinPop {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  font-size: 18px;
+  line-height: 1;
+  animation: obsidian-coinPop 1.8s ease-in-out infinite;
   pointer-events: none;
 }

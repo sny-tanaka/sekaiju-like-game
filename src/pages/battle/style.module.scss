@@ -1,5 +1,44 @@
 @use 'variables' as var;
 
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+@keyframes shakeA {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-6px); }
+  40%  { transform: translateX(5px); }
+  60%  { transform: translateX(-4px); }
+  80%  { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes barShimmer {
+  0%   { background-position: 0 0; }
+  100% { background-position: 40px 0; }
+}
+
+@keyframes encPulse {
+  0%, 100% { opacity: 0.92; }
+  50%      { opacity: 1; }
+}
+
+@keyframes dissolveE {
+  0%   { opacity: 1; filter: blur(0); transform: scale(1); }
+  60%  { opacity: 0.6; filter: blur(2px); }
+  100% { opacity: 0; filter: blur(6px); transform: scale(0.96); }
+}
+
+@keyframes obsidian-glowPulse {
+  0%, 100% { opacity: 0.4;  transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes shakeA          { 0%, 100% { transform: none; } }
+  @keyframes barShimmer      { 0%, 100% { background-position: 0 0; } }
+  @keyframes encPulse        { 0%, 100% { opacity: 1; } }
+  @keyframes dissolveE       { 0%, 100% { opacity: 0; transform: none; filter: none; } }
+  @keyframes obsidian-glowPulse { 0%, 100% { opacity: 0.6; transform: none; } }
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -13,15 +52,87 @@
   background-color: var.$parchment;
 }
 
-// 章マーカー
-.chapterMark {
+// 章マーカー行（マーカー + リザルト例ボタン）
+.chapterRow {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 0 0 4px;
+}
+
+.chapterMark {
+  margin: 0;
   font-family: 'Kaisei Tokumin', serif;
   font-size: 11px;
   font-weight: 500;
   color: var.$ink-faint;
   letter-spacing: 0.08em;
+}
+
+// (A) 行動順帯
+.turnOrderBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.turnOrderBar::-webkit-scrollbar { display: none; }
+
+.turnOrderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+  overflow: hidden;
+  transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease, margin 0.3s ease;
+}
+
+.turnOrderIconCompleted {
+  transform: translateX(-40%);
+  opacity: 0;
+  width: 0 !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  pointer-events: none;
+}
+
+.turnOrderEnemySprite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+}
+.turnOrderAlly {
+  background: var.$verdant;
+  color: var.$parchment;
+}
+.turnOrderEnemy {
+  background: var.$vermilion;
+  color: var.$parchment;
+}
+.turnOrderMore {
+  font-size: 10px;
+  color: var.$ink-faint;
+  flex-shrink: 0;
 }
 
 // ---- 戦場（敵 + 召喚 + 味方 + ログ）を内包するスクロール領域 ----
@@ -55,11 +166,22 @@
   flex: 1;
   max-width: 200px;
   padding: 8px;
-  border: 0.75px solid var.$rule;
   border-radius: 0;
+  border: 0.75px solid var.$rule;
   background-color: var.$parchment-card;
   box-shadow: 0 1px 3px var.$shadow-ink;
+  color: var.$ink;
   cursor: pointer;
+  transition: transform 0.18s ease-out; // state 駆動の前進/後退アニメ用
+}
+// nostyle 化後: .actionButton:disabled { opacity: 0.45 } を打ち消す
+// anim 中に disabled になっても暗転しない（.down の opacity:0.4 は維持）
+.enemy:disabled {
+  color: var.$ink;
+  opacity: 1;
+}
+.enemy:disabled.down {
+  opacity: 0.4;
 }
 
 .targeted {
@@ -78,6 +200,7 @@
   align-items: center;
   gap: 6px;
   justify-content: center;
+  color: var.$ink; // (C) disabled 継承を打ち消す
 }
 
 // 雑魚用：インラインスプライトが縮まないよう固定
@@ -91,7 +214,7 @@
   gap: 4px;
   font-size: 14px;
   font-weight: 700;
-  color: var.$ink;
+  color: var.$ink; // (C) disabled 状態でも継承
 }
 
 .enemyNameText {
@@ -100,6 +223,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var.$ink; // (C) disabled 継承を打ち消す
 }
 
 .enemyMarks {
@@ -107,68 +231,127 @@
   white-space: nowrap;
 }
 
-// §16: 選択中の敵の耐性コンパクト表示
-// 選択中の敵だけが 36px を確保（耐性バッジ 1〜2 行）。非選択時は 0 に詰めて、
-// 小型端末で縦方向に無駄な余白を作らない。flex-wrap の各行は align-items:stretch で
-// 並ぶため、行内では選択敵の高さに揃う（小さく見えるカードは出ない）。
-.enemyResist {
-  margin-top: 4px;
-  text-align: left;
+// ---- 対象情報パネル（耐性の縦広がり回避） ----
+// 敵エリアと召喚体/味方の間に固定高で配置。ターゲット未選択時もスペースは確保し、
+// 「敵をタップで対象選択」プロンプトを表示してレイアウトのジャンプを防ぐ。
+.targetInfoPanel {
+  flex: 0 0 auto;
+  min-height: 48px;
+  max-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+  background: var.$parchment-card;
+  border-top: 0.75px solid var.$rule;
+  border-bottom: 0.75px solid var.$rule;
+  overflow: hidden;
+  margin-bottom: 6px;
 }
-.targeted .enemyResist {
-  min-height: 36px;
+.targetInfoName {
+  flex: 0 0 auto;
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var.$ink;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.targetInfoResist {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.targetInfoResist::-webkit-scrollbar { display: none; }
+.targetInfoEmpty {
+  font-size: 11px;
+  color: var.$ink-faint;
+  letter-spacing: 0.04em;
+}
+
+// 敵カード内の HP バー直下にぶら下がる「弱点のみ」の常時チップ
+.enemyWeakChips {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 3px;
+  min-height: 14px; // 弱点なしの敵でも高さを確保（高さ均一化）
+}
+.weakChip {
+  font-size: 7px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.15);
+  color: var.$ink-faint;
+  line-height: 1;
+  white-space: nowrap;
+}
+// 属性ごとの弱点チップ色（アンダースコアはCSS Modules のクラス名に使う）
+.weakChip_fire  { background: var(--danger-tint); color: var.$vermilion; }
+.weakChip_ice   { background: rgba(90, 120, 200, 0.15); color: #6a8ec0; }
+.weakChip_volt  { background: rgba(201, 168, 106, 0.15); color: var.$illumination-gold; }
+.weakChip_slash, .weakChip_pierce, .weakChip_bash {
+  background: rgba(0, 0, 0, 0.08);
+  color: var.$ink-faint;
+}
+
+// 敵カードの状態異常角バッジ
+.enemyAilBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  font-size: 8px;
+  background: #5a3a6e;
+  color: #e7d2f5;
+  border-radius: 2px;
+  padding: 0 4px;
+  font-weight: 700;
+  pointer-events: none;
+  line-height: 1.4;
 }
 
 .down {
   opacity: 0.4;
 }
 
-// ---- 戦闘ログ（インライン 3 行 + タップで全履歴オーバーレイ）----
-// 画面下端の通常フローに常時 3 行表示。タップでフル履歴の overlay を開く。
-.log {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
-  flex-shrink: 0;
-  cursor: pointer;
-}
+// ---- 戦闘ログ（ヘッダ内 1 行プレビュー + タップで全履歴オーバーレイ）----
+// 行動順帯直下に 1 行プレビューを常時表示。タップでフル履歴の overlay を開く。
 
-.logHeader {
+// ヘッダ内 1 行ログプレビュー（モック v3 準拠）
+.logPreview {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 3px 10px;
-  background-color: var.$ink;
-  color: var.$parchment;
-  font-family: 'Kaisei Tokumin', serif;
+  gap: 8px;
+  padding: 4px 8px;
+  border-left: 2px solid var(--gold);
+  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  flex-shrink: 0;
+  color: var(--text-mute);
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 4px;
 }
 
-.logHeaderHint {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  opacity: 0.7;
-}
-
-// インライン表示の 3 行プレビュー（最新を下に表示。古いものは見えない）
-.logBody {
-  padding: 6px 10px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var.$ink;
-  // 3 行ぶんの高さに固定。溢れた古い行は非表示。
-  height: calc(12px * 1.5 * 3 + 12px);
+.logLatestLine {
+  flex: 1;
+  white-space: nowrap;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  text-overflow: ellipsis;
+  color: var(--text-base);
+}
+
+.logTapHint {
+  flex-shrink: 0;
+  color: var(--text-faint);
+  font-size: 9px;
+  letter-spacing: 0.16em;
 }
 
 .logLine {
@@ -180,7 +363,7 @@
   position: fixed;
   inset: 0;
   z-index: 30;
-  background-color: rgba(33, 36, 27, 0.45);
+  background-color: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,7 +379,7 @@
   flex-direction: column;
   background-color: var.$parchment-card;
   border: 0.75px solid var.$ink;
-  box-shadow: 0 6px 32px rgba(33, 36, 27, 0.45);
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.45);
   cursor: default;
 }
 
@@ -220,7 +403,6 @@
   color: var.$parchment;
   font-size: 16px;
   line-height: 1;
-  cursor: pointer;
   padding: 4px 6px;
 }
 
@@ -261,6 +443,15 @@
   margin-bottom: 4px;
 }
 
+// 後衛行は 3 列基準の幅で 2 つを中央配置
+.cardRowBack {
+  display: grid;
+  grid-template-columns: repeat(2, calc((100% - 12px) / 3));
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: unset;
+}
+
 .card {
   // 人数に依らず常に「3列基準」の同じ幅にする（少人数の行でも拡大しない）
   flex: 0 0 calc((100% - 12px) / 3);
@@ -270,12 +461,48 @@
   flex-direction: column;
   gap: 2px;
   padding: 5px;
-  border: 0.75px solid var.$rule;
   border-radius: 0;
+  border: 0.75px solid var.$rule;
   background-color: var.$parchment-card;
   box-shadow: 0 1px 3px var.$shadow-ink;
   text-align: left;
   cursor: pointer;
+  transition: transform 0.18s ease-out; // state 駆動の前進/後退アニメ用
+}
+
+// nostyle 化後: .actionButton:disabled { opacity: 0.45 } を打ち消す
+// anim 中に disabled になっても全体が暗転しない
+.card:disabled {
+  opacity: 1;
+}
+.card:disabled.down {
+  opacity: 0.4; // 倒れた味方は暗くする（.down が付くケース）
+}
+
+// ユニオン満タン U! バッジ（職業バッジの左に配置）
+.unionReadyBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 7px;
+  background: var.$illumination-gold;
+  color: var.$parchment-card;
+  border-radius: 2px;
+  padding: 0 3px;
+  font-weight: 700;
+  line-height: 1.4;
+  animation: glowPulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; box-shadow: 0 0 6px rgba(201, 168, 106, 0.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unionReadyBadge { animation: none; }
 }
 
 // 右上に固定する職業バッジ（カードのトレーディングカード化）
@@ -302,7 +529,7 @@
 .cardActive {
   border-color: var.$verdant;
   border-width: 1px;
-  box-shadow: 0 0 0 2px rgba(63, 107, 74, 0.35);
+  box-shadow: 0 0 0 2px rgba(63, 138, 92, 0.35);
 }
 
 // 味方対象選択中: タップ可能な味方カード
@@ -317,7 +544,7 @@
   border-color: var.$verdant-dark;
   border-style: solid;
   border-width: 1px;
-  box-shadow: 0 0 0 2px rgba(42, 74, 51, 0.4);
+  box-shadow: 0 0 0 2px rgba(63, 138, 92, 0.4);
   background-color: var.$parchment;
 }
 
@@ -408,7 +635,7 @@
 
 @keyframes cardFlash {
   0% {
-    background-color: rgba(178, 44, 44, 0.22);
+    background-color: rgba(178, 60, 48, 0.22);
     transform: translateX(0);
   }
   20% {
@@ -497,18 +724,35 @@
   touch-action: pan-y;
 }
 
-// スキル選択（2列グリッド）
+// スキル選択ラッパ（横スクロールヒント含む）
+.skillListWrap {
+  overflow: hidden;
+}
+
+// スキル選択（横スクロール 2 段グリッド）
 .skillList {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  grid-auto-flow: column;
+  grid-template-rows: 1fr 1fr;
+  grid-auto-columns: 120px;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.skillScrollHint {
+  font-size: 8px;
+  color: var.$ink-faint;
+  text-align: right;
+  margin-top: 2px;
 }
 
 .skillBtn {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
+  gap: 3px;
+  padding: 7px 8px;
   border: 0.75px solid var.$rule;
   border-radius: 0;
   background-color: var.$parchment-card;
@@ -522,7 +766,7 @@
   opacity: 0.4;
   cursor: not-allowed;
 
-  .tp {
+  .skillCostLine {
     color: var.$vermilion;
   }
 }
@@ -535,9 +779,25 @@
 }
 
 .skillName {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: var.$ink;
+}
+
+.skillCostLine {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var.$verdant-dark;
+}
+
+.skillTag {
+  font-size: 8px;
+  color: var.$ink-faint;
+  // 2行を超えたら省略
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .skillDesc {
@@ -546,13 +806,12 @@
   line-height: 1.4;
 }
 
-// スキルの威力・属性・対象サマリ（issue #18）
+// スキルの威力・属性・対象サマリ（issue #18）— 互換保持
 .skillSummary {
   font-size: 11px;
   font-weight: 700;
   color: var.$verdant-dark;
   line-height: 1.35;
-  // 2行を超えたら省略
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -684,16 +943,98 @@
   background-color: var.$parchment-card;
 }
 
+// 個別コマンド 2 行レイアウト
+.individualCmdRow1 {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+
+  button {
+    flex: 1;
+    height: 46px;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+}
+.individualCmdRow2 {
+  display: flex;
+  gap: 8px;
+
+  button {
+    flex: 1;
+    height: 40px;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+}
+.cmdPrimary {
+  background: linear-gradient(180deg, var.$illumination-gold, var.$ink-faint);
+  color: var.$parchment-card; // 暗色 (#15171f): 金背景に対して可読性良好
+  border: 0;
+  font-weight: 700;
+}
+.cmdSub {
+  border: 1px solid rgba(63, 138, 92, 0.5);
+  background: rgba(63, 138, 92, 0.1);
+  color: var.$verdant;
+}
+.cmdTertiary {
+  border: 1px solid rgba(63, 138, 92, 0.3);
+  color: var.$verdant-dark;
+  background: transparent;
+}
+.cmdBack {
+  flex: 0 0 62px;
+  border: 0.75px solid var.$rule;
+  color: var.$ink-faint;
+  background: transparent;
+}
+
 .cmdHead {
   font-size: 14px;
   font-weight: 800;
   color: var.$ink;
 }
 
+// (D) コマンドパネル主従構造: flex column
 .menu {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// (D) たたかう: 大ゴールドプライマリ (h50)
+.menuPrimary {
+  height: 50px;
+  min-height: 50px;
+  background: linear-gradient(180deg, var.$illumination-gold, var.$ink-faint);
+  color: var.$parchment-card; // 暗色 (#15171f): 金背景に対して可読性良好
+  border: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+// (D) さくせん / にげる の横並び行
+.menuRow {
+  display: flex;
+  gap: 6px;
+}
+
+// (D) さくせん (h44 小)
+.menuStrategy {
+  flex: 1;
+  height: 44px;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+// (D) にげる (h44 小)
+.menuFlee {
+  flex: 1;
+  height: 44px;
+  min-height: 44px;
+  font-size: 14px;
 }
 
 .menuBtn {
@@ -765,6 +1106,71 @@
   }
 }
 
+// defeat title
+.defeatTitle {
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 46px;
+  color: var.$vermilion;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 30px rgba(178, 60, 48, 0.6);
+  animation: glowPulseRed 4s ease-in-out infinite;
+  text-align: center;
+}
+
+@keyframes glowPulseRed {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; text-shadow: 0 0 40px rgba(178, 60, 48, 0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .defeatTitle { animation: none; }
+}
+
+// flee title
+.fleeTitle {
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 30px;
+  color: var.$verdant;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+// speedLine コンテナ
+.fleeLines {
+  position: relative;
+  width: 220px;
+  height: 80px;
+  margin-bottom: 12px;
+}
+
+.fleeSpeedLine {
+  position: absolute;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var.$verdant);
+  animation: fleeSpeedLine 1.1s ease-in-out infinite;
+}
+
+@keyframes fleeSpeedLine {
+  0%   { transform: translateX(-120%) scaleX(0.6); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translateX(320%) scaleX(1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fleeSpeedLine { animation: none; }
+}
+
+// defeat/flee のリザルトカード背景
+.resultLose {
+  background-color: var(--danger-tint);
+  border-color: rgba(178, 60, 48, 0.4);
+}
+.resultFlee {
+  background-color: rgba(63, 138, 92, 0.08);
+  border-color: rgba(63, 138, 92, 0.4);
+}
+
 // ---- 結果 ----
 .resultOverlay {
   position: fixed;
@@ -774,7 +1180,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background-color: rgba(33, 36, 27, 0.45);
+  background-color: rgba(0, 0, 0, 0.55);
 }
 
 .result {
@@ -853,6 +1259,29 @@
   font-variant-numeric: tabular-nums;
 }
 
+// バー本体のみに shimmer を当てるラッパー（EXP バー修正: 背景や文字に波打ちが出ないよう）
+.expBarShimmerWrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.expBarShimmerWrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+  background-size: 40px 40px;
+  animation: barShimmer 1.2s linear infinite;
+  pointer-events: none;
+  border-radius: 0;
+}
+
 // ---- 行動の逐次再生（issue #18） ----
 .playback {
   display: flex;
@@ -861,7 +1290,7 @@
   gap: 8px;
   padding: 8px 12px;
   border-radius: 0;
-  background-color: rgba(33, 36, 27, 0.06);
+  background-color: rgba(0, 0, 0, 0.08);
   flex-shrink: 0;
 }
 
@@ -909,7 +1338,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background-color: rgba(33, 36, 27, 0.45);
+  background-color: rgba(0, 0, 0, 0.55);
 }
 
 .dialog {
@@ -1066,11 +1495,11 @@
 }
 
 .strategyOff {
-  background: var.$ink;
-  color: var.$parchment-edge;
+  background: var.$parchment-card;
+  color: var.$ink-faint;
   padding: 4px 8px;
   border-radius: 0;
-  border: 0.75px solid var.$ink-faint;
+  border: 0.75px solid var.$rule;
   cursor: pointer;
 }
 
@@ -1109,3 +1538,1009 @@
   margin-bottom: 4px;
   pointer-events: none;
 }
+
+// ==========================================================
+// battle v5 — 攻撃 FX 6 属性・状態異常 10 種・リザルト独立画面
+// ==========================================================
+
+// ---- Step 2: 状態異常角バッジ 10 種化 ----
+
+// 敵カードの角バッジ行（複数並び）
+.enemyAilBadgeRow {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  display: flex;
+  gap: 2px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+// 単体バッジ（既存 .enemyAilBadge は維持、ここで再定義）
+// 既存の単一バッジ表示より優先度を上げる
+.enemyAilBadgeRow .enemyAilBadge {
+  position: static;
+  top: unset;
+  right: unset;
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+// 味方カードの状態異常角バッジ行
+.allyAilBadgeRow {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  display: flex;
+  gap: 2px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.allyAilBadge {
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+// ---- Step 3: 攻撃 FX レイヤー ----
+
+// 被弾 FX の shakeA を .flash に追加
+.flash {
+  animation: shakeA 0.24s ease, cardFlash 0.42s ease-out;
+  animation-fill-mode: both;
+}
+
+// 撃破時の dissolveE
+.dissolving {
+  animation: dissolveE 0.5s ease-out forwards;
+}
+
+// .inkOverlay に crit スケール
+.inkOverlay.inkCrit {
+  transform: translate(-50%, -50%) scale(1.3);
+}
+
+// ---- Step 4: リザルト独立画面 ----
+
+// 勝利リザルト画面
+.resultPage {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #0d0f14;
+  padding: 20px 16px max(20px, env(safe-area-inset-bottom, 0px));
+  gap: 16px;
+  animation: dialogPop 0.3s ease-out;
+}
+
+.resultPageHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.resultPageTitle {
+  font-family: var(--font-display, 'Kaisei Tokumin', serif);
+  font-size: 30px;
+  color: var(--gold, #c9a86a);
+  letter-spacing: 0.28em;
+  text-shadow: 0 0 24px var(--gold-glow, rgba(201, 168, 106, 0.5));
+}
+
+.resultPageSub {
+  font-size: 10px;
+  color: var(--text-faint, rgba(255,255,255,0.35));
+  letter-spacing: 0.18em;
+}
+
+.resultExpBar {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resultExpLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-faint, rgba(255,255,255,0.4));
+  letter-spacing: 0.1em;
+}
+
+.resultExpGain {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  color: var(--gold, #c9a86a);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.resultExpBarShimmer {
+  position: relative;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+.resultExpBarShimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 100%
+  );
+  background-size: 40px 40px;
+  animation: barShimmer 1s linear infinite;
+  border-radius: 5px;
+}
+
+.resultLevelUps {
+  position: relative;
+  width: 100%;
+}
+
+.resultLevelUpStack {
+  position: relative;
+  min-height: 100px;
+}
+
+.resultLevelUpBg2 {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 18px;
+  height: 82px;
+  background: #181b22;
+  border: 1px solid rgba(201, 168, 106, 0.16);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.resultLevelUpBg1 {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 9px;
+  height: 82px;
+  background: #1a1d26;
+  border: 1px solid rgba(201, 168, 106, 0.22);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.resultLevelUpCard {
+  position: relative;
+  background: #1a1d26;
+  border: 1px solid var(--gold, #c9a86a);
+  border-radius: 2px;
+  padding: 13px 15px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+  animation: dialogPop 0.28s ease-out;
+}
+
+.resultLevelUpName {
+  font-family: var(--font-display, 'Kaisei Tokumin', serif);
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 4px;
+}
+
+.resultLevelUpLevel {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold, #c9a86a);
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.resultLevelUpNew {
+  text-shadow: 0 0 10px var(--gold-glow, rgba(201, 168, 106, 0.5));
+  font-size: 17px;
+}
+
+.resultLevelUpStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.resultLevelUpStat {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+}
+
+.resultLevelUpOk {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.resultLevelUpOkBtn {
+  padding: 4px 18px;
+  border: 1px solid var(--gold, #c9a86a);
+  background: transparent;
+  color: var(--gold, #c9a86a);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.resultLoot {
+  width: 100%;
+}
+
+.resultLootHead {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 8px;
+}
+
+.resultLootGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.resultLootItem {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 3px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+}
+
+.resultGold {
+  width: 100%;
+  background: rgba(201, 168, 106, 0.08);
+  border: 1px solid rgba(201, 168, 106, 0.3);
+  border-radius: 3px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resultGoldLabel {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.45);
+}
+
+.resultGoldValue {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold-bright, #e0c080);
+}
+
+.resultPrimary {
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(180deg, var(--gold, #c9a86a), #7a5e30);
+  color: #1a1200;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  margin-top: auto;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// 全滅独立画面
+.defeatPage {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(20, 8, 8, 0.96);
+  padding: 24px 16px max(24px, env(safe-area-inset-bottom, 0px));
+}
+
+.defeatPartyStatus {
+  width: 248px;
+  background: #140e10;
+  border: 1px solid rgba(212, 103, 79, 0.25);
+  border-radius: 4px;
+  padding: 11px 13px;
+  margin-top: 8px;
+}
+
+.defeatPartyHead {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: #8c7a78;
+  margin-bottom: 8px;
+}
+
+.defeatPartyRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+
+.defeatPartyName {
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  width: 54px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.defeatPartyBar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.defeatPartyHpFill {
+  width: 0%;
+  height: 100%;
+  background: #d44f3f;
+}
+
+.defeatPartyVal {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 8px;
+  color: rgba(255,255,255,0.35);
+  width: 18px;
+  text-align: right;
+}
+
+.defeatBtn {
+  width: 220px;
+  height: 50px;
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  background: rgba(201, 168, 106, 0.08);
+  color: var(--gold, #c9a86a);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.defeatReach {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  font-size: 10px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+// 逃走独立画面
+.fleePage {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(8, 20, 12, 0.96);
+  padding: 24px 16px max(24px, env(safe-area-inset-bottom, 0px));
+}
+
+// encPulse — 敵エリア背景アニメ
+.enemies {
+  animation: encPulse 4.5s ease-in-out infinite;
+}
+
+// 行動順帯 先頭セル金枠・glow
+.turnOrderFirst {
+  position: relative;
+  width: 30px !important;
+  height: 30px !important;
+  border: 2px solid var(--gold, #c9a86a) !important;
+  box-shadow: 0 0 8px var(--gold-glow, rgba(201, 168, 106, 0.4));
+  animation: obsidian-glowPulse 2.2s ease-in-out infinite;
+}
+
+.turnOrderFirstLabel {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  color: var(--gold, #c9a86a);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+// 召喚リボン ラベル
+.summonsLabel {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: #8fd0a0;
+  margin-bottom: 4px;
+}
+
+// ==========================================================
+// battle effects — A-K（未実装エフェクトの一括追加）
+// モック v3 §9a/9b/9f/9h 準拠。新規 keyframe は _obsidian.scss 追記禁止のため
+// style.module.scss にローカル定義する。
+// ==========================================================
+
+// ---- A. healRise — 回復値ポップ ----
+@keyframes healRise {
+  0%   { transform: translate(-50%, 6px); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translate(-50%, -22px); opacity: 0; }
+}
+
+.healRisePop {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, 6px);
+  font-size: 13px;
+  font-weight: 800;
+  color: #5ec97a;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 12;
+  white-space: nowrap;
+  animation: healRise 0.8s ease-out forwards;
+}
+
+// ---- B. summonAppear — 召喚体登場 ----
+@keyframes summonAppear {
+  0%   { transform: scale(0.3) translateY(8px); opacity: 0; }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.summonNew {
+  animation: summonAppear 0.5s ease-out forwards;
+}
+
+// ---- C. runeSpin — 詠唱中の ✦ オーバーレイ ----
+@keyframes runeSpin {
+  0%   { transform: rotate(0deg) scale(0.6); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: rotate(180deg) scale(1.3); opacity: 0; }
+}
+
+.runeCasting {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  color: var.$illumination-gold;
+  text-shadow: 0 0 6px rgba(201, 168, 106, 0.8);
+  pointer-events: none;
+  z-index: 12;
+  animation: runeSpin 1.4s ease-in-out infinite;
+}
+
+// ---- D. hitFlash — 被弾時の赤 flash（enemy card 用） ----
+@keyframes hitFlash {
+  0%, 100% { background-color: rgba(212, 103, 79, 0); }
+  30%       { background-color: rgba(212, 103, 79, 0.4); }
+}
+
+.hitFlashOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  border-radius: inherit;
+  animation: hitFlash 1s ease-in-out forwards;
+}
+
+// ---- E. shakeB — 敵カードの縦揺れ（shakeA は横揺れ、B は縦方向）----
+@keyframes shakeB {
+  0%, 100% { transform: translateY(0); }
+  20%       { transform: translateY(-5px) rotate(-0.5deg); }
+  40%       { transform: translateY(4px) rotate(0.5deg); }
+  60%       { transform: translateY(-3px); }
+  80%       { transform: translateY(2px); }
+}
+
+.shakeBOverlay {
+  animation: shakeB 0.28s ease both;
+}
+
+// ---- F/G/H. 状態異常エフェクト: poisonWisp / sparkZap / ailDrift ----
+
+// F. poisonWisp — 毒/呪い バッジ浮遊 ☠
+@keyframes poisonWisp {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  30%  { opacity: 0.8; }
+  100% { transform: translateY(-16px) scale(1.3); opacity: 0; }
+}
+
+.ailBadgePoison,
+.ailBadgeCurse {
+  animation: poisonWisp 1.8s ease-in-out infinite;
+}
+
+// G. sparkZap — 麻痺バッジ ⚡ 点滅
+@keyframes sparkZap {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); }
+  50%       { opacity: 1; transform: scale(1.15); }
+}
+
+.ailBadgeParalysis {
+  animation: sparkZap 0.6s ease-in-out infinite;
+}
+
+// H. ailDrift — 状態異常マーカー全般の浮遊
+@keyframes ailDrift {
+  0%, 100% { transform: translateY(0); opacity: 0.85; }
+  50%       { transform: translateY(-2px); opacity: 1; }
+}
+
+.ailBadgeBase {
+  animation: ailDrift 2.4s ease-in-out infinite;
+}
+
+// ---- I. sealStamp — 戦闘開始のシール演出 ----
+@keyframes sealStamp {
+  0%   { transform: translate(-50%, -50%) scale(2.4) rotate(-14deg); opacity: 0; }
+  40%  { opacity: 1; }
+  55%  { transform: translate(-50%, -50%) scale(0.92) rotate(-6deg); }
+  70%  { transform: translate(-50%, -50%) scale(1.04) rotate(-6deg); }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(-6deg); opacity: 1; }
+}
+
+@keyframes sealFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.sealStampOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+}
+
+.sealStampInner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Kaisei Tokumin', serif;
+  font-size: 52px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: var.$vermilion;
+  border: 4px solid var.$vermilion;
+  padding: 8px 20px;
+  border-radius: 4px;
+  opacity: 0.88;
+  text-shadow: 0 2px 12px rgba(178, 60, 48, 0.5);
+  box-shadow: 0 0 24px rgba(178, 60, 48, 0.35);
+  animation: sealStamp 0.55s ease-out forwards;
+  white-space: nowrap;
+}
+
+.sealStampInnerOut {
+  animation: sealFadeOut 0.22s ease-in forwards;
+}
+
+// ---- J. dashAway — 逃走時キャラ離脱 ----
+@keyframes dashAway {
+  0%   { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(60px); opacity: 0; }
+}
+
+.dashAwayCard {
+  animation: dashAway 0.8s ease-in forwards;
+}
+
+// ---- 行動者前進アニメ（state 駆動）: 味方は上、敵は下 ----
+// @keyframes は廃止。advancingActorId state + CSS transition で制御。
+// class が付いたとき: transition で前進、class が外れたとき: transition で後退
+.cardAdvancing {
+  transform: translateY(-16px);
+  transition: transform 0.18s ease-out;
+}
+
+.enemyAdvancing {
+  transform: translateY(16px);
+  transition: transform 0.18s ease-out;
+}
+
+// ---- K. dustRise — 逃走時の足元砂塵 ----
+@keyframes dustRise {
+  0%   { transform: translate(0, 0) scale(0.5); opacity: 0; }
+  30%  { opacity: 0.5; }
+  100% { transform: translate(-26px, -12px) scale(1.3); opacity: 0; }
+}
+
+.dustContainer {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 60px;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.dustParticle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(180, 150, 90, 0.6);
+  animation: dustRise 1.1s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .healRisePop,
+  .summonNew,
+  .runeCasting,
+  .hitFlashOverlay,
+  .shakeBOverlay,
+  .ailBadgePoison,
+  .ailBadgeCurse,
+  .ailBadgeParalysis,
+  .ailBadgeBase,
+  .sealStampInner,
+  .sealStampInnerOut,
+  .dashAwayCard,
+  .dustParticle {
+    animation: none;
+  }
+  .cardAdvancing,
+  .enemyAdvancing {
+    transform: none;
+    transition: none;
+  }
+}
+
+// ==========================================================
+// レスポンシブ縮小: 短画面（高さ ≤ 720px）
+// iPhone SE (375×667) / iPhone 16 (393×778) などで
+// battlefield の初期表示スクロールをなくす。
+// max-height クエリなので大画面には影響しない。
+// ==========================================================
+
+@media (max-height: 720px) {
+  // --- レイアウト全体 ---
+  .layout {
+    padding-top: 8px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
+  // --- ヘッダ ---
+  .chapterRow {
+    margin-bottom: 2px;
+  }
+  .chapterMark {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+  }
+
+  // 行動順帯: アイコン縮小 + マージン詰め
+  .turnOrderBar {
+    gap: 3px;
+    margin-bottom: 3px;
+  }
+  .turnOrderFirst {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .turnOrderIcon {
+    width: 18px;
+    height: 18px;
+    font-size: 8px;
+  }
+  .turnOrderMore {
+    font-size: 9px;
+  }
+
+  // ログプレビュー
+  .logPreview {
+    padding: 3px 6px;
+    font-size: 9px;
+    margin-bottom: 3px;
+    gap: 6px;
+  }
+  .logTapHint {
+    font-size: 8px;
+  }
+
+  // --- 敵エリア ---
+  .enemies {
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+  .enemy {
+    padding: 5px;
+    gap: 3px;
+  }
+  .enemyName {
+    font-size: 12px;
+  }
+  .enemyWeakChips {
+    min-height: 12px;
+    margin-top: 2px;
+    gap: 2px;
+  }
+  .weakChip {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+
+  // --- 対象情報パネル ---
+  .targetInfoPanel {
+    min-height: 40px;
+    max-height: 40px;
+    padding: 3px 8px;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .targetInfoName {
+    font-size: 10px;
+  }
+  .targetInfoEmpty {
+    font-size: 10px;
+  }
+
+  // --- 召喚体リボン ---
+  .summonsLabel {
+    font-size: 7px;
+  }
+  .summon {
+    padding: 4px 6px;
+    gap: 2px;
+  }
+  .summonName {
+    font-size: 10px;
+  }
+  .summonHp {
+    font-size: 9px;
+  }
+
+  // --- 味方エリア ---
+  .party {
+    gap: 3px;
+    margin-bottom: 5px;
+  }
+  .rowTag {
+    font-size: 9px;
+  }
+  .cardRow {
+    gap: 4px;
+    margin-bottom: 3px;
+  }
+  .cardRowBack {
+    gap: 4px;
+    grid-template-columns: repeat(2, calc((100% - 8px) / 3));
+  }
+  .card {
+    padding: 4px;
+    gap: 1px;
+  }
+  .cardPortrait {
+    width: 24px;
+    height: 24px;
+  }
+  .cardHeader {
+    gap: 3px;
+  }
+  .cardHeaderText {
+    padding-right: 14px;
+  }
+  .cardName {
+    font-size: 10px;
+  }
+  .cardNums {
+    font-size: 9px;
+  }
+  .cardCmd {
+    font-size: 9px;
+  }
+  .cardStrategy {
+    font-size: 8px;
+  }
+  .jobBadge {
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+  }
+  .gaugeLabel {
+    font-size: 8px;
+  }
+
+  // --- コマンドパネル ---
+  .command {
+    gap: 5px;
+  }
+  .menu {
+    gap: 4px;
+  }
+  .menuPrimary {
+    height: 44px !important;
+    min-height: 44px !important;
+    font-size: 16px !important;
+  }
+  .menuStrategy,
+  .menuFlee {
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 13px !important;
+  }
+  .menuRow {
+    gap: 4px;
+  }
+  .individualCmdRow1 {
+    gap: 5px;
+    margin-bottom: 4px;
+    button {
+      height: 40px;
+      font-size: 13px;
+    }
+  }
+  .individualCmdRow2 {
+    gap: 5px;
+    button {
+      height: 34px;
+      font-size: 12px;
+    }
+  }
+  .menuBack {
+    min-height: 32px;
+    font-size: 12px;
+  }
+  .primary {
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .redo {
+    min-height: 48px;
+    font-size: 13px;
+  }
+}
+
+// ==========================================================
+// レスポンシブ縮小（追加段）: さらに短画面（高さ ≤ 640px）
+// iPhone SE (375×667) はこちらに非該当だが
+// 古い小型端末 (360×640 等) に対応する保険。
+// ==========================================================
+
+@media (max-height: 640px) {
+  // --- ヘッダをさらに詰める ---
+  .chapterMark {
+    font-size: 9px;
+  }
+  .logPreview {
+    padding: 2px 5px;
+    font-size: 8px;
+    margin-bottom: 2px;
+  }
+
+  // --- 行動順帯 ---
+  .turnOrderBar {
+    gap: 2px;
+    margin-bottom: 2px;
+  }
+  .turnOrderFirst {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .turnOrderIcon {
+    width: 16px;
+    height: 16px;
+    font-size: 7px;
+  }
+
+  // --- 敵エリア ---
+  .enemies {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .enemy {
+    padding: 4px;
+    gap: 2px;
+  }
+  .enemyName {
+    font-size: 11px;
+  }
+
+  // --- 対象情報パネル ---
+  .targetInfoPanel {
+    min-height: 34px;
+    max-height: 34px;
+    padding: 2px 6px;
+    margin-bottom: 3px;
+  }
+
+  // --- 味方エリア ---
+  .party {
+    gap: 2px;
+    margin-bottom: 3px;
+  }
+  .card {
+    padding: 3px;
+  }
+  .cardPortrait {
+    width: 20px;
+    height: 20px;
+  }
+  .cardName {
+    font-size: 9px;
+  }
+
+  // --- コマンドパネル ---
+  .menuPrimary {
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 14px !important;
+  }
+  .menuStrategy,
+  .menuFlee {
+    height: 32px !important;
+    min-height: 32px !important;
+    font-size: 12px !important;
+  }
+  .individualCmdRow1 {
+    button {
+      height: 34px;
+      font-size: 12px;
+    }
+  }
+  .individualCmdRow2 {
+    button {
+      height: 28px;
+      font-size: 11px;
+    }
+  }
+  .menuBack {
+    min-height: 28px;
+  }
+}
+

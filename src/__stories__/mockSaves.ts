@@ -25,7 +25,47 @@ export const mockEmpty: SaveData = (() => {
 // 種族・職業を多様化しつつ PARTY_MAX まで埋める（[01]の最大編成）。
 // addCharacterToGuild が前衛→後衛の順に詰めるので、最初の 3 人が前衛、
 // 続く 2 人が後衛に入る。
+//
+// 武器網羅（Battle Storybook で全攻撃属性 FX を確認できるよう設計）:
+//   1 ランス  (戦士)   sword  → slash  通常攻撃
+//   2 ブロン  (守護兵) spear  → pierce 通常攻撃
+//   3 リオン  (拳聖)   fist   → bash   通常攻撃
+//   4 セラ    (薬師)   staff  → bash   通常攻撃 + 回復スキル
+//   5 オン    (魔導士) staff  → bash   通常攻撃 + fire/ice/volt/almighty スキル
 // ============================================================
+
+// 装備インスタンス（guild.equipment プールにも追加し、各キャラに装備させる）
+const WEAPON_SWORD: EquipInstance = {
+  id: 'equip_party_sword',
+  masterId: 'equip_short_sword',
+  forgeLevel: 0,
+};
+const WEAPON_SPEAR: EquipInstance = {
+  id: 'equip_party_spear',
+  masterId: 'equip_iron_spear',
+  forgeLevel: 0,
+};
+const WEAPON_FIST: EquipInstance = {
+  id: 'equip_party_fist',
+  masterId: 'equip_iron_knuckle',
+  forgeLevel: 0,
+};
+const WEAPON_STAFF_MEDIC: EquipInstance = {
+  id: 'equip_party_staff_medic',
+  masterId: 'equip_oak_staff',
+  forgeLevel: 0,
+};
+const WEAPON_STAFF_MAGE: EquipInstance = {
+  id: 'equip_party_staff_mage',
+  masterId: 'equip_oak_staff',
+  forgeLevel: 0,
+};
+const ARMOR_LEATHER: EquipInstance = {
+  id: 'equip_party_armor',
+  masterId: 'equip_leather_armor',
+  forgeLevel: 0,
+};
+
 export const mockWithParty: SaveData = (() => {
   let save = createInitialSaveData(GUILD_NAME);
 
@@ -36,18 +76,62 @@ export const mockWithParty: SaveData = (() => {
     name: 'ランス',
     id: 'char_mock_warrior',
   });
+  // 戦士: sword 装備（slash） + slash 系・全体斬スキル
+  warrior.equipment = {
+    weapon: WEAPON_SWORD,
+    armor: ARMOR_LEATHER,
+    accessory: null,
+  };
+  warrior.learnedSkills = {
+    skill_power_slash: 1,
+    skill_cleave: 1,
+    skill_chain_slash: 1,
+    skill_warrior_war_cry: 1,
+    skill_warrior_double_slash: 1,
+    skill_warrior_blade_storm: 1,
+  };
+
   const guardian = createCharacter({
     raceId: 'race_golan',
     classId: 'class_guardian',
     name: 'ブロン',
     id: 'char_mock_guardian',
   });
+  // 守護兵: spear 装備（pierce） + 盾スキル
+  guardian.equipment = {
+    weapon: WEAPON_SPEAR,
+    armor: ARMOR_LEATHER,
+    accessory: null,
+  };
+  guardian.learnedSkills = {
+    skill_shield_bash: 1,
+    skill_provoke: 1,
+    skill_guardian_shield_press: 1,
+    skill_guardian_taunt_roar: 1,
+    skill_guardian_t_lance_charge: 1,
+  };
+
   const monk = createCharacter({
     raceId: 'race_therian',
     classId: 'class_monk',
     name: 'リオン',
     id: 'char_mock_monk',
   });
+  // 拳聖: fist 装備（bash） + bash 系スキル
+  monk.equipment = {
+    weapon: WEAPON_FIST,
+    armor: ARMOR_LEATHER,
+    accessory: null,
+  };
+  monk.learnedSkills = {
+    skill_triple_strike: 1,
+    skill_focus_ki: 1,
+    skill_iron_body: 1,
+    skill_monk_palm_strike: 1,
+    skill_monk_flurry: 1,
+    skill_monk_rising_dragon: 1,
+  };
+
   // 後衛 2 名: 回復・遠隔火力
   const healer = createCharacter({
     raceId: 'race_human',
@@ -55,18 +139,76 @@ export const mockWithParty: SaveData = (() => {
     name: 'セラ',
     id: 'char_mock_healer',
   });
+  // 薬師: staff 装備（bash） + 回復スキル
+  healer.equipment = {
+    weapon: WEAPON_STAFF_MEDIC,
+    armor: ARMOR_LEATHER,
+    accessory: null,
+  };
+  healer.learnedSkills = {
+    skill_heal: 1,
+    skill_mass_heal: 1,
+    skill_first_aid: 1,
+    skill_refresh_herb: 1,
+    skill_medic_full_heal: 1,
+    skill_medic_party_cure: 1,
+  };
+
   const mage = createCharacter({
     raceId: 'race_pix',
     classId: 'class_mage',
     name: 'オン',
     id: 'char_mock_mage',
   });
+  // 魔導士: staff 装備（bash） + fire/ice/volt/almighty 属性魔法スキル
+  mage.equipment = {
+    weapon: WEAPON_STAFF_MAGE,
+    armor: ARMOR_LEATHER,
+    accessory: null,
+  };
+  mage.learnedSkills = {
+    // fire
+    skill_fire_bolt: 1,
+    skill_fire_storm: 1,
+    skill_mage_t_hellfire: 1,
+    // ice
+    skill_ice_bolt: 1,
+    skill_mage_ice_storm: 1,
+    skill_mage_frost_lance: 1,
+    // volt
+    skill_volt_bolt: 1,
+    skill_mage_volt_storm: 1,
+    skill_mage_thunderbolt: 1,
+    // almighty (meteor は全体貫通属性として使う)
+    skill_mage_meteor: 1,
+    skill_mage_ragnarok: 1,
+    // バフ・ユーティリティ
+    skill_mage_focus: 1,
+  };
 
   save = addCharacterToGuild(save, warrior);
   save = addCharacterToGuild(save, guardian);
   save = addCharacterToGuild(save, monk);
   save = addCharacterToGuild(save, healer);
   save = addCharacterToGuild(save, mage);
+
+  // guild.equipment プールに使用装備インスタンスを登録
+  // （Shop / Forge ストーリーが参照するプールとは独立して追加する）
+  save = {
+    ...save,
+    guild: {
+      ...save.guild,
+      equipment: [
+        ...save.guild.equipment,
+        WEAPON_SWORD,
+        WEAPON_SPEAR,
+        WEAPON_FIST,
+        WEAPON_STAFF_MEDIC,
+        WEAPON_STAFF_MAGE,
+        ARMOR_LEATHER,
+      ],
+    },
+  };
 
   return save;
 })();
@@ -95,7 +237,10 @@ export const mockPostBoss: SaveData = (() => {
         deepestReached: 5,
         highestBossDefeated: 5,
         totalDives: 2,
-        bossDefeatLog: [{ depth: 5, at: Date.now() }],
+        bossDefeatLog: [
+          { depth: 5, at: Date.now(), enemyId: 'enemy_boss_gatekeeper' },
+          { depth: 10, at: Date.now() - 3600_000 }, // enemyId なし（後方互換確認用）
+        ],
       },
       bossGates: {
         ...save.towerState.bossGates,
@@ -136,6 +281,32 @@ export const mockShop: SaveData = (() => {
       ...mockWithParty.guild,
       gold: 5000,
       equipment,
+    },
+  };
+})();
+
+// ============================================================
+// mockShopWithEquipped — mockShop + 先頭メンバーが equip_inst_1 を装備済み
+// 売るタブのロック行テスト用
+// ============================================================
+export const mockShopWithEquipped: SaveData = (() => {
+  const equippedInst = mockShop.guild.equipment[0]; // equip_inst_1 (short_sword)
+  if (!equippedInst) return mockShop;
+  return {
+    ...mockShop,
+    guild: {
+      ...mockShop.guild,
+      members: mockShop.guild.members.map((m, i) =>
+        i === 0
+          ? {
+              ...m,
+              equipment: {
+                ...m.equipment,
+                weapon: equippedInst,
+              },
+            }
+          : m
+      ),
     },
   };
 })();

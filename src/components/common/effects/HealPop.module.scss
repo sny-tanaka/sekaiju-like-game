@@ -1,0 +1,30 @@
+// HealPop.module.scss
+// 回復値ポップアップ共通コンポーネントのスタイル。
+// keyframe は battle/style.module.scss の healRise を使用。
+
+@keyframes healRiseLocal {
+  0%   { transform: translate(-50%, 6px); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translate(-50%, -22px); opacity: 0; }
+}
+
+.healPop {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, 6px);
+  font-size: 13px;
+  font-weight: 800;
+  color: #5ec97a;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 12;
+  white-space: nowrap;
+  animation: healRiseLocal 0.8s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .healPop {
+    animation: none;
+  }
+}

@@ -1,0 +1,82 @@
+// DamagePop — ダメージ/回復/会心の数値ポップエフェクト
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+
+@keyframes splatA {
+  0%   { transform: translateY(0) scale(0.6); opacity: 1; }
+  20%  { transform: translateY(-8px) scale(1.15); opacity: 1; }
+  80%  { transform: translateY(-22px) scale(1); opacity: 1; }
+  100% { transform: translateY(-36px) scale(0.9); opacity: 0; }
+}
+
+@keyframes splatB {
+  0%   { transform: translateY(0) scale(0.6); opacity: 1; }
+  20%  { transform: translateY(-6px) scale(1.1); opacity: 1; }
+  80%  { transform: translateY(-18px) scale(0.95); opacity: 1; }
+  100% { transform: translateY(-30px) scale(0.85); opacity: 0; }
+}
+
+@keyframes critFlash {
+  0%, 100% { opacity: 0; }
+  20%      { opacity: 1; }
+  60%      { opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes splatA    { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes splatB    { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes critFlash { 0%, 100% { opacity: 0; } }
+}
+
+.pop {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;   // 親カードの中央から上昇開始
+  transform-origin: bottom center;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 22px;
+  font-weight: 800;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 12;
+  // splatA: translateY(0→-36px) + scale(.6→1.15→1→.9) + opacity(0→1→0)
+  animation: splatA 0.76s ease-out forwards;
+}
+
+.value {
+  display: inline-block;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+// ---- バリアント色 ----
+
+.damage {
+  color: #ffd9c9;
+}
+
+.heal {
+  color: #9ed8b4;
+  // heal は splatA より小さめ・明るめ: splatB を使用
+  animation: splatB 0.76s ease-out forwards;
+}
+
+.crit {
+  color: #ffd27a;
+  font-size: 28px; // 会心は 1.3x
+}
+
+// ---- 会心フラッシュ ----
+
+.critFlash {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, rgba(255, 210, 122, 0.6), transparent 60%);
+  animation: critFlash 0.5s ease-in-out;
+  pointer-events: none;
+}
+
+// ---- 属性別の追加色（damage / crit variant のとき） ----
+
+.elem_fire { color: #ff9a5a; }
+.elem_ice  { color: #a8d4f0; }
+.elem_volt { color: #e8d85b; }
+// slash / pierce / bash / almighty は default の .damage / .crit 色をそのまま使う

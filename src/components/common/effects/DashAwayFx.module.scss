@@ -1,0 +1,24 @@
+// DashAwayFx.module.scss
+// 逃走時キャラ離脱エフェクト共通コンポーネントのスタイル。
+// battle 画面の味方カードに className として適用。
+
+@keyframes dashAwayLocal {
+  0%   { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(60px); opacity: 0; }
+}
+
+.dashAway {
+  animation: dashAwayLocal 0.8s ease-in forwards;
+}
+
+.dashAwayEnemy {
+  animation: dashAwayLocal 0.8s ease-in forwards;
+  transform-origin: right center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashAway,
+  .dashAwayEnemy {
+    animation: none;
+  }
+}

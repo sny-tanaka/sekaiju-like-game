@@ -1,5 +1,5 @@
 import { CURRENT_SCHEMA_VERSION } from '@/domain/saveData';
-import type { SaveData, SaveMeta } from '@/domain/types';
+import type { Character, SaveData, SaveMeta, SavePartyPreviewMember } from '@/domain/types';
 
 // ============================================================================
 // セーブデータのシリアライズ・マイグレーション・破損判定（[05 §4.2]）。
@@ -167,11 +167,23 @@ export function deserializeSave(raw: unknown): LoadResult {
 
 /** タイトルに出すセーブの概況メタ情報を SaveData から導出する。 */
 export function deriveSaveMeta(data: SaveData): SaveMeta {
+  const { members, party } = data.guild;
+  const ids = [
+    ...party.front.filter((id): id is string => id !== null),
+    ...party.back.filter((id): id is string => id !== null),
+  ];
+  const partyPreview: SavePartyPreviewMember[] = ids
+    .map((id) => members.find((m) => m.id === id))
+    .filter((m): m is Character => m !== undefined)
+    .slice(0, 5)
+    .map((m) => ({ id: m.id, name: m.name, raceId: m.raceId, classId: m.classId }));
+
   return {
     guildName: data.guild.name,
     deepestReached: data.towerState.record.deepestReached,
     memberCount: data.guild.members.length,
     savedAt: data.savedAt,
+    partyPreview,
   };
 }
 

@@ -1,6 +1,6 @@
 import { deleteDB, openDB } from 'idb';
 
-import { createInitialSaveData } from '@/domain/saveData';
+import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
 import { _resetDbForTest, deleteGame, getSaveMeta, loadGame, saveGame } from '@/store/saveStore';
 
 beforeEach(async () => {
@@ -47,6 +47,41 @@ describe('saveStore (IndexedDB・単一セーブ)', () => {
     const meta = await getSaveMeta();
     expect(meta?.guildName).toBe('ギルドA');
     expect(meta?.memberCount).toBe(0);
+  });
+
+  test('getSaveMeta は編成中メンバーの partyPreview を返す', async () => {
+    let save = createInitialSaveData('探索者団');
+    // キャラを2体追加（addCharacterToGuild は内部で party にも追加する）
+    const char1 = createCharacter({
+      raceId: 'race_human',
+      classId: 'class_warrior',
+      name: 'アルバ',
+    });
+    const char2 = createCharacter({ raceId: 'race_pix', classId: 'class_mage', name: 'ルイ' });
+    save = addCharacterToGuild(save, char1);
+    save = addCharacterToGuild(save, char2);
+    await saveGame(save);
+
+    const meta = await getSaveMeta();
+    expect(meta?.partyPreview).toHaveLength(2);
+    expect(meta?.partyPreview?.[0]).toMatchObject({
+      id: char1.id,
+      name: 'アルバ',
+      raceId: 'race_human',
+      classId: 'class_warrior',
+    });
+    expect(meta?.partyPreview?.[1]).toMatchObject({
+      id: char2.id,
+      name: 'ルイ',
+      raceId: 'race_pix',
+      classId: 'class_mage',
+    });
+  });
+
+  test('getSaveMeta は編成が空なら partyPreview が空配列', async () => {
+    await saveGame(createInitialSaveData('空ギルド'));
+    const meta = await getSaveMeta();
+    expect(meta?.partyPreview).toEqual([]);
   });
 
   test('破損データは corrupted メタを返す', async () => {

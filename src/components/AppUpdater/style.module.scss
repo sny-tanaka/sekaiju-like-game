@@ -1,63 +1,60 @@
-@use 'variables' as var;
+// 黒曜テーマ: _variables.scss は参照しない。すべて var(--*) を使う。
 
 .banner {
-  position: fixed;
-  width: max-content;
-  max-width: calc(100vw - 32px);
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
+  position: absolute;
+  top: 60px;
+  left: 16px;
+  right: 16px;
   display: flex;
+  gap: 10px;
   align-items: center;
-  gap: 12px;
   padding: 10px 14px;
-  border-radius: 999px;
-  background: rgba(45, 25, 70, 0.92);
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  font-size: 13px;
-  font-weight: 600;
-  // セーフエリア（iOS ホームバー）への被りを避ける
-  margin-bottom: env(safe-area-inset-bottom, 0);
-  animation: slide_up 0.2s ease-out;
+  border-radius: 4px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  box-shadow: var(--shadow-modal);
+  color: var(--text-strong);
+  font-family: var(--font-body);
+  font-size: 12px;
+  z-index: 50;
+  animation: slide_down 0.2s ease-out;
 }
 
-// 「現在のバージョンは最新です」用。情報用なので彩度を抑えた色味に切り替える。
 .banner_info {
-  background: rgba(70, 110, 80, 0.92);
+  border-color: var(--rule-base);
+  color: var(--text-base);
 }
 
-@keyframes slide_up {
+@keyframes slide_down {
   from {
     opacity: 0;
-    transform: translate(-50%, 12px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
 }
 
 .message {
+  flex: 1;
   letter-spacing: 0.02em;
 }
 
 .button {
+  height: 28px;
+  padding: 0 12px;
   border: none;
-  background: linear-gradient(180deg, #ff8fb1 0%, #ff5b9c 100%);
-  color: #fff;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: 3px;
+  background: var(--gold);
+  color: var(--bg-mid);
+  font-family: var(--font-body);
   font-weight: 700;
+  font-size: 11px;
   cursor: pointer;
-  box-shadow: 0 2px 0 #c94278;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
   width: max-content;
 
   &:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 #c94278;
+    opacity: 0.85;
   }
 }

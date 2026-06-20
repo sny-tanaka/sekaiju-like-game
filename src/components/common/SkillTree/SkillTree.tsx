@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import styles from './style.module.scss';
 
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { SKILLS } from '@/data/skills';
 import {
   availableSP,
@@ -230,14 +231,12 @@ export const SkillTree = ({ nodes, char, onLearn }: Props) => {
                     .join('・')}
                 </div>
               ) : null}
-              <button
-                type="button"
+              <ActionButton
+                label={label}
                 className={styles.learnBtn}
                 disabled={!canDo}
                 onClick={() => onLearn(detail.id)}
-              >
-                {label}
-              </button>
+              />
             </div>
           );
         })()

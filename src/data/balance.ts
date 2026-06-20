@@ -186,6 +186,73 @@ export const SKILL_TP = {
   Kreviveratio: 0.15, // revive 割合部分
 } as const;
 
+// ----------------------------------------------------------------------------
+// 推奨レベル超過減衰（§ level-decay）
+// ----------------------------------------------------------------------------
+
+/**
+ * 現在の深度に対する推奨レベルを返す。
+ * 次のボス階（depth を BOSS_INTERVAL で切り上げた倍数）の APPROPRIATE.lv を使う。
+ */
+export function getRecommendedLevel(depth: number): number {
+  const bossFloor = Math.ceil(depth / BALANCE.BOSS_INTERVAL) * BALANCE.BOSS_INTERVAL;
+  // 無限タワー対応: APPROPRIATE は 10F〜100F の 10 段階のみ。
+  // 100F を超える深層ではプレイヤー側の LEVEL_CAP (=100) に合わせて
+  // 推奨 Lv = 100 で頭打ちにする（Lv100 パーティーは深層で減衰なし）。
+  if (bossFloor > 100) return APPROPRIATE[100].lv;
+  return APPROPRIATE[bossFloor]?.lv ?? 1;
+}
+
+/**
+ * レベル超過量 → 報酬減衰係数の区分線形曲線。
+ * excess 0→1.00 / 5→0.33 / 10→0.20 / 15→0.10（下限）
+ */
+export const LEVEL_DECAY_CURVE: ReadonlyArray<readonly [number, number]> = [
+  [0, 1.0],
+  [5, 0.33],
+  [10, 0.2],
+  [15, 0.1],
+] as const;
+
+/** 減衰の下限（15超過以降は 0.10 維持）。 */
+export const LEVEL_DECAY_MIN = 0.1;
+
+/**
+ * パーティ平均レベルと潜行深度から報酬倍率を返す（区分線形補間）。
+ * 推奨レベル以下なら 1.00（減衰なし）。
+ * エンカウント側は別途 0.25 下限で除数として使う（initEncounter の opts）。
+ */
+export function levelDecay(partyAvgLv: number, depth: number): number {
+  const rec = getRecommendedLevel(depth);
+  const excess = Math.max(0, partyAvgLv - rec);
+
+  for (let i = 0; i < LEVEL_DECAY_CURVE.length - 1; i++) {
+    const [x0, y0] = LEVEL_DECAY_CURVE[i];
+    const [x1, y1] = LEVEL_DECAY_CURVE[i + 1];
+    if (excess <= x1) {
+      const t = (excess - x0) / (x1 - x0);
+      return Math.max(LEVEL_DECAY_MIN, y0 + t * (y1 - y0));
+    }
+  }
+  return LEVEL_DECAY_MIN;
+}
+
+/**
+ * SaveData から潜行中パーティの平均レベルを計算するヘルパ。
+ * diveState.party の charId を guild.members で逆引きしてレベル平均を取る。
+ * BattleState が無い状況（戦闘外・エンカウント抽選前）用。
+ */
+export function partyAverageLevelFromDive(save: {
+  guild: { members: ReadonlyArray<{ id: string; level: number }> };
+  diveState: { party: ReadonlyArray<{ charId: string }> } | null;
+}): number {
+  if (!save.diveState || save.diveState.party.length === 0) return 1;
+  const ids = new Set(save.diveState.party.map((p) => p.charId));
+  const members = save.guild.members.filter((m) => ids.has(m.id));
+  if (members.length === 0) return 1;
+  return members.reduce((acc, m) => acc + m.level, 0) / members.length;
+}
+
 /** 状態異常の強さ（ailment TP価値の乗数）。 */
 export const AILMENT_SEVERITY: Record<string, number> = {
   headBind: 1.0,

@@ -1,336 +1,607 @@
-@use 'variables' as var;
+// forge/style.module.scss — 黒曜 OBSIDIAN MINIMAL v2（モック忠実化）
 
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+@keyframes forgeSpark {
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+  40%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+  70%  { transform: translate(-50%, -50%) scale(0.9); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes forgeSpark { 0%, 100% { transform: translate(-50%, -50%); opacity: 0; } }
+}
+
+// ---- ルートレイアウト ----
 .layout {
+  position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
-  color: var.$ink;
+  padding: 16px 20px max(20px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  background-color: var.$parchment;
+  background: radial-gradient(130% 90% at 50% -8%, #1c2230 0%, #0e0f13 56%, #090a0d 100%);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  gap: 12px;
 }
 
+// ---- ヘッダー ----
 .head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 0.75px solid var.$rule;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .title {
   margin: 0;
-  font-size: 24px;
-  font-weight: 900;
-  color: var.$ink;
-}
-
-.stock {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-family: var(--font-display);
+  font-size: 18px;
   font-weight: 700;
-  color: var.$ink-faint;
+  color: var(--text-strong);
 }
 
+// インゴット在庫行
+.stockRow {
+  display: flex;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.stockCopper {
+  color: #c98a5b;
+}
+
+.stockSilver {
+  color: var(--text-base);
+}
+
+.stockGold {
+  color: #e8d85b;
+}
+
+.stockFrag {
+  color: var(--text-faint);
+}
+
+// ---- flat underline タブバー ----
 .tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 4px;
+  border-bottom: 1px solid var(--rule-soft);
+  flex-shrink: 0;
 }
 
 .tab {
   flex: 1;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 15px;
-  font-weight: 700;
+  text-align: center;
+  padding: 9px 0;
+  font-size: 12px;
+  color: var(--text-faint);
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+  border: none;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
 .tabActive {
-  border-color: var.$verdant;
-  background-color: var.$parchment;
-  color: var.$verdant;
+  color: var(--bg-mid);
+  font-weight: 700;
+  background: var(--gold);
 }
 
+// ---- ヒント文 ----
 .hint {
-  margin: 0 0 12px;
   font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var.$ink-faint;
+  color: var(--text-mute);
+  line-height: 1.6;
+  background: var(--surface-elev);
+  border-left: 2px solid var(--gold);
+  padding: 8px 10px;
+  border-radius: 0 3px 3px 0;
+  flex-shrink: 0;
 }
 
-// ---- 装備リスト（内部スクロール） ----
+// ---- 装備リスト（唯一の可変領域） ----
 .list {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 11px;
+  padding: 4px 0;
 }
 
+// ---- 強化タブの行カード（縦並び 2 段） ----
 .row {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 12px 13px;
 }
 
-.rowHead {
+// 先頭強調行
+.rowHighlight {
+  background: linear-gradient(100deg, #1a2030, #13151c);
+  border: 1px solid rgba(201, 168, 106, 0.35);
+  border-radius: 4px;
+  padding: 12px 13px;
+}
+
+// MAX強化済み: 少し透過
+.rowMaxed {
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 12px 13px;
+  opacity: 0.7;
+}
+
+// 上段: アイコン + 名前 + ステ予測
+.rowTop {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
-.rowSelected {
-  border-color: var.$verdant;
-  background-color: var.$parchment;
+// ItemSprite ラッパー（44x44 カード）
+.spriteCard {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 3px;
+  background: #0c0d11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
-// ---- カスタム checkbox ----
-.check {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  cursor: pointer;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  position: relative;
-
-  &:checked {
-    background-color: var.$verdant;
-    border-color: var.$verdant;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -55%) rotate(45deg);
-      width: 4px;
-      height: 7px;
-      border-right: 1.5px solid var.$parchment;
-      border-bottom: 1.5px solid var.$parchment;
-    }
-  }
+// ItemSprite ラッパー（42x42 for リサイクルタブ）
+.spriteCardSm {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 3px;
+  background: #0c0d11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  flex: 1;
-  min-width: 0;
 }
 
+// 装備名（+N）— N の部分は goldColor で
 .name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var.$ink;
-}
-
-.note {
-  font-size: 12px;
-  color: var.$ink-faint;
-}
-
-.actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-// インゴットボタン（銅・銀・金）— 写本トークン
-.ingot {
-  min-height: 38px;
-  padding: 0 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-edge;
-  color: var.$ink-faint;
   font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
+  color: var(--text-strong);
+}
 
-  // 押下可能な状態（disabled でない）
-  &:not(:disabled) {
-    color: var.$ink;
-  }
+.forgeLevel {
+  color: var(--gold);
+}
+
+// ステ予測（「武器 ・ ATK +62 → +68」）
+.statPreview {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.statNext {
+  color: #9ed8b4; // 緑
+}
+
+// MAX chip（最大強化済み行の右端）
+.maxChip {
+  font-size: 11px;
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 106, 0.35);
+  border-radius: 2px;
+  padding: 5px 10px;
+  flex-shrink: 0;
+}
+
+// ---- 下段: インゴットボタン 3 種 ----
+.ingotRow {
+  display: flex;
+  gap: 8px;
+}
+
+// 銅ボタン
+.ingotCopper {
+  flex: 1;
+  height: 36px;
+  border-radius: 3px;
+  background: rgba(201, 134, 91, 0.18);
+  border: 1px solid rgba(201, 134, 91, 0.5);
+  color: #e0a87c;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
+  cursor: pointer;
 
   &:disabled {
-    opacity: 0.35;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 }
 
-.recycle {
-  min-height: 38px;
-  padding: 0 12px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  font-size: 13px;
-  font-weight: 700;
+// 銀ボタン
+.ingotSilver {
+  flex: 1;
+  height: 36px;
+  border-radius: 3px;
+  background: transparent;
+  border: 1px solid rgba(200, 196, 186, 0.4);
+  color: var(--text-base);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
   cursor: pointer;
-  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
-.maxed {
-  font-size: 13px;
-  font-weight: 700;
-  color: var.$vermilion;
+// 金ボタン
+.ingotGold {
+  flex: 1;
+  height: 36px;
+  border-radius: 3px;
+  background: transparent;
+  border: 1px solid var(--rule-soft);
+  color: var(--text-mute);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
-.empty {
-  color: var.$ink-faint;
-  font-size: 14px;
-}
-
-// 一括分解バー — $verdant 地
-.bulkBar {
+// ---- リサイクルタブの行（横並び 1 段） ----
+.recycleRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 8px 12px;
-  border-radius: 0;
-  background-color: var.$verdant;
+  gap: 12px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 11px 13px;
+}
+
+.recycleRowSelected {
+  border-color: var(--rule-gold);
+  background: var(--gold-tint);
+}
+
+// チェックボックス
+.check {
+  accent-color: var(--gold);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+// 分解で得る断片数
+.fragCount {
+  color: #c98a5b;
+}
+
+// 「分解」チップ
+.recycleChip {
+  font-size: 11px;
+  color: #e0a87c;
+  border: 1px solid rgba(201, 134, 91, 0.5);
+  border-radius: 2px;
+  padding: 5px 11px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: var(--font-body);
+}
+
+// ---- 断片自動変換注記（リサイクルタブ末尾）— v3 ----
+.convertHint {
+  margin-top: 6px;
+  background: var(--surface-elev);
+  border: 1px dashed rgba(201, 168, 106, 0.25);
+  border-radius: 4px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.convertIcon {
+  font-size: 14px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.convertText {
+  font-size: 11px;
+  color: var(--text-mute);
+  line-height: 1.5;
+}
+
+.convertAccent {
+  color: #c98a5b;
+}
+
+.convertDim {
+  color: var(--text-mute);
+}
+
+// 空状態
+.empty {
+  color: var(--text-mute);
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+// ---- 一括分解バー（リサイクルタブ、リストの下・フッタの上） ----
+.bulkBar {
+  flex-shrink: 0;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-gold);
+  border-radius: 4px;
+  box-shadow: var(--shadow-modal);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .bulkInfo {
   flex: 1;
   font-size: 13px;
-  font-weight: 700;
-  color: var.$parchment;
+  color: var(--text-soft);
 }
 
 .bulkClear {
-  min-height: 38px;
+  height: 36px;
   padding: 0 12px;
-  border: 0.75px solid var.$parchment-edge;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$parchment;
-  font-size: 13px;
-  font-weight: 700;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 12px;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
 .bulkRecycle {
-  min-height: 38px;
+  height: 36px;
   padding: 0 14px;
   border: none;
-  border-radius: 0;
-  background-color: var.$verdant-dark;
-  color: var.$parchment;
+  border-radius: 3px;
+  background: var(--danger);
+  color: var(--danger-text);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
+// ---- フッタ ----
 .foot {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 0.75px solid var.$rule;
+  flex-shrink: 0;
 }
 
 .back {
   width: 100%;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 14px;
+  height: 46px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-soft);
+  color: var(--text-mute);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  background: transparent;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
-// 強化/分解の確認ダイアログ（誤タップ防止）
+// ---- 確認ダイアログ（共通基盤） ----
 .confirmOverlay {
   position: fixed;
   inset: 0;
   z-index: 30;
+  background: rgba(6, 7, 10, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background-color: rgba(33, 36, 27, 0.45);
+  padding: 0 28px;
 }
 
 .confirmBox {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   width: 100%;
   max-width: 360px;
-  padding: 20px 18px;
-  border-radius: 4px;
-  border: 0.75px solid var.$rule;
-  background-color: var.$parchment-card;
-  box-shadow: 0 6px 24px var.$shadow-ink;
-}
-
-.confirmText {
-  font-size: 15px;
-  line-height: 1.5;
+  background: var(--surface-panel);
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  border-radius: 6px;
+  padding: 24px 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  color: var.$ink;
 }
 
+// 強化確認: 72x72 ItemSprite カード（sparkle 3 点が絶対配置される親）
+.dialogSpriteWrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+}
+
+.dialogSprite {
+  width: 72px;
+  height: 72px;
+  border-radius: 3px;
+  background: #0c0d11;
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+// ✦ sparkle 3 点
+.spark1 {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  font-size: 16px;
+  animation: forgeSpark 1.3s ease-in-out infinite;
+}
+
+.spark2 {
+  position: absolute;
+  top: 8px;
+  right: -8px;
+  font-size: 13px;
+  animation: forgeSpark 1.3s ease-in-out 0.3s infinite;
+}
+
+.spark3 {
+  position: absolute;
+  bottom: -4px;
+  left: 14px;
+  font-size: 14px;
+  animation: forgeSpark 1.3s ease-in-out 0.6s infinite;
+}
+
+// 装備名（分解確認では下スペースなし）
+.dialogTitle {
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text-strong);
+  margin-bottom: 6px;
+  align-self: center;
+}
+
+// 強化値 +N → +M
+.dialogForgeLevel {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+.dialogForgeLevelNext {
+  color: var(--gold-bright);
+  text-shadow: 0 0 12px rgba(232, 208, 153, 0.6);
+}
+
+// 補足ボックス（消費インゴット + ステ変化）
+.dialogCostBox {
+  width: 100%;
+  background: var(--surface-elev);
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.7;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.dialogCostIngot {
+  color: var(--text-base);
+}
+
+.dialogCostNext {
+  color: var(--success);
+}
+
+// 残量テキスト
+.dialogRemain {
+  font-size: 11px;
+  color: var(--text-mute);
+  margin-bottom: 20px;
+}
+
+// 分解確認のシンプルテキスト
+.dialogText {
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+// アクションボタン行
 .confirmActions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  width: 100%;
 }
 
-.confirmCancel,
+.confirmCancel {
+  flex: 1;
+  height: 48px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  color: #c8c4ba;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
 .confirmOk {
   flex: 1;
-  min-height: 48px;
-  border: none;
-  border-radius: 0;
-  font-size: 15px;
+  height: 48px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: var(--bg-mid);
   font-weight: 700;
+  font-size: 14px;
+  border: none;
   cursor: pointer;
+  font-family: var(--font-body);
 }
 
-// 「やめる」枠線のみ
-.confirmCancel {
-  border: 0.75px solid var.$rule;
-  background-color: transparent;
-  color: var.$ink;
-}
-
-// 「強化する」$verdant 地
-.confirmOk {
-  background-color: var.$verdant;
-  color: var.$parchment;
-}
-
-// 「分解する」$vermilion 地（取り消せない破壊アクション）
 .confirmOkDanger {
-  background-color: var.$vermilion;
-  color: var.$parchment;
+  flex: 1;
+  height: 48px;
+  border-radius: 3px;
+  background: var(--danger);
+  color: var(--danger-text);
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
-// 強化成功 gold InkSplatter（Phase 2）
+// ---- 強化成功 gold InkSplatter（Phase 2） ----
 .forgeGold {
   position: fixed;
   top: 50%;

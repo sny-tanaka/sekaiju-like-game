@@ -1,80 +1,98 @@
-@use 'variables' as var;
+// keyframe は _obsidian.scss から local copy（CSS Modules の名前スコープで global 参照が失われるため）
+@keyframes obsidian-warnBlink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-warnBlink { 0%, 100% { opacity: 1; } }
+}
 
 .card {
+  position: relative;
+  width: 100%;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--rule-gold);
+  border-radius: 4px;
+  background: var(--surface-card);
+  color: var(--text-base);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  padding: 16px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  box-shadow: 0 2px 6px var.$shadow-ink;
+  gap: 10px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.guildName {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-strong);
+}
+
+.depth {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--gold);
+}
+
+.partyRow {
+  display: flex;
+  gap: 6px;
+}
+
+.partyCell {
+  flex: 1;
+  aspect-ratio: 1 / 1;
+  border-radius: 3px;
+  background: var(--bg-deep);
+  border: 1px solid var(--rule-gold);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partyEmpty {
+  border-color: var(--rule-base);
+  color: var(--text-faint);
+  font-size: 14px;
+}
+
+.footRow {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
 }
 
 .corrupted {
-  border-color: var.$vermilion;
-  background-color: var.$parchment;
+  border: 1px solid var(--danger-glow);
+  background: var(--danger-tint);
+  border-radius: 4px;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: obsidian-warnBlink 1.6s steps(1) infinite;
 }
 
 .corruptedText {
-  font-size: 15px;
-  color: var.$vermilion;
+  font-size: 13px;
   font-weight: 700;
+  color: var(--danger-text);
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .corruptedNote {
   margin: 0;
-  font-size: 13px;
-  color: var.$ink-faint;
-}
-
-.guildName {
-  font-family: 'Kaisei Tokumin', serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var.$ink;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 22px;
-  margin: 0;
-
-  div {
-    display: flex;
-    flex-direction: column;
-  }
-
-  dt {
-    font-size: 11px;
-    color: var.$ink-faint;
-    letter-spacing: 0.04em;
-  }
-
-  dd {
-    margin: 0;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 16px;
-    font-weight: 700;
-    color: var.$ink;
-  }
-}
-
-.continue {
-  width: 100%;
-  min-height: 48px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.85;
-  }
+  font-size: 11px;
+  color: var(--danger-text-soft);
+  line-height: 1.6;
 }

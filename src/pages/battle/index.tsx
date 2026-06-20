@@ -4,9 +4,18 @@ import styles from './style.module.scss';
 
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { BattleExpBar } from '@/components/common/BattleExpBar/BattleExpBar';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
+import { BuffFx } from '@/components/common/effects/BuffFx/BuffFx';
+import { dashAwayClass } from '@/components/common/effects/DashAwayFx';
+import { DebuffFx } from '@/components/common/effects/DebuffFx/DebuffFx';
+import { DustRiseFx } from '@/components/common/effects/DustRiseFx';
+import { RuneSpinFx } from '@/components/common/effects/RuneSpinFx';
+import { SealStampFx } from '@/components/common/effects/SealStampFx';
+import { summonAppearClass } from '@/components/common/effects/SummonAppearFx';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
+import { HitFx } from '@/components/common/HitFx/HitFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
@@ -26,6 +35,9 @@ import {
   startBattle,
 } from '@/domain/battle';
 import type { LevelUpResult } from '@/domain/battle';
+import type { BattleEvent, CombatantSnapshot } from '@/domain/battleEvent';
+import { fmt } from '@/domain/battleLogFormat';
+import { previewTurnOrder } from '@/domain/combat';
 import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
 import { itemCount } from '@/domain/inventory';
@@ -44,6 +56,7 @@ import type {
   SkillId,
   UnionSkillDef,
 } from '@/domain/types';
+import { useBattleLogger } from '@/hooks/useBattleLogger';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
@@ -91,6 +104,20 @@ const AILMENT_LABEL: Record<string, string> = {
   headBind: '頭封じ',
   armBind: '腕封じ',
   legBind: '脚封じ',
+};
+
+// v5: 状態異常角バッジ 10 種（モック v3 §4.6.1 準拠）
+const AILMENT_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
+  poison: { label: '毒', bg: '#5a3a6e', fg: '#e7d2f5' },
+  paralysis: { label: '麻', bg: '#5e5a28', fg: '#e8d85b' },
+  sleep: { label: '眠', bg: '#33425e', fg: '#9fb6e0' },
+  blind: { label: '盲', bg: '#2e3340', fg: '#aab0bc' },
+  confusion: { label: '乱', bg: '#5e3a4e', fg: '#e6aecb' },
+  curse: { label: '呪', bg: '#3a2a4a', fg: '#c0a8e0' },
+  instantDeath: { label: '死', bg: '#4a1f1f', fg: '#e89080' },
+  headBind: { label: '頭', bg: '#5e3636', fg: '#e0a0a0' },
+  armBind: { label: '腕', bg: '#5e3636', fg: '#e0a0a0' },
+  legBind: { label: '脚', bg: '#5e3636', fg: '#e0a0a0' },
 };
 
 function effectLabel(e: SkillEffectDef, lv: number): string {
@@ -150,12 +177,28 @@ const STAT_LABEL: Record<string, string> = {
 };
 
 /** 戦闘員の現在 HP/戦闘不能のスナップショット（逐次再生の起点。issue #18）。 */
-function snapshotOf(s: BattleState): Record<string, { hp: number; isDown: boolean }> {
-  const snap: Record<string, { hp: number; isDown: boolean }> = {};
+function snapshotOf(s: BattleState): CombatantSnapshot {
+  const snap: CombatantSnapshot = {};
   for (const c of [...s.allies, ...s.enemies, ...s.summons]) {
     snap[c.id] = { hp: c.hp, isDown: c.isDown };
   }
   return snap;
+}
+
+/**
+ * reactions[] を持つイベントを再帰的にフラット化する。
+ * 各 reaction は元の親イベントの直後に挿入し、さらに reaction の reactions も展開する。
+ * flattenEvents(events) で渡された配列を1段の配列に変換する。
+ */
+function flattenEvents(events: BattleEvent[]): BattleEvent[] {
+  const result: BattleEvent[] = [];
+  for (const e of events) {
+    result.push(e);
+    if ('reactions' in e && Array.isArray(e.reactions) && e.reactions.length > 0) {
+      result.push(...flattenEvents(e.reactions as BattleEvent[]));
+    }
+  }
+  return result;
 }
 
 type UnionCmd = {
@@ -173,12 +216,17 @@ type UnionCmd = {
  */
 type UiMode = { kind: 'global' } | { kind: 'individual' } | { kind: 'strategy' };
 
-/** 逐次再生の状態（issue #18）。base=ターン開始時HP、revealed=表示済みログ行数。 */
-type Anim = { base: Record<string, { hp: number; isDown: boolean }>; revealed: number };
+/** 逐次再生の状態（Step 5）。events=フラット化済みイベント列、eventIdx=再生位置。 */
+type Anim = {
+  /** flattenEvents() で展開したターンのイベント列。 */
+  events: BattleEvent[];
+  /** 現在再生中のイベントインデックス。events.length に達したら再生完了。 */
+  eventIdx: number;
+  /** ターン開始時点の HP スナップショット（最初のイベント前状態）。 */
+  baseSnapshot: CombatantSnapshot;
+};
 
 export interface BattlePageProps {
-  /** Storybook 専用: 初期 BattleState の log を擬似的に埋める。本番経路では未使用。 */
-  __storyMockLogPreview?: string[];
   /** Storybook 専用: マウント後にスキル選択画面を直接開く。本番経路では未使用。 */
   __storyMockOpenSkillMenu?: boolean;
   /** Storybook 専用: rollEncounter / pendingFoeBattle の代わりに固定の敵 ID 列で開始する。
@@ -188,11 +236,7 @@ export interface BattlePageProps {
 
 // 戦闘（[03]）。一括入力型ターン制。本家に倣い、味方は前衛/後衛の2段で表示し、
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
-export const Page = ({
-  __storyMockLogPreview,
-  __storyMockOpenSkillMenu,
-  __storyMockEnemyIds,
-}: BattlePageProps) => {
+export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePageProps) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist, applySave } = useGameState();
   const play = useSfx();
@@ -210,6 +254,8 @@ export const Page = ({
   // 味方単体スキル選択後の対象選択フェーズ（allyOne 確認中のスキル ID）。
   const [allyTargetMenu, setAllyTargetMenu] = useState<SkillId | null>(null);
   const [busy, setBusy] = useState(false);
+  // 戦闘ログ（event 駆動 Step 5）。
+  const battleLogger = useBattleLogger();
   // このターンに予約したユニオン（MVP: 1ターン1回）。
   const [unionCmd, setUnionCmd] = useState<UnionCmd | null>(null);
   // 協力者選択中のユニオン（requiredParticipants > 1 のとき）。
@@ -218,12 +264,23 @@ export const Page = ({
   );
   // 行動の逐次再生（issue #18）。再生中はコマンド入力/結果を隠す。
   const [anim, setAnim] = useState<Anim | null>(null);
+  // TP の表示基準値（anim 再生中はターン開始時の実値を保持し、anim が null になったら更新）。
+  const tpBaseRef = useRef<Record<string, number>>({});
   // ダメージを受けたカードの点滅対象 ID（issue #18）。
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
-  // InkSplatter: ID → { value, variant } のマップ（Phase 2）。
-  // ログ行が表示されるたびに被弾者のダメージ量を記録し、アニメ終了後に削除。
+  // hits: damage/heal/crit ヒット演出の Map（HitFx で描画）。gold は inkSplatters で別管理。
+  type Hit = {
+    value: number | string;
+    variant: 'damage' | 'heal' | 'crit';
+    element?: import('@/domain/types').Element;
+    isCrit?: boolean;
+    isAllyTarget?: boolean;
+    seq: number;
+  };
+  const [hits, setHits] = useState<Map<string, Hit>>(new Map());
+  // InkSplatter: gold 専用（撃破演出）。damage/heal/crit は hits Map に移行済み。
   const [inkSplatters, setInkSplatters] = useState<
-    Map<string, { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }>
+    Map<string, { value: number | string; variant: 'gold'; seq?: number }>
   >(new Map());
   // 勝利演出の gold InkSplatter（Phase 2）。
   const [showVictoryGold, setShowVictoryGold] = useState(false);
@@ -236,6 +293,24 @@ export const Page = ({
   const [expDone, setExpDone] = useState(false);
   // 戦闘ログ。インラインで最新 3 行を常時表示、タップで全履歴オーバーレイ。
   const [logOpen, setLogOpen] = useState(false);
+
+  // B. summonAppear: 新規に登場した召喚体の ID セット（500ms で消える）
+  const [newSummonIds, setNewSummonIds] = useState<Set<string>>(new Set());
+  // I. sealStamp: 戦闘開始シール演出
+  const [showSeal, setShowSeal] = useState(false);
+  const [sealOut, setSealOut] = useState(false);
+  // J/K: 逃走時フラグ
+  const [fleeActive, setFleeActive] = useState(false);
+  // L/M: buff / debuff Fx — actor ごとの発火シーケンス番号 Map
+  const [buffFxMap, setBuffFxMap] = useState<Map<string, number>>(new Map());
+  const [debuffFxMap, setDebuffFxMap] = useState<Map<string, number>>(new Map());
+  // state 駆動の前進/後退アニメ: 現在前進中のアクター ID（null で後退 = 元位置に戻る）
+  const [advancingActorId, setAdvancingActorId] = useState<string | null>(null);
+  // 各 iter での「行動完了済み」フラグ（複数 Fx が同時に onDone を呼んでも 1 回だけ実行）
+  const actionCompletedRef = useRef(false);
+  // fxDone / loggerDone: 両方 true になってから tryComplete を実行（設計書 §2.5）
+  const fxDoneRef = useRef(false);
+  const loggerDoneRef = useRef(true);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -265,16 +340,6 @@ export const Page = ({
     setBattleVariant(isBoss ? 'boss' : isFoe ? 'foe' : 'battle');
   }, [state, setBattleVariant]);
 
-  // Storybook 専用: BattleState 初期化後に log を擬似的に埋める（本番では未使用）。
-  useEffect(() => {
-    if (!state || !__storyMockLogPreview || state.log.length > 0) return;
-    const snap = snapshotOf(state);
-    setState({
-      ...state,
-      log: __storyMockLogPreview.map((text) => ({ text, snapshot: snap })),
-    });
-  }, [state, __storyMockLogPreview]);
-
   // Storybook 専用: 初期マウントでスキル選択画面を直接開く（本番では未使用）。
   useEffect(() => {
     if (!__storyMockOpenSkillMenu || !state || activeId) return;
@@ -294,12 +359,63 @@ export const Page = ({
     return () => clearTimeout(t);
   }, [introFx, play]);
 
+  // I. sealStamp: introFx 開始と同時にシール演出を出し、350ms後フェードアウト→550ms後消去
+  useEffect(() => {
+    if (!introFx) return;
+    setShowSeal(true);
+    setSealOut(false);
+    const t1 = setTimeout(() => setSealOut(true), 350);
+    const t2 = setTimeout(() => {
+      setShowSeal(false);
+      setSealOut(false);
+    }, 570);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [introFx]);
+
+  // B. summonAppear: state.summons の追加分を newSummonIds に記録し、500ms後にクリア
+  const prevSummonIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!state) return;
+    const cur = new Set(state.summons.map((s) => s.id));
+    const added = new Set<string>();
+    for (const id of cur) {
+      if (!prevSummonIdsRef.current.has(id)) added.add(id);
+    }
+    prevSummonIdsRef.current = cur;
+    if (added.size === 0) return;
+    setNewSummonIds((prev) => new Set([...prev, ...added]));
+    const t = setTimeout(() => {
+      setNewSummonIds((prev) => {
+        const next = new Set(prev);
+        added.forEach((id) => next.delete(id));
+        return next;
+      });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  // J/K. flee: state.outcome が fled になったタイミングで fleeActive を true に
+  useEffect(() => {
+    if (state?.outcome === 'fled') setFleeActive(true);
+    else setFleeActive(false);
+  }, [state?.outcome]);
+
   // 1ターン解決して逐次再生を開始する（issue #18）。入力状態をクリアする。
   const runTurn = useCallback(
     (list: BattleCommand[]) => {
       if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
-      const base = snapshotOf(state);
+      const baseSnapshot = snapshotOf(state);
+      // TP 表示用ベースライン: anim 再生中はターン開始時の TP 実値を表示する
+      const tpSnap: Record<string, number> = {};
+      for (const c of [...state.allies, ...state.enemies, ...state.summons]) {
+        tpSnap[c.id] = c.tp ?? 0;
+      }
+      tpBaseRef.current = tpSnap;
       const final = resolveTurn(state, list, rngRef.current);
+      const flatEvts = flattenEvents(final.events);
       setState(final);
       setCommands({});
       setCommandTargets({});
@@ -310,11 +426,13 @@ export const Page = ({
       setUnionSetup(null);
       setActiveId(null);
       setFlashIds(new Set());
+      setHits(new Map());
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
-      setAnim(final.log.length > 0 ? { base, revealed: 0 } : null);
+      battleLogger.reset();
+      setAnim(flatEvts.length > 0 ? { events: flatEvts, eventIdx: 0, baseSnapshot } : null);
     },
-    [state]
+    [state, battleLogger]
   );
 
   // 不意打ち: ターン1は味方が動けない。突入演出が晴れてから敵の先手1巡を自動解決する。
@@ -327,56 +445,191 @@ export const Page = ({
     }
   }, [state, introFx, runTurn]);
 
-  // 逐次再生（issue #18）: ログ行を1行ずつ開き、被弾したカードを点滅させる。
+  // tryComplete: fxDoneRef + loggerDoneRef の両方が true のときのみ次イベントへ進む（設計書 §2.5）。
+  // actionCompletedRef で重複実行を防ぐ（複数 Fx 同時 onDone でも 1 回のみ）。
+  const tryComplete = useCallback(() => {
+    if (!fxDoneRef.current || !loggerDoneRef.current) return; // 両方完了を待つ
+    if (actionCompletedRef.current) return;
+    actionCompletedRef.current = true;
+    setAdvancingActorId(null); // 後退開始（CSS transition 0.18s）
+    // 後退完了後（200ms）に次のイベントへ
+    setTimeout(() => {
+      setAnim((prev) => (prev ? { ...prev, eventIdx: prev.eventIdx + 1 } : null));
+    }, 200);
+  }, []);
+
+  // onFxDone: 各 Fx の onDone callback から呼ぶ共通 helper
+  const onFxDone = useCallback(() => {
+    fxDoneRef.current = true;
+    tryComplete();
+  }, [tryComplete]);
+
+  // logger isIdle 監視: ログ再生完了で loggerDoneRef を更新して tryComplete を試みる
+  // battleLogger.isIdle だけを deps に取り出すことで、battleLogger オブジェクト自体（毎 render で新オブジェクト）を deps に含めるのを回避する
+  // 余韻は useBattleLogger 内で各メッセージ 300ms 保持するため、ここでは追加遅延なしで即 tryComplete する
+  useEffect(() => {
+    loggerDoneRef.current = battleLogger.isIdle;
+    if (battleLogger.isIdle) tryComplete();
+  }, [battleLogger.isIdle, tryComplete]);
+
+  // 逐次再生（Step 5）: events を1件ずつ再生する。
+  // mountFxFor: event 種別に応じて Fx state を発火する
   useEffect(() => {
     if (!state || !anim) return;
-    if (anim.revealed >= state.log.length) {
+    const { events, eventIdx, baseSnapshot } = anim;
+
+    // 全イベント再生完了
+    if (eventIdx >= events.length) {
       const t = setTimeout(() => {
         setAnim(null);
         setFlashIds(new Set());
+        setHits(new Map());
         setInkSplatters(new Map());
+        setAdvancingActorId(null);
       }, 200);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(
-      () => {
-        const idx = anim.revealed;
-        const cur = state.log[idx]?.snapshot;
-        const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
-        const fl = new Set<string>();
-        const nextSplatters = new Map<
-          string,
-          { value: number | string; variant: 'damage' | 'heal' | 'crit' | 'gold' }
-        >();
-        if (cur) {
-          for (const id of Object.keys(cur)) {
-            const p = prev?.[id];
-            if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) {
-              fl.add(id);
-              // InkSplatter: HP 差をダメージ値として表示
-              const dmg = Math.round(p.hp - cur[id].hp);
-              const logText = state.log[idx]?.text ?? '';
-              const isCrit = logText.includes('（会心）');
-              const isHeal = logText.includes('回復') && cur[id].hp > p.hp;
-              nextSplatters.set(id, {
-                value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
-                variant: isHeal ? 'heal' : isCrit ? 'crit' : 'damage',
-              });
-            } else if (p && cur[id].hp > p.hp) {
-              // HP 回復
-              const healed = Math.round(cur[id].hp - p.hp);
-              nextSplatters.set(id, { value: healed, variant: 'heal' });
-            }
+
+    const event = events[eventIdx];
+
+    // 新 iter 開始: 行動完了フラグ / fx / logger ドーン フラグを reset
+    // loggerDoneRef は battleLogger.isIdle 起点（isIdle 監視 useEffect に委ねる）
+    actionCompletedRef.current = false;
+    fxDoneRef.current = false;
+    loggerDoneRef.current = battleLogger.isIdle;
+    // iter 開始時に前 iter の Fx エントリをクリア（HP フリッカー修正: onDone 内で delete しない）
+    setHits(new Map());
+    setBuffFxMap(new Map());
+    setDebuffFxMap(new Map());
+
+    // ログ追記（pre テキスト）— appendLog は stable な useCallback なので deps に入れても安全。
+    // battleLogger オブジェクト自体は deps に入れない（useBattleLogger が毎 render 新オブジェクトを返すため deps に含めると無限ループになる）
+    const appendLog = battleLogger.append;
+    const { pre, post } = fmt(event, state);
+    if (pre) appendLog(pre);
+
+    // アクター ID の解決（前進アニメ用）
+    const currentActorId = 'actorId' in event ? (event as { actorId: string }).actorId : undefined;
+    setAdvancingActorId(currentActorId ?? null);
+
+    // DAMAGE_AT (200ms) 後: HP 差分から hits/flashIds を計算して Fx を発火
+    const DAMAGE_AT = 200;
+    const tDmg = setTimeout(() => {
+      // post テキストを append（Fx マウントと同時に表示する）
+      for (const p of post) appendLog(p);
+
+      // snapshotAfter（ダメージ適用後）と前 snapshot（適用前）の差分から hits を計算
+      const cur = event.snapshotAfter;
+      const prevSnap =
+        eventIdx > 0 ? (events[eventIdx - 1].snapshotAfter ?? baseSnapshot) : baseSnapshot;
+
+      const fl = new Set<string>();
+      const nextHits = new Map<string, Hit>();
+      if (cur) {
+        for (const id of Object.keys(cur)) {
+          const p = prevSnap?.[id];
+          if (!p) continue;
+          if (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown)) {
+            fl.add(id);
+            const dmg = Math.round(p.hp - cur[id].hp);
+            // event から属性を取得
+            const element =
+              event.kind === 'normal-attack' || event.kind === 'skill'
+                ? event.hits.find((h) => h.targetId === id)?.element
+                : undefined;
+            const isCrit =
+              event.kind === 'normal-attack' || event.kind === 'skill'
+                ? event.hits.some((h) => h.targetId === id && h.result === 'crit')
+                : false;
+            nextHits.set(id, {
+              value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
+              variant: isCrit ? 'crit' : 'damage',
+              element,
+              isCrit,
+              isAllyTarget: allyIdSetRef.current.has(id),
+              seq: eventIdx,
+            });
+          } else if (p && cur[id].hp > p.hp) {
+            // HP 回復
+            const healed = Math.round(cur[id].hp - p.hp);
+            nextHits.set(id, {
+              value: healed,
+              variant: 'heal',
+              isAllyTarget: allyIdSetRef.current.has(id),
+              seq: eventIdx,
+            });
           }
         }
-        setFlashIds(fl);
-        setInkSplatters(nextSplatters);
-        setAnim({ ...anim, revealed: anim.revealed + 1 });
-      },
-      anim.revealed === 0 ? 380 : 900
-    );
-    return () => clearTimeout(t);
-  }, [state, anim]);
+      }
+      setFlashIds(fl);
+      setHits(nextHits);
+
+      // mountFxFor: event 種別に応じた Fx 発火
+      let didSetBuffOrDebuff = false;
+
+      if (event.kind === 'tick') {
+        if (event.defeated) play('down');
+        if (event.effectType === 'buff-expire' || event.effectType === 'regen') {
+          setBuffFxMap((prev) => {
+            const next = new Map(prev);
+            next.set(event.targetId, eventIdx);
+            return next;
+          });
+          didSetBuffOrDebuff = true;
+        } else if (event.effectType === 'debuff-expire') {
+          setDebuffFxMap((prev) => {
+            const next = new Map(prev);
+            next.set(event.targetId, eventIdx);
+            return next;
+          });
+          didSetBuffOrDebuff = true;
+        }
+      } else if (event.kind === 'skill' || event.kind === 'normal-attack') {
+        // 戦闘不能になった対象
+        const defeated =
+          event.kind === 'normal-attack' || event.kind === 'skill'
+            ? event.hits.filter((h) => h.defeated)
+            : [];
+        if (defeated.length > 0) play('down');
+        // バフ付与
+        if (event.kind === 'skill' && event.buffs.length > 0) {
+          for (const b of event.buffs) {
+            setBuffFxMap((prev) => {
+              const next = new Map(prev);
+              next.set(b.targetId, eventIdx);
+              return next;
+            });
+          }
+          didSetBuffOrDebuff = true;
+        }
+        // デバフ付与
+        if (event.kind === 'skill' && event.debuffs.length > 0) {
+          for (const d of event.debuffs) {
+            setDebuffFxMap((prev) => {
+              const next = new Map(prev);
+              next.set(d.targetId, eventIdx);
+              return next;
+            });
+          }
+          didSetBuffOrDebuff = true;
+        }
+      }
+
+      // Fx 無し行動（防御・待機など）のフォールバック完了タイマー
+      const hasAnyFx = nextHits.size > 0 || didSetBuffOrDebuff;
+      if (!hasAnyFx) {
+        setTimeout(() => {
+          fxDoneRef.current = true;
+          tryComplete();
+        }, 400);
+      }
+    }, DAMAGE_AT);
+
+    return () => {
+      clearTimeout(tDmg);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- battleLogger を deps に入れると useBattleLogger が毎 render 新オブジェクトを返すため無限ループになる。appendLog（stable useCallback）は effect 内で変数に束縛して使う
+  }, [state, anim, play, tryComplete]);
 
   // リザルト用の経験値・レベルアップ結果（issue #18）。勝利時のみ算出。
   const expResults = useMemo(
@@ -421,7 +674,7 @@ export const Page = ({
     prevOutcomeRef.current = outcome;
     if (outcome === 'win') play('victory');
     else if (outcome === 'lose') play('defeat');
-    else if (outcome === 'fled') play('flee');
+    // fled SE は DustRiseFx マウント時に発火するため削除
   }, [state, anim, play]);
 
   // レベルアップ SE（levelQueue の先頭が表示されるたびに鳴らす）。
@@ -450,89 +703,6 @@ export const Page = ({
       allyIdSetRef.current = new Set(state.allies.map((a) => a.id));
     }
   }, [state]);
-
-  const prevRevealedRef = useRef(0);
-  useEffect(() => {
-    if (!state || !anim) {
-      prevRevealedRef.current = 0;
-      return;
-    }
-    const revealed = anim.revealed;
-    if (revealed <= prevRevealedRef.current) return;
-    // 新しく表示されたログ行を処理
-    const newLines = state.log.slice(prevRevealedRef.current, revealed);
-    prevRevealedRef.current = revealed;
-
-    for (const line of newLines) {
-      const t = line.text;
-      // 逃走成功
-      if (t === 'うまく逃げ切れた！') {
-        play('flee');
-        break;
-      }
-      // 戦闘不能（「は倒れた」）
-      if (t.includes('は倒れた')) {
-        play('down');
-        continue;
-      }
-      // 回復魔法
-      if (t.includes('は回復魔法を使った')) {
-        play('heal');
-        continue;
-      }
-      // スキル発動（「の○○！」形式＝スキル名で発動）
-      if (
-        t.includes('のスキル') ||
-        (/の.+！$/.test(t) && !t.includes('の攻撃！') && !t.includes('ユニオン'))
-      ) {
-        play('skill');
-        continue;
-      }
-      // ユニオン
-      if (t.startsWith('ユニオン！')) {
-        play('skill');
-        continue;
-      }
-      // 状態異常付与
-      if (t.includes('になった')) {
-        play('debuff');
-        continue;
-      }
-      // バフ（態勢を整えた = guard/buff系）
-      if (
-        t.includes('は態勢を整えた') ||
-        t.includes('の構えを取った') ||
-        t.includes('を引きつけた') ||
-        t.includes('の障壁を張った')
-      ) {
-        play('buff');
-        continue;
-      }
-      // ダメージ命中（通常攻撃＋スキルの clean ダメージ行・会心チェック）
-      if (/ に \d+ ダメージ/.test(t)) {
-        const isCritical = t.includes('（会心）');
-        // 被弾者が味方かどうかを判定（ログ文字列中の名前から特定は難しいのでsnapshotで判定）
-        const snap = line.snapshot;
-        const prevSnap = anim.base; // ターン開始時
-        let allyHit = false;
-        if (snap) {
-          for (const [id, cur] of Object.entries(snap)) {
-            if (allyIdSetRef.current.has(id)) {
-              const prev = prevSnap?.[id];
-              if (prev && cur.hp < prev.hp) {
-                allyHit = true;
-                break;
-              }
-            }
-          }
-        }
-        if (allyHit) play('damage');
-        play('attack');
-        if (isCritical) play('critical');
-        continue;
-      }
-    }
-  }, [state, anim, play]);
 
   const aliveEnemies = useMemo(() => state?.enemies.filter((e) => !e.isDown) ?? [], [state]);
   const aliveAllies = useMemo(() => state?.allies.filter((a) => !a.isDown) ?? [], [state]);
@@ -567,6 +737,26 @@ export const Page = ({
       return (ch?.strategy ?? 'batchiri') === 'meirei';
     });
   }, [aliveAllies, save]);
+
+  // (A) 行動順帯: ephemeral rng（ターン番号のみに依存）で次ターン行動順を予測する。
+  // rngRef の消費とは完全に分離した別系統の rng を使う。早期 return の前に置くこと（rules-of-hooks）。
+  const turnOrderPreview = useMemo(() => {
+    if (!state || state.outcome !== 'ongoing') return [];
+    const epRng = createRng((state.turn * 0x9e3779b9) >>> 0);
+    return previewTurnOrder(state, epRng);
+  }, [state]);
+
+  // (A-2) anim 再生中: eventIdx に達したイベントの actorId を完了済みとして収集。
+  // 完了済みアクターのアイコンを slideout アニメーションで消す。
+  const completedActorIds = useMemo(() => {
+    if (!anim) return new Set<string>();
+    const set = new Set<string>();
+    for (let i = 0; i < anim.eventIdx; i++) {
+      const e = anim.events[i];
+      if ('actorId' in e && typeof e.actorId === 'string') set.add(e.actorId);
+    }
+    return set;
+  }, [anim]);
 
   const allAssigned =
     uiMode.kind === 'individual'
@@ -823,6 +1013,14 @@ export const Page = ({
     return BATTLE_SKILLS[c.skillId]?.name ?? 'スキル';
   };
 
+  // F/G/H: 状態異常バッジへの追加クラス（poisonWisp/sparkZap/ailDrift）
+  const ailBadgeClass = (ailType: string): string => {
+    if (ailType === 'poison') return styles.ailBadgePoison;
+    if (ailType === 'curse') return styles.ailBadgeCurse;
+    if (ailType === 'paralysis') return styles.ailBadgeParalysis;
+    return styles.ailBadgeBase;
+  };
+
   // 状態異常マーク（バインド=🔒 / その他=🌀）。
   const ailmentMark = (c: Combatant): string => {
     const isBind = (t: string) => t === 'headBind' || t === 'armBind' || t === 'legBind';
@@ -830,6 +1028,16 @@ export const Page = ({
     if (c.ailments.some((a) => isBind(a.type))) s += ' 🔒';
     if (c.ailments.some((a) => !isBind(a.type))) s += ' 🌀';
     return s;
+  };
+
+  // C. runeSpin: コマンドで魔法属性スキル（fire/ice/volt/almighty）が選ばれているキャラか判定
+  const isCasting = (ally: Combatant): boolean => {
+    const cmd = commands[ally.id];
+    if (!cmd || cmd.kind !== 'skill') return false;
+    const skill = BATTLE_SKILLS[cmd.skillId];
+    if (!skill) return false;
+    const magicElems = ['fire', 'ice', 'volt', 'almighty'] as const;
+    return magicElems.some((el) => el === skill.element);
   };
 
   // 味方の職業名（戦闘中も常時表示。issue #18）。
@@ -850,10 +1058,17 @@ export const Page = ({
   };
 
   // 逐次再生中はログ行に紐づく HP スナップショットを表示する（issue #18）。再生外は実値。
-  const dispMap: Record<string, { hp: number; isDown: boolean }> | null = anim
-    ? anim.revealed > 0
-      ? (state.log[anim.revealed - 1]?.snapshot ?? anim.base)
-      : anim.base
+  // dispMap: anim 再生中は snapshotAfter ベースで HP バーを同期する（Step 5-8）
+  const dispMap: CombatantSnapshot | null = anim
+    ? (() => {
+        const { events, eventIdx, baseSnapshot } = anim;
+        // hits が反映済み (DAMAGE_AT 後) → 現イベントの snapshotAfter を参照
+        if (hits.size > 0) {
+          return events[eventIdx]?.snapshotAfter ?? baseSnapshot;
+        }
+        // hits 未反映 (DAMAGE_AT 前) → 前イベントの snapshotAfter（前の状態を維持）
+        return eventIdx > 0 ? (events[eventIdx - 1]?.snapshotAfter ?? baseSnapshot) : baseSnapshot;
+      })()
     : null;
   const dispOf = (c: Combatant): { hp: number; isDown: boolean } =>
     dispMap?.[c.id] ?? { hp: c.hp, isDown: c.isDown };
@@ -899,14 +1114,17 @@ export const Page = ({
 
   const renderCard = (a: Combatant) => {
     const d = dispOf(a);
+    // anim 再生中は TP をターン開始時の実値（tpBaseRef）から取得し、消費前の値を表示する
+    const dispTp = anim ? (tpBaseRef.current[a.id] ?? a.tp) : a.tp;
+    // 行動者前進アニメ: advancingActorId state で制御（state 駆動）
+    const isAdvancing = advancingActorId === a.id;
     // 味方対象選択中: そのキャラが選ばれているか
     const isAllyTargeted =
       isAllyTargeting && activeId !== null && commandTargets[activeId] === a.id;
     // 味方対象選択中: タップで対象選択できる（蘇生は戦闘不能のみ／その他は生存のみ）
     const isAllySelectable = isAllyTargeting && (reviveTargeting ? a.isDown : !a.isDown);
     return (
-      <button
-        type="button"
+      <ActionButton
         key={a.id}
         className={[
           styles.card,
@@ -915,12 +1133,18 @@ export const Page = ({
           isAllyTargeted ? styles.allyTargeted : '',
           commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
           flashIds.has(a.id) ? styles.flash : '',
-        ].join(' ')}
+          fleeActive ? dashAwayClass : '',
+          isAdvancing ? styles.cardAdvancing : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         disabled={
           state.outcome !== 'ongoing' ||
           !!anim ||
           (a.isDown && !(isAllyTargeting && reviveTargeting))
         }
+        sfx={null}
+        ariaLabel={`${a.name} を選択`}
         onClick={() => {
           if (isAllyTargeting && activeId) {
             // 味方対象選択: クリックで対象確定
@@ -933,7 +1157,35 @@ export const Page = ({
           }
         }}
       >
-        {/* InkSplatter — 被弾/回復時に重ね描画（Phase 2） */}
+        {/* HitFx — 被弾/回復時に重ね描画（AttackFx + DamagePop + SE を統合） */}
+        {hits.has(a.id) &&
+          (() => {
+            const hit = hits.get(a.id)!;
+            return (
+              <HitFx
+                key={`${a.id}-${hit.seq}`}
+                element={undefined}
+                variant={hit.variant}
+                value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
+                isCrit={hit.isCrit}
+                isAllyTarget
+                onDone={onFxDone}
+              />
+            );
+          })()}
+        {/* BuffFx — バフ付与演出（緑オーラ pulse 0.4s + SE） */}
+        <BuffFx
+          key={`${a.id}-buff-${buffFxMap.get(a.id) ?? 0}`}
+          visible={buffFxMap.has(a.id)}
+          onDone={onFxDone}
+        />
+        {/* DebuffFx — 状態異常付与演出（赤フラッシュ 0.4s + SE） */}
+        <DebuffFx
+          key={`${a.id}-debuff-${debuffFxMap.get(a.id) ?? 0}`}
+          visible={debuffFxMap.has(a.id)}
+          onDone={onFxDone}
+        />
+        {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
         {inkSplatters.has(a.id) &&
           (() => {
             const splat = inkSplatters.get(a.id)!;
@@ -943,8 +1195,9 @@ export const Page = ({
                 aria-hidden="true"
               >
                 <InkSplatter
+                  key={`${a.id}-${splat.seq ?? 0}`}
                   value={splat.value}
-                  variant={splat.variant}
+                  variant="gold"
                   size={64}
                   onDone={() =>
                     setInkSplatters((prev) => {
@@ -957,8 +1210,31 @@ export const Page = ({
               </div>
             );
           })()}
+        {/* C. runeSpin — 魔法スキル詠唱中の ✦ オーバーレイ */}
+        <RuneSpinFx visible={isCasting(a) && !anim} />
         {/* 職業バッジ（右上に固定） */}
         {!a.isSummon ? <span className={styles.jobBadge}>{classInitialOf(a)}</span> : null}
+        {/* ユニオン満タン U! バッジ */}
+        {a.unionGauge >= 100 ? <span className={styles.unionReadyBadge}>U!</span> : null}
+        {/* v5: 味方状態異常角バッジ 10 種（左肩）+ F/G/H エフェクト */}
+        {a.ailments.length > 0 && (
+          <div className={styles.allyAilBadgeRow}>
+            {a.ailments.map((ail) => {
+              const m = AILMENT_BADGE[ail.type];
+              if (!m) return null;
+              return (
+                <span
+                  key={ail.type}
+                  className={[styles.allyAilBadge, ailBadgeClass(ail.type)].join(' ')}
+                  style={{ background: m.bg, color: m.fg }}
+                  title={`${m.label} 残り${ail.remainingTurns}T`}
+                >
+                  {m.label}
+                </span>
+              );
+            })}
+          </div>
+        )}
         {/* 立ち絵 + 名前 + 作戦短縮（横並び） */}
         <div className={styles.cardHeader}>
           {!a.isSummon &&
@@ -976,10 +1252,7 @@ export const Page = ({
           <div className={styles.cardHeaderText}>
             <span className={styles.cardName}>
               <span className={styles.cardNameText}>{a.name}</span>
-              <span className={styles.cardMarks}>
-                {a.unionGauge >= 100 ? <span className={styles.uni}>★</span> : null}
-                {ailmentMark(a)}
-              </span>
+              <span className={styles.cardMarks}>{ailmentMark(a)}</span>
             </span>
             <span className={styles.cardStrategy}>{strategyShortLabelOf(a)}</span>
           </div>
@@ -991,13 +1264,13 @@ export const Page = ({
           showValue={false}
         />
         <StatBar
-          value={a.tp}
+          value={dispTp}
           max={a.maxTp}
           color="#B89255" // $illumination-gold
           showValue={false}
         />
         <div className={styles.cardNums}>
-          HP {Math.max(0, d.hp)} · TP {a.tp}
+          HP {Math.max(0, d.hp)} · TP {dispTp}
         </div>
         {/* ユニオンゲージ（issue #18）。100% で発動可。 */}
         <div className={styles.gaugeRow}>
@@ -1010,7 +1283,7 @@ export const Page = ({
           <span className={styles.gaugeLabel}>U {a.unionGauge}%</span>
         </div>
         <div className={styles.cardCmd}>{commands[a.id] ? `▶ ${cmdLabel(a)}` : ' '}</div>
-      </button>
+      </ActionButton>
     );
   };
 
@@ -1020,8 +1293,81 @@ export const Page = ({
   return (
     <div className={styles.layout}>
       {/* 章マーカー */}
-      <p className={styles.chapterMark}>❦ 戦闘</p>
-      {/* 戦場（敵 + 召喚 + 味方 + ログ）。上部はこの内側でのみ縦に溢れ、コマンド
+      <div className={styles.chapterRow}>
+        <p className={styles.chapterMark}>❦ 戦闘 ・ F{save.diveState.depth}</p>
+      </div>
+      {/* (A) 行動順帯（最大 8 アイコン + …） */}
+      {turnOrderPreview.length > 0 && (
+        <div
+          className={styles.turnOrderBar}
+          aria-label="次ターン行動順"
+        >
+          {turnOrderPreview.slice(0, 8).map((c, i) => {
+            const isFirst = i === 0;
+            const isAlly =
+              state.allies.some((a) => a.id === c.id) || state.summons.some((s) => s.id === c.id);
+            const isCompleted = completedActorIds.has(c.id);
+            const allyChar = isAlly ? save.guild.members.find((m) => m.id === c.id) : null;
+            const enemyCombatant = !isAlly ? state.enemies.find((e) => e.id === c.id) : null;
+            const enemyId = enemyCombatant?.enemyId;
+            return (
+              <span
+                key={`${c.id}-${i}`}
+                className={[
+                  styles.turnOrderIcon,
+                  isAlly ? styles.turnOrderAlly : styles.turnOrderEnemy,
+                  isFirst ? styles.turnOrderFirst : '',
+                  isCompleted ? styles.turnOrderIconCompleted : '',
+                ].join(' ')}
+                title={c.name}
+                style={isFirst ? { position: 'relative' } : undefined}
+              >
+                {isFirst && <span className={styles.turnOrderFirstLabel}>次</span>}
+                {isAlly && allyChar ? (
+                  <CharacterPortrait
+                    raceId={allyChar.raceId}
+                    classId={allyChar.classId}
+                    size={24}
+                    alt={c.name}
+                  />
+                ) : !isAlly && enemyId ? (
+                  <EnemySprite
+                    enemyId={enemyId}
+                    size="sm"
+                    alt={c.name}
+                    className={styles.turnOrderEnemySprite}
+                  />
+                ) : (
+                  c.name.slice(0, 1)
+                )}
+              </span>
+            );
+          })}
+          {turnOrderPreview.length > 8 && <span className={styles.turnOrderMore}>…</span>}
+        </div>
+      )}
+      {/* (B) 1 行ログプレビュー（ヘッダ内 / 行動順帯直下） */}
+      <div
+        className={styles.logPreview}
+        onClick={() => setLogOpen(true)}
+        role="button"
+        tabIndex={0}
+        aria-label="戦闘ログの全履歴を見る"
+      >
+        <span className={styles.logLatestLine}>
+          {(() => {
+            if (battleLogger.rendering) {
+              const { msg, progress } = battleLogger.rendering;
+              return msg.text.slice(0, Math.floor(msg.text.length * progress));
+            }
+            const lastText = battleLogger.displayed[battleLogger.displayed.length - 1]?.text;
+            if (!lastText) return `てきが あらわれた！（${state.turn} ターン目）`;
+            return lastText;
+          })()}
+        </span>
+        <span className={styles.logTapHint}>タップで全ログ</span>
+      </div>
+      {/* 戦場（敵 + 召喚 + 味方）。上部はこの内側でのみ縦に溢れ、コマンド
           エリア（下端）の表示領域を圧迫しない。極端ケースは内部スクロールで吸収。 */}
       <div className={styles.battlefield}>
         {/* 敵 */}
@@ -1032,15 +1378,60 @@ export const Page = ({
             const masterEnemyId = e.enemyId as EnemyId | undefined;
             const master = masterEnemyId ? ENEMIES[masterEnemyId] : undefined;
             const isLarge = master?.kind === 'boss' || master?.kind === 'foe';
+            const isEnemyAdvancing = advancingActorId === e.id;
             return (
-              <button
-                type="button"
+              <ActionButton
                 key={e.id}
-                className={`${styles.enemy} ${d.isDown ? styles.down : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
+                className={[
+                  styles.enemy,
+                  d.isDown ? styles.down + ' ' + styles.dissolving : '',
+                  isTargeted ? styles.targeted : '',
+                  flashIds.has(e.id) ? styles.flash + ' ' + styles.shakeBOverlay : '',
+                  isEnemyAdvancing ? styles.enemyAdvancing : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 disabled={e.isDown || !!anim || isAllyTargeting}
+                sfx={null}
+                ariaLabel={`${e.name} を対象に選択`}
                 onClick={() => setTargetId(e.id)}
               >
-                {/* InkSplatter — 敵への命中時（Phase 2） */}
+                {/* HitFx — 敵への命中時（AttackFx + DamagePop + SE を統合） */}
+                {hits.has(e.id) &&
+                  (() => {
+                    const hit = hits.get(e.id)!;
+                    return (
+                      <HitFx
+                        key={`${e.id}-${hit.seq}`}
+                        element={hit.element ?? 'slash'}
+                        variant={hit.variant}
+                        value={hit.variant === 'heal' ? `+${hit.value}` : hit.value}
+                        isCrit={hit.isCrit}
+                        isAllyTarget={false}
+                        onDone={onFxDone}
+                      />
+                    );
+                  })()}
+                {/* BuffFx — 敵バフ付与演出（緑オーラ pulse 0.4s + SE） */}
+                <BuffFx
+                  key={`${e.id}-buff-${buffFxMap.get(e.id) ?? 0}`}
+                  visible={buffFxMap.has(e.id)}
+                  onDone={onFxDone}
+                />
+                {/* DebuffFx — 敵状態異常付与演出（赤フラッシュ 0.4s + SE） */}
+                <DebuffFx
+                  key={`${e.id}-debuff-${debuffFxMap.get(e.id) ?? 0}`}
+                  visible={debuffFxMap.has(e.id)}
+                  onDone={onFxDone}
+                />
+                {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}
+                {flashIds.has(e.id) && (
+                  <div
+                    className={styles.hitFlashOverlay}
+                    aria-hidden="true"
+                  />
+                )}
+                {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
                 {inkSplatters.has(e.id) &&
                   (() => {
                     const splat = inkSplatters.get(e.id)!;
@@ -1050,8 +1441,9 @@ export const Page = ({
                         aria-hidden="true"
                       >
                         <InkSplatter
+                          key={`${e.id}-${splat.seq ?? 0}`}
                           value={splat.value}
-                          variant={splat.variant}
+                          variant="gold"
                           size={56}
                           onDone={() =>
                             setInkSplatters((prev) => {
@@ -1093,32 +1485,87 @@ export const Page = ({
                   color="#B22C2C" // $vermilion
                   showValue={false}
                 />
-                {/* §16: 選択中の敵の耐性コンパクト表示 */}
-                <div className={styles.enemyResist}>
-                  {isTargeted && master ? (
-                    <ResistBadges
-                      elementResist={master.resist}
-                      ailmentResist={
-                        masterEnemyId ? resolveEnemyAilmentResist(masterEnemyId) : undefined
-                      }
-                      compact
-                    />
-                  ) : null}
+                {/* HP バー直下の弱点チップ（常時表示・高さ均一）*/}
+                <div
+                  className={styles.enemyWeakChips}
+                  aria-hidden="true"
+                >
+                  {(['fire', 'ice', 'volt', 'slash', 'pierce', 'bash'] as const)
+                    .filter((el) => (master?.resist?.[el] ?? 1) < 1)
+                    .slice(0, 3)
+                    .map((el) => (
+                      <span
+                        key={el}
+                        className={`${styles.weakChip} ${styles[`weakChip_${el}`] ?? ''}`}
+                      >
+                        {ELEM_LABEL[el]}弱
+                      </span>
+                    ))}
                 </div>
-              </button>
+                {/* v5: 状態異常角バッジ 10 種・全件横並び + F/G/H エフェクト */}
+                {e.ailments.length > 0 && (
+                  <div className={styles.enemyAilBadgeRow}>
+                    {e.ailments.map((ail) => {
+                      const m = AILMENT_BADGE[ail.type];
+                      if (!m) return null;
+                      return (
+                        <span
+                          key={ail.type}
+                          className={[styles.enemyAilBadge, ailBadgeClass(ail.type)].join(' ')}
+                          style={{ background: m.bg, color: m.fg }}
+                          title={`${m.label} 残り${ail.remainingTurns}T`}
+                        >
+                          {m.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </ActionButton>
             );
           })}
+        </div>
+
+        {/* 対象情報パネル — 高さ固定で敵カード高に影響を与えない */}
+        <div
+          className={styles.targetInfoPanel}
+          aria-live="polite"
+        >
+          {(() => {
+            const tEnemy = targetId ? state.enemies.find((e) => e.id === targetId) : null;
+            const tMasterEnemyId = tEnemy?.enemyId as EnemyId | undefined;
+            const tMaster = tMasterEnemyId ? ENEMIES[tMasterEnemyId] : null;
+            if (!tEnemy || !tMaster) {
+              return <span className={styles.targetInfoEmpty}>敵をタップで対象選択</span>;
+            }
+            return (
+              <>
+                <span className={styles.targetInfoName}>{tEnemy.name}</span>
+                <div className={styles.targetInfoResist}>
+                  <ResistBadges
+                    elementResist={tMaster.resist}
+                    ailmentResist={
+                      tMasterEnemyId ? resolveEnemyAilmentResist(tMasterEnemyId) : undefined
+                    }
+                    compact
+                  />
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* 召喚体（最前列）。生存中のみ表示。 */}
         {state.summons.length > 0 ? (
           <div className={styles.summons}>
+            {/* v5: 召喚リボン ラベル（モック line 1034） */}
+            <span className={styles.summonsLabel}>召喚 {state.summons.length}/3</span>
             {state.summons.map((s) => {
               const d = dispOf(s);
               return (
                 <div
                   key={s.id}
-                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''}`}
+                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''} ${newSummonIds.has(s.id) ? summonAppearClass : ''}`}
                 >
                   <span className={styles.summonName}>🐾 {s.name}</span>
                   <StatBar
@@ -1141,128 +1588,247 @@ export const Page = ({
           {back.length > 0 && (
             <>
               <div className={styles.rowTag}>後衛（近接ダメージ -30%）</div>
-              <div className={styles.cardRow}>{back.map(renderCard)}</div>
+              <div className={`${styles.cardRow} ${styles.cardRowBack}`}>
+                {back.map(renderCard)}
+              </div>
             </>
           )}
         </div>
-
-        {/* 戦闘ログ（インライン 3 行プレビュー / キャラ下・コマンド上）。
-          タップで全履歴オーバーレイ。再生中は revealed 行までを順に表示する。 */}
-        <button
-          type="button"
-          className={styles.log}
-          onClick={() => setLogOpen(true)}
-          aria-label="戦闘ログの全履歴を見る"
-        >
-          <div className={styles.logHeader}>
-            <span>戦闘ログ</span>
-            <span className={styles.logHeaderHint}>タップで全履歴</span>
-          </div>
-          <div className={styles.logBody}>
-            {(() => {
-              const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-              if (visible.length === 0) {
-                return (
-                  <div className={styles.logLine}>てきが あらわれた！（{state.turn} ターン目）</div>
-                );
-              }
-              return visible.slice(-3).map((l, i, arr) => (
-                <div
-                  key={visible.length - arr.length + i}
-                  className={`${styles.logLine} ${anim && i === arr.length - 1 ? styles.logLineNew : ''}`}
-                >
-                  {l.text}
-                </div>
-              ));
-            })()}
-          </div>
-        </button>
       </div>
 
       {/* コマンド入力 / 実行 / 結果（再生中は再生コントロールのみ） */}
       {anim ? (
         <div className={styles.playback}>
           <span className={styles.playbackHint}>戦況を再生中…</span>
-          <button
-            type="button"
+          <ActionButton
             className={styles.skip}
+            label="▶▶ スキップ"
+            sfx={null}
             onClick={() => {
               setAnim(null);
               setFlashIds(new Set());
+              setHits(new Map());
+              setAdvancingActorId(null);
             }}
-          >
-            ▶▶ スキップ
-          </button>
+          />
         </div>
-      ) : state.outcome !== 'ongoing' ? (
-        <div className={styles.resultOverlay}>
-          <div className={styles.result}>
-            <div className={styles.resultTitle}>
-              {state.outcome === 'win'
-                ? '勝利！'
-                : state.outcome === 'fled'
-                  ? '逃走した'
-                  : '全滅...'}
+      ) : state.outcome === 'win' ? (
+        /* v5: 9c 勝利リザルト独立画面 */
+        <div className={styles.resultPage}>
+          {/* ヘッダ */}
+          <div className={styles.resultPageHeader}>
+            <div className={styles.resultPageTitle}>勝利</div>
+            <div className={styles.resultPageSub}>
+              F{save.diveState?.depth} ・ {state.enemies[0]?.name ?? '敵'}
+              {state.enemies.length > 1 ? ` ほか ${state.enemies.length - 1} 体` : ''} を撃破
             </div>
-            {/* 勝利時 gold InkSplatter（Phase 2） */}
-            {showVictoryGold ? (
-              <div
-                className={styles.victoryGold}
-                aria-hidden="true"
-              >
-                <InkSplatter
-                  value={`${rewards.gold}G`}
-                  variant="gold"
-                  size={72}
-                />
-              </div>
-            ) : null}
-            {state.outcome === 'win' ? (
-              <>
-                <div className={styles.resultBody}>
-                  経験値 {rewards.exp} ／ {rewards.gold} G を獲得
-                </div>
-                {/* 各キャラの次レベルまでの経験値バー（issue #50） */}
-                <div className={styles.expList}>
-                  {expResults.map((r) => (
-                    <div
-                      key={r.charId}
-                      className={styles.expRow}
-                    >
-                      <span className={styles.expName}>
-                        <span className={styles.expNameText}>{r.name}</span>
-                        <span className={styles.expLv}>
-                          {r.toLevel > r.fromLevel ? (
-                            <span className={styles.expUp}>
-                              Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
-                            </span>
-                          ) : (
-                            <>Lv{r.toLevel}</>
-                          )}
-                        </span>
-                      </span>
-                      <BattleExpBar
-                        fromLevel={r.fromLevel}
-                        fromExp={r.fromExp}
-                        gainedExp={r.gainedExp}
-                        start={expAnimStart}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : state.outcome === 'lose' ? (
-              <div className={styles.resultBody}>拠点へ帰還する</div>
-            ) : null}
-            <button
-              type="button"
-              className={styles.primary}
-              disabled={busy || levelQueue.length > 0 || (expAnimStart && !expDone)}
-              onClick={() => void finish(state)}
-            >
-              つづける
-            </button>
           </div>
+
+          {/* 勝利時 gold InkSplatter（Phase 2・既存維持） */}
+          {showVictoryGold ? (
+            <div
+              className={styles.victoryGold}
+              aria-hidden="true"
+            >
+              <InkSplatter
+                value={`${rewards.gold}G`}
+                variant="gold"
+                size={72}
+              />
+            </div>
+          ) : null}
+
+          {/* EXP バー（各キャラ） */}
+          <div className={styles.resultExpBar}>
+            <div className={styles.resultExpLabel}>
+              <span>獲得経験値</span>
+              <span className={styles.resultExpGain}>+{rewards.exp} EXP</span>
+            </div>
+            <div className={styles.expList}>
+              {expResults.map((r) => (
+                <div
+                  key={r.charId}
+                  className={styles.expRow}
+                >
+                  <span className={styles.expName}>
+                    <span className={styles.expNameText}>{r.name}</span>
+                    <span className={styles.expLv}>
+                      {r.toLevel > r.fromLevel ? (
+                        <span className={styles.expUp}>
+                          Lv{r.fromLevel}→{r.toLevel}（↑{r.toLevel - r.fromLevel}）
+                        </span>
+                      ) : (
+                        <>Lv{r.toLevel}</>
+                      )}
+                    </span>
+                  </span>
+                  {/* shimmer はバートラック（fill 部分）のみに当てる（BattleExpBar の shimmer prop で制御） */}
+                  <BattleExpBar
+                    fromLevel={r.fromLevel}
+                    fromExp={r.fromExp}
+                    gainedExp={r.gainedExp}
+                    start={expAnimStart}
+                    shimmer={expAnimStart}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* レベルアップ LIFO カード積み上げ（levelQueue[0] を手前に表示） */}
+          {levelQueue.length > 0 &&
+            (() => {
+              const r = levelQueue[0];
+              return (
+                <div className={styles.resultLevelUps}>
+                  <div className={styles.resultLevelUpStack}>
+                    {/* 後方 2 枚目の影カード */}
+                    {levelQueue.length >= 3 && <div className={styles.resultLevelUpBg2} />}
+                    {/* 後方 1 枚目の影カード */}
+                    {levelQueue.length >= 2 && <div className={styles.resultLevelUpBg1} />}
+                    {/* 手前カード（現在のレベルアップ） */}
+                    <div className={styles.resultLevelUpCard}>
+                      {/* レベルアップ gold InkSplatter（Phase 2・既存維持） */}
+                      <div
+                        className={styles.levelUpGold}
+                        aria-hidden="true"
+                      >
+                        <InkSplatter
+                          value={`Lv${r.toLevel}`}
+                          variant="gold"
+                          size={56}
+                        />
+                      </div>
+                      <div className={styles.resultLevelUpName}>{r.name}</div>
+                      <div className={styles.resultLevelUpLevel}>
+                        Lv{r.fromLevel} →{' '}
+                        <span className={styles.resultLevelUpNew}>Lv{r.toLevel}</span>
+                      </div>
+                      <div className={styles.resultLevelUpStats}>
+                        {Object.entries(r.statGains).map(([k, v]) => (
+                          <span
+                            key={k}
+                            className={styles.resultLevelUpStat}
+                          >
+                            {STAT_LABEL[k] ?? k} +{v}
+                          </span>
+                        ))}
+                      </div>
+                      <div className={styles.resultLevelUpOk}>
+                        <ActionButton
+                          className={styles.resultLevelUpOkBtn}
+                          label="OK"
+                          onClick={() => setLevelQueue((q) => q.slice(1))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+          {/* ドロップ一覧（state.drops から取得） */}
+          {state.drops.length > 0 && (
+            <div className={styles.resultLoot}>
+              <div className={styles.resultLootHead}>ドロップ品</div>
+              <div className={styles.resultLootGrid}>
+                {(() => {
+                  // アイテム ID ごとに件数を集計
+                  const countMap = new Map<string, number>();
+                  for (const d of state.drops) {
+                    countMap.set(d.itemId, (countMap.get(d.itemId) ?? 0) + 1);
+                  }
+                  return [...countMap.entries()].map(([itemId, count]) => (
+                    <div
+                      key={itemId}
+                      className={styles.resultLootItem}
+                    >
+                      <ItemSprite
+                        itemId={itemId as import('@/domain/types').ItemId}
+                        size="sm"
+                      />
+                      <span>
+                        {ITEMS[itemId as import('@/domain/types').ItemId]?.name ?? itemId} ×{count}
+                      </span>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* 獲得ゴールド */}
+          <div className={styles.resultGold}>
+            <span className={styles.resultGoldLabel}>獲得ゴールド</span>
+            <span className={styles.resultGoldValue}>◇ +{rewards.gold} G</span>
+          </div>
+
+          {/* 探索へ戻るボタン */}
+          <ActionButton
+            className={styles.resultPrimary}
+            disabled={busy || levelQueue.length > 0 || (expAnimStart && !expDone)}
+            label="探索へ戻る"
+            onClick={() => void finish(state)}
+          />
+        </div>
+      ) : state.outcome === 'lose' ? (
+        /* v5: 9g 全滅独立画面 */
+        <div className={styles.defeatPage}>
+          <div className={styles.defeatTitle}>全滅</div>
+          {/* 隊列の最期 HP/TP（モック line 1217） */}
+          <div className={styles.defeatPartyStatus}>
+            <div className={styles.defeatPartyHead}>隊列の最期 ・ HP/TP</div>
+            {state.allies.map((a) => (
+              <div
+                key={a.id}
+                className={styles.defeatPartyRow}
+              >
+                <span className={styles.defeatPartyName}>{a.name}</span>
+                <div className={styles.defeatPartyBar}>
+                  <div className={styles.defeatPartyHpFill} />
+                </div>
+                <span className={styles.defeatPartyVal}>0</span>
+              </div>
+            ))}
+          </div>
+          <ActionButton
+            className={styles.defeatBtn}
+            disabled={busy}
+            label="拠点へ戻る"
+            onClick={() => void finish(state)}
+          />
+          <div className={styles.defeatReach}>
+            到達: F{save.diveState?.depth} ・ 撃破: {state.enemies.filter((e) => e.isDown).length}{' '}
+            体
+          </div>
+        </div>
+      ) : state.outcome === 'fled' ? (
+        /* v5: 9h 逃走独立画面 */
+        <div className={styles.fleePage}>
+          <div
+            className={styles.fleeLines}
+            aria-hidden="true"
+          >
+            <div
+              className={styles.fleeSpeedLine}
+              style={{ top: '24px', width: '120px' }}
+            />
+            <div
+              className={styles.fleeSpeedLine}
+              style={{ top: '38px', width: '90px', animationDelay: '0.2s' }}
+            />
+            <div
+              className={styles.fleeSpeedLine}
+              style={{ top: '52px', width: '110px', animationDelay: '0.35s' }}
+            />
+          </div>
+          <div className={styles.fleeTitle}>逃走成功</div>
+          <ActionButton
+            className={styles.resultPrimary}
+            disabled={busy}
+            label="探索へ戻る"
+            onClick={() => void finish(state)}
+          />
         </div>
       ) : (
         <div className={styles.command}>
@@ -1292,13 +1858,12 @@ export const Page = ({
                       <div className={styles.unionBanner}>
                         <div className={styles.unionBannerHead}>
                           ⚡ ユニオン予約: {def?.name}
-                          <button
-                            type="button"
+                          <ActionButton
                             className={styles.unionCancel}
+                            label="取消"
+                            sfx="cancel"
                             onClick={() => setUnionCmd(null)}
-                          >
-                            取消
-                          </button>
+                          />
                         </div>
                         {def ? (
                           <div className={styles.unionBannerDesc}>
@@ -1318,29 +1883,26 @@ export const Page = ({
                     );
                   })()
                 : null}
-              <div className={styles.cmdHead}>全体行動</div>
               <div className={styles.menu}>
-                <button
-                  type="button"
-                  className={styles.menuBtn}
+                <ActionButton
+                  className={`${styles.menuBtn} ${styles.menuPrimary}`}
+                  label="たたかう"
                   onClick={onClickFight}
-                >
-                  たたかう
-                </button>
-                <button
-                  type="button"
-                  className={styles.menuBtn}
-                  onClick={() => setUiMode({ kind: 'strategy' })}
-                >
-                  さくせん
-                </button>
-                <button
-                  type="button"
-                  className={styles.menuBtn}
-                  onClick={handleFlee}
-                >
-                  にげる
-                </button>
+                />
+                <div className={styles.menuRow}>
+                  <ActionButton
+                    className={`${styles.menuBtn} ${styles.menuStrategy}`}
+                    label="さくせん"
+                    sfx="cursor"
+                    onClick={() => setUiMode({ kind: 'strategy' })}
+                  />
+                  <ActionButton
+                    className={`${styles.menuBtn} ${styles.menuFlee}`}
+                    label="にげる"
+                    sfx="cancel"
+                    onClick={handleFlee}
+                  />
+                </div>
               </div>
             </>
           )}
@@ -1355,13 +1917,12 @@ export const Page = ({
                       <div className={styles.unionBanner}>
                         <div className={styles.unionBannerHead}>
                           ⚡ ユニオン予約: {def?.name}
-                          <button
-                            type="button"
+                          <ActionButton
                             className={styles.unionCancel}
+                            label="取消"
+                            sfx="cancel"
                             onClick={() => setUnionCmd(null)}
-                          >
-                            取消
-                          </button>
+                          />
                         </div>
                         {def ? (
                           <div className={styles.unionBannerDesc}>
@@ -1395,13 +1956,15 @@ export const Page = ({
                         </span>
                       </div>
                       {allyTargetCandidates.map((a) => (
-                        <button
-                          type="button"
+                        <ActionButton
                           key={a.id}
                           className={[
                             styles.skillBtn,
                             commandTargets[active.id] === a.id ? styles.allyTargetSelected : '',
-                          ].join(' ')}
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          sfx="cursor"
                           onClick={() => {
                             assign(active.id, { kind: 'skill', skillId: allyTargetMenu }, a.id);
                           }}
@@ -1412,11 +1975,12 @@ export const Page = ({
                               HP {Math.max(0, dispOf(a).hp)}/{a.maxHp}
                             </span>
                           </span>
-                        </button>
+                        </ActionButton>
                       ))}
-                      <button
-                        type="button"
+                      <ActionButton
                         className={styles.menuBack}
+                        label="もどる"
+                        sfx="cancel"
                         onClick={() => {
                           setAllyTargetMenu(null);
                           // 選択中コマンドも未決定に戻す
@@ -1426,60 +1990,60 @@ export const Page = ({
                             return next;
                           });
                         }}
-                      >
-                        もどる
-                      </button>
+                      />
                     </div>
                   ) : skillMenu ? (
-                    <div className={styles.skillList}>
-                      {learnedSkillsList(active).map(({ id: sid, usable }) => (
-                        <button
-                          type="button"
-                          key={sid}
-                          className={[styles.skillBtn, !usable ? styles.skillBtnDisabled : ''].join(
-                            ' '
-                          )}
-                          disabled={!usable}
-                          onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
-                        >
-                          <span className={styles.skillTop}>
-                            <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
-                            <span className={styles.tp}>
-                              TP{' '}
-                              {computeSkillTpCost(
-                                BATTLE_SKILLS[sid],
-                                active.skillLevels?.[sid] ?? 1
-                              )}
-                            </span>
-                          </span>
-                          <span className={styles.skillSummary}>
-                            {skillSummary(
-                              BATTLE_SKILLS[sid].element,
-                              BATTLE_SKILLS[sid].target,
-                              BATTLE_SKILLS[sid].effects,
-                              active.skillLevels?.[sid] ?? 1
-                            )}
-                          </span>
-                        </button>
-                      ))}
-                      {learnedSkillsList(active).length === 0 ? (
-                        <div className={styles.empty}>学んでいるスキルがありません</div>
-                      ) : null}
-                      <button
-                        type="button"
+                    <>
+                      <div className={styles.skillListWrap}>
+                        <div className={styles.skillList}>
+                          {learnedSkillsList(active).map(({ id: sid, usable }) => (
+                            <ActionButton
+                              key={sid}
+                              className={[styles.skillBtn, !usable ? styles.skillBtnDisabled : '']
+                                .filter(Boolean)
+                                .join(' ')}
+                              disabled={!usable}
+                              sfx="cursor"
+                              onClick={() => assign(active.id, { kind: 'skill', skillId: sid })}
+                            >
+                              <span className={styles.skillName}>{BATTLE_SKILLS[sid].name}</span>
+                              <span className={styles.skillCostLine}>
+                                TP{' '}
+                                {computeSkillTpCost(
+                                  BATTLE_SKILLS[sid],
+                                  active.skillLevels?.[sid] ?? 1
+                                )}
+                              </span>
+                              <span className={styles.skillTag}>
+                                {skillSummary(
+                                  BATTLE_SKILLS[sid].element,
+                                  BATTLE_SKILLS[sid].target,
+                                  BATTLE_SKILLS[sid].effects,
+                                  active.skillLevels?.[sid] ?? 1
+                                )}
+                              </span>
+                            </ActionButton>
+                          ))}
+                          {learnedSkillsList(active).length === 0 ? (
+                            <div className={styles.empty}>学んでいるスキルがありません</div>
+                          ) : null}
+                        </div>
+                        <div className={styles.skillScrollHint}>← 横スクロール（2段）→</div>
+                      </div>
+                      <ActionButton
                         className={styles.menuBack}
+                        label="もどる"
+                        sfx="cancel"
                         onClick={() => setSkillMenu(false)}
-                      >
-                        もどる
-                      </button>
-                    </div>
+                      />
+                    </>
                   ) : itemMenu ? (
                     <div className={styles.skillList}>
                       {battleItems().map(({ id, remaining }) => (
-                        <button
-                          type="button"
+                        <ActionButton
                           key={id}
                           className={styles.skillBtn}
+                          sfx="cursor"
                           onClick={() => assign(active.id, { kind: 'item', itemId: id })}
                         >
                           <span className={styles.skillTop}>
@@ -1492,18 +2056,17 @@ export const Page = ({
                             </span>
                           </span>
                           <span className={styles.skillDesc}>{ITEMS[id].description}</span>
-                        </button>
+                        </ActionButton>
                       ))}
                       {battleItems().length === 0 ? (
                         <div className={styles.empty}>使える道具がない</div>
                       ) : null}
-                      <button
-                        type="button"
+                      <ActionButton
                         className={styles.menuBack}
+                        label="もどる"
+                        sfx="cancel"
                         onClick={() => setItemMenu(false)}
-                      >
-                        もどる
-                      </button>
+                      />
                     </div>
                   ) : unionSetup ? (
                     <div className={styles.skillList}>
@@ -1527,10 +2090,10 @@ export const Page = ({
                       {aliveAllies
                         .filter((a) => a.id !== unionSetup.actorId)
                         .map((a) => (
-                          <button
-                            type="button"
+                          <ActionButton
                             key={a.id}
                             className={styles.skillBtn}
+                            sfx="cursor"
                             onClick={() =>
                               reserveUnion(unionSetup.actorId, unionSetup.def, [
                                 unionSetup.actorId,
@@ -1542,18 +2105,17 @@ export const Page = ({
                               <span className={styles.skillName}>{a.name}</span>
                               <span className={styles.tp}>ゲージ {a.unionGauge}</span>
                             </span>
-                          </button>
+                          </ActionButton>
                         ))}
                       {aliveAllies.filter((a) => a.id !== unionSetup.actorId).length === 0 ? (
                         <div className={styles.empty}>協力できる味方がいない</div>
                       ) : null}
-                      <button
-                        type="button"
+                      <ActionButton
                         className={styles.menuBack}
+                        label="もどる"
+                        sfx="cancel"
                         onClick={() => setUnionSetup(null)}
-                      >
-                        もどる
-                      </button>
+                      />
                     </div>
                   ) : (
                     <>
@@ -1573,71 +2135,68 @@ export const Page = ({
                           </div>
                         );
                       })()}
-                      <div className={styles.menu}>
-                        <button
-                          type="button"
-                          className={styles.menuBtn}
+                      <div className={styles.individualCmdRow1}>
+                        <ActionButton
+                          className={`${styles.menuBtn} ${styles.cmdPrimary}`}
+                          label="攻撃"
                           onClick={() => assign(active.id, { kind: 'attack' })}
-                        >
-                          攻撃
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.menuBtn}
-                          onClick={() => assign(active.id, { kind: 'guard' })}
-                        >
-                          防御
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.menuBtn}
+                        />
+                        <ActionButton
+                          className={`${styles.menuBtn} ${styles.cmdSub}`}
                           disabled={learnedSkillsList(active).length === 0}
+                          label="スキル"
+                          sfx="cursor"
                           onClick={() => setSkillMenu(true)}
-                        >
-                          スキル
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.menuBtn}
-                          disabled={battleItems().length === 0}
-                          onClick={() => setItemMenu(true)}
-                        >
-                          どうぐ
-                        </button>
-                        {(() => {
-                          const def = unionSkillOf(active);
-                          if (!def || active.unionGauge < 100 || unionCmd) return null;
-                          return (
-                            <button
-                              type="button"
-                              className={`${styles.menuBtn} ${styles.unionBtn}`}
-                              onClick={() => onUnionPressed(active, def)}
-                            >
-                              ⚡ユニオン
-                            </button>
-                          );
-                        })()}
+                        />
                       </div>
+                      <div className={styles.individualCmdRow2}>
+                        <ActionButton
+                          className={`${styles.menuBtn} ${styles.cmdTertiary}`}
+                          disabled={battleItems().length === 0}
+                          label="どうぐ"
+                          sfx="cursor"
+                          onClick={() => setItemMenu(true)}
+                        />
+                        <ActionButton
+                          className={`${styles.menuBtn} ${styles.cmdTertiary}`}
+                          label="防御"
+                          onClick={() => assign(active.id, { kind: 'guard' })}
+                        />
+                        <ActionButton
+                          className={`${styles.menuBtn} ${styles.cmdBack}`}
+                          label="もどる"
+                          sfx="cancel"
+                          onClick={() => setUiMode({ kind: 'global' })}
+                        />
+                      </div>
+                      {(() => {
+                        const def = unionSkillOf(active);
+                        if (!def || active.unionGauge < 100 || unionCmd) return null;
+                        return (
+                          <ActionButton
+                            className={`${styles.menuBtn} ${styles.unionBtn}`}
+                            label="⚡ユニオン"
+                            onClick={() => onUnionPressed(active, def)}
+                          />
+                        );
+                      })()}
                     </>
                   )}
                 </>
               ) : (
                 <div className={styles.execRow}>
-                  <button
-                    type="button"
+                  <ActionButton
                     className={styles.redo}
+                    label="やり直す"
+                    sfx="cancel"
                     onClick={resetInput}
-                  >
-                    やり直す
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <ActionButton
                     className={styles.primary}
                     disabled={!allAssigned}
+                    label="実行"
                     onClick={handleResolve}
-                  >
-                    実行
-                  </button>
+                  />
                 </div>
               )}
             </>
@@ -1668,26 +2227,24 @@ export const Page = ({
                       </div>
                       <div className={styles.strategyButtons}>
                         {STRATEGY_LIST.map((s) => (
-                          <button
+                          <ActionButton
                             key={s.id}
-                            type="button"
                             className={cur === s.id ? styles.strategyOn : styles.strategyOff}
+                            label={s.label}
+                            sfx="cursor"
                             onClick={() => changeStrategy(a.id, s.id)}
-                          >
-                            {s.label}
-                          </button>
+                          />
                         ))}
                       </div>
                     </div>
                   );
                 })}
-                <button
-                  type="button"
+                <ActionButton
                   className={styles.menuBack}
+                  label="もどる"
+                  sfx="cancel"
                   onClick={() => setUiMode({ kind: 'global' })}
-                >
-                  もどる
-                </button>
+                />
               </div>
             </>
           )}
@@ -1706,83 +2263,66 @@ export const Page = ({
           >
             <div className={styles.logOverlayHeader}>
               <span>❦ 戦闘ログ</span>
-              <button
-                type="button"
+              <ActionButton
                 className={styles.logOverlayClose}
+                label="✕"
+                sfx={null}
+                ariaLabel="戦闘ログを閉じる"
                 onClick={() => setLogOpen(false)}
-                aria-label="戦闘ログを閉じる"
-              >
-                ✕
-              </button>
+              />
             </div>
             <div className={styles.logOverlayBody}>
               {(() => {
-                const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-                if (visible.length === 0) {
+                if (battleLogger.displayed.length === 0 && !battleLogger.rendering) {
                   return (
                     <div className={styles.logLine}>
                       てきが あらわれた！（{state.turn} ターン目）
                     </div>
                   );
                 }
-                return visible.map((l, i) => (
-                  <div
-                    key={i}
-                    className={styles.logLine}
-                  >
-                    {l.text}
-                  </div>
-                ));
+                return (
+                  <>
+                    {battleLogger.displayed.map((l) => (
+                      <div
+                        key={l.id}
+                        className={styles.logLine}
+                      >
+                        {l.text}
+                      </div>
+                    ))}
+                    {battleLogger.rendering && (
+                      <div className={styles.logLine}>
+                        {battleLogger.rendering.msg.text.slice(
+                          0,
+                          Math.floor(
+                            battleLogger.rendering.msg.text.length * battleLogger.rendering.progress
+                          )
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
               })()}
             </div>
           </div>
         </div>
       ) : null}
 
-      {/* レベルアップダイアログ（issue #18）。レベルアップしたキャラを順に表示する。 */}
-      {levelQueue.length > 0
-        ? (() => {
-            const r = levelQueue[0];
-            return (
-              <div className={styles.dialogOverlay}>
-                <div className={styles.dialog}>
-                  {/* レベルアップ gold InkSplatter（Phase 2） */}
-                  <div
-                    className={styles.levelUpGold}
-                    aria-hidden="true"
-                  >
-                    <InkSplatter
-                      value={`Lv${r.toLevel}`}
-                      variant="gold"
-                      size={72}
-                    />
-                  </div>
-                  <div className={styles.dialogTitle}>レベルアップ！</div>
-                  <div className={styles.dialogName}>
-                    {r.name} は Lv{r.fromLevel} → <strong>Lv{r.toLevel}</strong> になった！
-                  </div>
-                  <div className={styles.dialogStats}>
-                    {Object.entries(r.statGains).map(([k, v]) => (
-                      <span
-                        key={k}
-                        className={styles.dialogStat}
-                      >
-                        {STAT_LABEL[k] ?? k} +{v}
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.primary}
-                    onClick={() => setLevelQueue((q) => q.slice(1))}
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            );
-          })()
-        : null}
+      {/* レベルアップダイアログ（v5: resultPage 内の LIFO カードに統合済み。
+          ongoing 中に勝利確定していない段階でのダイアログ表示はここでは不要。
+          dialogOverlay / dialog クラスは削除禁止のため SCSS 側で保持する。 */}
+
+      {/* I. sealStamp — 戦闘開始時のシール演出 */}
+      {showSeal && (
+        <SealStampFx
+          variant="stamp"
+          caption="戦闘"
+          fadeOut={sealOut}
+        />
+      )}
+
+      {/* K. dustRise — 逃走時の足元砂塵（fled フェーズのみ） */}
+      <DustRiseFx visible={fleeActive} />
 
       {/* エンカウント/戦闘終了の暗転エフェクト（issue #18） */}
       {introFx ? <div className={styles.fxIntro} /> : null}

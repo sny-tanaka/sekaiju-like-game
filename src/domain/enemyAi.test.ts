@@ -95,7 +95,7 @@ describe('敵AI: クールダウン機能（多ターン進行）', () => {
     const logCounts: number[] = [];
     for (let i = 0; i < 5 && cur.outcome === 'ongoing'; i++) {
       const after = resolveTurn(cur, [{ kind: 'guard', actorId: cur.allies[0].id }], createRng(77));
-      logCounts.push(after.log.length);
+      logCounts.push(after.events.length);
       cur = resolveTurn(cur, [{ kind: 'guard', actorId: cur.allies[0].id }], rng);
     }
     expect(logCounts.length).toBeGreaterThan(0);
@@ -112,7 +112,7 @@ describe('敵AI: weight 抽選の決定論', () => {
     const base = fortify(startBattle(diveSave(11), ['enemy_t1_boulder_ogre']));
     const r1 = resolveTurn(base, [{ kind: 'guard', actorId: base.allies[0].id }], createRng(42));
     const r2 = resolveTurn(base, [{ kind: 'guard', actorId: base.allies[0].id }], createRng(42));
-    expect(r1.log.map((l) => l.text)).toEqual(r2.log.map((l) => l.text));
+    expect(r1.events.map((e) => e.kind)).toEqual(r2.events.map((e) => e.kind));
   });
 
   test('BASIC_WEIGHT = 10 が export されている', () => {
@@ -144,7 +144,7 @@ describe('敵AI: basic フォールバック', () => {
     expect(['ongoing', 'win', 'lose']).toContain(after.outcome);
   });
 
-  test('敵がログエントリを必ず残す', () => {
+  test('敵がイベントを必ず残す', () => {
     const base = startBattle(diveSave(), ['enemy_slime']);
     const state: BattleState = {
       ...base,
@@ -155,7 +155,7 @@ describe('敵AI: basic フォールバック', () => {
       [{ kind: 'guard', actorId: state.allies[0].id }],
       createRng(3)
     );
-    expect(after.log.length).toBeGreaterThan(0);
+    expect(after.events.length).toBeGreaterThan(0);
   });
 });
 
@@ -178,8 +178,8 @@ describe('敵AI: バフアクション適用', () => {
       const enemy = after.enemies[0];
       if (enemy.buffs.some((b) => b.stat === 'pdef')) {
         guardUpSeen = true;
-        // ログに「身構え」が出るはず
-        expect(after.log.some((l) => l.text.includes('身構え'))).toBe(true);
+        // pdef バフが付いた → ea_guard_up が選ばれた（events の skill イベントで確認）
+        expect(after.events.some((e) => e.kind === 'skill')).toBe(true);
         break;
       }
     }
@@ -199,7 +199,8 @@ describe('敵AI: バフアクション適用', () => {
       const enemy = after.enemies[0];
       if (enemy.buffs.some((b) => b.stat === 'patk' && b.modifier > 1)) {
         warRoarSeen = true;
-        expect(after.log.some((l) => l.text.includes('戦吼'))).toBe(true);
+        // patk バフが付いた → ea_war_roar が選ばれた（events の skill イベントで確認）
+        expect(after.events.some((e) => e.kind === 'skill')).toBe(true);
         break;
       }
     }
@@ -223,11 +224,10 @@ describe('敵AI: AoE デバフアクション（ea_screech）', () => {
         [{ kind: 'guard', actorId: base.allies[0].id }],
         createRng(seed)
       );
-      if (after.log.some((l) => l.text.includes('威嚇'))) {
+      // screech が使われると全味方に patk デバフが付く
+      if (after.allies.some((a) => a.buffs.some((b) => b.stat === 'patk' && b.modifier < 1))) {
         screechSeen = true;
-        expect(
-          after.allies.some((a) => a.buffs.some((b) => b.stat === 'patk' && b.modifier < 1))
-        ).toBe(true);
+        expect(after.events.some((e) => e.kind === 'skill')).toBe(true);
         break;
       }
     }

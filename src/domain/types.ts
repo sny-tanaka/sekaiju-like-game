@@ -468,16 +468,6 @@ export type BattleOutcome = 'ongoing' | 'win' | 'lose' | 'fled';
  */
 export type FirstStrike = 'none' | 'preemptive' | 'ambush';
 
-export interface BattleLogEntry {
-  text: string;
-  /**
-   * このログ行が表示された時点の全戦闘員の HP/戦闘不能状態のスナップショット（issue #18）。
-   * UI が行動を1行ずつ再生し、カードの HP バーを段階的に減らす/点滅させるために使う。
-   * 戦闘エンジンが resolveTurn 内で各 push 時に記録する（保存しない）。
-   */
-  snapshot?: Record<string, { hp: number; isDown: boolean }>;
-}
-
 export interface BattleState {
   turn: number;
   depth: number;
@@ -485,7 +475,11 @@ export interface BattleState {
   enemies: Combatant[];
   /** 召喚体（[03 §8]）。最前列の壁/攻撃役。最大3体。味方の全滅判定には数えない。 */
   summons: Combatant[];
-  log: BattleLogEntry[];
+  /**
+   * 構造化イベントリスト（[battle-event-redesign.md §2.2]）。
+   * 戦闘ロジックが生成し、UI がアニメーション再生に使う。
+   */
+  events: import('./battleEvent').BattleEvent[];
   outcome: BattleOutcome;
   /** 突入時の先手（[03 §10]）。FOE接触時に preemptive/ambush になる。 */
   firstStrike: FirstStrike;
@@ -762,12 +756,19 @@ export interface WarpState {
   unlockedCheckpoints: number[]; // [10, 20, 30, ...]
 }
 
+/** ボス撃破履歴 1 件。`enemyId` は v5 で追加（後方互換のため optional）。 */
+export interface BossDefeatLogEntry {
+  depth: number;
+  at: number;
+  enemyId?: EnemyId;
+}
+
 /** 最高到達階などのベスト記録（[06 §7]）。 */
 export interface TowerRecord {
   deepestReached: number; // 最深踏破階
   highestBossDefeated: number; // 最高撃破ボス階
   totalDives: number; // 挑戦回数
-  bossDefeatLog: { depth: number; at: number }[]; // 撃破履歴
+  bossDefeatLog: BossDefeatLogEntry[]; // 撃破履歴
 }
 
 export interface TowerState {
@@ -898,6 +899,14 @@ export interface SaveData {
   flags: Record<string, boolean>; // 到達階トリガーの解放フラグ
 }
 
+/** タイトルの SaveCard に表示する編成メンバーの軽量プレビュー情報。 */
+export interface SavePartyPreviewMember {
+  id: string;
+  name: string;
+  raceId: RaceId;
+  classId: ClassId;
+}
+
 /** タイトルに出すセーブの概況メタ情報（SaveData から導出）。セーブは1つ。 */
 export interface SaveMeta {
   guildName: string;
@@ -905,4 +914,6 @@ export interface SaveMeta {
   memberCount: number; // 団員数（概況）
   savedAt: number;
   corrupted?: boolean;
+  /** 編成中のキャラ（前衛→後衛順、最大5件）の軽量プレビュー。 */
+  partyPreview?: SavePartyPreviewMember[];
 }

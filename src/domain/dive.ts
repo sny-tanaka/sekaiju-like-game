@@ -1,4 +1,4 @@
-import { isBossFloor } from '@/data/balance';
+import { isBossFloor, levelDecay, partyAverageLevelFromDive } from '@/data/balance';
 import { initEncounter, onStep } from '@/domain/encounter';
 import { stepFoes } from '@/domain/foe';
 import { findEventCell, generateFloor } from '@/domain/generateFloor';
@@ -9,6 +9,7 @@ import { cellKey } from '@/domain/types';
 import type {
   Dir,
   DivePartyMember,
+  EnemyId,
   FloorMaster,
   FoeRuntimeState,
   PendingFoeBattle,
@@ -120,7 +121,11 @@ function enterFloor(save: SaveData, depth: number, encounterRng: Rng): SaveData 
       dir: facing,
       party: next.diveState?.party ?? buildDiveParty(next),
       persistentSummons: next.diveState?.persistentSummons ?? [],
-      encounter: { stepsUntilEncounter: initEncounter(encounterRng) },
+      encounter: {
+        stepsUntilEncounter: initEncounter(encounterRng, {
+          encounterRateDecay: levelDecay(partyAverageLevelFromDive(next), depth),
+        }),
+      },
       pendingFoeBattle: null,
     },
   };
@@ -264,7 +269,7 @@ export function resolveFoeBattle(save: SaveData, win: boolean): SaveData {
     );
     next = setFoeRuntime(next, dive.depth, foeRuntime);
     // 階層ボス撃破（[06 §4-5・§7]）: ゲート解放・ワープ解放・記録更新。
-    if (pending.isBoss) next = defeatBoss(next, dive.depth);
+    if (pending.isBoss) next = defeatBoss(next, dive.depth, Date.now(), pending.enemyId);
   }
   return next;
 }
@@ -275,7 +280,12 @@ export function resolveFoeBattle(save: SaveData, win: boolean): SaveData {
  * - WarpState にチェックポイント追加
  * - TowerRecord（最高撃破ボス階・撃破履歴）更新
  */
-export function defeatBoss(save: SaveData, depth: number, at: number = Date.now()): SaveData {
+export function defeatBoss(
+  save: SaveData,
+  depth: number,
+  at: number = Date.now(),
+  enemyId?: EnemyId
+): SaveData {
   const ts = save.towerState;
   const bossGates = { ...ts.bossGates, [depth]: { depth, defeated: true } };
   const unlockedCheckpoints = ts.warp.unlockedCheckpoints.includes(depth)
@@ -287,7 +297,7 @@ export function defeatBoss(save: SaveData, depth: number, at: number = Date.now(
     highestBossDefeated: Math.max(ts.record.highestBossDefeated, depth),
     bossDefeatLog: alreadyLogged
       ? ts.record.bossDefeatLog
-      : [...ts.record.bossDefeatLog, { depth, at }],
+      : [...ts.record.bossDefeatLog, { depth, at, enemyId }],
   };
   return {
     ...save,
@@ -345,7 +355,11 @@ export function goShallower(save: SaveData): SaveData {
       depth: prevDepth,
       pos: { x: exit.x, y: exit.y },
       dir: facing,
-      encounter: { stepsUntilEncounter: initEncounter(rng) },
+      encounter: {
+        stepsUntilEncounter: initEncounter(rng, {
+          encounterRateDecay: levelDecay(partyAverageLevelFromDive(next), prevDepth),
+        }),
+      },
       pendingFoeBattle: null,
     },
   };

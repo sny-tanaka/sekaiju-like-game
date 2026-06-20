@@ -40,3 +40,29 @@
 .next {
   font-size: 10px;
 }
+
+// shimmer: 金色の .fill 部分にのみ波打ちオーバーレイを当てる（未充填の背景には出ない）
+@keyframes barShimmer {
+  0%   { background-position: -80px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.fillShimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.fillShimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 100%
+  );
+  background-size: 80px 100%;
+  animation: barShimmer 1.2s linear infinite;
+  pointer-events: none;
+}

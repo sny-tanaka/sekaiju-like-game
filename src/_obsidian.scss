@@ -1,0 +1,345 @@
+// ==========================================================
+// 黒曜 OBSIDIAN MINIMAL テーマ — 案 A v2
+// ==========================================================
+
+// --- 紙地 / 背景層 ---
+$obsidian-bg-deep:    #090a0d;
+$obsidian-bg-mid:     #0e0f13;
+$obsidian-bg-rise:    #1c2230;
+$obsidian-surface-panel: #15171f;
+
+// --- インク（文字 / 罫線） ---
+$obsidian-text-strong: #f2ede1;
+$obsidian-text-base:   #d9d4c8;
+$obsidian-text-soft:   #c2bdb2;
+$obsidian-text-mute:   #9a958a;
+$obsidian-text-faint:  #8c8a84;
+$obsidian-text-blue:   #7d8aa0;
+$obsidian-text-quote:  #6b6f7a;
+
+// --- 金箔（primary） ---
+$obsidian-gold:        #c9a86a;
+$obsidian-gold-deep:   #b08f4f;
+$obsidian-gold-bright: #e8d099;
+
+// --- 危険 ---
+$obsidian-danger:       #b23c30;
+$obsidian-danger-glow:  #d4674f;
+$obsidian-danger-text:  #e09180;
+$obsidian-danger-soft:  #b89089;
+
+// --- 成功 / 情報 ---
+$obsidian-success:   #3f8a5c;
+$obsidian-info-blue: #a9c3d8;
+
+// ==========================================================
+// CSS カスタムプロパティを :root に配布
+// （各コンポーネントは原則こちらの var() を使う）
+// ==========================================================
+:root {
+  --bg-deep:    #{$obsidian-bg-deep};
+  --bg-mid:     #{$obsidian-bg-mid};
+  --bg-rise:    #{$obsidian-bg-rise};
+  --bg-overlay: rgba(6, 7, 10, 0.72);
+
+  --surface-card: linear-gradient(180deg, #191c24, #13151c);
+  --surface-panel: #{$obsidian-surface-panel};
+  --surface-elev: rgba(255, 255, 255, 0.04);
+
+  --bg-page-gradient: radial-gradient(
+    130% 90% at 50% -8%,
+    var(--bg-rise) 0%,
+    var(--bg-mid) 56%,
+    var(--bg-deep) 100%
+  );
+
+  --text-strong: #{$obsidian-text-strong};
+  --text-base:   #{$obsidian-text-base};
+  --text-soft:   #{$obsidian-text-soft};
+  --text-mute:   #{$obsidian-text-mute};
+  --text-faint:  #{$obsidian-text-faint};
+  --text-blue:   #{$obsidian-text-blue};
+  --text-quote:  #{$obsidian-text-quote};
+
+  --rule-soft:        rgba(255, 255, 255, 0.07);
+  --rule-base:        rgba(255, 255, 255, 0.14);
+  --rule-gold:        rgba(201, 168, 106, 0.3);
+  --rule-gold-strong: rgba(201, 168, 106, 0.5);
+
+  --gold:        #{$obsidian-gold};
+  --gold-deep:   #{$obsidian-gold-deep};
+  --gold-bright: #{$obsidian-gold-bright};
+  --gold-glow:   rgba(201, 168, 106, 0.3);
+  --gold-tint:   rgba(201, 168, 106, 0.08);
+
+  --danger:           #{$obsidian-danger};
+  --danger-glow:      #{$obsidian-danger-glow};
+  --danger-text:      #{$obsidian-danger-text};
+  --danger-text-soft: #{$obsidian-danger-soft};
+  --danger-tint:      rgba(212, 103, 79, 0.08);
+
+  --success:   #{$obsidian-success};
+  --info-blue: #{$obsidian-info-blue};
+
+  --shadow-page:  0 12px 40px rgba(0, 0, 0, 0.28);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.6);
+
+  --font-display: 'Shippori Mincho', serif;
+  --font-body:    'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+}
+
+// ==========================================================
+// グローバル keyframes（写本テーマの index.scss と競合しないよう接頭辞付き）
+// ==========================================================
+@keyframes obsidian-moteDrift {
+  0%   { transform: translateY(0)    translateX(0);  opacity: 0; }
+  10%  {                                              opacity: 0.7; }
+  90%  {                                              opacity: 0.7; }
+  100% { transform: translateY(-150px) translateX(14px); opacity: 0; }
+}
+@keyframes obsidian-glowPulse {
+  0%, 100% { opacity: 0.4;  transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+@keyframes obsidian-breathe {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+@keyframes obsidian-warnBlink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0.4; }
+}
+@keyframes obsidian-sealStamp {
+  0%   { transform: translate(-50%, -50%) scale(2.4) rotate(-14deg); opacity: 0; }
+  40%  { opacity: 1; }
+  55%  { transform: translate(-50%, -50%) scale(0.92) rotate(-6deg); }
+  70%  { transform: translate(-50%, -50%) scale(1.04) rotate(-6deg); }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(-6deg); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-moteDrift { 0%, 100% { opacity: 0; transform: none; } }
+  @keyframes obsidian-glowPulse { 0%, 100% { opacity: 0.6; transform: none; } }
+  @keyframes obsidian-breathe   { 0%, 100% { transform: none; } }
+  @keyframes obsidian-warnBlink { 0%, 100% { opacity: 1; } }
+  @keyframes obsidian-sealStamp { 0%, 100% { transform: translate(-50%, -50%); opacity: 1; } }
+}
+
+// ==========================================================
+// town 画面追加トークン
+// ==========================================================
+:root {
+  --info-blue-tint: rgba(111, 159, 216, 0.08);
+  --info-blue-rule: rgba(111, 159, 216, 0.30);
+  --info-blue-text: #9cc2ec;
+}
+
+@keyframes obsidian-sheetRise {
+  0%   { transform: translateY(20%); opacity: 0; }
+  100% { transform: translateY(0);   opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-sheetRise { 0%, 100% { transform: none; opacity: 1; } }
+}
+
+// ==========================================================
+// battle v5 — 攻撃 FX 6 属性 + シーケンスタイムライン
+// ==========================================================
+
+@keyframes atkSlash {
+  0%   { transform: translate(-50%, -50%) rotate(-38deg) scaleX(0); opacity: 0; }
+  20%  { opacity: 1; }
+  60%  { transform: translate(-50%, -50%) rotate(-38deg) scaleX(1); opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes atkThrust {
+  0%   { transform: translate(-50%, -50%) scaleX(0); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scaleX(1.2) translateX(20%); opacity: 0; }
+}
+
+@keyframes thrustLine {
+  0%   { transform: scaleX(0); opacity: 0; }
+  30%  { transform: scaleX(1.1); opacity: 1; }
+  100% { transform: scaleX(1.4) translateX(30%); opacity: 0; }
+}
+
+@keyframes atkBlunt {
+  0%   { transform: scale(0.6); opacity: 0; }
+  30%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes ringExpand {
+  0%   { transform: scale(0.4); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes atkFire {
+  0%   { transform: scale(0.6); opacity: 0; }
+  30%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1.5) translateY(-8%); opacity: 0; }
+}
+
+@keyframes atkIce {
+  0%   { transform: rotate(45deg) scale(0.5); opacity: 0; }
+  30%  { transform: rotate(45deg) scale(1); opacity: 1; }
+  100% { transform: rotate(135deg) scale(1.3); opacity: 0; }
+}
+
+@keyframes atkVolt {
+  0%   { transform: translateY(-50%) scaleY(0); opacity: 0; }
+  20%  { transform: translateY(0) scaleY(1); opacity: 1; }
+  35%  { opacity: 0.5; }
+  50%  { opacity: 1; }
+  100% { transform: translateY(50%) scaleY(0.8); opacity: 0; }
+}
+
+@keyframes critFlash {
+  0%, 100% { opacity: 0; }
+  20%      { opacity: 1; }
+  60%      { opacity: 0.6; }
+}
+
+@keyframes shakeA {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-6px); }
+  40%  { transform: translateX(5px); }
+  60%  { transform: translateX(-4px); }
+  80%  { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes shakeB {
+  0%, 100% { transform: translateY(0); }
+  25%      { transform: translateY(-3px); }
+  50%      { transform: translateY(2px); }
+  75%      { transform: translateY(-2px); }
+}
+
+@keyframes barShimmer {
+  0%   { background-position: 0 0; }
+  100% { background-position: 40px 0; }
+}
+
+@keyframes encPulse {
+  0%, 100% { opacity: 0.92; }
+  50%      { opacity: 1; }
+}
+
+@keyframes dissolveE {
+  0%   { opacity: 1; filter: blur(0); transform: scale(1); }
+  60%  { opacity: 0.6; filter: blur(2px); }
+  100% { opacity: 0; filter: blur(6px); transform: scale(0.96); }
+}
+
+@keyframes splatA {
+  0%   { transform: translateY(0) scale(0.6); opacity: 1; }
+  20%  { transform: translateY(-8px) scale(1.15); opacity: 1; }
+  80%  { transform: translateY(-22px) scale(1); opacity: 1; }
+  100% { transform: translateY(-36px) scale(0.9); opacity: 0; }
+}
+
+@keyframes splatB {
+  0%   { transform: translateY(0) scale(0.6); opacity: 1; }
+  20%  { transform: translateY(-6px) scale(1.1); opacity: 1; }
+  80%  { transform: translateY(-18px) scale(0.95); opacity: 1; }
+  100% { transform: translateY(-30px) scale(0.85); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes atkSlash    { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkThrust   { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes thrustLine  { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkBlunt    { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes ringExpand  { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkFire     { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkIce      { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes atkVolt     { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes critFlash   { 0%, 100% { opacity: 0; } }
+  @keyframes shakeA      { 0%, 100% { transform: none; } }
+  @keyframes shakeB      { 0%, 100% { transform: none; } }
+  @keyframes barShimmer  { 0%, 100% { background-position: 0 0; } }
+  @keyframes encPulse    { 0%, 100% { opacity: 1; } }
+  @keyframes dissolveE   { 0%, 100% { opacity: 0; transform: none; filter: none; } }
+  @keyframes splatA      { 0%, 100% { transform: none; opacity: 0; } }
+  @keyframes splatB      { 0%, 100% { transform: none; opacity: 0; } }
+}
+
+:root {
+  // 属性カラー（モック v3 §4.5 準拠）
+  --elem-slash:  255, 217, 201;   /* #ffd9c9 */
+  --elem-thrust: 207, 224, 255;   /* #cfe0ff */
+  --elem-blunt:  255, 224, 160;   /* #ffe0a0 */
+  --elem-fire:   255, 150,  90;   /* #ff965a */
+  --elem-ice:    160, 210, 240;   /* #a0d2f0 */
+  --elem-volt:   232, 216,  91;   /* #e8d85b */
+
+  // 会心の重畳色（金 flash）
+  --crit-glow: rgba(255, 210, 122, 0.55);
+
+  // シーケンスタイミング（ミリ秒）
+  --seq-fx-start:    50ms;
+  --seq-shake-start: 200ms;
+  --seq-pop-start:   280ms;
+  --seq-hp-start:    400ms;
+  --seq-dissolve:    660ms;
+  --seq-end:         800ms;
+}
+
+// atkMagic keyframe（無属性 almighty 用）— モック v3 line 17–63 より転記
+@keyframes atkMagic {
+  0%   { transform: scale(.3) rotate(0); opacity: 0; }
+  42%  { opacity: 1; }
+  100% { transform: scale(1.5) rotate(165deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes atkMagic {
+    0%, 100% { transform: none; opacity: 0; }
+  }
+}
+
+// forgeSpark — bash アイコン用（💥 の弾む入場）
+@keyframes forgeSpark {
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+  40%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+  70%  { transform: translate(-50%, -50%) scale(0.9); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
+}
+
+// glowPulse — almighty アイコン用（✦ のジワジワ点滅）
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 4px rgba(224, 192, 255, 0.6)); }
+  50%       { opacity: 1;   filter: drop-shadow(0 0 10px rgba(224, 192, 255, 1)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes forgeSpark { 0%, 100% { transform: translate(-50%, -50%); opacity: 0; } }
+  @keyframes glowPulse  { 0%, 100% { opacity: 0.6; } }
+}
+
+// ==========================================================
+// town — warpScan（ワープ実行時スキャン線）
+// ==========================================================
+@keyframes obsidian-warpScan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(360%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-warpScan { 0%, 100% { transform: translateY(0); opacity: 0; } }
+}
+
+@keyframes obsidian-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes obsidian-fadeIn { from { opacity: 1; } to { opacity: 1; } }
+}

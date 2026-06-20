@@ -1,368 +1,172 @@
-@use 'variables' as var;
+// guild-char ページ — 黒曜 OBSIDIAN MINIMAL v2（モック忠実化）
+// var(--*) を直接参照。写本テーマの SCSS 変数は使わない。
 
 .layout {
+  position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px 16px max(20px, env(safe-area-inset-bottom, 0px));
+  padding: 0 0 max(14px, env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  color: var.$ink;
-  background-color: var.$parchment;
+  background: var(--bg-page-gradient);
+  color: var(--text-base);
+  font-family: var(--font-body);
 }
 
+// ---- ヘッダー ----
 .head {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 0.75px solid var.$rule;
   flex-shrink: 0;
-}
-
-// メインコンテンツ（スクロール領域）
-.body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+  background: linear-gradient(180deg, #1a1f2b, #13151c);
+  border-bottom: 1px solid var(--rule-gold);
+  padding: 18px 20px 14px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
 }
 
 .headPortrait {
   flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  background: #0c0d11;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
-.headText {
+.headInfo {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
-.title {
+.headName {
   margin: 0;
-  font-size: 24px;
-  font-weight: 900;
-  color: var.$ink;
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--text-strong);
+  font-weight: 400;
 }
 
-.sub {
-  font-size: 13px;
-  color: var.$ink-faint;
-}
-
-.card {
-  padding: 12px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  box-shadow: 0 1px 3px var.$shadow-ink;
-  margin-bottom: 12px;
-}
-
-.h2 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  font-weight: 800;
-  color: var.$ink;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.sp {
-  font-family: 'JetBrains Mono', monospace;
+.headSub {
   font-size: 12px;
-  color: var.$illumination-gold;
-  font-weight: 700;
+  color: var(--text-soft);
 }
 
-.stats {
+.posTag {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  border-radius: 2px;
+  padding: 1px 7px;
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+// EXP 進捗ブロック（v5: 案A v3）
+.headExp {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.headExpLabel {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-mute);
+  text-transform: uppercase;
+}
+
+.headExpValue {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.headExpValueMax {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+// ---- body（唯一の可変スクロール領域） ----
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 16px 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+// ---- セクションの共通見出し ----
+.sectionTitle {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+// ---- 能力値グリッド（4列） ----
+.statsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   margin: 0;
-
-  div {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 6px 0;
-    background-color: var.$parchment;
-    border: 0.75px solid var.$rule;
-    border-radius: 0;
-  }
-
-  dt {
-    font-size: 10px;
-    color: var.$ink-faint;
-  }
-
-  dd {
-    margin: 0;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 16px;
-    font-weight: 700;
-    color: var.$ink;
-  }
 }
 
-.equipSlot {
-  padding: 8px 0;
-  border-top: 0.75px solid var.$rule;
-
-  &:first-of-type {
-    border-top: none;
-  }
-}
-
-.equipHead {
+.statCell {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  padding: 6px 0;
+  background: #15171f;
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
 }
 
-.slotLabel {
-  font-size: 12px;
-  font-weight: 700;
-  width: 36px;
-  color: var.$ink-faint;
+.statLabel {
+  font-size: 9px;
+  color: var(--text-faint);
 }
 
-.equipName {
-  flex: 1;
-  font-size: 14px;
-  color: var.$ink;
-}
-
-.smallBtn {
-  min-height: 32px;
-  padding: 0 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment;
-  color: var.$ink;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-// ---- 装備プール（内部スクロール） ----
-.equipPool {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-.equipPick {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
-  padding-left: 44px;
-}
-
-.pickBtn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 34px;
-  padding: 0 8px;
-  border: 0.75px solid var.$verdant;
-  border-radius: 0;
-  background-color: var.$parchment;
-  color: var.$verdant-dark;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-// ---- スキル一覧（内部スクロール） ----
-.skillList {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-  list-style: none;
+.statValue {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--text-strong);
+  font-weight: 600;
   margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
-.skill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.statValueHp {
+  color: #9ed8b4;
 }
 
-.skillInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.statValueTp {
+  color: #8fb6e0;
 }
 
-.skillName {
-  font-size: 14px;
-  font-weight: 700;
-  color: var.$ink;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.skillLv {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var.$ink-faint;
-  font-weight: 400;
-}
-
-.skillDesc {
-  font-size: 11px;
-  color: var.$ink-faint;
-}
-
-.learnBtn {
-  width: 44px;
-  min-height: 44px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$verdant;
-  color: var.$parchment;
-  font-size: 20px;
-  font-weight: 800;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-}
-
-.jobRow {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.select,
-.input {
-  flex: 1;
-  min-height: 40px;
-  padding: 0 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  font-size: 14px;
-  background-color: var.$parchment;
-  color: var.$ink;
-}
-
-.actBtn {
-  min-height: 40px;
-  padding: 0 14px;
-  border: 0.75px solid var.$verdant;
-  border-radius: 0;
-  background-color: var.$parchment;
-  color: var.$verdant-dark;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    border-color: var.$rule;
-    background-color: transparent;
-    color: var.$ink-faint;
-  }
-}
-
-.warn {
-  margin: 4px 0 12px;
-  font-size: 11px;
-  color: var.$ink-faint;
-  line-height: 1.5;
-}
-
-.warnCaption {
-  margin: 2px 0 0;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var.$ink-faint;
-  opacity: 0.7;
-}
-
-.titleHave {
-  margin: 0 0 12px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var.$ink;
-}
-
-.titleOpts {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
-.titleBtn {
-  flex: 1;
-  min-width: 120px;
-  min-height: 44px;
-  border: 0.75px solid var.$verdant;
-  border-radius: 0;
-  background-color: var.$parchment;
-  color: var.$verdant-dark;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.rbForm {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.danger {
-  flex: 1;
-  min-height: 44px;
-  border: none;
-  border-radius: 0;
-  background-color: var.$vermilion;
-  color: var.$parchment;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.foot {
-  flex-shrink: 0;
-  margin-top: 4px;
-  padding-top: 12px;
-  border-top: 0.75px solid var.$rule;
-}
-
-.back {
-  width: 100%;
-  min-height: 44px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-// §16: 種族耐性セクション
-.resistBlock {
+// ---- 種族耐性 ----
+.resistWrap {
+  // ResistBadges の外周ラッパー
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -371,39 +175,534 @@
 .resistRow {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .resistLabel {
-  font-size: 11px;
-  font-weight: 800;
-  color: var.$ink-faint;
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  color: var(--text-faint);
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
-.skillTabs {
+// ---- 装備セクション ----
+.equipRows {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.skillTab {
+.equipRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 8px 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: border-color var(--motion-quick);
+}
+
+.equipRowEquipped {
+  background: #1a1d26;
+  border-color: rgba(201, 168, 106, 0.35);
+}
+
+.equipRowExpanded {
+  border-color: var(--rule-gold);
+}
+
+.equipItemSprite {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  background: #0c0d11;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.equipMeta {
   flex: 1;
-  min-width: 90px;
-  min-height: 36px;
-  padding: 4px 8px;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: transparent;
-  color: var.$ink;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.equipSlotLabel {
+  font-size: 9px;
+  color: var(--text-faint);
+}
+
+.equipName {
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+.equipNameEmpty {
+  color: #5d5a52;
+}
+
+.equipStats {
+  font-size: 10px;
+  color: #9ed8b4;
+}
+
+.equipChip {
+  flex-shrink: 0;
+  font-size: 10px;
+  border-radius: 2px;
+  padding: 4px 9px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+
+.equipChipUnequip {
+  color: var(--text-mute);
+  border: 1px solid var(--rule-base);
+}
+
+.equipChipPick {
+  color: var(--gold);
+  border: 1px solid var(--rule-gold);
+}
+
+// 展開中の候補パネル
+.candidatePanel {
+  background: var(--bg-deep);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  padding: 10px 12px;
+  margin-top: 4px;
+}
+
+.candidateEmpty {
+  font-size: 11px;
+  color: var(--text-mute);
+  text-align: center;
+  padding: 4px 0;
+}
+
+.candidateRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  font-family: var(--font-body);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.candidateItemSprite {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: #0c0d11;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.candidateMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.candidateName {
   font-size: 12px;
+  color: var(--text-strong);
+}
+
+.candidateBonus {
+  font-size: 10px;
+  color: #9ed8b4;
+}
+
+.candidateAssign {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--gold);
+  border: 1px solid rgba(201, 168, 106, 0.4);
+  border-radius: 2px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+// ---- スキルセクション ----
+.skillHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.skillTitle {
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text-strong);
+}
+
+.spTag {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--gold);
+  background: var(--gold-tint);
+  border: 1px solid var(--rule-gold);
+  border-radius: 3px;
+  padding: 3px 10px;
+}
+
+.skillSubTabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.skillSubTab {
+  padding: 5px 14px;
+  border-radius: 2px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-mute);
+  transition: background var(--motion-quick), color var(--motion-quick);
+}
+
+.skillSubTabActive {
+  background: var(--gold);
+  color: var(--bg-mid);
+  font-weight: 700;
+  border-color: var(--gold);
+}
+
+.skillTreeWrap {
+  background: #0a0b0e;
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 10px;
+  height: 268px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skillTreeLegend {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  font-size: 8px;
+  color: var(--text-faint);
+  z-index: 1;
+}
+
+// 習得済みスキル一覧
+.learnedList {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.learnedItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--surface-panel);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+}
+
+.learnedName {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+.learnedSub {
+  font-size: 9px;
+  color: var(--text-faint);
+}
+
+// ---- 育成 3列ボタン ----
+.growthBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.growthBtn {
+  flex: 1;
+  height: 44px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  background: transparent;
+  transition: opacity var(--motion-quick);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.growthBtnTransfer {
+  border: 1px solid var(--rule-base);
+  color: var(--text-soft);
+}
+
+.growthBtnTitle {
+  border: 1px solid var(--rule-gold);
+  color: var(--gold);
+}
+
+.growthBtnRebirth {
+  border: 1px solid rgba(212, 103, 79, 0.45);
+  color: var(--danger-text);
+}
+
+.growthBtnLabel {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.growthBtnSub {
+  font-size: 8px;
+  opacity: 0.75;
+}
+
+// ---- フッタ ----
+.foot {
+  flex-shrink: 0;
+  padding: 0 20px;
+}
+
+.back {
+  width: 100%;
+  height: 46px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+// ---- bottom sheet（転職 / 称号 / 転生） ----
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+}
+
+.sheet {
+  width: min(560px, 100%);
+  background: var(--surface-panel);
+  border-top: 1px solid var(--rule-gold);
+  border-radius: 10px 10px 0 0;
+  padding: 18px 20px max(20px, env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 80dvh;
+  overflow-y: auto;
+}
+
+.sheetHandle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--rule-base);
+  margin: 0 auto 4px;
+  flex-shrink: 0;
+}
+
+.sheetTitle {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-strong);
+}
+
+.sheetWarn {
+  font-size: 12px;
+  color: var(--danger-text-soft);
+  line-height: 1.7;
+  background: var(--danger-tint);
+  border-left: 2px solid var(--danger-glow);
+  padding: 10px 12px;
+  border-radius: 0 3px 3px 0;
+}
+
+.sheetNote {
+  font-size: 11px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+// select / input in sheet
+.sheetSelect,
+.sheetInput {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: var(--surface-elev);
+  color: var(--text-base);
+  font-size: 14px;
+  font-family: var(--font-body);
+}
+
+.sheetActionRow {
+  display: flex;
+  gap: 10px;
+}
+
+.sheetActPrimary {
+  flex: 1;
+  height: 48px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  border: none;
+  border-radius: 3px;
+  color: var(--bg-mid);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.sheetActDanger {
+  flex: 1;
+  height: 48px;
+  background: var(--danger);
+  border: none;
+  border-radius: 3px;
+  color: var(--danger-text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.sheetActCancel {
+  flex: 1;
+  height: 48px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.sheetClose {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-mute);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+// 称号オプション
+.titleOpts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.titleBtn {
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--rule-gold);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--gold);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  font-family: var(--font-body);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: var(--rule-base);
+    color: var(--text-faint);
+  }
 }
 
-.skillTabOn {
-  background-color: var.$verdant;
-  border-color: var.$verdant;
-  color: var.$parchment;
+.titleHave {
+  font-size: 14px;
+  color: var(--text-soft);
+  padding: 8px 0;
+}
+
+// 転生プレビュー
+.rbPreview {
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.rbBonus {
+  font-size: 11px;
+  color: var(--gold);
+  background: var(--gold-tint);
+  border-radius: 3px;
+  padding: 6px 10px;
+}
+
+.empty {
+  font-size: 13px;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 16px 0;
 }

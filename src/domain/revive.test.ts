@@ -109,8 +109,12 @@ describe('revive: 蘇生効果', () => {
     expect(after.isDown).toBe(false);
     // target.hp は revive では変化しない（生存者スキップ）。
     // ※ ターン内で敵の通常攻撃を受けると HP が変わるため、「revive 適用前と同じ」だけ検証するのは困難。
-    // 代わりにログに蘇生テキストが含まれないことで無効を確認する。
-    const hasReviveLog = next.log.some((l) => l.text.includes('を蘇生した'));
-    expect(hasReviveLog).toBe(false);
+    // 代わりに events の heal 対象に 'alive' が含まれないことで無効を確認する。
+    const hasReviveHeal = next.events.some(
+      (e) =>
+        e.kind === 'skill' &&
+        (e as import('./battleEvent').SkillEvent).heals.some((h) => h.targetId === 'alive')
+    );
+    expect(hasReviveHeal).toBe(false);
   });
 });

@@ -3,14 +3,16 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { SkillTree } from '@/components/common/SkillTree/SkillTree';
-import { CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
+import { canGainExp, expToNext, CLASS_CHANGE_LEVEL_PENALTY, UNLOCK } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { EQUIPMENT } from '@/data/equipment';
 import { RACES } from '@/data/races';
+import { SKILLS } from '@/data/skills';
 import { TITLES } from '@/data/titles';
 import {
   acquireTitle,
@@ -20,7 +22,7 @@ import {
   reincarnateInSave,
   transferClassInSave,
 } from '@/domain/charProgress';
-import { equipDisplayName } from '@/domain/forge';
+import { equipDisplayName, gradedBaseBonuses } from '@/domain/forge';
 import { canEquip, equipItem, unequipItem } from '@/domain/inventory';
 import { availableSP, learnSkill } from '@/domain/skillTree';
 import { computeBaseStats } from '@/domain/stats';
@@ -37,6 +39,7 @@ const SLOT_LABEL: Record<EquipSlotKey, string> = {
   armor: '防具',
   accessory: '装飾',
 };
+
 const STAT_ROWS: { key: StatKey; label: string }[] = [
   { key: 'hp', label: 'HP' },
   { key: 'tp', label: 'TP' },
@@ -48,6 +51,8 @@ const STAT_ROWS: { key: StatKey; label: string }[] = [
   { key: 'luc', label: 'LUC' },
 ];
 
+type GrowthMode = 'transfer' | 'title' | 'rebirth' | null;
+
 // キャラ詳細（[01 §10]）。ステータス・装備・スキル振り。
 export const Page = ({ id }: { id: string }) => {
   const { navigate } = useNavigation();
@@ -58,7 +63,10 @@ export const Page = ({ id }: { id: string }) => {
   const [rbName, setRbName] = useState('');
   const [rbRace, setRbRace] = useState<RaceId>(RACE_IDS[0]);
   const [rbClass, setRbClass] = useState<ClassId>(CLASS_IDS[0]);
-  const [rbOpen, setRbOpen] = useState(false);
+  // 育成 bottom sheet
+  const [growthMode, setGrowthMode] = useState<GrowthMode>(null);
+  // 装備スロットの展開
+  const [expandedSlot, setExpandedSlot] = useState<EquipSlotKey | null>(null);
 
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
@@ -72,48 +80,113 @@ export const Page = ({ id }: { id: string }) => {
   const sp = availableSP(char);
   const deepestReached = save.towerState.record.deepestReached;
 
+  // ポジション判定
+  const pos = save.guild.party.front.includes(id)
+    ? '前衛'
+    : save.guild.party.back.includes(id)
+      ? '後衛'
+      : null;
+
   const updateChar = (fn: (c: Character) => Character) =>
     applyAndPersist((s: SaveData) => ({
       ...s,
       guild: { ...s.guild, members: s.guild.members.map((m) => (m.id === id ? fn(m) : m)) },
     }));
 
+  // 装備スロットの候補一覧
+  const candidatesForSlot = (slot: EquipSlotKey) =>
+    save.guild.equipment.filter(
+      (e) => EQUIPMENT[e.masterId]?.slot === slot && canEquip(char, e.masterId)
+    );
+
+  // 装備ボーナス表示文字列
+  const equipStatLabel = (masterId: string, grade?: number): string => {
+    const bonuses = gradedBaseBonuses(masterId, grade);
+    const parts: string[] = [];
+    if (bonuses.atk) parts.push(`ATK+${bonuses.atk}`);
+    if (bonuses.mat) parts.push(`MAT+${bonuses.mat}`);
+    if (bonuses.def) parts.push(`DEF+${bonuses.def}`);
+    if (bonuses.mdf) parts.push(`MDF+${bonuses.mdf}`);
+    return parts.join(' ');
+  };
+
+  // 習得済みスキル一覧（現タブのみ）
+  const learnedSkills = (() => {
+    const tree =
+      skillTab === 'class'
+        ? (CLASSES[char.classId]?.skillTree.skills ?? [])
+        : skillTab === 'race'
+          ? (RACES[char.raceId]?.raceSkillTree.skills ?? [])
+          : char.titleId
+            ? (TITLES[char.titleId]?.skillTree.skills ?? [])
+            : [];
+    return tree.filter((s) => (char.learnedSkills[s.skillId] ?? 0) > 0);
+  })();
+
   return (
     <div className={styles.layout}>
+      {/* ヘッダー */}
       <header className={styles.head}>
-        <CharacterPortrait
-          raceId={char.raceId}
-          classId={char.classId}
-          size={56}
-          className={styles.headPortrait}
-        />
-        <div className={styles.headText}>
-          <h1 className={styles.title}>{char.name}</h1>
-          <span className={styles.sub}>
-            {RACES[char.raceId]?.name} / {CLASSES[char.classId]?.name} / Lv{char.level}
-          </span>
+        <div className={styles.headPortrait}>
+          <CharacterPortrait
+            raceId={char.raceId}
+            classId={char.classId}
+            size={64}
+          />
         </div>
+        <div className={styles.headInfo}>
+          <h1 className={styles.headName}>{char.name}</h1>
+          <span className={styles.headSub}>
+            {RACES[char.raceId]?.name} ・ {CLASSES[char.classId]?.name} ・ Lv{char.level}
+          </span>
+          {pos ? <span className={styles.posTag}>{pos}</span> : null}
+        </div>
+
+        {/* EXP 進捗ブロック（v5: 案A v3 取り込み）。Lv キャップ到達済みは MAX 表示。 */}
+        {canGainExp(char.level) ? (
+          <div className={styles.headExp}>
+            <span className={styles.headExpLabel}>EXP</span>
+            <span className={styles.headExpValue}>
+              {Math.round(((char.exp ?? 0) / expToNext(char.level)) * 100)}%
+            </span>
+          </div>
+        ) : (
+          <div className={styles.headExp}>
+            <span className={styles.headExpLabel}>EXP</span>
+            <span className={styles.headExpValueMax}>MAX</span>
+          </div>
+        )}
       </header>
 
+      {/* body（スクロール領域） */}
       <main className={styles.body}>
-        {/* ステータス */}
-        <section className={styles.card}>
-          <h2 className={styles.h2}>ステータス</h2>
-          <dl className={styles.stats}>
+        {/* 能力値 */}
+        <section>
+          <p className={styles.sectionTitle}>能力値</p>
+          <dl className={styles.statsGrid}>
             {STAT_ROWS.map((r) => (
-              <div key={r.key}>
-                <dt>{r.label}</dt>
-                <dd>{stats[r.key]}</dd>
+              <div
+                key={r.key}
+                className={styles.statCell}
+              >
+                <dt className={styles.statLabel}>{r.label}</dt>
+                <dd
+                  className={`${styles.statValue} ${
+                    r.key === 'hp' ? styles.statValueHp : r.key === 'tp' ? styles.statValueTp : ''
+                  }`}
+                >
+                  {stats[r.key]}
+                </dd>
               </div>
             ))}
           </dl>
         </section>
 
-        {/* §16: 種族耐性（属性・状態異常） */}
-        {RACES[char.raceId]?.elementResist || RACES[char.raceId]?.ailmentResist ? (
-          <section className={styles.card}>
-            <h2 className={styles.h2}>種族耐性</h2>
-            <div className={styles.resistBlock}>
+        {/* 種族耐性 */}
+        <section>
+          <p className={styles.sectionTitle}>種族耐性</p>
+          <div className={styles.resistWrap}>
+            {RACES[char.raceId]?.elementResist ? (
               <div className={styles.resistRow}>
                 <span className={styles.resistLabel}>属性</span>
                 <ResistBadges
@@ -121,6 +194,8 @@ export const Page = ({ id }: { id: string }) => {
                   ailmentResist={undefined}
                 />
               </div>
+            ) : null}
+            {RACES[char.raceId]?.ailmentResist ? (
               <div className={styles.resistRow}>
                 <span className={styles.resistLabel}>状態異常</span>
                 <ResistBadges
@@ -128,293 +203,431 @@ export const Page = ({ id }: { id: string }) => {
                   ailmentResist={RACES[char.raceId]?.ailmentResist}
                 />
               </div>
-            </div>
-          </section>
-        ) : (
-          <section className={styles.card}>
-            <h2 className={styles.h2}>種族耐性</h2>
-            <p className={styles.warnCaption}>この種族は特別な耐性を持ちません。</p>
-          </section>
-        )}
-
-        {/* 装備 */}
-        <section className={styles.card}>
-          <h2 className={styles.h2}>装備</h2>
-          {SLOTS.map((slot) => {
-            const equipped = char.equipment[slot];
-            // 所有プールから、このスロットに装備可能な個体を候補に
-            const candidates = save.guild.equipment.filter(
-              (e) => EQUIPMENT[e.masterId]?.slot === slot && canEquip(char, e.masterId)
-            );
-            return (
-              <div
-                key={slot}
-                className={styles.equipSlot}
-              >
-                <div className={styles.equipHead}>
-                  <span className={styles.slotLabel}>{SLOT_LABEL[slot]}</span>
-                  <span className={styles.equipName}>
-                    {equipped ? equipDisplayName(equipped) : '（なし）'}
-                  </span>
-                  {equipped ? (
-                    <button
-                      type="button"
-                      className={styles.smallBtn}
-                      onClick={() => void updateAndUnequip(slot)}
-                    >
-                      外す
-                    </button>
-                  ) : null}
-                </div>
-                {candidates.length > 0 ? (
-                  <div className={styles.equipPick}>
-                    {candidates.map((e) => (
-                      <button
-                        type="button"
-                        key={e.id}
-                        className={styles.pickBtn}
-                        onClick={() => void applyAndPersist((s) => equipItem(s, id, e.id))}
-                      >
-                        <ItemSprite
-                          itemId={e.masterId}
-                          size="sm"
-                        />
-                        {equipDisplayName(e)} 装備
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
-        </section>
-
-        {/* スキル（本家風ツリー表示。職業/種族/称号で切替） */}
-        <section className={styles.card}>
-          <h2 className={styles.h2}>
-            スキル <span className={styles.sp}>SP {sp}</span>
-          </h2>
-          <div className={styles.skillTabs}>
-            <button
-              type="button"
-              className={`${styles.skillTab} ${skillTab === 'class' ? styles.skillTabOn : ''}`}
-              onClick={() => setSkillTab('class')}
-            >
-              職業（{CLASSES[char.classId]?.name ?? ''}）
-            </button>
-            <button
-              type="button"
-              className={`${styles.skillTab} ${skillTab === 'race' ? styles.skillTabOn : ''}`}
-              onClick={() => setSkillTab('race')}
-            >
-              種族（{RACES[char.raceId]?.name ?? ''}）
-            </button>
-            {char.titleId ? (
-              <button
-                type="button"
-                className={`${styles.skillTab} ${skillTab === 'title' ? styles.skillTabOn : ''}`}
-                onClick={() => setSkillTab('title')}
-              >
-                称号（{TITLES[char.titleId]?.name ?? ''}）
-              </button>
+            ) : null}
+            {!RACES[char.raceId]?.elementResist && !RACES[char.raceId]?.ailmentResist ? (
+              <p className={styles.empty}>この種族は特別な耐性を持ちません。</p>
             ) : null}
           </div>
-          <SkillTree
-            nodes={
-              skillTab === 'class'
-                ? (CLASSES[char.classId]?.skillTree.skills ?? [])
-                : skillTab === 'race'
-                  ? (RACES[char.raceId]?.raceSkillTree.skills ?? [])
-                  : char.titleId
-                    ? (TITLES[char.titleId]?.skillTree.skills ?? [])
-                    : []
-            }
-            char={char}
-            onLearn={(skillId) => {
-              play('create');
-              void updateChar((c) => learnSkill(c, skillId));
-            }}
-          />
         </section>
 
-        {/* 育成: 転職・称号・転生 */}
-        <section className={styles.card}>
-          <h2 className={styles.h2}>転職</h2>
-          <div className={styles.jobRow}>
-            <select
-              className={styles.select}
-              value={transferTo}
-              onChange={(e) => setTransferTo(e.target.value)}
-            >
-              {CLASS_IDS.map((cid) => (
-                <option
-                  key={cid}
-                  value={cid}
-                >
-                  {CLASSES[cid].name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className={styles.actBtn}
-              disabled={transferTo === char.classId}
-              onClick={() => {
-                play('decide');
-                void applyAndPersist((s) => transferClassInSave(s, id, transferTo));
-              }}
-            >
-              転職する
-            </button>
+        {/* 装備 */}
+        <section>
+          <p className={styles.sectionTitle}>装備</p>
+          <div className={styles.equipRows}>
+            {SLOTS.map((slot) => {
+              const equipped = char.equipment[slot];
+              const isExpanded = expandedSlot === slot;
+              const candidates = candidatesForSlot(slot);
+              const bonusStr = equipped ? equipStatLabel(equipped.masterId, equipped.grade) : '';
+
+              return (
+                <div key={slot}>
+                  <ActionButton
+                    className={`${styles.equipRow} ${equipped ? styles.equipRowEquipped : ''} ${isExpanded ? styles.equipRowExpanded : ''}`}
+                    onClick={() => {
+                      if (!equipped) {
+                        // 空きスロットはタップで候補を展開
+                        setExpandedSlot(isExpanded ? null : slot);
+                      } else {
+                        // 装備済みスロットもタップで候補展開トグル
+                        setExpandedSlot(isExpanded ? null : slot);
+                      }
+                    }}
+                  >
+                    <div className={styles.equipItemSprite}>
+                      {equipped ? (
+                        <ItemSprite
+                          itemId={equipped.masterId}
+                          size="sm"
+                        />
+                      ) : (
+                        <span style={{ fontSize: '18px', color: 'var(--text-faint)' }}>—</span>
+                      )}
+                    </div>
+                    <div className={styles.equipMeta}>
+                      <span className={styles.equipSlotLabel}>{SLOT_LABEL[slot]}</span>
+                      <span
+                        className={`${styles.equipName} ${!equipped ? styles.equipNameEmpty : ''}`}
+                      >
+                        {equipped ? equipDisplayName(equipped) : '（なし）'}
+                      </span>
+                      {bonusStr ? <span className={styles.equipStats}>{bonusStr}</span> : null}
+                    </div>
+                    {equipped ? (
+                      <span
+                        className={`${styles.equipChip} ${styles.equipChipUnequip}`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void updateAndUnequip(slot);
+                          setExpandedSlot(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            void updateAndUnequip(slot);
+                            setExpandedSlot(null);
+                          }
+                        }}
+                      >
+                        外す
+                      </span>
+                    ) : (
+                      <span className={`${styles.equipChip} ${styles.equipChipPick}`}>選ぶ</span>
+                    )}
+                  </ActionButton>
+
+                  {/* 展開パネル */}
+                  {isExpanded ? (
+                    <div className={styles.candidatePanel}>
+                      {candidates.length === 0 ? (
+                        <p className={styles.candidateEmpty}>装備可能な候補がありません</p>
+                      ) : (
+                        candidates.map((e) => {
+                          const cBonusStr = equipStatLabel(e.masterId, e.grade);
+                          return (
+                            <ActionButton
+                              key={e.id}
+                              className={styles.candidateRow}
+                              onClick={() => {
+                                void applyAndPersist((s) => equipItem(s, id, e.id));
+                                setExpandedSlot(null);
+                              }}
+                            >
+                              <div className={styles.candidateItemSprite}>
+                                <ItemSprite
+                                  itemId={e.masterId}
+                                  size="sm"
+                                />
+                              </div>
+                              <div className={styles.candidateMeta}>
+                                <span className={styles.candidateName}>{equipDisplayName(e)}</span>
+                                {cBonusStr ? (
+                                  <span className={styles.candidateBonus}>{cBonusStr}</span>
+                                ) : null}
+                              </div>
+                              <span className={styles.candidateAssign}>装備</span>
+                            </ActionButton>
+                          );
+                        })
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
-          <p className={styles.warn}>
-            ※ レベルが {CLASS_CHANGE_LEVEL_PENALTY}{' '}
-            下がり、職業/称号スキルは振り直しになります（種族スキルは保持）。
-          </p>
+        </section>
 
-          <h2 className={styles.h2}>称号</h2>
-          {char.titleId ? (
-            <p className={styles.titleHave}>習得済み: {TITLES[char.titleId]?.name}</p>
-          ) : deepestReached < UNLOCK.TITLE_DEPTH ? (
-            <p className={styles.warn}>
-              第 {UNLOCK.TITLE_DEPTH} 階到達で習得できます（現在 {deepestReached}F）。
-            </p>
-          ) : (
-            <div className={styles.titleOpts}>
-              {(CLASSES[char.classId]?.titleOptions ?? []).map((tid) => (
-                <button
-                  key={tid}
-                  type="button"
-                  className={styles.titleBtn}
-                  disabled={!canAcquireTitle(char, tid, deepestReached)}
-                  onClick={() => void updateChar((c) => acquireTitle(c, tid, deepestReached))}
-                >
-                  {TITLES[tid]?.name}（SP+5）
-                </button>
-              ))}
-            </div>
-          )}
+        {/* スキル */}
+        <section>
+          <div className={styles.skillHead}>
+            <span className={styles.skillTitle}>スキル ・ {char.name}</span>
+            <span className={styles.spTag}>SP {sp}</span>
+          </div>
 
-          <h2 className={styles.h2}>転生</h2>
-          {!canReincarnate(char) ? (
-            <p className={styles.warn}>
-              Lv{UNLOCK.REBIRTH_MIN_LEVEL} 以上で転生できます（現在 Lv{char.level}）。
-            </p>
-          ) : !rbOpen ? (
-            <button
-              type="button"
-              className={styles.actBtn}
-              onClick={() => setRbOpen(true)}
-            >
-              転生する…
-            </button>
-          ) : (
-            <div className={styles.rbForm}>
-              <p className={styles.warn}>
-                ※ 作り直して強い新人になります（開始Lv
-                1（やり直し）・種族に応じた永続ボーナス付き）。
-              </p>
-              {char.rebirthBonus && (
-                <p className={styles.warn}>
-                  現在の累積ボーナス（転生{char.rebirthBonus.count}回）:{' '}
-                  {Object.entries(char.rebirthBonus.stats)
-                    .filter(([, v]) => v && v > 0)
-                    .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
-                    .map(([k, v]) => `${k.toUpperCase()}+${v}`)
-                    .join(' / ')}
-                </p>
-              )}
-              {(() => {
-                const preview = rebirthStatBonusForRace(rbRace);
-                const previewStr = Object.entries(preview)
-                  .filter(([, v]) => v && v > 0)
-                  .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
-                  .map(([k, v]) => `${k.toUpperCase()}+${v}`)
-                  .join(', ');
-                return (
-                  <p className={styles.warn}>
-                    {RACES[rbRace]?.name}で転生 → 今回付与: {previewStr}
-                  </p>
-                );
-              })()}
-              <input
-                className={styles.input}
-                type="text"
-                maxLength={16}
-                placeholder={char.name}
-                value={rbName}
-                onChange={(e) => setRbName(e.target.value)}
+          {/* サブタブ */}
+          <div className={styles.skillSubTabs}>
+            <ActionButton
+              label="職業"
+              sfx="cursor"
+              className={`${styles.skillSubTab} ${skillTab === 'class' ? styles.skillSubTabActive : ''}`}
+              onClick={() => setSkillTab('class')}
+            />
+            <ActionButton
+              label="種族"
+              sfx="cursor"
+              className={`${styles.skillSubTab} ${skillTab === 'race' ? styles.skillSubTabActive : ''}`}
+              onClick={() => setSkillTab('race')}
+            />
+            {char.titleId ? (
+              <ActionButton
+                label="称号"
+                sfx="cursor"
+                className={`${styles.skillSubTab} ${skillTab === 'title' ? styles.skillSubTabActive : ''}`}
+                onClick={() => setSkillTab('title')}
               />
-              <div className={styles.jobRow}>
-                <select
-                  className={styles.select}
-                  value={rbRace}
-                  onChange={(e) => setRbRace(e.target.value)}
-                >
-                  {RACE_IDS.map((r) => (
-                    <option
-                      key={r}
-                      value={r}
-                    >
-                      {RACES[r].name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className={styles.select}
-                  value={rbClass}
-                  onChange={(e) => setRbClass(e.target.value)}
-                >
-                  {CLASS_IDS.map((c) => (
-                    <option
-                      key={c}
-                      value={c}
-                    >
-                      {CLASSES[c].name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.jobRow}>
-                <button
-                  type="button"
-                  className={styles.danger}
-                  onClick={() => {
-                    play('create');
-                    void applyAndPersist((s) =>
-                      reincarnateInSave(s, id, {
-                        raceId: rbRace,
-                        classId: rbClass,
-                        name: rbName.trim() || char.name,
-                      })
-                    );
-                    setRbOpen(false);
-                  }}
-                >
-                  転生を実行
-                </button>
-                <button
-                  type="button"
-                  className={styles.actBtn}
-                  onClick={() => setRbOpen(false)}
-                >
-                  やめる
-                </button>
-              </div>
+            ) : null}
+          </div>
+
+          {/* スキルツリー */}
+          <div className={styles.skillTreeWrap}>
+            <div className={styles.skillTreeLegend}>
+              <span>●習得</span>
+              <span>□選択可</span>
+              <span>□未開放</span>
             </div>
-          )}
+            <SkillTree
+              nodes={
+                skillTab === 'class'
+                  ? (CLASSES[char.classId]?.skillTree.skills ?? [])
+                  : skillTab === 'race'
+                    ? (RACES[char.raceId]?.raceSkillTree.skills ?? [])
+                    : char.titleId
+                      ? (TITLES[char.titleId]?.skillTree.skills ?? [])
+                      : []
+              }
+              char={char}
+              onLearn={(skillId) => {
+                play('create');
+                void updateChar((c) => learnSkill(c, skillId));
+              }}
+            />
+          </div>
+
+          {/* 習得済みスキル一覧 */}
+          {learnedSkills.length > 0 ? (
+            <ul className={styles.learnedList}>
+              {learnedSkills.map((s) => {
+                const lv = char.learnedSkills[s.skillId] ?? 0;
+                return (
+                  <li
+                    key={s.skillId}
+                    className={styles.learnedItem}
+                  >
+                    <span className={styles.learnedName}>
+                      {SKILLS[s.skillId]?.name ?? s.skillId.replace(/^skill_/, '')}
+                    </span>
+                    <span className={styles.learnedSub}>Lv{lv}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </section>
+
+        {/* 育成 3列ボタン */}
+        <section>
+          <div className={styles.growthBtns}>
+            <ActionButton
+              sfx="cursor"
+              className={`${styles.growthBtn} ${styles.growthBtnTransfer}`}
+              onClick={() => setGrowthMode('transfer')}
+            >
+              <span className={styles.growthBtnLabel}>転職</span>
+              <span className={styles.growthBtnSub}>
+                Lv-{CLASS_CHANGE_LEVEL_PENALTY}/技リセット
+              </span>
+            </ActionButton>
+            <ActionButton
+              sfx="cursor"
+              className={`${styles.growthBtn} ${styles.growthBtnTitle}`}
+              onClick={() => setGrowthMode('title')}
+            >
+              <span className={styles.growthBtnLabel}>称号</span>
+              <span className={styles.growthBtnSub}>{char.titleId ? '習得済み' : '2択選択'}</span>
+            </ActionButton>
+            <ActionButton
+              sfx="cursor"
+              className={`${styles.growthBtn} ${styles.growthBtnRebirth}`}
+              disabled={!canReincarnate(char)}
+              onClick={() => setGrowthMode('rebirth')}
+            >
+              <span className={styles.growthBtnLabel}>転生</span>
+              <span className={styles.growthBtnSub}>Lv100→1</span>
+            </ActionButton>
+          </div>
         </section>
       </main>
 
+      {/* フッタ */}
       <footer className={styles.foot}>
-        <button
-          type="button"
+        <ActionButton
+          label="一覧へ戻る"
           className={styles.back}
           onClick={() => navigate({ name: 'guild' })}
-        >
-          もどる
-        </button>
+        />
       </footer>
+
+      {/* ===== 育成 bottom sheet ===== */}
+      {growthMode ? (
+        <div
+          className={styles.overlay}
+          onClick={() => setGrowthMode(null)}
+        >
+          <div
+            className={styles.sheet}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.sheetHandle} />
+
+            {/* 転職 */}
+            {growthMode === 'transfer' ? (
+              <>
+                <p className={styles.sheetTitle}>転職</p>
+                <p className={styles.sheetWarn}>
+                  レベルが {CLASS_CHANGE_LEVEL_PENALTY}{' '}
+                  下がり、職業・称号スキルは振り直しになります（種族スキルは保持）。
+                </p>
+                <select
+                  className={styles.sheetSelect}
+                  value={transferTo}
+                  onChange={(e) => setTransferTo(e.target.value)}
+                >
+                  {CLASS_IDS.map((cid) => (
+                    <option
+                      key={cid}
+                      value={cid}
+                    >
+                      {CLASSES[cid].name}
+                    </option>
+                  ))}
+                </select>
+                <div className={styles.sheetActionRow}>
+                  <ActionButton
+                    label="もどる"
+                    sfx="cancel"
+                    className={styles.sheetActCancel}
+                    onClick={() => setGrowthMode(null)}
+                  />
+                  <ActionButton
+                    label="転職する"
+                    className={styles.sheetActPrimary}
+                    disabled={transferTo === char.classId}
+                    onClick={() => {
+                      void applyAndPersist((s) => transferClassInSave(s, id, transferTo));
+                      setGrowthMode(null);
+                    }}
+                  />
+                </div>
+              </>
+            ) : null}
+
+            {/* 称号 */}
+            {growthMode === 'title' ? (
+              <>
+                <p className={styles.sheetTitle}>称号</p>
+                {char.titleId ? (
+                  <p className={styles.titleHave}>習得済み: {TITLES[char.titleId]?.name}</p>
+                ) : deepestReached < UNLOCK.TITLE_DEPTH ? (
+                  <p className={styles.sheetNote}>
+                    第 {UNLOCK.TITLE_DEPTH} 階到達で習得できます（現在 {deepestReached}F）。
+                  </p>
+                ) : (
+                  <div className={styles.titleOpts}>
+                    {(CLASSES[char.classId]?.titleOptions ?? []).map((tid) => (
+                      <ActionButton
+                        key={tid}
+                        label={`${TITLES[tid]?.name}（SP+5）`}
+                        className={styles.titleBtn}
+                        disabled={!canAcquireTitle(char, tid, deepestReached)}
+                        onClick={() => {
+                          void updateChar((c) => acquireTitle(c, tid, deepestReached));
+                          setGrowthMode(null);
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                <ActionButton
+                  label="とじる"
+                  sfx="cancel"
+                  className={styles.sheetClose}
+                  onClick={() => setGrowthMode(null)}
+                />
+              </>
+            ) : null}
+
+            {/* 転生 */}
+            {growthMode === 'rebirth' ? (
+              <>
+                <p className={styles.sheetTitle}>転生</p>
+                <p className={styles.sheetWarn}>
+                  作り直して強い新人になります（開始 Lv1・種族に応じた永続ボーナス付き）。
+                </p>
+                {char.rebirthBonus && (
+                  <p className={styles.rbBonus}>
+                    現在の累積ボーナス（転生{char.rebirthBonus.count}回）:{' '}
+                    {Object.entries(char.rebirthBonus.stats)
+                      .filter(([, v]) => v && v > 0)
+                      .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
+                      .map(([k, v]) => `${k.toUpperCase()}+${v}`)
+                      .join(' / ')}
+                  </p>
+                )}
+                {(() => {
+                  const preview = rebirthStatBonusForRace(rbRace);
+                  const previewStr = Object.entries(preview)
+                    .filter(([, v]) => v && v > 0)
+                    .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
+                    .map(([k, v]) => `${k.toUpperCase()}+${v}`)
+                    .join(', ');
+                  return (
+                    <p className={styles.rbPreview}>
+                      {RACES[rbRace]?.name}で転生 → 今回付与: {previewStr}
+                    </p>
+                  );
+                })()}
+                <input
+                  className={styles.sheetInput}
+                  type="text"
+                  maxLength={16}
+                  placeholder={char.name}
+                  value={rbName}
+                  onChange={(e) => setRbName(e.target.value)}
+                />
+                <div className={styles.sheetActionRow}>
+                  <select
+                    className={styles.sheetSelect}
+                    style={{ flex: 1 }}
+                    value={rbRace}
+                    onChange={(e) => setRbRace(e.target.value)}
+                  >
+                    {RACE_IDS.map((r) => (
+                      <option
+                        key={r}
+                        value={r}
+                      >
+                        {RACES[r].name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className={styles.sheetSelect}
+                    style={{ flex: 1 }}
+                    value={rbClass}
+                    onChange={(e) => setRbClass(e.target.value)}
+                  >
+                    {CLASS_IDS.map((c) => (
+                      <option
+                        key={c}
+                        value={c}
+                      >
+                        {CLASSES[c].name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.sheetActionRow}>
+                  <ActionButton
+                    label="やめる"
+                    sfx="cancel"
+                    className={styles.sheetActCancel}
+                    onClick={() => setGrowthMode(null)}
+                  />
+                  <ActionButton
+                    label="転生を実行"
+                    sfx={null}
+                    className={styles.sheetActDanger}
+                    onClick={() => {
+                      play('create');
+                      void applyAndPersist((s) =>
+                        reincarnateInSave(s, id, {
+                          raceId: rbRace,
+                          classId: rbClass,
+                          name: rbName.trim() || char.name,
+                        })
+                      );
+                      setGrowthMode(null);
+                    }}
+                  />
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 

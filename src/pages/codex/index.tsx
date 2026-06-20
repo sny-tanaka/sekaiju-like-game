@@ -3,12 +3,14 @@ import { useState } from 'react';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
+import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
+import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { ENEMIES } from '@/data/enemies';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import { codexSummary, monsterCodex } from '@/domain/codex';
-import type { EnemyId } from '@/domain/types';
+import type { EnemyId, ItemId } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
@@ -18,7 +20,7 @@ export const Page = () => {
   const { save } = useGameState();
   const play = useSfx();
   const [tab, setTab] = useState<'record' | 'codex'>('record');
-  // 選択中のモンスター ID（タップで詳細展開）
+  // 選択中のモンスター ID（グリッドタップで詳細表示）
   const [selectedId, setSelectedId] = useState<EnemyId | null>(null);
 
   if (!save) {
@@ -35,143 +37,249 @@ export const Page = () => {
     setSelectedId((prev) => (prev === id ? null : id));
   };
 
+  const selectedEntry = selectedId ? (entries.find((e) => e.id === selectedId) ?? null) : null;
+
   return (
     <div className={styles.layout}>
       <header className={styles.head}>
-        <p className={styles.chapterMark}>❦ 台帳</p>
         <h1 className={styles.title}>図鑑 / 記録</h1>
       </header>
 
       <div className={styles.tabs}>
-        <button
-          type="button"
+        <ActionButton
+          label="到達記録"
+          sfx="cursor"
           className={`${styles.tab} ${tab === 'record' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('record');
-          }}
-        >
-          到達記録
-        </button>
-        <button
-          type="button"
+          onClick={() => setTab('record')}
+        />
+        <ActionButton
+          label="図鑑"
+          sfx="cursor"
           className={`${styles.tab} ${tab === 'codex' ? styles.tabActive : ''}`}
-          onClick={() => {
-            play('cursor');
-            setTab('codex');
-          }}
-        >
-          図鑑
-        </button>
+          onClick={() => setTab('codex')}
+        />
       </div>
 
       {tab === 'record' ? (
         <div className={styles.records}>
-          <div className={styles.statBig}>
-            <span className={styles.statNum}>{rec.deepestReached}</span>
-            <span className={styles.statLabel}>最深到達階</span>
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statCardLabel}>最深到達</div>
+              <div className={styles.statCardNum}>
+                {rec.deepestReached}
+                <span className={styles.statCardUnit}>F</span>
+              </div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statCardLabel}>挑戦回数</div>
+              <div className={styles.statCardNum}>
+                {rec.totalDives}
+                <span className={styles.statCardUnit}>回</span>
+              </div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statCardLabel}>最高ボス撃破</div>
+              <div className={styles.statCardNum}>
+                {rec.highestBossDefeated > 0 ? rec.highestBossDefeated : '—'}
+                {rec.highestBossDefeated > 0 && <span className={styles.statCardUnit}>F</span>}
+              </div>
+            </div>
+            <div className={styles.statCard}>
+              <div className={styles.statCardLabel}>図鑑達成率</div>
+              <div
+                className={styles.ringWrap}
+                aria-label={`図鑑達成率 ${sum.completionPct}%`}
+              >
+                <svg
+                  viewBox="0 0 60 60"
+                  className={styles.ringSvg}
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="25"
+                    fill="none"
+                    stroke="var(--rule-soft)"
+                    strokeWidth="5"
+                  />
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="25"
+                    fill="none"
+                    stroke="var(--gold)"
+                    strokeWidth="5"
+                    strokeDasharray={Math.PI * 2 * 25}
+                    strokeDashoffset={Math.PI * 2 * 25 * (1 - sum.completionPct / 100)}
+                    transform="rotate(-90 30 30)"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className={styles.ringText}>{sum.completionPct}%</span>
+              </div>
+            </div>
           </div>
-          <dl className={styles.statList}>
-            <div className={styles.statRow}>
-              <dt>最高撃破ボス階</dt>
-              <dd>{rec.highestBossDefeated > 0 ? `${rec.highestBossDefeated}F` : '—'}</dd>
-            </div>
-            <div className={styles.statRow}>
-              <dt>挑戦回数</dt>
-              <dd>{rec.totalDives}</dd>
-            </div>
-            <div className={styles.statRow}>
-              <dt>図鑑達成率</dt>
-              <dd>{sum.completionPct}%</dd>
-            </div>
-          </dl>
 
           <p className={styles.h2Caption}>ボス撃破履歴</p>
           {rec.bossDefeatLog.length === 0 ? (
             <p className={styles.empty}>まだボスを倒していません。</p>
           ) : (
             <ul className={styles.bossLog}>
-              {rec.bossDefeatLog
-                .slice()
-                .reverse()
-                .map((b, i) => (
+              {[...rec.bossDefeatLog].reverse().map((b, i) => {
+                const enemyMaster = b.enemyId ? ENEMIES[b.enemyId] : null;
+                const name = enemyMaster?.name ?? `${b.depth}F のボス`;
+                const timeText =
+                  typeof b.at === 'number'
+                    ? new Date(b.at).toLocaleTimeString('ja-JP', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : null;
+                return (
                   <li
                     key={i}
                     className={styles.bossRow}
                   >
-                    <span>{b.depth}F のボス撃破</span>
+                    <div className={styles.bossRowSprite}>
+                      {b.enemyId ? (
+                        <EnemySprite
+                          enemyId={b.enemyId}
+                          size="sm"
+                        />
+                      ) : (
+                        <span aria-hidden="true">👹</span>
+                      )}
+                    </div>
+                    <div className={styles.bossRowMain}>
+                      <div className={styles.bossName}>{name}</div>
+                      <div className={styles.bossMeta}>
+                        {b.depth}F{timeText ? ` ・ ${timeText}` : ''}
+                      </div>
+                    </div>
+                    <span className={styles.bossStamp}>✦</span>
                   </li>
-                ))}
+                );
+              })}
             </ul>
           )}
         </div>
       ) : (
         <div className={styles.codex}>
-          <div className={styles.codexSummary}>
-            撃破 {sum.monstersDefeated}/{sum.monstersTotal}・ドロップ {sum.dropsFound}/
-            {sum.dropsTotal}
+          <div className={styles.codexSummaryRow}>
+            <span className={styles.codexSummaryText}>
+              撃破 {sum.monstersDefeated}/{sum.monstersTotal}・ドロップ {sum.dropsFound}/
+              {sum.dropsTotal}
+            </span>
+            <span className={styles.codexSummaryPct}>{sum.completionPct}%</span>
           </div>
-          <div className={styles.list}>
+
+          {/* 詳細カード（選択中エントリ） */}
+          {selectedEntry &&
+            (() => {
+              const master = ENEMIES[selectedEntry.id];
+              return (
+                <div className={styles.bossDetail}>
+                  <div className={styles.bossDetailSprite}>
+                    <EnemySprite
+                      enemyId={selectedEntry.id}
+                      size="lg"
+                    />
+                  </div>
+                  <div className={styles.bossDetailInfo}>
+                    <div className={styles.bossDetailName}>
+                      {selectedEntry.name}
+                      {selectedEntry.defeated && <span className={styles.badge}>撃破</span>}
+                    </div>
+                    <div className={styles.bossDetailMeta}>第{selectedEntry.tierBand + 1}帯</div>
+                    <div className={styles.bossDetailResist}>
+                      {master && (
+                        <>
+                          <div className={styles.resistSection}>
+                            <span className={styles.resistHead}>属性</span>
+                            <ResistBadges
+                              elementResist={master.resist}
+                              ailmentResist={undefined}
+                            />
+                          </div>
+                          <div className={styles.resistSection}>
+                            <span className={styles.resistHead}>状態異常</span>
+                            <ResistBadges
+                              elementResist={undefined}
+                              ailmentResist={resolveEnemyAilmentResist(selectedEntry.id)}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+          {/* ドロップ行 */}
+          {selectedEntry && selectedEntry.drops.length > 0 && (
+            <div className={styles.dropRow}>
+              {selectedEntry.drops.map((d) => (
+                <div
+                  key={d.itemId}
+                  className={`${styles.dropCell} ${d.found ? styles.dropFound : styles.dropUnknown}`}
+                >
+                  <div className={styles.dropIcon}>
+                    {d.found ? (
+                      <ItemSprite
+                        itemId={d.itemId as ItemId}
+                        size="sm"
+                      />
+                    ) : (
+                      <span aria-hidden="true">？</span>
+                    )}
+                  </div>
+                  <span className={styles.dropName}>{d.found ? d.name : '未入手'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 6 列グリッド */}
+          <div className={styles.gridLabel}>
+            <span className={styles.gridLabelText}>MONSTERS</span>
+            <span className={styles.gridLegend}>緑=遭遇済 / 朱=ボス</span>
+          </div>
+          <div className={styles.grid}>
             {entries.map((e) => {
-              const isOpen = selectedId === e.id;
               const master = ENEMIES[e.id];
+              const isBoss = master?.isBoss ?? false;
+              const cellClass = [
+                styles.cell,
+                !e.seen ? styles.cellUnseen : '',
+                e.seen && !e.defeated ? styles.cellSeen : '',
+                e.defeated ? styles.cellDefeated : '',
+                isBoss ? styles.cellBoss : '',
+                selectedId === e.id ? styles.cellSelected : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
               return (
                 <div
                   key={e.id}
-                  className={`${styles.row} ${e.seen ? '' : styles.unseen} ${e.seen ? styles.rowClickable : ''}`}
+                  className={cellClass}
                   role={e.seen ? 'button' : undefined}
                   tabIndex={e.seen ? 0 : undefined}
+                  aria-label={e.seen ? e.name : '未遭遇のモンスター'}
                   onClick={() => toggleEntry(e.id, e.seen)}
                   onKeyDown={(ev) => {
                     if (ev.key === 'Enter' || ev.key === ' ') toggleEntry(e.id, e.seen);
                   }}
                 >
-                  <EnemySprite
-                    enemyId={e.id}
-                    size="sm"
-                    silhouette={!e.seen}
-                    className={styles.thumb}
-                    alt={e.seen ? e.name : '未遭遇のモンスター'}
-                  />
-                  <div className={styles.info}>
-                    <span className={styles.name}>
-                      {e.seen ? e.name : '？？？'}
-                      {e.defeated ? <span className={styles.badge}>撃破</span> : null}
-                      {e.seen ? <span className={styles.expand}>{isOpen ? '▲' : '▼'}</span> : null}
-                    </span>
-                    <span className={styles.sub}>
-                      第{e.tierBand + 1}帯
-                      {e.seen && e.drops.length > 0
-                        ? '・' + e.drops.map((d) => (d.found ? d.name : '？')).join(' / ')
-                        : ''}
-                    </span>
-                  </div>
-
-                  {/* §16: 耐性詳細（遭遇済みのみ展開表示） */}
-                  {isOpen && master ? (
-                    <div className={styles.resistDetail}>
-                      <div className={styles.spriteLarge}>
-                        <EnemySprite
-                          enemyId={e.id}
-                          size="lg"
-                        />
-                      </div>
-                      <div className={styles.resistSection}>
-                        <span className={styles.resistHead}>属性</span>
-                        <ResistBadges
-                          elementResist={master.resist}
-                          ailmentResist={undefined}
-                        />
-                      </div>
-                      <div className={styles.resistSection}>
-                        <span className={styles.resistHead}>状態異常</span>
-                        <ResistBadges
-                          elementResist={undefined}
-                          ailmentResist={resolveEnemyAilmentResist(e.id)}
-                        />
-                      </div>
-                    </div>
-                  ) : null}
+                  <span className={styles.cellSprite}>
+                    <EnemySprite
+                      enemyId={e.id}
+                      size="sm"
+                      silhouette={!e.seen}
+                      alt={e.seen ? e.name : ''}
+                    />
+                  </span>
                 </div>
               );
             })}
@@ -180,13 +288,11 @@ export const Page = () => {
       )}
 
       <footer className={styles.foot}>
-        <button
-          type="button"
+        <ActionButton
+          label="拠点へ戻る"
           className={styles.back}
           onClick={() => navigate({ name: 'town' })}
-        >
-          拠点へ戻る
-        </button>
+        />
       </footer>
     </div>
   );
