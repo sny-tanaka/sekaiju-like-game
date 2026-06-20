@@ -298,8 +298,9 @@
   border: 1px solid var(--rule-soft);
   border-radius: 5px;
   padding: 8px;
-  max-height: 360px;
-  overflow: hidden;
+  // max-height / overflow:hidden を除去: padding 分を含めるとマップが見切れるため
+  // .mid の overflow-y:auto がスクロールを受け持つ
+  overflow: visible;
   flex-shrink: 0;
 }
 
