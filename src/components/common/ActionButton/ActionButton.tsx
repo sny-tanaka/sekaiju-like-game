@@ -1,63 +1,23 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useCallback } from 'react';
 
 import styles from './style.module.scss';
 
 import type { SfxId } from '@/audio/sfxManifest';
 import { useSfx } from '@/audio/useSfx';
 
-/**
- * ActionButton のバリアント。
- * - 'default': parchment 背景のメニューボタン（既存の見た目）
- * - 'primary': ゴールドグラデーションの CTA ボタン
- * - 'secondary': 透明背景 + ボーダー（サブ・戻るボタン等）
- * - 'destructive': 危険操作用の赤ボタン
- * - 'icon': 34px 円形の透明ボタン（歯車等のアイコン）
- * - 'ghost': テキストリンク調（更新ボタン・モーダル閉じる等）
- * - 'card': 複数行カード型（ダイブ・タイル・種族カード等）
- * - 'tab': セグメント/チップ型（caller が active 状態を className で付与）
- */
-export type ActionButtonVariant =
-  | 'default'
-  | 'primary'
-  | 'secondary'
-  | 'destructive'
-  | 'icon'
-  | 'ghost'
-  | 'card'
-  | 'tab';
-
-/** size が適用される variant（その他は自前で高さを持つ）。 */
-const VARIANTS_USING_SIZE = ['default', 'primary', 'secondary', 'destructive'] as const;
-type VariantUsingSize = (typeof VARIANTS_USING_SIZE)[number];
-
-type ActionButtonProps = {
+export interface ActionButtonProps {
   /** 文字列ラベル。children と排他的に使う。 */
   label?: string;
   /** 任意の子要素（アイコン＋テキストの組み合わせ等）。label と排他的に使う。 */
   children?: ReactNode;
-  /** サブテキスト（説明・Phase 表記など）。 */
+  /** サブテキスト（説明・Phase 表記など）。button の title 属性に使用。 */
   description?: string;
-  variant?: ActionButtonVariant;
-  /**
-   * ボタンサイズ。default / primary / secondary / destructive にのみ適用。
-   * - 'small': 戦闘画面の小型ボタン向け（min-height: 36px）
-   * - 'medium': 現行スタイル相当（min-height: 56px、スマホ用タップ領域）
-   * - 'large': 確認ダイアログ等の重要ボタン向け（min-height: 64px）
-   */
-  size?: 'small' | 'medium' | 'large';
-  /**
-   * true のとき、variant の base スタイル (border / background / padding / min-height /
-   * width / text-align など) を全て無効化する。className で旧 bare button スタイルを
-   * 完全復活したい場合に使う。
-   * SE / disabled / focus / a11y / hover の transition だけ残す。
-   */
-  nostyle?: boolean;
   disabled?: boolean;
   /** button 要素の aria-label 属性に渡す（a11y 対応）。 */
   ariaLabel?: string;
   /** ボタンの type 属性。form の submit button にも使用可能。 */
   type?: 'button' | 'submit';
-  /** 呼び出し側で追加 class を付与できる。 */
+  /** 呼び出し側で追加 class を付与できる。見た目は画面側 className が完全に支配する。 */
   className?: string;
   onClick?: () => void;
   /**
@@ -66,56 +26,68 @@ type ActionButtonProps = {
    * - null: 無音（効果音を鳴らさない）
    */
   sfx?: SfxId | null;
-};
+  /**
+   * @deprecated ヘッドレス化により無視される。Phase 5-2 で各画面から削除予定。
+   */
+  variant?: string;
+  /**
+   * @deprecated ヘッドレス化により無視される。Phase 5-2 で各画面から削除予定。
+   */
+  size?: string;
+  /**
+   * @deprecated ヘッドレス化により無視される。Phase 5-2 で各画面から削除予定。
+   */
+  nostyle?: boolean;
+}
 
 /**
- * アクションボタン。選択・実行・画面遷移など、何らかのアクションを発火するボタン全般に使う。
- * スマホ前提の十分なタップ領域（size='medium' で min-height: 56px）を持つ。
+ * ActionButton - 押すと何かしらのアクション (選択・実行・遷移) が起きるボタン。
  *
- * variant で見た目を切り替える。省略時は 'default'（parchment メニュースタイル）。
+ * ヘッドレス UI:
+ * - 見た目は className で完全に画面側が支配
+ * - SE 発火、disabled、focus-visible、a11y のみ受け持つ
+ * - ブラウザ button デフォルト (border / background / padding / font / text-align) はリセット
+ *
+ * SE: sfx prop で指定 (default 'decide')。null で無音。
+ *
+ * variant / size / nostyle は @deprecated (ヘッドレス化により無視される)。
+ * Phase 5-2 で各画面から削除する。
  */
 export const ActionButton = ({
   label,
   children,
   description,
-  variant = 'default',
-  size = 'medium',
-  nostyle = false,
   disabled = false,
   ariaLabel,
   type = 'button',
   className,
   onClick,
   sfx = 'decide',
+  // deprecated props — destructure して捨てる（tsc エラーにならないよう受け取る）
+  variant: _variant,
+  size: _size,
+  nostyle: _nostyle,
 }: ActionButtonProps) => {
   const play = useSfx();
 
-  const handleClick = () => {
-    if (!disabled && sfx !== null) {
-      play(sfx);
-    }
+  const handleClick = useCallback(() => {
+    if (disabled) return;
+    if (sfx !== null) play(sfx);
     onClick?.();
-  };
+  }, [disabled, onClick, play, sfx]);
 
-  const usesSize = VARIANTS_USING_SIZE.includes(variant as VariantUsingSize);
+  const classes = [styles.actionButton, className].filter(Boolean).join(' ');
 
   return (
     <button
       type={type}
-      className={[
-        styles.actionButton,
-        nostyle ? '' : styles[variant],
-        nostyle || !usesSize ? '' : styles[size],
-        className ?? '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className={classes}
       disabled={disabled}
       aria-label={ariaLabel}
       onClick={handleClick}
+      title={description}
     >
-      {children ?? <span className={styles.label}>{label}</span>}
-      {description ? <span className={styles.description}>{description}</span> : null}
+      {children ?? label}
     </button>
   );
 };

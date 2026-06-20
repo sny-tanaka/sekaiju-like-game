@@ -1,270 +1,31 @@
 @use 'variables' as var;
 
-// ==========================================================
-// ActionButton — 共通ベース
-// ==========================================================
-
+/**
+ * ActionButton - ヘッドレス UI のため、button reset + a11y のみ。
+ * 見た目は画面側 className が完全に支配する。
+ */
 .actionButton {
-  // ブラウザデフォルトのボタンスタイルをリセット（nostyle=true でも適用される）
-  border: none;
+  // ブラウザ button デフォルトをリセット
+  appearance: none;
+  -webkit-appearance: none;
   background: none;
+  border: none;
   padding: 0;
   margin: 0;
   font: inherit;
   color: inherit;
-
-  // 最小共通スタイル（nostyle=true でも残す）
+  text-align: inherit;
   cursor: pointer;
-  font-family: inherit;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    background-color var(--motion-quick, 0.15s ease),
-    opacity var(--motion-quick, 0.15s ease),
-    transform var(--motion-quick, 0.1s ease);
-
-  &:active:not(:disabled) {
-    transform: scale(0.98);
-  }
 
   &:disabled {
-    opacity: 0.45;
     cursor: not-allowed;
+    // opacity は画面側で制御
   }
 
   &:focus-visible {
     outline: 2px solid var.$illumination-gold;
     outline-offset: 2px;
   }
-}
-
-// ==========================================================
-// variant: default（parchment メニューボタン ― 既存挙動維持）
-// ==========================================================
-
-.default {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background-color: var.$parchment-card;
-  color: var.$ink;
-  text-align: left;
-  box-shadow: 0 1px 3px var.$shadow-ink;
-
-  // 綴じ装飾: 左 4px の縦帯
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background-color: var.$verdant;
-  }
-}
-
-// ==========================================================
-// variant: primary（ゴールドグラデーション CTA）
-// ==========================================================
-
-.primary {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  border: 0.75px solid var.$verdant;
-  border-radius: 0;
-  background: linear-gradient(135deg, var.$illumination-gold, var.$verdant);
-  color: var.$parchment-card;
-  font-weight: 700;
-  text-align: left;
-  box-shadow: 0 1px 3px var.$shadow-ink;
-
-  // 綴じ装飾: primary は金箔帯
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background-color: var.$illumination-gold-soft;
-  }
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var.$verdant, var.$illumination-gold);
-  }
-}
-
-// ==========================================================
-// variant: secondary（透明背景 + ボーダー）
-// ==========================================================
-
-.secondary {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  background: transparent;
-  color: var.$ink;
-  text-align: left;
-}
-
-// ==========================================================
-// variant: destructive（危険操作 ― 赤）
-// ==========================================================
-
-.destructive {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  border: 0.75px solid var.$vermilion;
-  border-radius: 0;
-  background-color: var.$vermilion;
-  color: var.$parchment-card;
-  font-weight: 700;
-  text-align: left;
-  opacity: 0.88;
-
-  &:hover:not(:disabled) {
-    opacity: 1;
-  }
-}
-
-// ==========================================================
-// variant: icon（34px 円形）
-// ==========================================================
-
-.icon {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  min-height: 34px;
-  padding: 0;
-  border: 0.75px solid var.$illumination-gold;
-  border-radius: 50%;
-  background: transparent;
-  color: var.$ink;
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-}
-
-// ==========================================================
-// variant: ghost（テキストリンク調）
-// ==========================================================
-
-.ghost {
-  width: auto;
-  min-height: 0;
-  padding: 4px 12px;
-  background: transparent;
-  border: none;
-  color: var.$ink-faint;
-  font-size: 12px;
-  font-weight: 500;
-  text-decoration: none;
-
-  &:hover:not(:disabled) {
-    color: var.$ink;
-    text-decoration: underline;
-  }
-}
-
-// ==========================================================
-// variant: card（複数行カード）
-// ==========================================================
-
-.card {
-  width: 100%;
-  min-height: 80px;
-  padding: 14px 16px;
-  background-color: var.$parchment-card;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  color: var.$ink;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  text-align: left;
-
-  &:hover:not(:disabled) {
-    background-color: var.$parchment-edge;
-  }
-}
-
-// ==========================================================
-// variant: tab（セグメント/チップ）
-// ==========================================================
-
-.tab {
-  width: auto;
-  flex: 1;
-  min-height: 36px;
-  padding: 8px 12px;
-  background: transparent;
-  border: 0.75px solid var.$rule;
-  border-radius: 0;
-  color: var.$ink-faint;
-  font-size: 13px;
-  font-weight: 600;
-
-  &:hover:not(:disabled) {
-    color: var.$ink;
-  }
-}
-
-// ==========================================================
-// size バリアント（default / primary / secondary / destructive のみ）
-// ==========================================================
-
-.small {
-  min-height: 36px;
-  padding: 6px 12px 6px 16px;
-  font-size: 13px;
-}
-
-.medium {
-  min-height: 56px;
-  padding: 12px 16px 12px 20px;
-  font-size: 15px;
-}
-
-.large {
-  min-height: 64px;
-  padding: 14px 20px 14px 24px;
-  font-size: 17px;
-}
-
-// ==========================================================
-// テキスト要素
-// ==========================================================
-
-.label {
-  font-weight: 700;
-}
-
-.description {
-  font-size: 12px;
-  opacity: 0.8;
 }
