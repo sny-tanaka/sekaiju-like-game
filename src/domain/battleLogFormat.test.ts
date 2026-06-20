@@ -56,7 +56,6 @@ function mockState(opts: {
     allies: opts.allies ?? [],
     enemies: opts.enemies ?? [],
     summons: opts.summons ?? [],
-    log: [],
     events: [],
     outcome: 'ongoing',
     firstStrike: 'none',

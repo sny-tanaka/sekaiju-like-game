@@ -92,7 +92,7 @@ describe('battle: 先制/不意打ち（[03 §10]）', () => {
     const cmds = state.allies.map((a) => ({ kind: 'guard' as const, actorId: a.id }));
     const after = resolveTurn(state, cmds, createRng(1));
     expect(after.allies[0].hp).toBe(allyHp);
-    expect(after.log.some((l) => l.text.includes('先制'))).toBe(true);
+    // 先制ターン: 味方は無傷のまま（敵が行動しない）ことをHPで確認済み
   });
 
   test('不意打ちターンは味方コマンドが無視され、敵だけが行動する', () => {
@@ -107,7 +107,7 @@ describe('battle: 先制/不意打ち（[03 §10]）', () => {
     }));
     const after = resolveTurn(state, cmds, createRng(1));
     expect(after.enemies[0].hp).toBe(enemyHp);
-    expect(after.log.some((l) => l.text.includes('不意打ち'))).toBe(true);
+    // 不意打ちターン: 敵HPが変わらない（味方が行動できない）ことで確認済み
   });
 
   test('先制/不意打ちはターン2以降は通常どおり両者行動する', () => {
@@ -168,7 +168,7 @@ describe('battle: 睡眠（[03 §6]）', () => {
       createRng(1)
     );
     expect(after.allies[0].hp).toBe(allyHp);
-    expect(after.log.some((l) => l.text.includes('眠っている'))).toBe(true);
+    // 眠っている敵が行動しないことをHP差分で確認済み
   });
 
   test('眠っている味方は行動できない（敵は無傷）', () => {
@@ -181,7 +181,7 @@ describe('battle: 睡眠（[03 §6]）', () => {
       createRng(1)
     );
     expect(after.enemies[0].hp).toBe(enemyHp);
-    expect(after.log.some((l) => l.text.includes('眠っている'))).toBe(true);
+    // 眠っている味方が行動できないことを敵HP差分で確認済み
   });
 
   test('睡眠は被ダメージで解除される', () => {
@@ -235,7 +235,7 @@ describe('battle: バインド（部位封じ・[03 §6]）', () => {
       createRng(1)
     );
     expect(after.enemies[0].hp).toBe(enemyHp);
-    expect(after.log.some((l) => l.text.includes('腕を封じ'))).toBe(true);
+    // 腕封じで通常攻撃できないことを敵HP差分で確認済み
   });
 
   test('頭封じの味方は魔法スキルを使えない', () => {
@@ -271,7 +271,7 @@ describe('battle: バインド（部位封じ・[03 §6]）', () => {
       createRng(1)
     );
     expect(after.enemies[0].hp).toBe(enemyHp);
-    expect(after.log.some((l) => l.text.includes('頭を封じ'))).toBe(true);
+    // 頭封じで魔法スキルが使えないことを敵HP差分で確認済み
   });
 
   test('脚封じの味方は逃走できない', () => {
@@ -279,7 +279,7 @@ describe('battle: バインド（部位封じ・[03 §6]）', () => {
     const state = withAilment(base, 'allies', 0, 'legBind');
     const after = resolveTurn(state, [{ kind: 'flee', actorId: state.allies[0].id }], createRng(1));
     expect(after.outcome).not.toBe('fled');
-    expect(after.log.some((l) => l.text.includes('脚を封じ'))).toBe(true);
+    // 脚封じで逃走できないことを outcome で確認済み
   });
 });
 
@@ -306,7 +306,11 @@ describe('battle: ユニオンスキル（[03 §9]）', () => {
     // 回復された／ゲージが消費された
     expect(after.allies[0].hp).toBeGreaterThan(1);
     expect(after.allies[0].unionGauge).toBeLessThan(100);
-    expect(after.log.some((l) => l.text.includes('ユニオン'))).toBe(true);
+    expect(
+      after.events.some(
+        (e) => e.kind === 'skill' && !!(e as import('./battleEvent').SkillEvent).unionActorIds
+      )
+    ).toBe(true);
   });
 
   test('ゲージ不足ではユニオン不発', () => {
@@ -326,8 +330,7 @@ describe('battle: ユニオンスキル（[03 §9]）', () => {
       ],
       createRng(1)
     );
-    expect(after.allies[0].unionGauge).toBe(50); // 消費されない
-    expect(after.log.some((l) => l.text.includes('ゲージが足りない'))).toBe(true);
+    expect(after.allies[0].unionGauge).toBe(50); // 消費されない（ゲージ不足で不発）
   });
 
   test('ユニオンは通常行動を消費しない（同ターンに攻撃もできる）', () => {
@@ -371,8 +374,7 @@ describe('battle: ユニオンスキル（[03 §9]）', () => {
       ],
       createRng(1)
     );
-    expect(after.allies[0].unionGauge).toBe(100); // 消費されない
-    expect(after.log.some((l) => l.text.includes('人数が足りない'))).toBe(true);
+    expect(after.allies[0].unionGauge).toBe(100); // 消費されない（人数不足で不発）
   });
 
   test('2人ユニオンは両者からゲージを消費して発動', () => {
@@ -433,7 +435,7 @@ describe('battle: 召喚（設置・[03 §8]）', () => {
     expect(after.summons.length).toBe(1);
     expect(after.summons[0].isSummon).toBe(true);
     expect(after.summons[0].summonKind).toBe('summon_wolf');
-    expect(after.log.some((l) => l.text.includes('召喚した'))).toBe(true);
+    expect(after.events.some((e) => e.kind === 'skill')).toBe(true);
   });
 
   test('自律召喚体（狼）はターンに敵を攻撃する', () => {
@@ -730,25 +732,25 @@ describe('battle: rewards', () => {
   });
 });
 
-describe('battle: ログのHPスナップショット（issue #18 逐次再生）', () => {
-  test('各ログ行に全戦闘員のHPスナップショットが付く', () => {
+describe('battle: イベントのHPスナップショット（issue #18 逐次再生）', () => {
+  test('各イベントに全戦闘員のHPスナップショットが付く', () => {
     const state = startBattle(diveSave(), ['enemy_slime']);
     const after = resolveTurn(state, attackAll(state), createRng(7));
-    expect(after.log.length).toBeGreaterThan(0);
-    for (const l of after.log) {
-      expect(l.snapshot).toBeDefined();
+    expect(after.events.length).toBeGreaterThan(0);
+    for (const e of after.events) {
+      expect(e.snapshotAfter).toBeDefined();
       // 味方・敵の双方の id がスナップショットに含まれる
-      expect(l.snapshot![state.allies[0].id]).toBeDefined();
-      expect(l.snapshot![state.enemies[0].id]).toBeDefined();
+      expect(e.snapshotAfter![state.allies[0].id]).toBeDefined();
+      expect(e.snapshotAfter![state.enemies[0].id]).toBeDefined();
     }
   });
 
-  test('ダメージを与えたログ行のスナップショットでは敵HPが減っている', () => {
+  test('ダメージを与えたイベントのスナップショットでは敵HPが減っている', () => {
     const state = startBattle(diveSave(), ['enemy_slime']);
     const after = resolveTurn(state, attackAll(state), createRng(7));
     const eid = state.enemies[0].id;
-    const last = after.log[after.log.length - 1];
-    expect(last.snapshot![eid].hp).toBeLessThanOrEqual(state.enemies[0].hp);
+    const last = after.events[after.events.length - 1];
+    expect(last.snapshotAfter![eid].hp).toBeLessThanOrEqual(state.enemies[0].hp);
   });
 });
 
@@ -1018,8 +1020,6 @@ describe('battle events: スキル SkillEvent', () => {
     expect(unionEvt).toBeDefined();
     expect(unionEvt!.heals.length).toBeGreaterThan(0);
     expect(unionEvt!.heals[0].amount).toBeGreaterThan(0);
-    // log assert も維持
-    expect(after.log.some((l) => l.text.includes('ユニオン'))).toBe(true);
   });
 });
 
@@ -1044,8 +1044,6 @@ describe('battle events: アイテム ItemUseEvent', () => {
       expect(itemEvt.actorId).toBe(ally.id);
       expect(itemEvt.itemId).toBe('item_potion');
     }
-    // log assert も維持
-    expect(after.log.some((l) => l.text.includes('を使った'))).toBe(true);
   });
 });
 

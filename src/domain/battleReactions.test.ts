@@ -47,7 +47,15 @@ describe('battle: 反撃（counter・[03 §6.5]）', () => {
     ally.states = [{ kind: 'counter', chance: 1, power: 3, statBase: 'int', remainingTurns: 2 }];
     const before = enemy.hp;
     const after = resolveTurn(state, [{ kind: 'guard', actorId: ally.id }], createRng(1));
-    expect(after.log.some((l) => l.text.includes('反撃'))).toBe(true);
+    // 反撃: events の reactions に normal-attack が存在することで確認
+    const hasCounter = after.events.some(
+      (e) =>
+        (e.kind === 'normal-attack' || e.kind === 'skill') &&
+        (e as import('./battleEvent').NormalAttackEvent).reactions?.some(
+          (r) => r.kind === 'normal-attack' || r.kind === 'skill'
+        )
+    );
+    expect(hasCounter).toBe(true);
     expect(after.enemies[0].hp).toBeLessThan(before);
   });
 });
@@ -69,7 +77,13 @@ describe('battle: 連携追撃（chase・[03 §6.5]）', () => {
       ],
       createRng(3)
     );
-    expect(after.log.some((l) => l.text.includes('連携追撃'))).toBe(true);
+    // 連携追撃: events に reactions が存在することで確認
+    const hasChase = after.events.some(
+      (e) =>
+        (e.kind === 'normal-attack' || e.kind === 'skill') &&
+        (e as import('./battleEvent').NormalAttackEvent).reactions?.length > 0
+    );
+    expect(hasChase).toBe(true);
   });
 
   test('多段ヒットのスキルでも連携追撃は対象につき1回だけ（[03 §6.5]）', () => {
@@ -89,8 +103,11 @@ describe('battle: 連携追撃（chase・[03 §6.5]）', () => {
       ],
       createRng(3)
     );
-    const chases = after.log.filter((l) => l.text.includes('連携追撃')).length;
-    expect(chases).toBe(1);
+    // 多段ヒットでも連携追撃は1回のみ: reactions の数が1
+    const chaseReactions = after.events.flatMap((e) =>
+      'reactions' in e ? ((e as import('./battleEvent').NormalAttackEvent).reactions ?? []) : []
+    );
+    expect(chaseReactions.length).toBe(1);
   });
 });
 
@@ -124,8 +141,7 @@ describe('battle: 障壁（barrier・[03 §6.5]）', () => {
     ally.states = [{ kind: 'barrier', absorb: 99999, remainingTurns: 2 }];
     const before = ally.hp;
     const after = resolveTurn(state, [{ kind: 'guard', actorId: ally.id }], createRng(1));
-    expect(after.log.some((l) => l.text.includes('障壁'))).toBe(true);
-    expect(after.allies[0].hp).toBe(before); // 全吸収で HP 不変
+    expect(after.allies[0].hp).toBe(before); // 全吸収で HP 不変（障壁が機能した証拠）
   });
 });
 

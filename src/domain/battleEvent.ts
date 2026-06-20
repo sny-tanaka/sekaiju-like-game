@@ -1,7 +1,6 @@
 // ============================================================================
 // BattleEvent — 戦闘イベントの ADT（設計書: dev-docs/battle-event-redesign.md §2.1）
 // 戦闘ロジックが生成し、UI がアニメーション再生に使う構造化イベントリスト。
-// ログ（BattleLogEntry[]）と並存する（ログ削除は Step 5 で別タスク）。
 // ============================================================================
 
 import type { AilmentType, BuffStatTarget, Element, SummonKind } from './types';
@@ -128,14 +127,25 @@ export type SummonEvent = {
 };
 
 // ----------------------------------------------------------------------------
+// snapshotAfter: イベント実行直後の HP/戦闘不能スナップショット（Step 5 HP バー同期用）
+// battle.ts が各 events.push 直後に記録する。オプショナル（全 event 必須ではない）。
+// ----------------------------------------------------------------------------
+
+export type CombatantSnapshot = Record<string, { hp: number; isDown: boolean }>;
+
+// ----------------------------------------------------------------------------
 // 統合型
 // ----------------------------------------------------------------------------
 
-export type BattleEvent =
+export type BattleEvent = (
   | NormalAttackEvent
   | SkillEvent
   | DefendEvent
   | FleeEvent
   | ItemUseEvent
   | TickEvent
-  | SummonEvent;
+  | SummonEvent
+) & {
+  /** battle.ts がイベント push 直後に記録するスナップショット（HP バー同期用）。 */
+  snapshotAfter?: CombatantSnapshot;
+};

@@ -39,7 +39,6 @@ import type {
   ActiveBuff,
   AilmentType,
   BattleCommand,
-  BattleLogEntry,
   BattleSkillDef,
   BattleState,
   Character,
@@ -69,20 +68,6 @@ const MAX_SUMMONS = 3;
 // ============================================================================
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-
-/** 状態異常の表示名（ログ用）。 */
-const AILMENT_LABEL: Record<AilmentType, string> = {
-  poison: '毒',
-  paralysis: '麻痺',
-  sleep: '睡眠',
-  confusion: '混乱',
-  curse: '呪い',
-  blind: '盲目',
-  instantDeath: '即死',
-  headBind: '頭封じ',
-  armBind: '腕封じ',
-  legBind: '脚封じ',
-};
 
 /** 装備のフラットボーナスを合算（[04]）。 */
 function aggregateEquip(char: Character): EquipBonuses {
@@ -239,7 +224,6 @@ export function startBattle(
     allies,
     enemies,
     summons,
-    log: [],
     events: [],
     outcome: 'ongoing',
     firstStrike,
@@ -332,12 +316,11 @@ function sameSide(state: BattleState, c: Combatant): Combatant[] {
  * 障壁（[03 §6.5]）。被弾ダメージを総量 absorb まで肩代わりする。残量を消費し、尽きたら解除。
  * 返り値は障壁適用後の実ダメージ。
  */
-function consumeBarrier(target: Combatant, dmg: number, log: BattleState['log']): number {
+function consumeBarrier(target: Combatant, dmg: number): number {
   const st = (target.states ?? []).find((s) => s.kind === 'barrier' && s.absorb > 0);
   if (!st || st.kind !== 'barrier') return dmg;
   const absorbed = Math.min(st.absorb, dmg);
   st.absorb -= absorbed;
-  if (absorbed > 0) log.push({ text: `${target.name} は障壁で ${absorbed} のダメージを防いだ` });
   if (st.absorb <= 0) target.states = (target.states ?? []).filter((s) => s !== st);
   return dmg - absorbed;
 }
@@ -349,7 +332,7 @@ function consumeBarrier(target: Combatant, dmg: number, log: BattleState['log'])
  * 返り値: 命中したか・実ダメージ・HitResult（events 生成用）。
  */
 function strikeOnce(
-  state: BattleState,
+  _state: BattleState,
   actor: Combatant,
   target: Combatant,
   p: { statBase: 'str' | 'int'; power: number; element: Element },
@@ -369,7 +352,6 @@ function strikeOnce(
     rng
   );
   if (!res.hit) {
-    state.log.push({ text: `${actor.name} の攻撃は外れた`, actorId: actor.id });
     return {
       hit: false,
       dealt: 0,
@@ -382,25 +364,12 @@ function strikeOnce(
       },
     };
   }
-  const dealt = consumeBarrier(target, res.damage, state.log);
+  const dealt = consumeBarrier(target, res.damage);
   const dealLogs = dealDamage(target, dealt);
+  void dealLogs; // ログ廃止のため使わないが dealDamage の副作用（HP減算・isDown 更新）は必要
   if (opts.actorUnion) gainUnion(actor, opts.actorUnion);
   gainUnion(target, 5);
   const defeated = target.isDown;
-  // 障壁で全吸収（dealt=0）した場合はダメージログを省く（「障壁で防いだ」は consumeBarrier で出力済み）。
-  if (dealt > 0) {
-    state.log.push({
-      text: opts.clean
-        ? `${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`
-        : `${actor.name} の攻撃！ ${target.name} に ${dealt} ダメージ${res.critical ? '（会心）' : ''}`,
-      element: p.element,
-      // clean=true（反撃/連携追撃由来の追加打）はサブ処理なので actorId を付けない。
-      // 通常攻撃の発動ログ（「{name} の攻撃！」）は actor.id を付ける。
-      actorId: opts.clean ? undefined : actor.id,
-    });
-  }
-  // 撃破・起床ログはダメージ本文の後に出す（「ダメージ→倒れた」の順序を保つ）。
-  for (const text of dealLogs) state.log.push({ text, element: p.element });
   return {
     hit: true,
     dealt,
@@ -435,7 +404,6 @@ function triggerReactions(
     for (const st of target.states ?? []) {
       if (st.kind !== 'counter') continue;
       if (rng.next() >= st.chance) continue;
-      state.log.push({ text: `${target.name} の反撃！`, actorId: target.id });
       const el: Element = st.statBase === 'str' ? 'bash' : 'almighty';
       const r = strikeOnce(
         state,
@@ -462,7 +430,6 @@ function triggerReactions(
       for (const st of ch.states ?? []) {
         if (st.kind !== 'chase') continue;
         if (st.element !== element && st.element !== 'almighty' && element !== 'almighty') continue;
-        state.log.push({ text: `${ch.name} の連携追撃！`, actorId: ch.id });
         const r = strikeOnce(
           state,
           ch,
@@ -571,7 +538,7 @@ function applySkillEffect(
   level: number,
   targets: Combatant[],
   rng: Rng,
-  target: TargetType
+  _target: TargetType
 ): SkillEffectResult {
   const result: SkillEffectResult = { hits: [], heals: [], buffs: [], debuffs: [], reactions: [] };
   switch (effect.kind) {
@@ -610,8 +577,8 @@ function applySkillEffect(
       if (effect.drain && drainTotal > 0 && !actor.isDown) {
         const before = actor.hp;
         actor.hp = clamp(actor.hp + Math.round(drainTotal * effect.drain), 0, actor.maxHp);
-        if (actor.hp > before)
-          state.log.push({ text: `${actor.name} は ${actor.hp - before} 吸収した` });
+        // 吸収量はログに出さない（SkillEvent の hits に drain フラグは持たせていない）
+        void before;
       }
       break;
     }
@@ -630,7 +597,6 @@ function applySkillEffect(
         target.hp = clamp(target.hp + amount, 0, target.maxHp);
         result.heals.push({ targetId: target.id, amount });
       }
-      state.log.push({ text: `${actor.name} は回復魔法を使った（+${amount}）`, actorId: actor.id });
       break;
     }
     case 'buff': {
@@ -648,7 +614,6 @@ function applySkillEffect(
           turns: effect.turns,
         });
       }
-      state.log.push({ text: `${actor.name} は態勢を整えた`, actorId: actor.id });
       break;
     }
     case 'ailment': {
@@ -663,7 +628,6 @@ function applySkillEffect(
             magnitude: effect.magnitude,
           });
           result.debuffs.push({ targetId: target.id, effect: effect.ailment, turns: effect.turns });
-          state.log.push({ text: `${target.name} は${AILMENT_LABEL[effect.ailment]}になった` });
         }
       }
       break;
@@ -671,15 +635,13 @@ function applySkillEffect(
     case 'summon': {
       if (actor.side !== 'ally') break; // 召喚は味方専用（敵が summon 効果を持っても味方側を生まない）
       if (aliveSummons(state).length >= MAX_SUMMONS) {
-        state.log.push({ text: 'これ以上は召喚できない' });
-        break;
+        break; // 満員（ログなし）
       }
       const id = `summon_${state.turn}_${state.summons.length}`;
       const s = buildSummon(effect.summonKind, state.depth, actor.id, id);
       state.summons.push(s);
       result.summonedId = s.id;
       result.summonedKind = effect.summonKind;
-      state.log.push({ text: `${actor.name} は ${s.name} を召喚した！`, actorId: actor.id });
       break;
     }
     case 'counter': {
@@ -694,7 +656,6 @@ function applySkillEffect(
         });
         result.buffs.push({ targetId: target.id, effect: 'counter', turns: effect.turns });
       }
-      state.log.push({ text: `${actor.name} は反撃の構えを取った`, actorId: actor.id });
       break;
     }
     case 'chase': {
@@ -709,7 +670,6 @@ function applySkillEffect(
         });
         result.buffs.push({ targetId: target.id, effect: 'chase', turns: effect.turns });
       }
-      state.log.push({ text: `${actor.name} は連携の構えを取った`, actorId: actor.id });
       break;
     }
     case 'decoy': {
@@ -722,7 +682,6 @@ function applySkillEffect(
         });
         result.buffs.push({ targetId: target.id, effect: 'decoy', turns: effect.turns });
       }
-      state.log.push({ text: `${actor.name} は敵の注意を引きつけた`, actorId: actor.id });
       break;
     }
     case 'barrier': {
@@ -735,14 +694,12 @@ function applySkillEffect(
         });
         result.buffs.push({ targetId: target.id, effect: 'barrier', turns: effect.turns });
       }
-      state.log.push({ text: `${actor.name} は守りの障壁を張った`, actorId: actor.id });
       break;
     }
     case 'cleanse': {
       for (const target of targets) {
         if (target.isDown || target.ailments.length === 0) continue;
         target.ailments = [];
-        state.log.push({ text: `${target.name} の状態異常が治療された` });
       }
       break;
     }
@@ -752,7 +709,6 @@ function applySkillEffect(
         target.isDown = false;
         target.hp = clamp(Math.round(target.maxHp * effect.ratio(level)), 1, target.maxHp);
         result.heals.push({ targetId: target.id, amount: target.hp });
-        state.log.push({ text: `${actor.name} は ${target.name} を蘇生した（HP+${target.hp}）` });
       }
       break;
     }
@@ -771,7 +727,6 @@ function applySkillEffect(
         addState(target, { kind: 'regen', amount, remainingTurns: effect.turns });
         result.buffs.push({ targetId: target.id, effect: 'regen', turns: effect.turns });
       }
-      state.log.push({ text: `${actor.name} は継続回復を付与した`, actorId: actor.id });
       break;
     }
     case 'restoreTp': {
@@ -783,10 +738,6 @@ function applySkillEffect(
         const add = effect.ratio ? Math.round(t.maxTp * effect.ratio) : effect.amount(level);
         t.tp = clamp(t.tp + add, 0, t.maxTp);
       }
-      state.log.push({
-        text: `${actor.name} は ${target === 'self' ? 'TP' : '味方のTP'} を回復した`,
-        actorId: actor.id,
-      });
       break;
     }
     default:
@@ -795,8 +746,17 @@ function applySkillEffect(
   return result;
 }
 
-/** 通常攻撃（物理・武器属性 or 素手 bash）。反撃/連携追撃の対象になる（[03 §6.5]）。 */
-function basicAttack(state: BattleState, actor: Combatant, target: Combatant, rng: Rng): void {
+/** 通常攻撃（物理・武器属性 or 素手 bash）。反撃/連携追撃の対象になる（[03 §6.5]）。
+ * pushFn: snapshotAfter を付与して events に積むラッパー（resolveTurn から注入）。
+ * 省略時（単体テスト・召喚体の自律攻撃）は state.events.push を直接使う（snapshotAfter なし）。
+ */
+function basicAttack(
+  state: BattleState,
+  actor: Combatant,
+  target: Combatant,
+  rng: Rng,
+  pushFn?: (evt: import('./battleEvent').BattleEvent) => void
+): void {
   if (target.isDown) return;
   const element: Element = actor.normalAttackElement ?? 'bash';
   const r = strikeOnce(state, actor, target, { statBase: 'str', power: 1, element }, rng, {
@@ -811,7 +771,11 @@ function basicAttack(state: BattleState, actor: Combatant, target: Combatant, rn
     hits: r.hitResult ? [r.hitResult] : [],
     reactions: reactionEvts,
   };
-  state.events.push(normalAttackEvent);
+  if (pushFn) {
+    pushFn(normalAttackEvent);
+  } else {
+    state.events.push(normalAttackEvent);
+  }
 }
 
 const avgAgi = (cs: Combatant[]) =>
@@ -854,19 +818,21 @@ function skillUsesArm(def: BattleSkillDef): boolean {
 /**
  * ユニオンスキルを解決する（[03 §9]）。ターン冒頭に処理。通常行動は消費しない。
  * 発動者ゲージ100%が条件。発動者を含む requiredParticipants 人から gaugeCostPerParticipant を消費。
+ * pushFn: snapshotAfter を付与して events に積むラッパー（resolveTurn から注入）。
  */
 function resolveUnion(
   state: BattleState,
   cmd: Extract<BattleCommand, { kind: 'union' }>,
-  rng: Rng
+  rng: Rng,
+  pushFn?: (evt: import('./battleEvent').BattleEvent) => void
 ): void {
+  const push = pushFn ?? ((evt) => state.events.push(evt));
   const def = UNION_SKILLS[cmd.unionSkillId];
   if (!def) return;
   const activator = find(state, cmd.actorId);
   if (!activator || activator.isDown || activator.side !== 'ally') return;
   if (activator.unionGauge < 100) {
-    state.log.push({ text: `${activator.name} はユニオンゲージが足りない` });
-    return;
+    return; // ゲージ不足（ログなし）
   }
   // 参加者（発動者を必ず含む）。生存中の味方のみ。
   const ids = new Set(cmd.participantIds);
@@ -875,8 +841,7 @@ function resolveUnion(
     .map((id) => find(state, id))
     .filter((c): c is Combatant => !!c && !c.isDown && c.side === 'ally');
   if (participants.length < def.requiredParticipants) {
-    state.log.push({ text: `${activator.name} の${def.name}は参加人数が足りない` });
-    return;
+    return; // 人数不足（ログなし）
   }
   // 発動者を先頭に、必要人数ぶんゲージを消費する。
   const payers = [activator, ...participants.filter((p) => p.id !== activator.id)].slice(
@@ -886,7 +851,6 @@ function resolveUnion(
   for (const p of payers) {
     p.unionGauge = clamp(p.unionGauge - def.gaugeCostPerParticipant, 0, 100);
   }
-  state.log.push({ text: `ユニオン！ ${activator.name} の${def.name}！`, actorId: activator.id });
   const level = activator.skillLevels?.[cmd.unionSkillId] ?? 1;
   const targets = resolveTargets(state, activator, def.target, cmd.targetId);
   // SkillEvent 組み立て用の蓄積
@@ -913,7 +877,7 @@ function resolveUnion(
     unionReactions.push(...r.reactions);
     // 召喚 effect があれば SummonEvent を push
     if (r.summonedId && r.summonedKind) {
-      state.events.push({
+      push({
         kind: 'summon-appear',
         summonerId: activator.id,
         summonId: r.summonedId,
@@ -935,7 +899,7 @@ function resolveUnion(
     debuffs: unionDebuffs,
     reactions: unionReactions,
   };
-  state.events.push(unionSkillEvent);
+  push(unionSkillEvent);
 }
 
 /**
@@ -945,19 +909,23 @@ function resolveUnion(
 export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: Rng): BattleState {
   if (state.outcome !== 'ongoing') return state;
   // ディープコピー（純粋性のため）
-  const next: BattleState = structuredClone({ ...state, log: [], events: [] });
-  // ログ行ごとに「その時点の全戦闘員 HP」を記録する（issue #18 の逐次再生用）。
-  // すべての効果ヘルパは next.log.push でログを積むため、push をラップして自動採取する。
-  const origPush = next.log.push.bind(next.log);
-  next.log.push = (...entries: BattleLogEntry[]): number => {
-    const r = origPush(...entries);
-    const snap: Record<string, { hp: number; isDown: boolean }> = {};
+  const next: BattleState = structuredClone({ ...state, events: [] });
+
+  /** 現時点のHPスナップショットを取る（snapshotAfter 記録用）。 */
+  const takeSnapshot = (): import('./battleEvent').CombatantSnapshot => {
+    const snap: import('./battleEvent').CombatantSnapshot = {};
     for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
       snap[c.id] = { hp: c.hp, isDown: c.isDown };
     }
-    for (const e of entries) e.snapshot = snap;
-    return r;
+    return snap;
   };
+
+  /** events.push のラッパー: push 直後に snapshotAfter を記録する。 */
+  const pushEvent = (evt: import('./battleEvent').BattleEvent): void => {
+    const withSnap = { ...evt, snapshotAfter: takeSnapshot() };
+    next.events.push(withSnap);
+  };
+
   // 通常行動のコマンド表（ユニオンは別枠なので除外する）。
   const cmdByActor = new Map(commands.filter((c) => c.kind !== 'union').map((c) => [c.actorId, c]));
 
@@ -965,13 +933,11 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   const firstStrikeActive = next.turn === 1 && next.firstStrike !== 'none';
   const skipEnemies = firstStrikeActive && next.firstStrike === 'preemptive';
   const skipAllies = firstStrikeActive && next.firstStrike === 'ambush';
-  if (skipEnemies) next.log.push({ text: '先制攻撃！ 味方が先手を取った' });
-  if (skipAllies) next.log.push({ text: '不意打ち！ 敵に先手を取られた' });
 
   // ユニオンスキル（[03 §9]）: 通常行動とは別枠でターン冒頭に解決する。不意打ちターンは不可。
   if (!skipAllies) {
     for (const c of commands) {
-      if (c.kind === 'union') resolveUnion(next, c, rng);
+      if (c.kind === 'union') resolveUnion(next, c, rng, pushEvent);
     }
   }
 
@@ -980,7 +946,8 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
   if (!skipAllies && fleeCmd && next.outcome === 'ongoing') {
     const fleer = find(next, fleeCmd.actorId);
     if (fleer && isLegBound(fleer)) {
-      next.log.push({ text: `${fleer.name} は脚を封じられて逃げられない`, actorId: fleer.id });
+      // 脚封じで逃走失敗（ログ代わりに flee:success=false を push）
+      pushEvent({ kind: 'flee', actorId: fleeCmd.actorId, success: false });
     } else {
       // §8.1 逃走率: base 0.4、ボス逃走不可、FOE は 0.5倍
       let rate = clamp(
@@ -994,13 +961,11 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         rate *= 0.5;
       }
       if (rate > 0 && rng.next() < rate) {
-        next.log.push({ text: 'うまく逃げ切れた！' });
         next.outcome = 'fled';
-        next.events.push({ kind: 'flee', actorId: fleeCmd.actorId, success: true });
+        pushEvent({ kind: 'flee', actorId: fleeCmd.actorId, success: true });
         return next;
       }
-      next.log.push({ text: '逃げられなかった！' });
-      next.events.push({ kind: 'flee', actorId: fleeCmd.actorId, success: false });
+      pushEvent({ kind: 'flee', actorId: fleeCmd.actorId, success: false });
     }
   }
 
@@ -1012,7 +977,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       if (!actor || actor.isDown) continue;
       addBuff(actor, { stat: 'pdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
       addBuff(actor, { stat: 'mdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
-      next.events.push({ kind: 'defend', actorId: actor.id });
+      pushEvent({ kind: 'defend', actorId: actor.id });
     }
   }
 
@@ -1102,13 +1067,11 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (next.outcome !== 'ongoing') break;
     // 睡眠: 行動不能（被ダメで解除。[03 §6]）。
     if (isAsleep(actor)) {
-      next.log.push({ text: `${actor.name} は眠っている`, actorId: actor.id });
-      continue;
+      continue; // ログなし（UI は event がないことで無行動を表現）
     }
     // 麻痺: 30% で行動不能
     if (isParalyzed(actor) && rng.next() < BALANCE.PARALYSIS_SKIP) {
-      next.log.push({ text: `${actor.name} は麻痺で動けない`, actorId: actor.id });
-      continue;
+      continue; // ログなし
     }
 
     // 召喚体（[03 §8]）: actsOnTurn なら生存敵を1体自律攻撃。壁のみの個体は行動しない。
@@ -1116,7 +1079,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       const m = actor.summonKind ? SUMMONS[actor.summonKind] : undefined;
       if (m?.actsOnTurn) {
         const enemies = aliveSide(next, 'enemy');
-        if (enemies.length > 0) basicAttack(next, actor, rng.pick(enemies), rng);
+        if (enemies.length > 0) basicAttack(next, actor, rng.pick(enemies), rng, pushEvent);
       }
       if (aliveSide(next, 'enemy').length === 0) break;
       continue;
@@ -1125,8 +1088,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (actor.side === 'enemy') {
       // §15.6: 候補が空で動けない場合（部位封じで全行動ブロック）
       if (enemyBoundCannotAct.has(actor.id)) {
-        next.log.push({ text: `${actor.name} は封じられて動けない`, actorId: actor.id });
-        continue;
+        continue; // ログなし
       }
       // §3.2 ③効果適用
       const selectedAction = enemySelectedAction.get(actor.id);
@@ -1135,11 +1097,10 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         // basic フォールバック: 通常攻撃
         const target = decoyTargetId ? find(next, decoyTargetId) : undefined;
         const t = target && !target.isDown ? target : aliveSide(next, 'ally')[0];
-        if (t) basicAttack(next, actor, t, rng);
+        if (t) basicAttack(next, actor, t, rng, pushEvent);
       } else {
         // スキルアクション適用
         const targets = resolveTargets(next, actor, selectedAction.target, decoyTargetId ?? '');
-        next.log.push({ text: `${actor.name} の${selectedAction.name}！`, actorId: actor.id });
         // SkillEvent 組み立て用
         const skillHits: HitResult[] = [];
         const skillHeals: HealResult[] = [];
@@ -1164,7 +1125,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           skillReactions.push(...r.reactions);
           // 召喚 effect があれば SummonEvent を push
           if (r.summonedId && r.summonedKind) {
-            next.events.push({
+            pushEvent({
               kind: 'summon-appear',
               summonerId: actor.id,
               summonId: r.summonedId,
@@ -1173,7 +1134,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
             });
           }
         }
-        next.events.push({
+        pushEvent({
           kind: 'skill',
           actorId: actor.id,
           skillId: selectedAction.id,
@@ -1196,40 +1157,29 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       if (!cmd || cmd.kind === 'guard' || cmd.kind === 'flee') continue;
       if (cmd.kind === 'attack') {
         if (isArmBound(actor)) {
-          next.log.push({ text: `${actor.name} は腕を封じられて攻撃できない`, actorId: actor.id });
-          continue;
+          continue; // 腕封じで攻撃不可（ログなし）
         }
         const target = find(next, cmd.targetId);
         const t = target && !target.isDown ? target : aliveSide(next, 'enemy')[0];
-        if (t) basicAttack(next, actor, t, rng);
+        if (t) basicAttack(next, actor, t, rng, pushEvent);
       } else if (cmd.kind === 'skill') {
         const def = BATTLE_SKILLS[cmd.skillId];
         if (!def) continue;
         // 部位封じでスキル不可（腕系スキル＝armBind / 頭系スキル＝headBind。[03 §6]）
         if (skillUsesArm(def) && isArmBound(actor)) {
-          next.log.push({
-            text: `${actor.name} は腕を封じられてスキルを使えない`,
-            actorId: actor.id,
-          });
-          continue;
+          continue; // 腕封じ
         }
         if (!skillUsesArm(def) && isHeadBound(actor)) {
-          next.log.push({
-            text: `${actor.name} は頭を封じられてスキルを使えない`,
-            actorId: actor.id,
-          });
-          continue;
+          continue; // 頭封じ
         }
         const level = actor.skillLevels?.[cmd.skillId] ?? 1;
         const cost = computeSkillTpCost(def, level);
         if (actor.tp < cost) {
-          next.log.push({ text: `${actor.name} は TP が足りない`, actorId: actor.id });
-          continue;
+          continue; // TP 不足（ログなし）
         }
         actor.tp -= cost;
         gainUnion(actor, 10);
         const targets = skillTargets(next, actor, def, cmd.targetId);
-        next.log.push({ text: `${actor.name} の${def.name}！`, actorId: actor.id });
         // SkillEvent 組み立て用
         const allySkillHits: HitResult[] = [];
         const allySkillHeals: HealResult[] = [];
@@ -1254,7 +1204,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           allySkillReactions.push(...r.reactions);
           // 召喚 effect があれば SummonEvent を push
           if (r.summonedId && r.summonedKind) {
-            next.events.push({
+            pushEvent({
               kind: 'summon-appear',
               summonerId: actor.id,
               summonId: r.summonedId,
@@ -1263,7 +1213,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
             });
           }
         }
-        next.events.push({
+        pushEvent({
           kind: 'skill',
           actorId: actor.id,
           skillId: cmd.skillId,
@@ -1292,9 +1242,8 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
           }
         }
         next.consumedItems.push(cmd.itemId);
-        next.log.push({ text: `${actor.name} は ${item.name} を使った`, actorId: actor.id });
         if (itemEffect) {
-          next.events.push({
+          pushEvent({
             kind: 'item-use',
             actorId: actor.id,
             itemId: cmd.itemId,
@@ -1315,10 +1264,9 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     if (poison) {
       const dmg = poison.magnitude ?? Math.max(1, Math.floor(c.maxHp * BALANCE.POISON_HP_RATIO));
       const dealLogs = dealDamage(c, dmg);
-      next.log.push({ text: `${c.name} は毒で ${dmg} のダメージ`, element: 'almighty' });
-      for (const text of dealLogs) next.log.push({ text, element: 'almighty' });
+      void dealLogs; // ログ廃止のため使わないが dealDamage の副作用（HP減算・isDown 更新）は必要
       // TickEvent: poison
-      next.events.push({
+      pushEvent({
         kind: 'tick',
         targetId: c.id,
         effectType: 'poison',
@@ -1335,9 +1283,8 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       const before = c.hp;
       c.hp = clamp(c.hp + s.amount, 0, c.maxHp);
       if (c.hp > before) {
-        next.log.push({ text: `${c.name} は ${c.hp - before} 回復した（リジェネ）` });
         // TickEvent: regen
-        next.events.push({
+        pushEvent({
           kind: 'tick',
           targetId: c.id,
           effectType: 'regen',
@@ -1351,7 +1298,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     // バフ期限切れの TickEvent を生成してから減算する。
     const expiringBuffs = c.buffs.filter((b) => b.remainingTurns <= 1);
     for (const b of expiringBuffs) {
-      next.events.push({
+      pushEvent({
         kind: 'tick',
         targetId: c.id,
         effectType: 'buff-expire',
@@ -1364,7 +1311,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     // デバフ（状態異常）期限切れの TickEvent を生成してから減算する。
     const expiringAilments = c.ailments.filter((a) => a.remainingTurns <= 1);
     for (const a of expiringAilments) {
-      next.events.push({
+      pushEvent({
         kind: 'tick',
         targetId: c.id,
         effectType: 'debuff-expire',
@@ -1390,7 +1337,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
     for (const d of ENEMIES[e.enemyId].drops ?? []) {
       if (rng.next() < d.rate) {
         next.drops.push({ enemyId: e.enemyId, itemId: d.itemId });
-        next.log.push({ text: `${e.name} は ${ITEMS[d.itemId]?.name ?? d.itemId} を落とした` });
+        // ドロップはログなし（リザルト画面で表示する）
       }
     }
   }
@@ -1642,7 +1589,6 @@ export function buildSimBattleState(
     allies,
     enemies,
     summons: [],
-    log: [],
     events: [],
     outcome: 'ongoing',
     firstStrike: 'none',

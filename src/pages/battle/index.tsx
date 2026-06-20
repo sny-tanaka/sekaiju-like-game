@@ -34,6 +34,8 @@ import {
   startBattle,
 } from '@/domain/battle';
 import type { LevelUpResult } from '@/domain/battle';
+import type { BattleEvent, CombatantSnapshot } from '@/domain/battleEvent';
+import { fmt } from '@/domain/battleLogFormat';
 import { previewTurnOrder } from '@/domain/combat';
 import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
@@ -53,6 +55,7 @@ import type {
   SkillId,
   UnionSkillDef,
 } from '@/domain/types';
+import { useBattleLogger } from '@/hooks/useBattleLogger';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
@@ -173,12 +176,28 @@ const STAT_LABEL: Record<string, string> = {
 };
 
 /** 戦闘員の現在 HP/戦闘不能のスナップショット（逐次再生の起点。issue #18）。 */
-function snapshotOf(s: BattleState): Record<string, { hp: number; isDown: boolean }> {
-  const snap: Record<string, { hp: number; isDown: boolean }> = {};
+function snapshotOf(s: BattleState): CombatantSnapshot {
+  const snap: CombatantSnapshot = {};
   for (const c of [...s.allies, ...s.enemies, ...s.summons]) {
     snap[c.id] = { hp: c.hp, isDown: c.isDown };
   }
   return snap;
+}
+
+/**
+ * reactions[] を持つイベントを再帰的にフラット化する。
+ * 各 reaction は元の親イベントの直後に挿入し、さらに reaction の reactions も展開する。
+ * flattenEvents(events) で渡された配列を1段の配列に変換する。
+ */
+function flattenEvents(events: BattleEvent[]): BattleEvent[] {
+  const result: BattleEvent[] = [];
+  for (const e of events) {
+    result.push(e);
+    if ('reactions' in e && Array.isArray(e.reactions) && e.reactions.length > 0) {
+      result.push(...flattenEvents(e.reactions as BattleEvent[]));
+    }
+  }
+  return result;
 }
 
 type UnionCmd = {
@@ -196,17 +215,17 @@ type UnionCmd = {
  */
 type UiMode = { kind: 'global' } | { kind: 'individual' } | { kind: 'strategy' };
 
-/** 逐次再生の状態（issue #18）。base=ターン開始時HP、revealed=表示済みログ行数。 */
+/** 逐次再生の状態（Step 5）。events=フラット化済みイベント列、eventIdx=再生位置。 */
 type Anim = {
-  base: Record<string, { hp: number; isDown: boolean }>;
-  revealed: number;
-  /** 各ログ行に対応する行動者 ID（前進アニメ用）。actorIds[revealed] が現在の行動者。 */
-  actorIds: string[];
+  /** flattenEvents() で展開したターンのイベント列。 */
+  events: BattleEvent[];
+  /** 現在再生中のイベントインデックス。events.length に達したら再生完了。 */
+  eventIdx: number;
+  /** ターン開始時点の HP スナップショット（最初のイベント前状態）。 */
+  baseSnapshot: CombatantSnapshot;
 };
 
 export interface BattlePageProps {
-  /** Storybook 専用: 初期 BattleState の log を擬似的に埋める。本番経路では未使用。 */
-  __storyMockLogPreview?: string[];
   /** Storybook 専用: マウント後にスキル選択画面を直接開く。本番経路では未使用。 */
   __storyMockOpenSkillMenu?: boolean;
   /** Storybook 専用: rollEncounter / pendingFoeBattle の代わりに固定の敵 ID 列で開始する。
@@ -216,11 +235,7 @@ export interface BattlePageProps {
 
 // 戦闘（[03]）。一括入力型ターン制。本家に倣い、味方は前衛/後衛の2段で表示し、
 // キャラごとにコマンド（攻撃/防御/スキル/逃走）をメニュー選択する。
-export const Page = ({
-  __storyMockLogPreview,
-  __storyMockOpenSkillMenu,
-  __storyMockEnemyIds,
-}: BattlePageProps) => {
+export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePageProps) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist, applySave } = useGameState();
   const play = useSfx();
@@ -238,6 +253,8 @@ export const Page = ({
   // 味方単体スキル選択後の対象選択フェーズ（allyOne 確認中のスキル ID）。
   const [allyTargetMenu, setAllyTargetMenu] = useState<SkillId | null>(null);
   const [busy, setBusy] = useState(false);
+  // 戦闘ログ（event 駆動 Step 5）。
+  const battleLogger = useBattleLogger();
   // このターンに予約したユニオン（MVP: 1ターン1回）。
   const [unionCmd, setUnionCmd] = useState<UnionCmd | null>(null);
   // 協力者選択中のユニオン（requiredParticipants > 1 のとき）。
@@ -319,16 +336,6 @@ export const Page = ({
     setBattleVariant(isBoss ? 'boss' : isFoe ? 'foe' : 'battle');
   }, [state, setBattleVariant]);
 
-  // Storybook 専用: BattleState 初期化後に log を擬似的に埋める（本番では未使用）。
-  useEffect(() => {
-    if (!state || !__storyMockLogPreview || state.log.length > 0) return;
-    const snap = snapshotOf(state);
-    setState({
-      ...state,
-      log: __storyMockLogPreview.map((text) => ({ text, snapshot: snap })),
-    });
-  }, [state, __storyMockLogPreview]);
-
   // Storybook 専用: 初期マウントでスキル選択画面を直接開く（本番では未使用）。
   useEffect(() => {
     if (!__storyMockOpenSkillMenu || !state || activeId) return;
@@ -396,7 +403,7 @@ export const Page = ({
   const runTurn = useCallback(
     (list: BattleCommand[]) => {
       if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
-      const base = snapshotOf(state);
+      const baseSnapshot = snapshotOf(state);
       // TP 表示用ベースライン: anim 再生中はターン開始時の TP 実値を表示する
       const tpSnap: Record<string, number> = {};
       for (const c of [...state.allies, ...state.enemies, ...state.summons]) {
@@ -404,9 +411,7 @@ export const Page = ({
       }
       tpBaseRef.current = tpSnap;
       const final = resolveTurn(state, list, rngRef.current);
-      // 各ログ行の行動者 ID は BattleLogEntry.actorId から直接読む（前進アニメ用）。
-      // 行動開始ログのみ actorId が設定されており、結果ログ（被弾・撃破・ドロップ等）は undefined。
-      const actorIds = final.log.map((entry) => entry.actorId ?? '');
+      const flatEvts = flattenEvents(final.events);
       setState(final);
       setCommands({});
       setCommandTargets({});
@@ -420,9 +425,10 @@ export const Page = ({
       setHits(new Map());
       setInkSplatters(new Map());
       setUiMode({ kind: 'global' });
-      setAnim(final.log.length > 0 ? { base, revealed: 0, actorIds } : null);
+      battleLogger.reset();
+      setAnim(flatEvts.length > 0 ? { events: flatEvts, eventIdx: 0, baseSnapshot } : null);
     },
-    [state]
+    [state, battleLogger]
   );
 
   // 不意打ち: ターン1は味方が動けない。突入演出が晴れてから敵の先手1巡を自動解決する。
@@ -435,22 +441,26 @@ export const Page = ({
     }
   }, [state, introFx, runTurn]);
 
-  // 行動完了シグナル: Fx の onDone から呼ばれ、後退 + 次ログへの進行を担う
+  // tryComplete: Fx の onDone から呼ばれる。後退 + 次イベントへの進行を担う。
   // actionCompletedRef で重複実行を防ぐ（複数 Fx 同時 onDone でも 1 回のみ）
-  const completeAction = useCallback(() => {
+  const tryComplete = useCallback(() => {
     if (actionCompletedRef.current) return;
     actionCompletedRef.current = true;
     setAdvancingActorId(null); // 後退開始（CSS transition 0.18s）
-    // 後退完了後（200ms）に次のログへ
+    // 後退完了後（200ms）に次のイベントへ
     setTimeout(() => {
-      setAnim((prev) => (prev ? { ...prev, revealed: prev.revealed + 1 } : null));
+      setAnim((prev) => (prev ? { ...prev, eventIdx: prev.eventIdx + 1 } : null));
     }, 200);
   }, []);
 
-  // 逐次再生（issue #18）: ログ行を1行ずつ開き、被弾したカードを点滅させる。
+  // 逐次再生（Step 5）: events を1件ずつ再生する。
+  // mountFxFor: event 種別に応じて Fx state を発火する
   useEffect(() => {
     if (!state || !anim) return;
-    if (anim.revealed >= state.log.length) {
+    const { events, eventIdx, baseSnapshot } = anim;
+
+    // 全イベント再生完了
+    if (eventIdx >= events.length) {
       const t = setTimeout(() => {
         setAnim(null);
         setFlashIds(new Set());
@@ -461,40 +471,55 @@ export const Page = ({
       return () => clearTimeout(t);
     }
 
-    const idx = anim.revealed;
-    const cur = state.log[idx]?.snapshot;
-    const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
+    const event = events[eventIdx];
 
     // 新 iter 開始: 行動完了フラグを reset
     actionCompletedRef.current = false;
 
-    // Step 0 (即時 0ms): 前進開始 — CSS transition 0.18s が走り始める
-    const currentActor = anim.actorIds[idx];
-    setAdvancingActorId(currentActor ?? null);
+    // ログ追記（pre テキスト）
+    if (state) {
+      const { pre, post } = fmt(event, state);
+      if (pre) battleLogger.append(pre);
+      for (const p of post) battleLogger.append(p);
+    }
 
-    // Step 1 (DAMAGE_AT = 200ms): 前進完了直後にダメージ/回復/バフ/デバフ発生
+    // アクター ID の解決（前進アニメ用）
+    const currentActorId = 'actorId' in event ? (event as { actorId: string }).actorId : undefined;
+    setAdvancingActorId(currentActorId ?? null);
+
+    // DAMAGE_AT (200ms) 後: HP 差分から hits/flashIds を計算して Fx を発火
     const DAMAGE_AT = 200;
-
     const tDmg = setTimeout(() => {
+      // snapshotAfter（ダメージ適用後）と前 snapshot（適用前）の差分から hits を計算
+      const cur = event.snapshotAfter;
+      const prevSnap =
+        eventIdx > 0 ? (events[eventIdx - 1].snapshotAfter ?? baseSnapshot) : baseSnapshot;
+
       const fl = new Set<string>();
       const nextHits = new Map<string, Hit>();
       if (cur) {
         for (const id of Object.keys(cur)) {
-          const p = prev?.[id];
-          if (p && (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown))) {
+          const p = prevSnap?.[id];
+          if (!p) continue;
+          if (cur[id].hp < p.hp || (cur[id].isDown && !p.isDown)) {
             fl.add(id);
             const dmg = Math.round(p.hp - cur[id].hp);
-            const logText = state.log[idx]?.text ?? '';
-            const isCrit = logText.includes('（会心）');
-            const isHeal = logText.includes('回復') && cur[id].hp > p.hp;
-            const element = state.log[idx]?.element;
+            // event から属性を取得
+            const element =
+              event.kind === 'normal-attack' || event.kind === 'skill'
+                ? event.hits.find((h) => h.targetId === id)?.element
+                : undefined;
+            const isCrit =
+              event.kind === 'normal-attack' || event.kind === 'skill'
+                ? event.hits.some((h) => h.targetId === id && h.result === 'crit')
+                : false;
             nextHits.set(id, {
               value: dmg > 0 ? dmg : Math.round(cur[id].hp - p.hp),
-              variant: isHeal ? 'heal' : isCrit ? 'crit' : 'damage',
+              variant: isCrit ? 'crit' : 'damage',
               element,
               isCrit,
               isAllyTarget: allyIdSetRef.current.has(id),
-              seq: idx,
+              seq: eventIdx,
             });
           } else if (p && cur[id].hp > p.hp) {
             // HP 回復
@@ -503,94 +528,76 @@ export const Page = ({
               value: healed,
               variant: 'heal',
               isAllyTarget: allyIdSetRef.current.has(id),
-              seq: idx,
+              seq: eventIdx,
             });
           }
         }
       }
       setFlashIds(fl);
       setHits(nextHits);
-      // gold InkSplatter は勝利演出 useEffect 経由で setInkSplatters → 既存ロジック維持
 
-      // SE 発火: attack/critical/damage/heal は HitFx マウント時 useEffect で集約発火するため除外
-      const line = state.log[idx];
+      // mountFxFor: event 種別に応じた Fx 発火
       let didSetBuffOrDebuff = false;
-      if (line) {
-        const t = line.text;
-        // 逃走成功 (SE は DustRiseFx マウント時に発火)
-        // 戦闘不能
-        if (t.includes('は倒れた')) {
-          play('down');
+
+      if (event.kind === 'tick') {
+        if (event.defeated) play('down');
+        if (event.effectType === 'buff-expire' || event.effectType === 'regen') {
+          setBuffFxMap((prev) => {
+            const next = new Map(prev);
+            next.set(event.targetId, eventIdx);
+            return next;
+          });
+          didSetBuffOrDebuff = true;
+        } else if (event.effectType === 'debuff-expire') {
+          setDebuffFxMap((prev) => {
+            const next = new Map(prev);
+            next.set(event.targetId, eventIdx);
+            return next;
+          });
+          didSetBuffOrDebuff = true;
         }
-        // スキル発動 (SE は RuneSpinFx visible=true 時に発火)
-        // ユニオン (SE は RuneSpinFx visible=true 時に発火)
-        // 状態異常付与
-        else if (t.includes('になった')) {
-          const allActors = [...(state?.allies ?? []), ...(state?.enemies ?? [])];
-          const targetActor = allActors.find((a) => t.startsWith(a.name));
-          if (targetActor) {
-            const targetId = targetActor.id;
-            setDebuffFxMap((prev) => {
-              const next = new Map(prev);
-              next.set(targetId, idx);
-              return next;
-            });
-            didSetBuffOrDebuff = true;
-          } else {
-            play('debuff');
-          }
-        }
-        // バフ系
-        else if (
-          t.includes('は態勢を整えた') ||
-          t.includes('の構えを取った') ||
-          t.includes('を引きつけた') ||
-          t.includes('の障壁を張った')
-        ) {
-          const allActors = [...(state?.allies ?? []), ...(state?.enemies ?? [])];
-          const targetActor = allActors.find((a) => t.startsWith(a.name));
-          if (targetActor) {
-            const targetId = targetActor.id;
+      } else if (event.kind === 'skill' || event.kind === 'normal-attack') {
+        // 戦闘不能になった対象
+        const defeated =
+          event.kind === 'normal-attack' || event.kind === 'skill'
+            ? event.hits.filter((h) => h.defeated)
+            : [];
+        if (defeated.length > 0) play('down');
+        // バフ付与
+        if (event.kind === 'skill' && event.buffs.length > 0) {
+          for (const b of event.buffs) {
             setBuffFxMap((prev) => {
               const next = new Map(prev);
-              next.set(targetId, idx);
+              next.set(b.targetId, eventIdx);
               return next;
             });
-            didSetBuffOrDebuff = true;
-          } else {
-            play('buff');
           }
+          didSetBuffOrDebuff = true;
         }
-        // damage/heal SE は HitFx 内で isAllyTarget/variant に応じて発火するため除外
+        // デバフ付与
+        if (event.kind === 'skill' && event.debuffs.length > 0) {
+          for (const d of event.debuffs) {
+            setDebuffFxMap((prev) => {
+              const next = new Map(prev);
+              next.set(d.targetId, eventIdx);
+              return next;
+            });
+          }
+          didSetBuffOrDebuff = true;
+        }
       }
 
-      // Fx 無し行動（防御・構え・待機など）のフォールバック完了タイマー
-      // HitFx / BuffFx / DebuffFx の onDone が呼ばれないケースでループを進める
+      // Fx 無し行動（防御・待機など）のフォールバック完了タイマー
       const hasAnyFx = nextHits.size > 0 || didSetBuffOrDebuff;
       if (!hasAnyFx) {
-        // 次のログの actorId が同じ（連続行動＝スキル詠唱→実ダメージ）→ 前進キープのまま次へ
-        const nextIdx = idx + 1;
-        const nextActor = anim.actorIds[nextIdx];
-        const isContinuation = currentActor && nextActor === currentActor;
-
-        if (isContinuation) {
-          // 前進キープ: setAdvancingActorId(null) を呼ばず、revealed+1 のみ進める
-          setTimeout(() => {
-            if (actionCompletedRef.current) return;
-            actionCompletedRef.current = true;
-            setAnim((prev) => (prev ? { ...prev, revealed: prev.revealed + 1 } : null));
-          }, 200); // 短めの待機（詠唱表現）
-        } else {
-          // 次に同 actor が行動しない（防御・待機・別 actor の連続 etc.）: 通常フォールバック
-          setTimeout(() => completeAction(), 400);
-        }
+        setTimeout(() => tryComplete(), 400);
       }
     }, DAMAGE_AT);
 
     return () => {
       clearTimeout(tDmg);
     };
-  }, [state, anim, play, completeAction]);
+  }, [state, anim, play, tryComplete, battleLogger]);
 
   // リザルト用の経験値・レベルアップ結果（issue #18）。勝利時のみ算出。
   const expResults = useMemo(
@@ -1007,16 +1014,16 @@ export const Page = ({
   };
 
   // 逐次再生中はログ行に紐づく HP スナップショットを表示する（issue #18）。再生外は実値。
-  const dispMap: Record<string, { hp: number; isDown: boolean }> | null = anim
+  // dispMap: anim 再生中は snapshotAfter ベースで HP バーを同期する（Step 5-8）
+  const dispMap: CombatantSnapshot | null = anim
     ? (() => {
-        // hits が反映されている = DAMAGE_AT 後 → 現ログの snapshot を参照（HP バーをダメージ Fx と同期）
+        const { events, eventIdx, baseSnapshot } = anim;
+        // hits が反映済み (DAMAGE_AT 後) → 現イベントの snapshotAfter を参照
         if (hits.size > 0) {
-          return state.log[anim.revealed]?.snapshot ?? anim.base;
+          return events[eventIdx]?.snapshotAfter ?? baseSnapshot;
         }
-        // hits 未反映 = DAMAGE_AT 前 → 前ログの snapshot（HP は前の状態を維持）
-        return anim.revealed > 0
-          ? (state.log[anim.revealed - 1]?.snapshot ?? anim.base)
-          : anim.base;
+        // hits 未反映 (DAMAGE_AT 前) → 前イベントの snapshotAfter（前の状態を維持）
+        return eventIdx > 0 ? (events[eventIdx - 1]?.snapshotAfter ?? baseSnapshot) : baseSnapshot;
       })()
     : null;
   const dispOf = (c: Combatant): { hp: number; isDown: boolean } =>
@@ -1121,7 +1128,7 @@ export const Page = ({
                     next.delete(a.id);
                     return next;
                   });
-                  completeAction();
+                  tryComplete();
                 }}
               />
             );
@@ -1136,7 +1143,7 @@ export const Page = ({
               n.delete(a.id);
               return n;
             });
-            completeAction();
+            tryComplete();
           }}
         />
         {/* DebuffFx — 状態異常付与演出（赤フラッシュ 0.4s + SE） */}
@@ -1149,7 +1156,7 @@ export const Page = ({
               n.delete(a.id);
               return n;
             });
-            completeAction();
+            tryComplete();
           }}
         />
         {/* gold InkSplatter — 撃破演出（既存ロジック維持） */}
@@ -1302,9 +1309,11 @@ export const Page = ({
       >
         <span className={styles.logLatestLine}>
           {(() => {
-            const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-            if (visible.length === 0) return `てきが あらわれた！（${state.turn} ターン目）`;
-            return visible[visible.length - 1].text;
+            const renderingText = battleLogger.rendering?.msg.text;
+            const lastText = battleLogger.displayed[battleLogger.displayed.length - 1]?.text;
+            const latestText = renderingText ?? lastText;
+            if (!latestText) return `てきが あらわれた！（${state.turn} ターン目）`;
+            return latestText;
           })()}
         </span>
         <span className={styles.logTapHint}>タップで全ログ</span>
@@ -1347,7 +1356,7 @@ export const Page = ({
                             next.delete(e.id);
                             return next;
                           });
-                          completeAction();
+                          tryComplete();
                         }}
                       />
                     );
@@ -1362,7 +1371,7 @@ export const Page = ({
                       n.delete(e.id);
                       return n;
                     });
-                    completeAction();
+                    tryComplete();
                   }}
                 />
                 {/* DebuffFx — 敵状態異常付与演出（赤フラッシュ 0.4s + SE） */}
@@ -1375,7 +1384,7 @@ export const Page = ({
                       n.delete(e.id);
                       return n;
                     });
-                    completeAction();
+                    tryComplete();
                   }}
                 />
                 {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}
@@ -2261,17 +2270,20 @@ export const Page = ({
             </div>
             <div className={styles.logOverlayBody}>
               {(() => {
-                const visible = anim ? state.log.slice(0, anim.revealed) : state.log;
-                if (visible.length === 0) {
+                const allLines = [
+                  ...battleLogger.displayed,
+                  ...(battleLogger.rendering ? [battleLogger.rendering.msg] : []),
+                ];
+                if (allLines.length === 0) {
                   return (
                     <div className={styles.logLine}>
                       てきが あらわれた！（{state.turn} ターン目）
                     </div>
                   );
                 }
-                return visible.map((l, i) => (
+                return allLines.map((l) => (
                   <div
-                    key={i}
+                    key={l.id}
                     className={styles.logLine}
                   >
                     {l.text}

@@ -468,24 +468,6 @@ export type BattleOutcome = 'ongoing' | 'win' | 'lose' | 'fled';
  */
 export type FirstStrike = 'none' | 'preemptive' | 'ambush';
 
-export interface BattleLogEntry {
-  text: string;
-  /** 攻撃/スキルの属性。AttackFx に渡すために使う。省略時は UI 側で 'slash' を fallback とする。 */
-  element?: Element;
-  /**
-   * 行動開始ログ（攻撃発動・スキル発動・防御選択など）の行動者 ID。
-   * UI が前進アニメを適用するキャラを特定するために使う。
-   * 結果ログ（被弾・撃破・ドロップ等）は undefined とする。
-   */
-  actorId?: string;
-  /**
-   * このログ行が表示された時点の全戦闘員の HP/戦闘不能状態のスナップショット（issue #18）。
-   * UI が行動を1行ずつ再生し、カードの HP バーを段階的に減らす/点滅させるために使う。
-   * 戦闘エンジンが resolveTurn 内で各 push 時に記録する（保存しない）。
-   */
-  snapshot?: Record<string, { hp: number; isDown: boolean }>;
-}
-
 export interface BattleState {
   turn: number;
   depth: number;
@@ -493,11 +475,9 @@ export interface BattleState {
   enemies: Combatant[];
   /** 召喚体（[03 §8]）。最前列の壁/攻撃役。最大3体。味方の全滅判定には数えない。 */
   summons: Combatant[];
-  log: BattleLogEntry[];
   /**
    * 構造化イベントリスト（[battle-event-redesign.md §2.2]）。
    * 戦闘ロジックが生成し、UI がアニメーション再生に使う。
-   * log（BattleLogEntry[]）と並存する（log 削除は Step 5 で別タスク）。
    */
   events: import('./battleEvent').BattleEvent[];
   outcome: BattleOutcome;

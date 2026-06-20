@@ -102,13 +102,11 @@ describe('regen: リジェネ（継続回復）', () => {
     const next = resolveTurn(state, [cmd], rng);
 
     const afterAlly = next.allies.find((a) => a.id === 'ally1')!;
-    // ターン終了時リジェネで少なくとも regenAmount 回復しているはず（敵の攻撃は受けるが守備が高い）
-    // 回復ログが存在することで確認する
-    const hasRegenLog = next.log.some((l) => l.text.includes('リジェネ'));
-    expect(hasRegenLog).toBe(true);
-    // HP が上がっている（敵攻撃より回復が上回る場合は純増。最低限 100 以上に留まることを確認）
-    // 敵の通常攻撃（str=1, vit=100 守備）でほぼダメージがないため回復分が反映されるはず
-    // 少なくとも regen が「効いた」ことを確認: ログ確認だけで十分
+    // ターン終了時リジェネで TickEvent(regen) が生成されることで確認する
+    const hasRegenTick = next.events.some(
+      (e): e is import('./battleEvent').TickEvent => e.kind === 'tick' && e.effectType === 'regen'
+    );
+    expect(hasRegenTick).toBe(true);
     expect(afterAlly).toBeDefined();
   });
 
@@ -218,18 +216,10 @@ describe('drain: HP吸収', () => {
     // 敵にダメージが入っていること
     expect(afterEnemy.hp).toBeLessThan(enemy.hp);
 
-    // 吸収ログが存在すること（実際に吸収された場合）
-    // HP が 50 から上昇しているか、吸収ログが出ているか
-    const hasAbsorbLog = next.log.some((l) => l.text.includes('吸収した'));
-    // 初期 HP が 50 で maxHp が 200 なので、吸収できる余地がある
-    // ダメージが入っていれば術者 HP は上昇するはず
-    if (hasAbsorbLog) {
-      expect(afterActor.hp).toBeGreaterThan(50);
-    }
-    // 少なくとも吸収ログまたは術者HPの増加が見られるはず（ダメージが 0 でない限り）
+    // 吸収: ダメージが入っていれば術者 HP が上昇しているはず（初期 50, maxHp 200）
     const damageDealt = enemy.hp - afterEnemy.hp;
     if (damageDealt > 0) {
-      expect(hasAbsorbLog).toBe(true);
+      expect(afterActor.hp).toBeGreaterThan(50);
     }
   });
 
@@ -273,11 +263,7 @@ describe('drain: HP吸収', () => {
 
     const afterActor = next.allies.find((a) => a.id === 'summoner')!;
 
-    // 敵の攻撃で HP が下がることがあるため、吸収ログがない（=満タンで吸収されない）ことを確認
-    // HP はターン後に変化するが、maxHp を超えないこと
+    // 満タン時は吸収されない: HP は maxHp を超えない
     expect(afterActor.hp).toBeLessThanOrEqual(actor.maxHp);
-    // 吸収ログは出ない（満タン時は before === after）
-    const hasAbsorbLog = next.log.some((l) => l.text.includes('吸収した'));
-    expect(hasAbsorbLog).toBe(false);
   });
 });
