@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import styles from './style.module.scss';
+import { computeCompletedActorIds, computeDisplayedTurnOrder } from './turnOrder';
 
 import { useBgm } from '@/audio/bgm/useBgm';
 import { useSfx } from '@/audio/useSfx';
@@ -467,14 +468,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   // completedActorIds（再生中ターンの events から計算）と一致して全アイコンが slideout する。
   const displayedTurnOrder = useMemo(() => {
     if (!state) return [];
-    if (anim && anim.actorOrder.length > 0) {
-      const all = [...state.allies, ...state.enemies, ...state.summons];
-      const lookup = new Map(all.map((c) => [c.id, c]));
-      return anim.actorOrder
-        .map((id) => lookup.get(id))
-        .filter((c): c is (typeof all)[number] => !!c);
-    }
-    return turnOrderPreview;
+    return computeDisplayedTurnOrder(state, anim?.actorOrder ?? null, turnOrderPreview);
   }, [anim, state, turnOrderPreview]);
 
   // 不意打ち: ターン1は味方が動けない。突入演出が晴れてから敵の先手1巡を自動解決する。
@@ -804,12 +798,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   // 完了済みアクターのアイコンを slideout アニメーションで消す。
   const completedActorIds = useMemo(() => {
     if (!anim) return new Set<string>();
-    const set = new Set<string>();
-    for (let i = 0; i < anim.eventIdx; i++) {
-      const e = anim.events[i];
-      if ('actorId' in e && typeof e.actorId === 'string') set.add(e.actorId);
-    }
-    return set;
+    return computeCompletedActorIds(anim.events, anim.eventIdx);
   }, [anim]);
 
   const allAssigned =
