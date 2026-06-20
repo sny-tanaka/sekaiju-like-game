@@ -17,6 +17,16 @@ import { SUMMONS } from '@/data/summons';
 import { UNION_SKILLS } from '@/data/unionSkills';
 import { weaponNormalAttackElement } from '@/data/weaponElement';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
+import type {
+  BattleEvent,
+  BuffKind,
+  BuffResult,
+  DebuffResult,
+  HealResult,
+  HitResult,
+  NormalAttackEvent,
+  SkillEvent,
+} from '@/domain/battleEvent';
 import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { enemyLapForDepth } from '@/domain/encounterTable';
 import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
@@ -336,7 +346,7 @@ function consumeBarrier(target: Combatant, dmg: number, log: BattleState['log'])
  * 物理/魔法1ヒットを解決する（[03 §7]）。命中判定→障壁→ダメージ→ユニオン。
  * 反応（反撃/連携追撃）は発火しない。呼び出し側が「行動（スキル/通常攻撃）単位」で
  * 対象ごとに1回だけ triggerReactions を呼ぶ（多段ヒットでの過剰発動を防ぐ。[03 §6.5]）。
- * 返り値: 命中したか・実ダメージ。
+ * 返り値: 命中したか・実ダメージ・HitResult（events 生成用）。
  */
 function strikeOnce(
   state: BattleState,
@@ -345,8 +355,8 @@ function strikeOnce(
   p: { statBase: 'str' | 'int'; power: number; element: Element },
   rng: Rng,
   opts: { actorUnion?: number; clean?: boolean } = {}
-): { hit: boolean; dealt: number } {
-  if (target.isDown) return { hit: false, dealt: 0 };
+): { hit: boolean; dealt: number; hitResult: HitResult | null } {
+  if (target.isDown) return { hit: false, dealt: 0, hitResult: null };
   const res = computeDamage(
     actor,
     target,
@@ -360,12 +370,23 @@ function strikeOnce(
   );
   if (!res.hit) {
     state.log.push({ text: `${actor.name} の攻撃は外れた`, actorId: actor.id });
-    return { hit: false, dealt: 0 };
+    return {
+      hit: false,
+      dealt: 0,
+      hitResult: {
+        targetId: target.id,
+        result: 'miss',
+        damage: 0,
+        element: p.element,
+        defeated: false,
+      },
+    };
   }
   const dealt = consumeBarrier(target, res.damage, state.log);
   const dealLogs = dealDamage(target, dealt);
   if (opts.actorUnion) gainUnion(actor, opts.actorUnion);
   gainUnion(target, 5);
+  const defeated = target.isDown;
   // 障壁で全吸収（dealt=0）した場合はダメージログを省く（「障壁で防いだ」は consumeBarrier で出力済み）。
   if (dealt > 0) {
     state.log.push({
@@ -380,7 +401,17 @@ function strikeOnce(
   }
   // 撃破・起床ログはダメージ本文の後に出す（「ダメージ→倒れた」の順序を保つ）。
   for (const text of dealLogs) state.log.push({ text, element: p.element });
-  return { hit: true, dealt };
+  return {
+    hit: true,
+    dealt,
+    hitResult: {
+      targetId: target.id,
+      result: res.critical ? 'crit' : 'hit',
+      damage: dealt,
+      element: p.element,
+      defeated,
+    },
+  };
 }
 
 /**
@@ -388,6 +419,7 @@ function strikeOnce(
  * - 反撃（counter）: 被弾した target が生存し攻撃者と敵対していれば確率で反撃。
  * - 連携追撃（chase）: 攻撃側の味方が同属性 chase を持つなら、被弾した敵へ追撃。
  * 反応由来の追加打（strikeOnce）はここからは反応を再発火しないため連鎖しない。
+ * 返り値: 発生した反応 BattleEvent[] の配列（呼び出し側が親 event の reactions[] に格納する）。
  */
 function triggerReactions(
   state: BattleState,
@@ -396,7 +428,8 @@ function triggerReactions(
   element: Element,
   dealt: number,
   rng: Rng
-): void {
+): BattleEvent[] {
+  const reactionEvents: BattleEvent[] = [];
   // 反撃: target → attacker
   if (!target.isDown && !attacker.isDown && target.side !== attacker.side) {
     for (const st of target.states ?? []) {
@@ -404,7 +437,7 @@ function triggerReactions(
       if (rng.next() >= st.chance) continue;
       state.log.push({ text: `${target.name} の反撃！`, actorId: target.id });
       const el: Element = st.statBase === 'str' ? 'bash' : 'almighty';
-      strikeOnce(
+      const r = strikeOnce(
         state,
         target,
         attacker,
@@ -412,6 +445,13 @@ function triggerReactions(
         rng,
         { clean: true }
       );
+      const counterEvent: NormalAttackEvent = {
+        kind: 'normal-attack',
+        actorId: target.id,
+        hits: r.hitResult ? [r.hitResult] : [],
+        reactions: [],
+      };
+      reactionEvents.push(counterEvent);
       if (attacker.isDown) break;
     }
   }
@@ -423,7 +463,7 @@ function triggerReactions(
         if (st.kind !== 'chase') continue;
         if (st.element !== element && st.element !== 'almighty' && element !== 'almighty') continue;
         state.log.push({ text: `${ch.name} の連携追撃！`, actorId: ch.id });
-        strikeOnce(
+        const r = strikeOnce(
           state,
           ch,
           target,
@@ -431,9 +471,17 @@ function triggerReactions(
           rng,
           { clean: true }
         );
+        const chaseEvent: NormalAttackEvent = {
+          kind: 'normal-attack',
+          actorId: ch.id,
+          hits: r.hitResult ? [r.hitResult] : [],
+          reactions: [],
+        };
+        reactionEvents.push(chaseEvent);
       }
     }
   }
+  return reactionEvents;
 }
 
 /**
@@ -501,6 +549,20 @@ function skillTargets(
   return resolveTargets(state, actor, def.target, targetId);
 }
 
+/** applySkillEffect の戻り値: SkillEvent 組み立て用の結果蓄積。 */
+type SkillEffectResult = {
+  hits: HitResult[];
+  heals: HealResult[];
+  buffs: BuffResult[];
+  debuffs: DebuffResult[];
+  /** スキルで召喚が行われた場合の召喚 ID（SummonEvent 生成用）。 */
+  summonedId?: string;
+  /** スキルで召喚が行われた場合の召喚種別。 */
+  summonedKind?: SummonKind;
+  /** 反応 events（damage 効果が triggerReactions を呼んだ結果）。 */
+  reactions: BattleEvent[];
+};
+
 function applySkillEffect(
   state: BattleState,
   actor: Combatant,
@@ -510,7 +572,8 @@ function applySkillEffect(
   targets: Combatant[],
   rng: Rng,
   target: TargetType
-): void {
+): SkillEffectResult {
+  const result: SkillEffectResult = { hits: [], heals: [], buffs: [], debuffs: [], reactions: [] };
   switch (effect.kind) {
     case 'damage': {
       const hits = effect.hits ?? 1;
@@ -530,13 +593,17 @@ function applySkillEffect(
             rng,
             { clean: true }
           );
+          if (r.hitResult) result.hits.push(r.hitResult);
           if (r.hit) {
             landed = true;
             total += r.dealt;
           }
         }
         // 反応は「スキル×対象」単位で1回（多段でも追撃/反撃は1回。[03 §6.5]）。
-        if (landed) triggerReactions(state, actor, target, element, total, rng);
+        if (landed) {
+          const reactionEvts = triggerReactions(state, actor, target, element, total, rng);
+          result.reactions.push(...reactionEvts);
+        }
         drainTotal += total; // ★追加
       }
       // ★追加: HP吸収
@@ -561,6 +628,7 @@ function applySkillEffect(
       for (const target of targets) {
         if (target.isDown) continue;
         target.hp = clamp(target.hp + amount, 0, target.maxHp);
+        result.heals.push({ targetId: target.id, amount });
       }
       state.log.push({ text: `${actor.name} は回復魔法を使った（+${amount}）`, actorId: actor.id });
       break;
@@ -572,6 +640,12 @@ function applySkillEffect(
           modifier: effect.modifier(level),
           remainingTurns: effect.turns,
           stackGroup: effect.stackGroup,
+        });
+        // isBuffImmune な対象は addBuff で弾かれるが、event には載せる（UI判断に任せる）
+        result.buffs.push({
+          targetId: target.id,
+          effect: effect.stat as BuffKind,
+          turns: effect.turns,
         });
       }
       state.log.push({ text: `${actor.name} は態勢を整えた`, actorId: actor.id });
@@ -588,6 +662,7 @@ function applySkillEffect(
             remainingTurns: effect.turns,
             magnitude: effect.magnitude,
           });
+          result.debuffs.push({ targetId: target.id, effect: effect.ailment, turns: effect.turns });
           state.log.push({ text: `${target.name} は${AILMENT_LABEL[effect.ailment]}になった` });
         }
       }
@@ -602,6 +677,8 @@ function applySkillEffect(
       const id = `summon_${state.turn}_${state.summons.length}`;
       const s = buildSummon(effect.summonKind, state.depth, actor.id, id);
       state.summons.push(s);
+      result.summonedId = s.id;
+      result.summonedKind = effect.summonKind;
       state.log.push({ text: `${actor.name} は ${s.name} を召喚した！`, actorId: actor.id });
       break;
     }
@@ -615,6 +692,7 @@ function applySkillEffect(
           statBase: effect.statBase,
           remainingTurns: effect.turns,
         });
+        result.buffs.push({ targetId: target.id, effect: 'counter', turns: effect.turns });
       }
       state.log.push({ text: `${actor.name} は反撃の構えを取った`, actorId: actor.id });
       break;
@@ -629,6 +707,7 @@ function applySkillEffect(
           statBase: effect.statBase,
           remainingTurns: effect.turns,
         });
+        result.buffs.push({ targetId: target.id, effect: 'chase', turns: effect.turns });
       }
       state.log.push({ text: `${actor.name} は連携の構えを取った`, actorId: actor.id });
       break;
@@ -641,6 +720,7 @@ function applySkillEffect(
           weight: effect.weight(level),
           remainingTurns: effect.turns,
         });
+        result.buffs.push({ targetId: target.id, effect: 'decoy', turns: effect.turns });
       }
       state.log.push({ text: `${actor.name} は敵の注意を引きつけた`, actorId: actor.id });
       break;
@@ -653,6 +733,7 @@ function applySkillEffect(
           absorb: effect.absorb(level),
           remainingTurns: effect.turns,
         });
+        result.buffs.push({ targetId: target.id, effect: 'barrier', turns: effect.turns });
       }
       state.log.push({ text: `${actor.name} は守りの障壁を張った`, actorId: actor.id });
       break;
@@ -670,6 +751,7 @@ function applySkillEffect(
         if (!target.isDown) continue; // 生存者には無効
         target.isDown = false;
         target.hp = clamp(Math.round(target.maxHp * effect.ratio(level)), 1, target.maxHp);
+        result.heals.push({ targetId: target.id, amount: target.hp });
         state.log.push({ text: `${actor.name} は ${target.name} を蘇生した（HP+${target.hp}）` });
       }
       break;
@@ -687,6 +769,7 @@ function applySkillEffect(
       for (const target of targets) {
         if (target.isDown) continue;
         addState(target, { kind: 'regen', amount, remainingTurns: effect.turns });
+        result.buffs.push({ targetId: target.id, effect: 'regen', turns: effect.turns });
       }
       state.log.push({ text: `${actor.name} は継続回復を付与した`, actorId: actor.id });
       break;
@@ -709,6 +792,7 @@ function applySkillEffect(
     default:
       break;
   }
+  return result;
 }
 
 /** 通常攻撃（物理・武器属性 or 素手 bash）。反撃/連携追撃の対象になる（[03 §6.5]）。 */
@@ -719,7 +803,15 @@ function basicAttack(state: BattleState, actor: Combatant, target: Combatant, rn
     actorUnion: 5,
   });
   // 通常攻撃は単発なのでヒット時に1回だけ反応を判定する（[03 §6.5]）。
-  if (r.hit) triggerReactions(state, actor, target, element, r.dealt, rng);
+  const reactionEvts = r.hit ? triggerReactions(state, actor, target, element, r.dealt, rng) : [];
+  // BattleEvent: NormalAttackEvent を生成して push
+  const normalAttackEvent: NormalAttackEvent = {
+    kind: 'normal-attack',
+    actorId: actor.id,
+    hits: r.hitResult ? [r.hitResult] : [],
+    reactions: reactionEvts,
+  };
+  state.events.push(normalAttackEvent);
 }
 
 const avgAgi = (cs: Combatant[]) =>
@@ -797,9 +889,53 @@ function resolveUnion(
   state.log.push({ text: `ユニオン！ ${activator.name} の${def.name}！`, actorId: activator.id });
   const level = activator.skillLevels?.[cmd.unionSkillId] ?? 1;
   const targets = resolveTargets(state, activator, def.target, cmd.targetId);
+  // SkillEvent 組み立て用の蓄積
+  const unionHits: HitResult[] = [];
+  const unionHeals: HealResult[] = [];
+  const unionBuffs: BuffResult[] = [];
+  const unionDebuffs: DebuffResult[] = [];
+  const unionReactions: BattleEvent[] = [];
   for (const effect of def.effects) {
-    applySkillEffect(state, activator, effect, def.element, level, targets, rng, def.target);
+    const r = applySkillEffect(
+      state,
+      activator,
+      effect,
+      def.element,
+      level,
+      targets,
+      rng,
+      def.target
+    );
+    unionHits.push(...r.hits);
+    unionHeals.push(...r.heals);
+    unionBuffs.push(...r.buffs);
+    unionDebuffs.push(...r.debuffs);
+    unionReactions.push(...r.reactions);
+    // 召喚 effect があれば SummonEvent を push
+    if (r.summonedId && r.summonedKind) {
+      state.events.push({
+        kind: 'summon-appear',
+        summonerId: activator.id,
+        summonId: r.summonedId,
+        summonKind: r.summonedKind,
+        summonName: SUMMONS[r.summonedKind]?.name,
+      });
+    }
   }
+  // SkillEvent（ユニオン）を push
+  const unionSkillEvent: SkillEvent = {
+    kind: 'skill',
+    actorId: activator.id,
+    skillId: cmd.unionSkillId,
+    unionActorIds: payers.map((p) => p.id),
+    targetIds: targets.map((t) => t.id),
+    hits: unionHits,
+    heals: unionHeals,
+    buffs: unionBuffs,
+    debuffs: unionDebuffs,
+    reactions: unionReactions,
+  };
+  state.events.push(unionSkillEvent);
 }
 
 /**
@@ -860,9 +996,11 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       if (rate > 0 && rng.next() < rate) {
         next.log.push({ text: 'うまく逃げ切れた！' });
         next.outcome = 'fled';
+        next.events.push({ kind: 'flee', actorId: fleeCmd.actorId, success: true });
         return next;
       }
       next.log.push({ text: '逃げられなかった！' });
+      next.events.push({ kind: 'flee', actorId: fleeCmd.actorId, success: false });
     }
   }
 
@@ -874,6 +1012,7 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       if (!actor || actor.isDown) continue;
       addBuff(actor, { stat: 'pdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
       addBuff(actor, { stat: 'mdef', modifier: 1.5, remainingTurns: 1, stackGroup: 'guard' });
+      next.events.push({ kind: 'defend', actorId: actor.id });
     }
   }
 
@@ -1001,8 +1140,14 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         // スキルアクション適用
         const targets = resolveTargets(next, actor, selectedAction.target, decoyTargetId ?? '');
         next.log.push({ text: `${actor.name} の${selectedAction.name}！`, actorId: actor.id });
+        // SkillEvent 組み立て用
+        const skillHits: HitResult[] = [];
+        const skillHeals: HealResult[] = [];
+        const skillBuffs: BuffResult[] = [];
+        const skillDebuffs: DebuffResult[] = [];
+        const skillReactions: BattleEvent[] = [];
         for (const effect of selectedAction.effects) {
-          applySkillEffect(
+          const r = applySkillEffect(
             next,
             actor,
             effect,
@@ -1012,7 +1157,33 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
             rng,
             selectedAction.target
           );
+          skillHits.push(...r.hits);
+          skillHeals.push(...r.heals);
+          skillBuffs.push(...r.buffs);
+          skillDebuffs.push(...r.debuffs);
+          skillReactions.push(...r.reactions);
+          // 召喚 effect があれば SummonEvent を push
+          if (r.summonedId && r.summonedKind) {
+            next.events.push({
+              kind: 'summon-appear',
+              summonerId: actor.id,
+              summonId: r.summonedId,
+              summonKind: r.summonedKind,
+              summonName: SUMMONS[r.summonedKind]?.name,
+            });
+          }
         }
+        next.events.push({
+          kind: 'skill',
+          actorId: actor.id,
+          skillId: selectedAction.id,
+          targetIds: targets.map((t) => t.id),
+          hits: skillHits,
+          heals: skillHeals,
+          buffs: skillBuffs,
+          debuffs: skillDebuffs,
+          reactions: skillReactions,
+        });
         // actionState 更新
         if (!actor.actionState) actor.actionState = {};
         actor.actionState[selectedAction.id] = {
@@ -1059,24 +1230,78 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
         gainUnion(actor, 10);
         const targets = skillTargets(next, actor, def, cmd.targetId);
         next.log.push({ text: `${actor.name} の${def.name}！`, actorId: actor.id });
+        // SkillEvent 組み立て用
+        const allySkillHits: HitResult[] = [];
+        const allySkillHeals: HealResult[] = [];
+        const allySkillBuffs: BuffResult[] = [];
+        const allySkillDebuffs: DebuffResult[] = [];
+        const allySkillReactions: BattleEvent[] = [];
         for (const effect of def.effects) {
-          applySkillEffect(next, actor, effect, def.element, level, targets, rng, def.target);
+          const r = applySkillEffect(
+            next,
+            actor,
+            effect,
+            def.element,
+            level,
+            targets,
+            rng,
+            def.target
+          );
+          allySkillHits.push(...r.hits);
+          allySkillHeals.push(...r.heals);
+          allySkillBuffs.push(...r.buffs);
+          allySkillDebuffs.push(...r.debuffs);
+          allySkillReactions.push(...r.reactions);
+          // 召喚 effect があれば SummonEvent を push
+          if (r.summonedId && r.summonedKind) {
+            next.events.push({
+              kind: 'summon-appear',
+              summonerId: actor.id,
+              summonId: r.summonedId,
+              summonKind: r.summonedKind,
+              summonName: SUMMONS[r.summonedKind]?.name,
+            });
+          }
         }
+        next.events.push({
+          kind: 'skill',
+          actorId: actor.id,
+          skillId: cmd.skillId,
+          targetIds: targets.map((t) => t.id),
+          hits: allySkillHits,
+          heals: allySkillHeals,
+          buffs: allySkillBuffs,
+          debuffs: allySkillDebuffs,
+          reactions: allySkillReactions,
+        });
       } else if (cmd.kind === 'item') {
         const item = ITEMS[cmd.itemId];
         if (!item || !item.useContext?.includes('battle')) continue;
         const target = find(next, cmd.targetId) ?? actor;
+        let itemEffect: import('@/domain/battleEvent').ItemEffect | undefined;
         for (const eff of item.effects ?? []) {
           if (eff.kind === 'heal') {
-            target.hp = clamp(target.hp + eff.amount(1), 0, target.maxHp);
+            const healAmt = eff.amount(1);
+            target.hp = clamp(target.hp + healAmt, 0, target.maxHp);
+            itemEffect = { kind: 'heal', amount: healAmt };
           } else if (eff.kind === 'restoreTp') {
             // ratio 指定があれば最大TPの割合で回復（高レベルでも有効）。なければ固定値。
             const add = eff.ratio ? Math.round(target.maxTp * eff.ratio) : eff.amount(1);
             target.tp = clamp(target.tp + add, 0, target.maxTp);
+            itemEffect = { kind: 'tp-restore', amount: add };
           }
         }
         next.consumedItems.push(cmd.itemId);
         next.log.push({ text: `${actor.name} は ${item.name} を使った`, actorId: actor.id });
+        if (itemEffect) {
+          next.events.push({
+            kind: 'item-use',
+            actorId: actor.id,
+            itemId: cmd.itemId,
+            targetId: target.id,
+            effect: itemEffect,
+          });
+        }
       }
     }
     // 途中勝敗チェック
@@ -1092,6 +1317,14 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       const dealLogs = dealDamage(c, dmg);
       next.log.push({ text: `${c.name} は毒で ${dmg} のダメージ`, element: 'almighty' });
       for (const text of dealLogs) next.log.push({ text, element: 'almighty' });
+      // TickEvent: poison
+      next.events.push({
+        kind: 'tick',
+        targetId: c.id,
+        effectType: 'poison',
+        amount: dmg,
+        defeated: c.isDown,
+      });
     }
   }
   // リジェネ（継続回復・[issue #41]）。毒の後、残ターン減算の前にHPを回復する。
@@ -1101,15 +1334,43 @@ export function resolveTurn(state: BattleState, commands: BattleCommand[], rng: 
       if (s.kind !== 'regen') continue;
       const before = c.hp;
       c.hp = clamp(c.hp + s.amount, 0, c.maxHp);
-      if (c.hp > before)
+      if (c.hp > before) {
         next.log.push({ text: `${c.name} は ${c.hp - before} 回復した（リジェネ）` });
+        // TickEvent: regen
+        next.events.push({
+          kind: 'tick',
+          targetId: c.id,
+          effectType: 'regen',
+          amount: c.hp - before,
+        });
+      }
     }
   }
   for (const c of [...next.allies, ...next.enemies, ...next.summons]) {
     // 戦闘中の TP 自然回復は廃止（issue #57 第2弾）。TP はアイテム/スキルで管理する有限資源とする。
+    // バフ期限切れの TickEvent を生成してから減算する。
+    const expiringBuffs = c.buffs.filter((b) => b.remainingTurns <= 1);
+    for (const b of expiringBuffs) {
+      next.events.push({
+        kind: 'tick',
+        targetId: c.id,
+        effectType: 'buff-expire',
+        effect: b.stat as BuffKind,
+      });
+    }
     c.buffs = c.buffs
       .map((b) => ({ ...b, remainingTurns: b.remainingTurns - 1 }))
       .filter((b) => b.remainingTurns > 0);
+    // デバフ（状態異常）期限切れの TickEvent を生成してから減算する。
+    const expiringAilments = c.ailments.filter((a) => a.remainingTurns <= 1);
+    for (const a of expiringAilments) {
+      next.events.push({
+        kind: 'tick',
+        targetId: c.id,
+        effectType: 'debuff-expire',
+        effect: a.type,
+      });
+    }
     c.ailments = c.ailments
       .map((a) => ({ ...a, remainingTurns: a.remainingTurns - 1 }))
       .filter((a) => a.remainingTurns > 0);
