@@ -286,6 +286,8 @@ export const Page = ({
   // L/M: buff / debuff Fx — actor ごとの発火シーケンス番号 Map
   const [buffFxMap, setBuffFxMap] = useState<Map<string, number>>(new Map());
   const [debuffFxMap, setDebuffFxMap] = useState<Map<string, number>>(new Map());
+  // state 駆動の前進/後退アニメ: 現在前進中のアクター ID（null で後退 = 元位置に戻る）
+  const [advancingActorId, setAdvancingActorId] = useState<string | null>(null);
 
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
@@ -440,6 +442,7 @@ export const Page = ({
         setFlashIds(new Set());
         setHits(new Map());
         setInkSplatters(new Map());
+        setAdvancingActorId(null);
       }, 200);
       return () => clearTimeout(t);
     }
@@ -448,8 +451,13 @@ export const Page = ({
     const cur = state.log[idx]?.snapshot;
     const prev = idx > 0 ? (state.log[idx - 1]?.snapshot ?? anim.base) : anim.base;
 
-    // Step 1: advance のピーク中（~180ms）でダメージ表示
+    // Step 1: advance のピーク中（~180ms）でダメージ表示 + 行動者前進
     const DAMAGE_AT = 180;
+    // Step 2: 行動完了を state で明示してから後退（keyframe の固定時間予約ではなく明示的 clear）
+    const RETRACT_AT = 700;
+    // Step 3: revealed を進める（一律 900ms）
+    const NEXT_AT = 900;
+
     const tDmg = setTimeout(() => {
       const fl = new Set<string>();
       const nextHits = new Map<string, Hit>();
@@ -535,16 +543,24 @@ export const Page = ({
         }
         // damage/heal SE は HitFx 内で isAllyTarget/variant に応じて発火するため除外
       }
+
+      // 行動者前進: CSS transition で前進（class 付与 → translateY が適用される）
+      const currentActor = anim.actorIds[idx];
+      setAdvancingActorId(currentActor ?? null);
     }, DAMAGE_AT);
 
-    // Step 2: advance 完了後に revealed を進める（次の actor の advance が始まる）
-    const NEXT_AT = anim.revealed === 0 ? 780 : 900;
+    // 後退: state をクリアすると CSS transition で translateY(0) に戻る
+    const tRetract = setTimeout(() => {
+      setAdvancingActorId(null);
+    }, RETRACT_AT);
+
     const tNext = setTimeout(() => {
       setAnim({ ...anim, revealed: anim.revealed + 1 });
     }, NEXT_AT);
 
     return () => {
       clearTimeout(tDmg);
+      clearTimeout(tRetract);
       clearTimeout(tNext);
     };
   }, [state, anim, play]);
@@ -1015,8 +1031,8 @@ export const Page = ({
     const d = dispOf(a);
     // anim 再生中は TP をターン開始時の実値（tpBaseRef）から取得し、消費前の値を表示する
     const dispTp = anim ? (tpBaseRef.current[a.id] ?? a.tp) : a.tp;
-    // 行動者前進アニメ: 現在のログ行（anim.revealed）に対応する行動者カードを前進させる
-    const isAdvancing = !!anim && anim.actorIds[anim.revealed] === a.id;
+    // 行動者前進アニメ: advancingActorId state で制御（state 駆動）
+    const isAdvancing = advancingActorId === a.id;
     // 味方対象選択中: そのキャラが選ばれているか
     const isAllyTargeted =
       isAllyTargeting && activeId !== null && commandTargets[activeId] === a.id;
@@ -1267,7 +1283,7 @@ export const Page = ({
             const masterEnemyId = e.enemyId as EnemyId | undefined;
             const master = masterEnemyId ? ENEMIES[masterEnemyId] : undefined;
             const isLarge = master?.kind === 'boss' || master?.kind === 'foe';
-            const isEnemyAdvancing = !!anim && anim.actorIds[anim.revealed] === e.id;
+            const isEnemyAdvancing = advancingActorId === e.id;
             return (
               <button
                 type="button"
@@ -1505,6 +1521,7 @@ export const Page = ({
               setAnim(null);
               setFlashIds(new Set());
               setHits(new Map());
+              setAdvancingActorId(null);
             }}
           >
             ▶▶ スキップ

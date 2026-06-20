@@ -107,6 +107,7 @@
   cursor: pointer;
   // (C) disabled 継承を打ち消す: ブラウザのデフォルト（灰色）に上書きされないよう明示
   color: var.$ink;
+  transition: transform 0.18s ease-out; // state 駆動の前進/後退アニメ用
 }
 // (C) disabled 状態でも色とコントラストを維持する（.down の opacity:0.4 は維持）
 .enemy:disabled {
@@ -401,6 +402,7 @@
   box-shadow: 0 1px 3px var.$shadow-ink;
   text-align: left;
   cursor: pointer;
+  transition: transform 0.18s ease-out; // state 駆動の前進/後退アニメ用
 }
 
 // ユニオン満タン U! バッジ（職業バッジの左に配置）
@@ -2101,27 +2103,17 @@
   animation: dashAway 0.8s ease-in forwards;
 }
 
-// ---- 行動者前進アニメ（モック v3 §9d）: 味方は上、敵は下 ----
-@keyframes allyAdvance {
-  0%   { transform: translateY(0); }
-  20%  { transform: translateY(-16px); }
-  70%  { transform: translateY(-16px); }
-  100% { transform: translateY(0); }
-}
-
-@keyframes enemyAdvance {
-  0%   { transform: translateY(0); }
-  20%  { transform: translateY(16px); }
-  70%  { transform: translateY(16px); }
-  100% { transform: translateY(0); }
-}
-
+// ---- 行動者前進アニメ（state 駆動）: 味方は上、敵は下 ----
+// @keyframes は廃止。advancingActorId state + CSS transition で制御。
+// class が付いたとき: transition で前進、class が外れたとき: transition で後退
 .cardAdvancing {
-  animation: allyAdvance 0.7s ease-in-out forwards;
+  transform: translateY(-16px);
+  transition: transform 0.18s ease-out;
 }
 
 .enemyAdvancing {
-  animation: enemyAdvance 0.7s ease-in-out forwards;
+  transform: translateY(16px);
+  transition: transform 0.18s ease-out;
 }
 
 // ---- K. dustRise — 逃走時の足元砂塵 ----
@@ -2164,10 +2156,13 @@
   .sealStampInner,
   .sealStampInnerOut,
   .dashAwayCard,
-  .cardAdvancing,
-  .enemyAdvancing,
   .dustParticle {
     animation: none;
+  }
+  .cardAdvancing,
+  .enemyAdvancing {
+    transform: none;
+    transition: none;
   }
 }
 
