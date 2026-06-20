@@ -1,13 +1,19 @@
 import styles from './style.module.scss';
 
 import { CharacterPortrait } from '@/components/common/CharacterPortrait/CharacterPortrait';
-import type { Character, SaveMeta } from '@/domain/types';
+import type { Character, SaveMeta, SavePartyPreviewMember } from '@/domain/types';
+
+/** SaveCard が受け付けるパーティプレビューの共用型（Character は上位互換）。 */
+type PreviewMember = Pick<SavePartyPreviewMember, 'id' | 'name' | 'raceId' | 'classId'>;
 
 type Props = {
   /** セーブの概況。 */
   meta: SaveMeta;
-  /** 先頭 5 名分のポートレート用。長さ 0〜5 まで。なければ空配列。 */
-  partyPreview?: Character[];
+  /**
+   * 先頭 5 名分のポートレート用。長さ 0〜5 まで。
+   * 省略時は meta.partyPreview を使う。両方無ければ空配列。
+   */
+  partyPreview?: (Character | SavePartyPreviewMember)[];
 };
 
 const formatTime = (epoch: number): string => {
@@ -18,7 +24,7 @@ const formatTime = (epoch: number): string => {
 };
 
 // タイトルに表示する単一セーブのメタカード。通常 / 破損の2状態。
-export const SaveCard = ({ meta, partyPreview = [] }: Props) => {
+export const SaveCard = ({ meta, partyPreview }: Props) => {
   if (meta.corrupted) {
     return (
       <div className={styles.corrupted}>
@@ -28,7 +34,9 @@ export const SaveCard = ({ meta, partyPreview = [] }: Props) => {
     );
   }
 
-  const slots = Array.from({ length: 5 }, (_, i) => partyPreview[i] ?? null);
+  // 明示的に渡されたプレビューを優先し、なければ meta.partyPreview を使う
+  const preview: PreviewMember[] = (partyPreview ?? meta.partyPreview ?? []) as PreviewMember[];
+  const slots = Array.from({ length: 5 }, (_, i) => preview[i] ?? null);
 
   return (
     <div className={styles.card}>

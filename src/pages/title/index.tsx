@@ -7,7 +7,7 @@ import { AppUpdater } from '@/components/AppUpdater/AppUpdater';
 import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { SaveCard } from '@/components/common/SaveCard/SaveCard';
 import { SoundSettings } from '@/components/common/SoundSettings';
-import type { Character, SaveMeta } from '@/domain/types';
+import type { Character, SaveMeta, SavePartyPreviewMember } from '@/domain/types';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
 import { useGameState } from '@/store/gameState';
 import { useNavigation } from '@/store/navigation';
@@ -39,18 +39,21 @@ export const Page = () => {
   const hasValidSave = meta !== null && !meta.corrupted;
 
   // パーティプレビュー（前衛 → 後衛 の順で先頭 5 名）
-  const partyPreview = useMemo<Character[]>(() => {
-    if (!save) return [];
-    const { members, party } = save.guild;
-    const ids = [
-      ...party.front.filter((id): id is string => id !== null),
-      ...party.back.filter((id): id is string => id !== null),
-    ];
-    return ids
-      .map((id) => members.find((m) => m.id === id))
-      .filter((m): m is Character => m !== undefined)
-      .slice(0, 5);
-  }, [save]);
+  // save がロード済みなら最新の編成を使い、未ロードなら meta.partyPreview で表示する
+  const partyPreview = useMemo<(Character | SavePartyPreviewMember)[]>(() => {
+    if (save) {
+      const { members, party } = save.guild;
+      const ids = [
+        ...party.front.filter((id): id is string => id !== null),
+        ...party.back.filter((id): id is string => id !== null),
+      ];
+      return ids
+        .map((id) => members.find((m) => m.id === id))
+        .filter((m): m is Character => m !== undefined)
+        .slice(0, 5);
+    }
+    return meta?.partyPreview ?? [];
+  }, [save, meta]);
 
   const handleContinue = useCallback(async () => {
     setBusy(true);

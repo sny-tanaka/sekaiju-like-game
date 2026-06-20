@@ -919,6 +919,14 @@ export interface SaveData {
   flags: Record<string, boolean>; // 到達階トリガーの解放フラグ
 }
 
+/** タイトルの SaveCard に表示する編成メンバーの軽量プレビュー情報。 */
+export interface SavePartyPreviewMember {
+  id: string;
+  name: string;
+  raceId: RaceId;
+  classId: ClassId;
+}
+
 /** タイトルに出すセーブの概況メタ情報（SaveData から導出）。セーブは1つ。 */
 export interface SaveMeta {
   guildName: string;
@@ -926,4 +934,6 @@ export interface SaveMeta {
   memberCount: number; // 団員数（概況）
   savedAt: number;
   corrupted?: boolean;
+  /** 編成中のキャラ（前衛→後衛順、最大5件）の軽量プレビュー。 */
+  partyPreview?: SavePartyPreviewMember[];
 }
