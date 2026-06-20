@@ -253,6 +253,14 @@ export const Page = ({
   // 戦闘ログ。インラインで最新 3 行を常時表示、タップで全履歴オーバーレイ。
   const [logOpen, setLogOpen] = useState(false);
 
+  // B. summonAppear: 新規に登場した召喚体の ID セット（500ms で消える）
+  const [newSummonIds, setNewSummonIds] = useState<Set<string>>(new Set());
+  // I. sealStamp: 戦闘開始シール演出
+  const [showSeal, setShowSeal] = useState(false);
+  const [sealOut, setSealOut] = useState(false);
+  // J/K: 逃走時フラグ
+  const [fleeActive, setFleeActive] = useState(false);
+
   // 初期化（1回のみ）: FOE 接触なら予約敵で開始、そうでなければエンカウント抽選
   useEffect(() => {
     if (state || !save?.diveState) return;
@@ -309,6 +317,50 @@ export const Page = ({
     const t = setTimeout(() => setIntroFx(false), 700);
     return () => clearTimeout(t);
   }, [introFx, play]);
+
+  // I. sealStamp: introFx 開始と同時にシール演出を出し、350ms後フェードアウト→550ms後消去
+  useEffect(() => {
+    if (!introFx) return;
+    setShowSeal(true);
+    setSealOut(false);
+    const t1 = setTimeout(() => setSealOut(true), 350);
+    const t2 = setTimeout(() => {
+      setShowSeal(false);
+      setSealOut(false);
+    }, 570);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [introFx]);
+
+  // B. summonAppear: state.summons の追加分を newSummonIds に記録し、500ms後にクリア
+  const prevSummonIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!state) return;
+    const cur = new Set(state.summons.map((s) => s.id));
+    const added = new Set<string>();
+    for (const id of cur) {
+      if (!prevSummonIdsRef.current.has(id)) added.add(id);
+    }
+    prevSummonIdsRef.current = cur;
+    if (added.size === 0) return;
+    setNewSummonIds((prev) => new Set([...prev, ...added]));
+    const t = setTimeout(() => {
+      setNewSummonIds((prev) => {
+        const next = new Set(prev);
+        added.forEach((id) => next.delete(id));
+        return next;
+      });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  // J/K. flee: state.outcome が fled になったタイミングで fleeActive を true に
+  useEffect(() => {
+    if (state?.outcome === 'fled') setFleeActive(true);
+    else setFleeActive(false);
+  }, [state?.outcome]);
 
   // 1ターン解決して逐次再生を開始する（issue #18）。入力状態をクリアする。
   const runTurn = useCallback(
@@ -847,6 +899,14 @@ export const Page = ({
     return BATTLE_SKILLS[c.skillId]?.name ?? 'スキル';
   };
 
+  // F/G/H: 状態異常バッジへの追加クラス（poisonWisp/sparkZap/ailDrift）
+  const ailBadgeClass = (ailType: string): string => {
+    if (ailType === 'poison') return styles.ailBadgePoison;
+    if (ailType === 'curse') return styles.ailBadgeCurse;
+    if (ailType === 'paralysis') return styles.ailBadgeParalysis;
+    return styles.ailBadgeBase;
+  };
+
   // 状態異常マーク（バインド=🔒 / その他=🌀）。
   const ailmentMark = (c: Combatant): string => {
     const isBind = (t: string) => t === 'headBind' || t === 'armBind' || t === 'legBind';
@@ -854,6 +914,16 @@ export const Page = ({
     if (c.ailments.some((a) => isBind(a.type))) s += ' 🔒';
     if (c.ailments.some((a) => !isBind(a.type))) s += ' 🌀';
     return s;
+  };
+
+  // C. runeSpin: コマンドで魔法属性スキル（fire/ice/volt/almighty）が選ばれているキャラか判定
+  const isCasting = (ally: Combatant): boolean => {
+    const cmd = commands[ally.id];
+    if (!cmd || cmd.kind !== 'skill') return false;
+    const skill = BATTLE_SKILLS[cmd.skillId];
+    if (!skill) return false;
+    const magicElems = ['fire', 'ice', 'volt', 'almighty'] as const;
+    return magicElems.some((el) => el === skill.element);
   };
 
   // 味方の職業名（戦闘中も常時表示。issue #18）。
@@ -939,6 +1009,7 @@ export const Page = ({
           isAllyTargeted ? styles.allyTargeted : '',
           commands[a.id] && !isAllyTargeting ? styles.cardDecided : '',
           flashIds.has(a.id) ? styles.flash : '',
+          fleeActive ? styles.dashAwayCard : '',
         ].join(' ')}
         disabled={
           state.outcome !== 'ongoing' ||
@@ -981,11 +1052,29 @@ export const Page = ({
               </div>
             );
           })()}
+        {/* A. healRise — 回復値ポップ（HP回復時のみ） */}
+        {inkSplatters.has(a.id) && inkSplatters.get(a.id)!.variant === 'heal' && (
+          <div
+            className={styles.healRisePop}
+            aria-hidden="true"
+          >
+            +{inkSplatters.get(a.id)!.value}
+          </div>
+        )}
+        {/* C. runeSpin — 魔法スキル詠唱中の ✦ オーバーレイ */}
+        {isCasting(a) && !anim && (
+          <div
+            className={styles.runeCasting}
+            aria-hidden="true"
+          >
+            ✦
+          </div>
+        )}
         {/* 職業バッジ（右上に固定） */}
         {!a.isSummon ? <span className={styles.jobBadge}>{classInitialOf(a)}</span> : null}
         {/* ユニオン満タン U! バッジ */}
         {a.unionGauge >= 100 ? <span className={styles.unionReadyBadge}>U!</span> : null}
-        {/* v5: 味方状態異常角バッジ 10 種（左肩） */}
+        {/* v5: 味方状態異常角バッジ 10 種（左肩）+ F/G/H エフェクト */}
         {a.ailments.length > 0 && (
           <div className={styles.allyAilBadgeRow}>
             {a.ailments.map((ail) => {
@@ -994,7 +1083,7 @@ export const Page = ({
               return (
                 <span
                   key={ail.type}
-                  className={styles.allyAilBadge}
+                  className={[styles.allyAilBadge, ailBadgeClass(ail.type)].join(' ')}
                   style={{ background: m.bg, color: m.fg }}
                   title={`${m.label} 残り${ail.remainingTurns}T`}
                 >
@@ -1109,7 +1198,7 @@ export const Page = ({
               <button
                 type="button"
                 key={e.id}
-                className={`${styles.enemy} ${d.isDown ? styles.down + ' ' + styles.dissolving : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash : ''}`}
+                className={`${styles.enemy} ${d.isDown ? styles.down + ' ' + styles.dissolving : ''} ${isTargeted ? styles.targeted : ''} ${flashIds.has(e.id) ? styles.flash + ' ' + styles.shakeBOverlay : ''}`}
                 disabled={e.isDown || !!anim || isAllyTargeting}
                 onClick={() => setTargetId(e.id)}
               >
@@ -1126,6 +1215,13 @@ export const Page = ({
                       />
                     );
                   })()}
+                {/* D. hitFlash — 被弾時の赤 flash オーバーレイ（cardFlash と並走） */}
+                {flashIds.has(e.id) && (
+                  <div
+                    className={styles.hitFlashOverlay}
+                    aria-hidden="true"
+                  />
+                )}
                 {/* InkSplatter — 敵への命中時（Phase 2） */}
                 {inkSplatters.has(e.id) &&
                   (() => {
@@ -1198,7 +1294,7 @@ export const Page = ({
                       </span>
                     ))}
                 </div>
-                {/* v5: 状態異常角バッジ 10 種・全件横並び */}
+                {/* v5: 状態異常角バッジ 10 種・全件横並び + F/G/H エフェクト */}
                 {e.ailments.length > 0 && (
                   <div className={styles.enemyAilBadgeRow}>
                     {e.ailments.map((ail) => {
@@ -1207,7 +1303,7 @@ export const Page = ({
                       return (
                         <span
                           key={ail.type}
-                          className={styles.enemyAilBadge}
+                          className={[styles.enemyAilBadge, ailBadgeClass(ail.type)].join(' ')}
                           style={{ background: m.bg, color: m.fg }}
                           title={`${m.label} 残り${ail.remainingTurns}T`}
                         >
@@ -1261,7 +1357,7 @@ export const Page = ({
               return (
                 <div
                   key={s.id}
-                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''}`}
+                  className={`${styles.summon} ${d.isDown ? styles.down : ''} ${flashIds.has(s.id) ? styles.flash : ''} ${newSummonIds.has(s.id) ? styles.summonNew : ''}`}
                 >
                   <span className={styles.summonName}>🐾 {s.name}</span>
                   <StatBar
@@ -2058,6 +2154,36 @@ export const Page = ({
       {/* レベルアップダイアログ（v5: resultPage 内の LIFO カードに統合済み。
           ongoing 中に勝利確定していない段階でのダイアログ表示はここでは不要。
           dialogOverlay / dialog クラスは削除禁止のため SCSS 側で保持する。 */}
+
+      {/* I. sealStamp — 戦闘開始時のシール演出 */}
+      {showSeal && (
+        <div
+          className={styles.sealStampOverlay}
+          aria-hidden="true"
+        >
+          <div className={sealOut ? styles.sealStampInnerOut : styles.sealStampInner}>戦闘</div>
+        </div>
+      )}
+
+      {/* K. dustRise — 逃走時の足元砂塵（fled フェーズのみ） */}
+      {fleeActive && (
+        <div
+          className={styles.dustContainer}
+          aria-hidden="true"
+        >
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className={styles.dustParticle}
+              style={{
+                left: `${20 + i * 30}px`,
+                bottom: `${10 + (i % 3) * 12}px`,
+                animationDelay: `${i * 0.18}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* エンカウント/戦闘終了の暗転エフェクト（issue #18） */}
       {introFx ? <div className={styles.fxIntro} /> : null}
