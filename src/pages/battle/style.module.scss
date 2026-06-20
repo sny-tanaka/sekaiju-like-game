@@ -2123,3 +2123,306 @@
   }
 }
 
+// ==========================================================
+// レスポンシブ縮小: 短画面（高さ ≤ 720px）
+// iPhone SE (375×667) / iPhone 16 (393×778) などで
+// battlefield の初期表示スクロールをなくす。
+// max-height クエリなので大画面には影響しない。
+// ==========================================================
+
+@media (max-height: 720px) {
+  // --- レイアウト全体 ---
+  .layout {
+    padding-top: 8px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
+  // --- ヘッダ ---
+  .chapterRow {
+    margin-bottom: 2px;
+  }
+  .chapterMark {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+  }
+
+  // 行動順帯: アイコン縮小 + マージン詰め
+  .turnOrderBar {
+    gap: 3px;
+    margin-bottom: 3px;
+  }
+  .turnOrderFirst {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .turnOrderIcon {
+    width: 18px;
+    height: 18px;
+    font-size: 8px;
+  }
+  .turnOrderMore {
+    font-size: 9px;
+  }
+
+  // ログプレビュー
+  .logPreview {
+    padding: 3px 6px;
+    font-size: 9px;
+    margin-bottom: 3px;
+    gap: 6px;
+  }
+  .logTapHint {
+    font-size: 8px;
+  }
+
+  // --- 敵エリア ---
+  .enemies {
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+  .enemy {
+    padding: 5px;
+    gap: 3px;
+  }
+  .enemyName {
+    font-size: 12px;
+  }
+  .enemyWeakChips {
+    min-height: 12px;
+    margin-top: 2px;
+    gap: 2px;
+  }
+  .weakChip {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+
+  // --- 対象情報パネル ---
+  .targetInfoPanel {
+    min-height: 40px;
+    max-height: 40px;
+    padding: 3px 8px;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .targetInfoName {
+    font-size: 10px;
+  }
+  .targetInfoEmpty {
+    font-size: 10px;
+  }
+
+  // --- 召喚体リボン ---
+  .summonsLabel {
+    font-size: 7px;
+  }
+  .summon {
+    padding: 4px 6px;
+    gap: 2px;
+  }
+  .summonName {
+    font-size: 10px;
+  }
+  .summonHp {
+    font-size: 9px;
+  }
+
+  // --- 味方エリア ---
+  .party {
+    gap: 3px;
+    margin-bottom: 5px;
+  }
+  .rowTag {
+    font-size: 9px;
+  }
+  .cardRow {
+    gap: 4px;
+    margin-bottom: 3px;
+  }
+  .cardRowBack {
+    gap: 4px;
+    grid-template-columns: repeat(2, calc((100% - 8px) / 3));
+  }
+  .card {
+    padding: 4px;
+    gap: 1px;
+  }
+  .cardPortrait {
+    width: 24px;
+    height: 24px;
+  }
+  .cardHeader {
+    gap: 3px;
+  }
+  .cardHeaderText {
+    padding-right: 14px;
+  }
+  .cardName {
+    font-size: 10px;
+  }
+  .cardNums {
+    font-size: 9px;
+  }
+  .cardCmd {
+    font-size: 9px;
+  }
+  .cardStrategy {
+    font-size: 8px;
+  }
+  .jobBadge {
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+  }
+  .gaugeLabel {
+    font-size: 8px;
+  }
+
+  // --- コマンドパネル ---
+  .command {
+    gap: 5px;
+  }
+  .menu {
+    gap: 4px;
+  }
+  .menuPrimary {
+    height: 44px !important;
+    min-height: 44px !important;
+    font-size: 16px !important;
+  }
+  .menuStrategy,
+  .menuFlee {
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 13px !important;
+  }
+  .menuRow {
+    gap: 4px;
+  }
+  .individualCmdRow1 {
+    gap: 5px;
+    margin-bottom: 4px;
+    button {
+      height: 40px;
+      font-size: 13px;
+    }
+  }
+  .individualCmdRow2 {
+    gap: 5px;
+    button {
+      height: 34px;
+      font-size: 12px;
+    }
+  }
+  .menuBack {
+    min-height: 32px;
+    font-size: 12px;
+  }
+  .primary {
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .redo {
+    min-height: 48px;
+    font-size: 13px;
+  }
+}
+
+// ==========================================================
+// レスポンシブ縮小（追加段）: さらに短画面（高さ ≤ 640px）
+// iPhone SE (375×667) はこちらに非該当だが
+// 古い小型端末 (360×640 等) に対応する保険。
+// ==========================================================
+
+@media (max-height: 640px) {
+  // --- ヘッダをさらに詰める ---
+  .chapterMark {
+    font-size: 9px;
+  }
+  .logPreview {
+    padding: 2px 5px;
+    font-size: 8px;
+    margin-bottom: 2px;
+  }
+
+  // --- 行動順帯 ---
+  .turnOrderBar {
+    gap: 2px;
+    margin-bottom: 2px;
+  }
+  .turnOrderFirst {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .turnOrderIcon {
+    width: 16px;
+    height: 16px;
+    font-size: 7px;
+  }
+
+  // --- 敵エリア ---
+  .enemies {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .enemy {
+    padding: 4px;
+    gap: 2px;
+  }
+  .enemyName {
+    font-size: 11px;
+  }
+
+  // --- 対象情報パネル ---
+  .targetInfoPanel {
+    min-height: 34px;
+    max-height: 34px;
+    padding: 2px 6px;
+    margin-bottom: 3px;
+  }
+
+  // --- 味方エリア ---
+  .party {
+    gap: 2px;
+    margin-bottom: 3px;
+  }
+  .card {
+    padding: 3px;
+  }
+  .cardPortrait {
+    width: 20px;
+    height: 20px;
+  }
+  .cardName {
+    font-size: 9px;
+  }
+
+  // --- コマンドパネル ---
+  .menuPrimary {
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 14px !important;
+  }
+  .menuStrategy,
+  .menuFlee {
+    height: 32px !important;
+    min-height: 32px !important;
+    font-size: 12px !important;
+  }
+  .individualCmdRow1 {
+    button {
+      height: 34px;
+      font-size: 12px;
+    }
+  }
+  .individualCmdRow2 {
+    button {
+      height: 28px;
+      font-size: 11px;
+    }
+  }
+  .menuBack {
+    min-height: 28px;
+  }
+}
+
