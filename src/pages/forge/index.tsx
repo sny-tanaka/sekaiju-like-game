@@ -302,7 +302,7 @@ export const Page = () => {
                 return (
                   <div
                     key={e.id}
-                    className={isSelected ? styles.recycleRowSelected : styles.recycleRow}
+                    className={`${styles.recycleRow} ${isSelected ? styles.recycleRowSelected : ''}`}
                   >
                     <input
                       type="checkbox"
