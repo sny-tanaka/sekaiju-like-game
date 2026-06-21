@@ -33374,7 +33374,7 @@ const Vz = 2500,
                 i.jsxs('footer', {
                   className: SA.foot,
                   children: [
-                    i.jsxs('span', { className: SA.version, children: ['v', '1.0.8'] }),
+                    i.jsxs('span', { className: SA.version, children: ['v', '1.0.9'] }),
                     i.jsx(J, {
                       label: G ? '確認中…' : '更新を確認',
                       sfx: 'cursor',
