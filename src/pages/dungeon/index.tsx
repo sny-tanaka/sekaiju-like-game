@@ -50,7 +50,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // 階段で上下移動、帰還で拠点へ。オートセーブは階移動・帰還時（[05 §4]）。
 export const Page = () => {
   const { navigate } = useNavigation();
-  const { save, applySave, applyAndPersist } = useGameState();
+  const { save, applySave, applyAndPersist, flag, setFlag } = useGameState();
   const play = useSfx();
   // 移動中エンカウント抽選用の ephemeral 乱数（ダイブ内で1本。再開時は作り直し）
   const rngRef = useRef<Rng | null>(null);
@@ -88,8 +88,8 @@ export const Page = () => {
     x: number;
     y: number;
   } | null>(null);
-  // 旗（自動移動の目標地点）。同時に 1 つまで、永続化しない
-  const [flag, setFlag] = useState<{ x: number; y: number } | null>(null);
+  // 旗（自動移動の目標地点）は GameState Context が保持する。
+  // 戦闘で dungeon が unmount しても消えないが、リロード（Provider 再生成）では消える。
 
   const dive = save?.diveState ?? null;
 
