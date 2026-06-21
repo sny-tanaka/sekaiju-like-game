@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { isAutoMoveDisabled, nextFlagOnCellTap } from './flag';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
@@ -289,13 +290,13 @@ export const Page = () => {
       if (!rngRef.current) rngRef.current = createRng((save!.masterSeed ^ 0x9e3779b9) >>> 0);
       // タップしたマスが現在の旗と同じなら旗を解除、異なるなら旗を移す（即移動しない）
       setFlag((prev) => {
-        if (prev && prev.x === x && prev.y === y) return null;
         // 現在地へのタップは無視
         if (dive.pos.x === x && dive.pos.y === y) return null;
         // 到達不能なマスも旗設置対象外にする
         const path = pathTo(floor, dive.pos, { x, y });
         if (!path || path.length === 0) return null;
-        return { x, y };
+        // 同じマスなら解除、異なるマスなら上書き
+        return nextFlagOnCellTap(prev, { x, y });
       });
     },
     [dive, floor, save]
@@ -455,7 +456,7 @@ export const Page = () => {
           label="自動移動"
           sfx={null}
           className={styles.autoWalkBtn}
-          disabled={!flag || walkingRef.current}
+          disabled={isAutoMoveDisabled(flag, walkingRef.current)}
           onClick={() => {
             if (flag) void autoWalk(flag);
           }}
