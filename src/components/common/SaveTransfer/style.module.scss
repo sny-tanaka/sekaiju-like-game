@@ -1,0 +1,251 @@
+// 黒曜テーマ: _variables.scss は参照しない。すべて var(--*) を使う。
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-base);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--text-strong);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.description {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// ---- ボタン類 ---------------------------------------------------------------
+
+.primaryBtn {
+  width: 100%;
+  height: 40px;
+  border-radius: 3px;
+  border: none;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: var(--bg-mid);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: opacity 0.14s;
+
+  &:disabled {
+    background: var(--surface-elev);
+    color: var(--text-mute);
+    cursor: default;
+  }
+
+  &:not(:disabled):active {
+    opacity: 0.85;
+  }
+}
+
+.subBtn {
+  width: 100%;
+  height: 38px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: var(--surface-elev);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: opacity 0.14s;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &:not(:disabled):active {
+    opacity: 0.7;
+  }
+}
+
+.cancelBtn {
+  width: 100%;
+  height: 34px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-base);
+  background: transparent;
+  color: var(--text-mute);
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: opacity 0.14s;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &:not(:disabled):active {
+    opacity: 0.7;
+  }
+}
+
+.dangerBtn {
+  width: 100%;
+  height: 44px;
+  border-radius: 3px;
+  border: none;
+  background: var(--danger);
+  color: var(--danger-text);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: opacity 0.14s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &:not(:disabled):active {
+    opacity: 0.85;
+  }
+}
+
+// ---- テキストエリア ---------------------------------------------------------
+
+.codeArea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-base);
+  background: var(--surface-elev);
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  padding: 8px 10px;
+  resize: none;
+  overflow-x: hidden;
+  word-break: break-all;
+  white-space: pre-wrap;
+  outline: none;
+
+  &:focus {
+    border-color: var(--rule-gold);
+  }
+
+  &[readonly] {
+    cursor: default;
+    color: var(--text-soft);
+  }
+
+  &::placeholder {
+    color: var(--text-faint);
+  }
+}
+
+// ---- フォールバック ---------------------------------------------------------
+
+.fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fallbackNote {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+// ---- インポートアクション群 -------------------------------------------------
+
+.importActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// ---- エラーメッセージ -------------------------------------------------------
+
+.errorMsg {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--danger-text);
+  background: var(--danger-tint);
+  border-left: 2px solid var(--danger-glow);
+  padding: 6px 10px;
+  border-radius: 0 3px 3px 0;
+}
+
+// ---- toast ------------------------------------------------------------------
+
+.toast {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--gold);
+  text-align: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+// ---- 確認モーダル（上書き確認）---------------------------------------------
+
+.confirmOverlay {
+  // SaveTransfer のコンテナ内に表示（モーダルの外にあるため relative フォールバック）
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-base);
+}
+
+.confirmPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface-elev);
+  border: 1px solid var(--rule-gold);
+  border-radius: 4px;
+  padding: 14px;
+}
+
+.confirmText {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+
+.confirmAccent {
+  color: var(--danger-text);
+}
+
+.confirmActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
