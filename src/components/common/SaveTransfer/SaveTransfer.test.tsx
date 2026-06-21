@@ -415,6 +415,74 @@ describe('SaveTransfer', () => {
     expect(screen.getByTestId('current-screen').textContent).not.toBe('town');
   });
 
+  // ============================================================
+  // label-wrap / visually-hidden / file.text() テスト
+  // ============================================================
+
+  test('インポートボタンは <label> の子として <input type="file"> が配置されている', () => {
+    renderSaveTransfer(mockWithParty);
+
+    const labelText = screen.getByText('セーブのファイルを読み込む');
+    const label = labelText.closest('label');
+    expect(label).not.toBeNull();
+
+    const input = label!.querySelector('input[type="file"]');
+    expect(input).not.toBeNull();
+  });
+
+  test('file input の className には fileInput クラスが含まれる（visually-hidden 指定）', () => {
+    renderSaveTransfer(mockWithParty);
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).not.toBeNull();
+    // CSS Modules は "[hash]_fileInput" の形式になる
+    expect(input.className).toMatch(/fileInput/);
+  });
+
+  test('file.text() が存在する場合はそれを呼び、applyAndPersist まで動く', async () => {
+    renderSaveTransfer(); // save=null で initialSave 無し（ディスク有りはデフォルト mock）
+
+    const validStr = encodeSaveTransfer(mockWithParty);
+
+    // file.text() が呼ばれて validStr を返すモックファイルを作る
+    const mockFile = {
+      text: vi.fn().mockResolvedValue(validStr),
+      name: 'save.txt',
+      size: validStr.length,
+      type: 'text/plain',
+    } as unknown as File;
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [mockFile], configurable: true });
+    fireEvent.change(input);
+
+    // save=null の場合は確認モーダルなしで直接 applyAndPersist が呼ばれ town へ遷移
+    await waitFor(() => {
+      expect(screen.getByTestId('current-screen').textContent).toBe('town');
+    });
+
+    expect(mockFile.text).toHaveBeenCalled();
+  }, 10000);
+
+  test('file.text() が無い場合は FileReader にフォールバックして applyAndPersist まで動く', async () => {
+    renderSaveTransfer(); // save=null
+
+    const validStr = encodeSaveTransfer(mockWithParty);
+    const file = new File([validStr], 'save.txt', { type: 'text/plain' });
+
+    // text() を消して FileReader 経由を強制する
+    Object.defineProperty(file, 'text', { value: undefined, configurable: true });
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    // FileReader 経由で読めて town へ遷移するはず
+    await waitFor(() => {
+      expect(screen.getByTestId('current-screen').textContent).toBe('town');
+    });
+  }, 10000);
+
   test('インポート: file input は同じファイル 2 回連続選択に対応 (onChange 後に value がリセットされる)', () => {
     // コンポーネントが onChange ハンドラーの先頭で e.target.value = '' を実行していることを
     // コードレベルで確認するためのテスト。
