@@ -231,7 +231,11 @@ export const Page = () => {
   const autoWalk = useCallback(
     async (target: { x: number; y: number }) => {
       if (walkingRef.current) return;
-      if (!rngRef.current) return;
+      if (!save) return;
+      // 戦闘から戻った直後は dungeon が remount されていて rngRef が null。
+      // doMove / handleGather / handleCellClick を経ずに自動移動ボタンを直接押した
+      // ケースをカバーするため、ここで lazy init する（旗は戦闘を跨いで残る仕様）。
+      if (!rngRef.current) rngRef.current = createRng((save.masterSeed ^ 0x9e3779b9) >>> 0);
       walkingRef.current = true;
       setNotice(null);
       try {
@@ -282,7 +286,7 @@ export const Page = () => {
         walkingRef.current = false;
       }
     },
-    [applyAndPersist, navigate]
+    [save, applyAndPersist, navigate, setFlag]
   );
 
   const handleCellClick = useCallback(
