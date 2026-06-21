@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { isGuardBuffExpire } from './buffExpire';
+import { applyDeadDisp } from './dispOf';
+import { loadSkipAnim, saveSkipAnim } from './skipAnimSetting';
 import styles from './style.module.scss';
 import {
   computeCompletedActorIds,
@@ -314,21 +317,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   const [fleeConfirm, setFleeConfirm] = useState(false);
 
   // ---- スキップ永続化 ----
-  // localStorage キー: 'sekaiju:settings:skipBattleAnim'
-  const SKIP_ANIM_KEY = 'sekaiju:settings:skipBattleAnim';
-  const [skipBattleAnim, setSkipBattleAnimState] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(SKIP_ANIM_KEY) === '1';
-    } catch {
-      return false;
-    }
-  });
+  // localStorage キー: 'sekaiju:settings:skipBattleAnim'（skipAnimSetting.ts で管理）
+  const [skipBattleAnim, setSkipBattleAnimState] = useState<boolean>(() => loadSkipAnim());
   const setSkipBattleAnim = useCallback((val: boolean) => {
-    try {
-      localStorage.setItem(SKIP_ANIM_KEY, val ? '1' : '0');
-    } catch {
-      // ignore
-    }
+    saveSkipAnim(val);
     setSkipBattleAnimState(val);
   }, []);
   // L/M: buff / debuff Fx — actor ごとの発火シーケンス番号 Map
@@ -662,12 +654,9 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       if (event.kind === 'tick') {
         if (event.defeated) play('down');
         // 防御コマンド由来のバフ（pdef/mdef, stackGroup:'guard'）の期限切れは演出なし。
-        // その他のバフ（攻撃力UP等）は通常通り BuffFx を発火する。
-        const isGuardBuffExpire =
-          event.effectType === 'buff-expire' &&
-          (event.effect === 'pdef' || event.effect === 'mdef');
+        // その他のバフ（攻撃力UP等）は通常通り BuffFx を発火する（buffExpire.ts 参照）。
         if (
-          (event.effectType === 'buff-expire' && !isGuardBuffExpire) ||
+          (event.effectType === 'buff-expire' && !isGuardBuffExpire(event)) ||
           event.effectType === 'regen'
         ) {
           setBuffFxMap((prev) => {
@@ -1191,10 +1180,8 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   // baseSnapshot（ターン開始値）を参照し、倒した敵の HP が一瞬元に戻るフレームが生じる。
   // これを防ぐため、deadActorIds（そのターンのイベント列で死亡確定済み）の actor は
   // dispMap の値にかかわらず HP=0/isDown=true を強制する。
-  const dispOf = (c: Combatant): { hp: number; isDown: boolean } => {
-    if (anim && deadActorIds.has(c.id)) return { hp: 0, isDown: true };
-    return dispMap?.[c.id] ?? { hp: c.hp, isDown: c.isDown };
-  };
+  const dispOf = (c: Combatant): { hp: number; isDown: boolean } =>
+    applyDeadDisp(c, dispMap, anim ? deadActorIds : new Set<string>());
 
   // そのキャラが発動できるユニオンスキル（種族スキルツリーのうち UNION_SKILLS に該当・習得済み）。
   const unionSkillOf = (ally: Combatant): UnionSkillDef | null => {
