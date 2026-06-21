@@ -28,7 +28,16 @@ import { Redirect, useNavigation } from '@/store/navigation';
 
 // 確認待ちの売買操作（タップ1回での誤購入/誤売却を防ぐ。確認ダイアログ経由でのみ実行）。
 type Pending =
-  | { kind: 'buy'; id: string; name: string; price: number }
+  | {
+      kind: 'buy';
+      id: string;
+      name: string;
+      price: number;
+      /** 消費アイテムの所持上限（undefined = 上限なし / 装備）。 */
+      maxStack?: number;
+      /** openPending 時点の現在所持数（maxStack と合わせて購入可能数を算出）。 */
+      currentQty: number;
+    }
   | { kind: 'sellItem'; itemId: string; grade: number; name: string; price: number; maxQty: number }
   | { kind: 'sellEquip'; id: string; name: string; price: number };
 
@@ -94,18 +103,35 @@ export const Page = () => {
   };
 
   // 買う: 解放済みカタログ（装備＝スロット、アイテム＝消費）。qty は所持数。
-  type BuyRow = { key: string; entry: ShopEntry; category: ShopCat; price: number; qty: number };
-  const buyRows: BuyRow[] = shopCatalog(save).map((e) => ({
-    key: e.id,
-    entry: e,
-    category:
-      e.kind === 'equip' ? ((EQUIPMENT[e.id]?.slot ?? 'item') as ShopCat) : itemCategory(e.id),
-    price: e.price,
-    qty:
+  type BuyRow = {
+    key: string;
+    entry: ShopEntry;
+    category: ShopCat;
+    price: number;
+    qty: number;
+    /** 消費アイテムの所持上限（undefined = 上限なし / 装備）。 */
+    maxStack?: number;
+    /** 所持が上限に達しているか（購入ボタン disabled 判定）。 */
+    atStockMax: boolean;
+  };
+  const buyRows: BuyRow[] = shopCatalog(save).map((e) => {
+    const qty =
       e.kind === 'equip'
         ? save.guild.equipment.filter((x) => x.masterId === e.id).length
-        : itemCount(save, e.id),
-  }));
+        : itemCount(save, e.id);
+    const maxStack = e.kind === 'item' ? ITEMS[e.id]?.maxStack : undefined;
+    const atStockMax = maxStack !== undefined && qty >= maxStack;
+    return {
+      key: e.id,
+      entry: e,
+      category:
+        e.kind === 'equip' ? ((EQUIPMENT[e.id]?.slot ?? 'item') as ShopCat) : itemCategory(e.id),
+      price: e.price,
+      qty,
+      maxStack,
+      atStockMax,
+    };
+  });
 
   // 売る: 所有装備（個体）＋売却可能な所持品（素材/アイテム）。
   type SellRow =
@@ -251,13 +277,20 @@ export const Page = () => {
   const buyView = view(buyRows);
   const sellView = view(sellRows);
 
-  // 数量ステッパーの上限（buy: floor(gold/price)、sellItem: 所持 qty）。
-  const pendingMax =
-    pending && pending.kind !== 'sellEquip'
-      ? pending.kind === 'buy'
-        ? Math.max(1, Math.floor(gold / pending.price))
-        : pending.maxQty
-      : 1;
+  // 数量ステッパーの上限（buy: floor(gold/price) かつ maxStack 空き、sellItem: 所持 qty）。
+  const pendingMax = (() => {
+    if (!pending || pending.kind === 'sellEquip') return 1;
+    if (pending.kind === 'buy') {
+      const affordableMax = Math.max(1, Math.floor(gold / pending.price));
+      // maxStack がある消費アイテムは「上限 - 現在所持数」も考慮する
+      const stockRoom =
+        pending.maxStack !== undefined
+          ? Math.max(0, pending.maxStack - pending.currentQty)
+          : affordableMax;
+      return Math.min(affordableMax, stockRoom) || 1;
+    }
+    return pending.maxQty;
+  })();
 
   // 装備詳細モーダル用情報の組み立て（#31）。
   const renderEquipDetail = () => {
@@ -412,7 +445,7 @@ export const Page = () => {
           buyView.length === 0 ? (
             <p className={styles.empty}>該当する商品がありません。</p>
           ) : (
-            buyView.map(({ entry: e, qty }) => (
+            buyView.map(({ entry: e, qty, maxStack, atStockMax }) => (
               <div
                 key={e.id}
                 className={styles.row}
@@ -441,22 +474,31 @@ export const Page = () => {
                     <span className={styles.name}>{e.name}</span>
                   )}
                   <span className={styles.note}>
-                    {e.note ? `${e.note} ・ ` : ''}所持 {qty}
+                    {e.note ? `${e.note} ・ ` : ''}
+                    {/* 上限あり消費アイテムは n/N 表記、それ以外は数のみ */}
+                    {maxStack !== undefined ? `所持 ${qty}/${maxStack}` : `所持 ${qty}`}
+                    {atStockMax && <span className={styles.stockMaxLabel}> 所持上限</span>}
                   </span>
                 </div>
-                <ActionButton
-                  label={`${e.price} G`}
-                  className={styles.action}
-                  disabled={gold < e.price}
-                  onClick={() =>
-                    openPending({
-                      kind: 'buy',
-                      id: e.id,
-                      name: e.name,
-                      price: e.price,
-                    })
-                  }
-                />
+                {atStockMax ? (
+                  <span className={styles.stockMaxBadge}>所持上限です</span>
+                ) : (
+                  <ActionButton
+                    label={`${e.price} G`}
+                    className={styles.action}
+                    disabled={gold < e.price}
+                    onClick={() =>
+                      openPending({
+                        kind: 'buy',
+                        id: e.id,
+                        name: e.name,
+                        price: e.price,
+                        maxStack,
+                        currentQty: qty,
+                      })
+                    }
+                  />
+                )}
               </div>
             ))
           )

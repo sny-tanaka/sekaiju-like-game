@@ -135,6 +135,24 @@ export function sellEquipment(save: SaveData, instanceId: string): SaveData {
 }
 
 /**
+ * 購入数を「現在の所持数と maxStack から算出した空き」に収める純粋関数。
+ *
+ * - maxStack が undefined（上限なし）の場合は requested をそのまま返す。
+ * - currentStock >= maxStack の場合は 0（所持上限到達済み）。
+ * - currentStock + requested > maxStack の場合は maxStack - currentStock に丸める。
+ * - それ以外は requested をそのまま返す。
+ */
+export function clampPurchaseQty(
+  currentStock: number,
+  maxStack: number | undefined,
+  requested: number
+): number {
+  if (maxStack === undefined) return requested;
+  const room = Math.max(0, maxStack - currentStock);
+  return Math.min(requested, room);
+}
+
+/**
  * 複数購入: 所持金で買える上限（floor(gold/price) と qty の小さい方）まで購入する。
  * 消費アイテムは maxStack を超える分は購入しない（代金もその分だけ）。
  * 0個なら save をそのまま返す。装備は個体プールへ、消費品は倉庫へ qty 個追加。

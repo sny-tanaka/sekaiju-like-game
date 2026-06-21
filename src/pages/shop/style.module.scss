@@ -411,6 +411,25 @@
   letter-spacing: 0.04em;
 }
 
+// 所持上限到達バッジ（購入ボタン代替）
+.stockMaxBadge {
+  min-height: 40px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var.$ink-faint;
+  border: 0.75px solid var.$rule;
+  white-space: nowrap;
+}
+
+// 所持数表示内の「 所持上限」ラベル
+.stockMaxLabel {
+  color: var.$ink-faint;
+  font-weight: 700;
+}
+
 // 購入確定 InkSplatter（Phase 2）
 .buyConfirmedFx {
   position: fixed;
