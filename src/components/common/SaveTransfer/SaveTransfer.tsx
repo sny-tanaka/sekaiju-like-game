@@ -5,6 +5,7 @@ import styles from './style.module.scss';
 import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { useGameState } from '@/store/gameState';
 import { useNavigation } from '@/store/navigation';
+import { getSaveMeta, loadGame } from '@/store/saveStore';
 import { decodeSaveTransfer, encodeSaveTransfer } from '@/store/saveTransfer';
 
 // ============================================================================
@@ -25,6 +26,8 @@ export const SaveTransfer = () => {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState('');
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+  // null = ロード中、true = ディスクに有効セーブあり、false = なし or 破損
+  const [hasSaveOnDisk, setHasSaveOnDisk] = useState<boolean | null>(null);
 
   // toast を 2 秒で消す
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,21 +43,52 @@ export const SaveTransfer = () => {
     };
   }, []);
 
+  // マウント時にディスク上のセーブ存在を確認する。
+  // save（メモリ）が truthy になったら確実に有りとして同期する。
+  useEffect(() => {
+    if (save) {
+      setHasSaveOnDisk(true);
+      return;
+    }
+    let cancelled = false;
+    void getSaveMeta().then((meta) => {
+      if (cancelled) return;
+      if (meta === null || meta.corrupted) {
+        setHasSaveOnDisk(false);
+      } else {
+        setHasSaveOnDisk(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [save]);
+
   // ---- エクスポート --------------------------------------------------------
 
   const handleExport = useCallback(async () => {
-    if (!save) return;
     setBusy(true);
-    const str = encodeSaveTransfer(save);
     try {
-      await navigator.clipboard.writeText(str);
-      setExportStr(str);
-      showToast('コピーしました');
-      setMode('idle');
-    } catch {
-      // clipboard API が使えない場合はフォールバック表示
-      setExportStr(str);
-      setMode('export');
+      let working = save;
+      if (!working) {
+        const result = await loadGame();
+        if (!result.ok) {
+          showToast('セーブが読み込めません');
+          return;
+        }
+        working = result.data;
+      }
+      const str = encodeSaveTransfer(working);
+      try {
+        await navigator.clipboard.writeText(str);
+        setExportStr(str);
+        showToast('コピーしました');
+        setMode('idle');
+      } catch {
+        // clipboard API が使えない場合はフォールバック表示
+        setExportStr(str);
+        setMode('export');
+      }
     } finally {
       setBusy(false);
     }
@@ -165,7 +199,7 @@ export const SaveTransfer = () => {
           <ActionButton
             label="セーブをコピー"
             className={styles.primaryBtn}
-            disabled={!save || busy}
+            disabled={!hasSaveOnDisk || busy}
             onClick={() => void handleExport()}
           />
           {mode === 'export' && exportStr && (
