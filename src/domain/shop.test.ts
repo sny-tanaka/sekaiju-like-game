@@ -3,6 +3,7 @@ import { createInitialSaveData } from '@/domain/saveData';
 import {
   buy,
   buyMany,
+  clampPurchaseQty,
   equipableClassNames,
   sell,
   sellEquipment,
@@ -117,6 +118,61 @@ describe('shop', () => {
     expect(names).toContain('戦士');
     expect(names).toContain('魔導士');
     expect(names.length).toBeGreaterThan(0);
+  });
+
+  // --- #88 clampPurchaseQty テスト ---
+  describe('clampPurchaseQty', () => {
+    test('maxStack undefined（上限なし）なら requested をそのまま返す', () => {
+      expect(clampPurchaseQty(0, undefined, 99)).toBe(99);
+      expect(clampPurchaseQty(50, undefined, 10)).toBe(10);
+    });
+
+    test('currentStock が maxStack に達していれば 0 を返す', () => {
+      expect(clampPurchaseQty(10, 10, 1)).toBe(0);
+      expect(clampPurchaseQty(15, 10, 5)).toBe(0); // 超過済みも 0
+    });
+
+    test('currentStock + requested > maxStack のとき空き数まで丸める', () => {
+      expect(clampPurchaseQty(7, 10, 5)).toBe(3); // 10 - 7 = 3
+      expect(clampPurchaseQty(0, 10, 15)).toBe(10);
+    });
+
+    test('currentStock + requested <= maxStack なら requested をそのまま返す', () => {
+      expect(clampPurchaseQty(3, 10, 4)).toBe(4); // 3+4=7 <= 10
+      expect(clampPurchaseQty(0, 10, 10)).toBe(10);
+    });
+  });
+
+  // --- #88 buyMany 上限チェック回帰テスト ---
+  test('buyMany: maxStack に達しているアイテムは購入できない（save 変わらない）', () => {
+    // item_potion の maxStack = 30。30個持っている状態で buyMany → save そのまま返す
+    let save = richSave(10000);
+    // 倉庫に30個セット
+    save = { ...save, guild: { ...save.guild, storage: [{ itemId: 'item_potion', qty: 30 }] } };
+    const before = save;
+    const result = buyMany(save, 'item_potion', 1);
+    expect(result).toBe(before);
+    expect(result.guild.gold).toBe(10000);
+    expect(itemCount(result, 'item_potion')).toBe(30);
+  });
+
+  test('buyMany: maxStack 超え数量を指定しても上限までしか購入されない（代金も上限分だけ）', () => {
+    // item_potion の maxStack = 30、現在 25個 → 5個しか買えない
+    let save = richSave(10000);
+    save = { ...save, guild: { ...save.guild, storage: [{ itemId: 'item_potion', qty: 25 }] } };
+    // qty=10 指定でも実際には 5 個だけ
+    const result = buyMany(save, 'item_potion', 10);
+    expect(itemCount(result, 'item_potion')).toBe(30);
+    expect(result.guild.gold).toBe(10000 - 30 * 5); // 30G × 5個 = 150G
+  });
+
+  test('buyMany: 上限到達済みアイテムを大量購入しても所持金が余計に減らない（過剰減算バグの回帰）', () => {
+    // 上限に達しているとき、gold が不変であることを確認
+    let save = richSave(5000);
+    save = { ...save, guild: { ...save.guild, storage: [{ itemId: 'item_potion', qty: 30 }] } };
+    const result = buyMany(save, 'item_potion', 7);
+    // 購入不可なので gold は一切変わらない
+    expect(result.guild.gold).toBe(5000);
   });
 
   test('消費アイテム・素材を売ると所持金が増え倉庫から減る（#16 回帰）', () => {
