@@ -127,6 +127,44 @@
   }
 }
 
+// ---- 貼り付けテキストエリア -------------------------------------------------
+
+.subSectionTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--text-soft);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.pasteArea {
+  width: 100%;
+  min-height: 80px;
+  padding: 8px 10px;
+  background: var(--surface-elev);
+  border: 1px solid var(--rule-base);
+  border-radius: 3px;
+  color: var(--text-base);
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  resize: vertical;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: var(--text-mute);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+}
+
 // ---- ファイル選択ラベル（インポートボタン）----------------------------------
 // iOS PWA では display:none の input + ref.click() が change を拾えない事例が多いため、
 // <label> でラップして native forwarding を使う。input は visually-hidden にする。

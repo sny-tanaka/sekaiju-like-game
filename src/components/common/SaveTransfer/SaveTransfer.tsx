@@ -16,11 +16,12 @@ import { decodeSaveTransfer, encodeSaveTransfer } from '@/store/saveTransfer';
 // ============================================================================
 
 export const SaveTransfer = () => {
-  const { save, applyAndPersist } = useGameState();
+  const { save, importSave } = useGameState();
   const { navigate } = useNavigation();
 
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pasteInput, setPasteInput] = useState('');
   const [toast, setToast] = useState('');
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
   // インポートで読み込んだデータを一時保持（上書き確認 OK 時に使う）
@@ -187,7 +188,7 @@ export const SaveTransfer = () => {
       if (!result.ok) return;
       setBusy(true);
       try {
-        await applyAndPersist(() => result.data);
+        await importSave(result.data);
         showToast('読み込みました');
         setPendingImportStr('');
         setConfirmOverwrite(false);
@@ -196,12 +197,27 @@ export const SaveTransfer = () => {
         setBusy(false);
       }
     },
-    [applyAndPersist, showToast, navigate]
+    [importSave, showToast, navigate]
   );
 
   const handleConfirmOk = useCallback(() => {
     void doApplyWithStr(pendingImportStr);
   }, [doApplyWithStr, pendingImportStr]);
+
+  const handlePasteLoad = useCallback(async () => {
+    setError('');
+    const result = decodeSaveTransfer(pasteInput);
+    if (!result.ok) {
+      setError(result.reason);
+      return;
+    }
+    setPendingImportStr(pasteInput);
+    if (save) {
+      setConfirmOverwrite(true);
+    } else {
+      void doApplyWithStr(pasteInput);
+    }
+  }, [pasteInput, save, doApplyWithStr]);
 
   const handleConfirmCancel = useCallback(() => {
     setConfirmOverwrite(false);
@@ -262,7 +278,7 @@ export const SaveTransfer = () => {
         />
       </div>
 
-      {/* インポート */}
+      {/* インポート: ファイル経路 */}
       <div className={styles.section}>
         {/* <label> ラップで iOS PWA でも確実に file picker が開く */}
         <label className={`${styles.subBtn} ${styles.fileLabel}`}>
@@ -275,8 +291,35 @@ export const SaveTransfer = () => {
             onClick={() => setError('')}
           />
         </label>
-        {error ? <p className={styles.errorMsg}>{error}</p> : null}
       </div>
+
+      {/* インポート: 貼り付け経路（iOS PWA でファイル経路が詰まる場合の保険） */}
+      <div className={styles.section}>
+        <h4 className={styles.subSectionTitle}>ファイルが読み込めない場合</h4>
+        <p className={styles.description}>
+          ダウンロードしたファイルを Files / メモ等で開いて全選択コピーし、
+          下の欄に貼り付けて「読み込む」を押してください。
+        </p>
+        <textarea
+          className={styles.pasteArea}
+          rows={4}
+          value={pasteInput}
+          placeholder="ここに引き継ぎ文字列を貼り付け"
+          onChange={(e) => {
+            setPasteInput(e.target.value);
+            setError('');
+          }}
+        />
+        <ActionButton
+          label="貼り付けた文字列を読み込む"
+          className={styles.subBtn}
+          disabled={!pasteInput.trim() || busy}
+          onClick={() => void handlePasteLoad()}
+        />
+      </div>
+
+      {/* エラーメッセージ（ファイル経路・貼り付け経路共通） */}
+      {error ? <p className={styles.errorMsg}>{error}</p> : null}
     </div>
   );
 };

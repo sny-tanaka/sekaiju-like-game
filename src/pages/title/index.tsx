@@ -6,7 +6,6 @@ import { useSfx } from '@/audio/useSfx';
 import { AppUpdater } from '@/components/AppUpdater/AppUpdater';
 import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { SaveCard } from '@/components/common/SaveCard/SaveCard';
-import { SaveTransfer } from '@/components/common/SaveTransfer';
 import { SoundSettings } from '@/components/common/SoundSettings';
 import type { Character, SaveMeta, SavePartyPreviewMember } from '@/domain/types';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
@@ -289,7 +288,15 @@ export const Page = () => {
               </ActionButton>
             </div>
             <SoundSettings />
-            <SaveTransfer />
+            <ActionButton
+              label="セーブの引き継ぎ"
+              className={styles.modalClose}
+              sfx="cursor"
+              onClick={() => {
+                setSoundOpen(false);
+                navigate({ name: 'saveTransfer' });
+              }}
+            />
             <ActionButton
               label="とじる"
               sfx="cursor"

@@ -6,6 +6,7 @@ import { Page as ForgePage } from '@/pages/forge';
 import { Page as GuildPage } from '@/pages/guild';
 import { Page as GuildCharPage } from '@/pages/guild-char';
 import { Page as NotFoundPage } from '@/pages/not-found';
+import { Page as SaveTransferPage } from '@/pages/save-transfer';
 import { Page as ShopPage } from '@/pages/shop';
 import { Page as TitlePage } from '@/pages/title';
 import { Page as TownPage } from '@/pages/town';
@@ -36,6 +37,8 @@ function App() {
         return <DungeonPage />;
       case 'battle':
         return <BattlePage />;
+      case 'saveTransfer':
+        return <SaveTransferPage />;
       default:
         return <NotFoundPage />;
     }
