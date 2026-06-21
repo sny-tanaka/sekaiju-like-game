@@ -33332,7 +33332,7 @@ const TT = 2500,
                 i.jsxs('footer', {
                   className: yA.foot,
                   children: [
-                    i.jsxs('span', { className: yA.version, children: ['v', '1.0.4'] }),
+                    i.jsxs('span', { className: yA.version, children: ['v', '1.0.3'] }),
                     i.jsx(F, {
                       label: w ? '確認中…' : '更新を確認',
                       sfx: 'cursor',

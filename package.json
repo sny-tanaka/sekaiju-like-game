@@ -1,11 +1,12 @@
 {
   "name": "sekaiju-like-game",
-  "version": "1.0.4",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "node scripts/bump-patch-version.mjs && tsc -b && vite build",
+    "build:nobump": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
