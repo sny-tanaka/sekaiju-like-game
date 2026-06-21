@@ -3,17 +3,21 @@ import type { Dispatch, ReactNode, RefObject } from 'react';
 
 import { createInitialSaveData } from '@/domain/saveData';
 import type { SaveData } from '@/domain/types';
+import type { Flag } from '@/pages/dungeon/flag';
 import { loadGame, saveGame } from '@/store/saveStore';
 
 // ============================================================================
 // ゲーム状態ストア（[05 §6]）。セーブは1つ。
 // 永続化対象 SaveData を単一の真実とする。状態遷移は純粋な reducer に寄せ、
 // 永続化（IndexedDB 書き込み）は provider の effect 層（async メソッド）で行う。
+// flag は探索画面の旗位置。戦闘で dungeon が unmount しても保持するため
+// Provider 側に持つが、リロードでは消える（SaveData に入れない）。
 // ============================================================================
 
 interface GameState {
   save: SaveData | null;
   saving: boolean;
+  flag: Flag;
 }
 
 type Action =
@@ -21,11 +25,12 @@ type Action =
   | { type: 'updateSave'; updater: (prev: SaveData) => SaveData }
   | { type: 'setSave'; save: SaveData }
   | { type: 'saving'; saving: boolean }
+  | { type: 'setFlag'; flag: Flag }
   | { type: 'clear' };
 
-const initialState: GameState = { save: null, saving: false };
+const initialState: GameState = { save: null, saving: false, flag: null };
 
-function reducer(state: GameState, action: Action): GameState {
+export function reducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case 'load':
       return { ...state, save: action.save };
@@ -35,6 +40,8 @@ function reducer(state: GameState, action: Action): GameState {
       return { ...state, save: action.save };
     case 'saving':
       return { ...state, saving: action.saving };
+    case 'setFlag':
+      return { ...state, flag: action.flag };
     case 'clear':
       return { ...initialState };
   }
@@ -53,6 +60,8 @@ interface GameStateContextValue extends GameState {
   persist: () => Promise<void>;
   /** タイトルへ戻る（メモリ状態クリア。セーブは消さない）。 */
   exitToTitle: () => void;
+  /** 探索画面の旗位置を更新する（戦闘を跨いで保持。リロードで消える）。 */
+  setFlag: (flag: Flag | ((prev: Flag) => Flag)) => void;
 }
 
 const GameStateContext = createContext<GameStateContextValue | null>(null);
@@ -73,7 +82,7 @@ export function GameStateProvider({
 }) {
   const [state, dispatch] = useReducer(
     reducer,
-    initialSave ? { save: initialSave, saving: false } : initialState
+    initialSave ? { save: initialSave, saving: false, flag: null } : initialState
   );
   const stateRef = useStateRef(state);
 
@@ -129,6 +138,15 @@ export function GameStateProvider({
     dispatch({ type: 'clear' });
   }, []);
 
+  const setFlag = useCallback(
+    (flagOrUpdater: Flag | ((prev: Flag) => Flag)) => {
+      const next =
+        typeof flagOrUpdater === 'function' ? flagOrUpdater(stateRef.current.flag) : flagOrUpdater;
+      dispatch({ type: 'setFlag', flag: next });
+    },
+    [stateRef]
+  );
+
   const value = useMemo<GameStateContextValue>(
     () => ({
       ...state,
@@ -138,8 +156,9 @@ export function GameStateProvider({
       applyAndPersist,
       persist,
       exitToTitle,
+      setFlag,
     }),
-    [state, startNewGame, continueGame, applySave, applyAndPersist, persist, exitToTitle]
+    [state, startNewGame, continueGame, applySave, applyAndPersist, persist, exitToTitle, setFlag]
   );
 
   return <GameStateContext.Provider value={value}>{children}</GameStateContext.Provider>;

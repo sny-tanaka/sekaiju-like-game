@@ -732,7 +732,7 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
       clearTimeout(tDmg);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- battleLogger を deps に入れると useBattleLogger が毎 render 新オブジェクトを返すため無限ループになる。appendLog（stable useCallback）は effect 内で変数に束縛して使う
-  }, [state, anim, play, tryComplete]);
+  }, [state, anim, play, tryComplete, skipBattleAnim]);
 
   // リザルト用の経験値・レベルアップ結果（issue #18）。勝利時のみ算出。
   const expResults = useMemo(
