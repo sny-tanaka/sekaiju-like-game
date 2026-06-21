@@ -127,6 +127,30 @@
   }
 }
 
+// ---- ファイル選択ラベル（インポートボタン）----------------------------------
+// iOS PWA では display:none の input + ref.click() が change を拾えない事例が多いため、
+// <label> でラップして native forwarding を使う。input は visually-hidden にする。
+
+.fileLabel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.fileLabelText {
+  pointer-events: none;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
 // ---- エラーメッセージ -------------------------------------------------------
 
 .errorMsg {

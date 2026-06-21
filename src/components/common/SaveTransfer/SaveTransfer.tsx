@@ -28,8 +28,6 @@ export const SaveTransfer = () => {
   // null = ロード中、true = ディスクに有効セーブあり、false = なし or 破損
   const [hasSaveOnDisk, setHasSaveOnDisk] = useState<boolean | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   // toast を 2 秒で消す
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = useCallback((msg: string) => {
@@ -135,9 +133,13 @@ export const SaveTransfer = () => {
 
   // ---- インポート ----------------------------------------------------------
 
-  /** File をテキストとして読む。FileReader を使って確実に非同期で読み込む。 */
-  const readFileAsText = useCallback((file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
+  /** File をテキストとして読む。file.text() が使える環境（iOS Safari 含む）はそれを優先し、
+   *  無い場合は FileReader にフォールバックする。 */
+  const readFileAsText = useCallback(async (file: File): Promise<string> => {
+    if (typeof file.text === 'function') {
+      return await file.text();
+    }
+    return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
@@ -262,23 +264,17 @@ export const SaveTransfer = () => {
 
       {/* インポート */}
       <div className={styles.section}>
-        {/* 非表示の file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".txt,.json,.dat,text/plain"
-          style={{ display: 'none' }}
-          onChange={(e) => void handleFileChange(e)}
-        />
-        <ActionButton
-          label="セーブのファイルを読み込む"
-          className={styles.subBtn}
-          sfx="cursor"
-          onClick={() => {
-            setError('');
-            fileInputRef.current?.click();
-          }}
-        />
+        {/* <label> ラップで iOS PWA でも確実に file picker が開く */}
+        <label className={`${styles.subBtn} ${styles.fileLabel}`}>
+          <span className={styles.fileLabelText}>セーブのファイルを読み込む</span>
+          <input
+            type="file"
+            accept=".txt,.json,.dat,text/plain"
+            className={styles.fileInput}
+            onChange={(e) => void handleFileChange(e)}
+            onClick={() => setError('')}
+          />
+        </label>
         {error ? <p className={styles.errorMsg}>{error}</p> : null}
       </div>
     </div>
