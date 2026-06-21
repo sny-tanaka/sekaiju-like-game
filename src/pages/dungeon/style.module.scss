@@ -311,6 +311,40 @@
   flex-shrink: 0;
 }
 
+// mapWrap に相対配置を加えて flagOverlay を重ねられるようにするバリアント
+.mapWrapRelative {
+  position: relative;
+}
+
+// 旗 SVG overlay（DungeonMap canvas の上に絶対配置）
+.flagOverlay {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+// 自動移動ボタン（旗が無ければ disabled）
+.autoWalkBtn {
+  width: 100%;
+  max-width: 360px;
+  min-height: 44px;
+  border: 0.75px solid var(--danger, #b23c30);
+  border-radius: 0;
+  background-color: var.$parchment-card;
+  color: var(--danger, #b23c30);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
 .palette {
   display: flex;
   flex-wrap: wrap;

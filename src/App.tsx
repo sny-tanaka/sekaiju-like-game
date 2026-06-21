@@ -23,7 +23,7 @@ function App() {
       case 'town':
         return <TownPage />;
       case 'guild':
-        return <GuildPage />;
+        return <GuildPage tab={screen.tab} />;
       case 'guildChar':
         return <GuildCharPage id={screen.id} />;
       case 'shop':

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { isAutoMoveDisabled, nextFlagOnCellTap } from './flag';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
@@ -87,6 +88,8 @@ export const Page = () => {
     x: number;
     y: number;
   } | null>(null);
+  // 旗（自動移動の目標地点）。同時に 1 つまで、永続化しない
+  const [flag, setFlag] = useState<{ x: number; y: number } | null>(null);
 
   const dive = save?.diveState ?? null;
 
@@ -192,9 +195,11 @@ export const Page = () => {
         setNotice('強大な力に阻まれている。階層ボスを倒さねば先へ進めない。');
         return;
       }
+      setFlag(null); // 階層移動で旗をクリア
       play('dive');
       await applyAndPersist((s) => goDeeper(s));
     } else if (kind === 'stairsDown') {
+      setFlag(null); // 階層移動で旗をクリア
       if (save.diveState!.depth <= 1) {
         play('warp');
         await applyAndPersist((s) => returnToTown(s));
@@ -213,7 +218,8 @@ export const Page = () => {
       if (!result.ok) return;
       void applyAndPersist(() => result.save);
       if (!result.save.diveState) {
-        // 帰還の糸など → 拠点へ
+        // 帰還の糸など → 拠点へ。旗もクリア
+        setFlag(null);
         setItemOpen(false);
         navigate({ name: 'town' });
       }
@@ -221,31 +227,56 @@ export const Page = () => {
     [save, applyAndPersist, navigate]
   );
 
-  // タップしたマスまで自動で歩く（[02 §3]・issue #20）。1歩ずつ解決し、エンカウント時は中断して戦闘へ。
+  // 旗の位置まで自動で歩く（issue #80）。1歩ずつ解決し、エンカウント時は中断して戦闘へ。
   const autoWalk = useCallback(
-    async (path: Dir[]) => {
-      if (walkingRef.current || path.length === 0) return;
+    async (target: { x: number; y: number }) => {
+      if (walkingRef.current) return;
+      if (!rngRef.current) return;
       walkingRef.current = true;
       setNotice(null);
       try {
-        for (const dir of path) {
-          if (!rngRef.current) continue;
+        // 経路計算は毎ステップ applyAndPersist コールバック内で行う（最新 save から取得）
+        let keepGoing = true;
+        while (keepGoing) {
           let triggered = false;
           let moved = false;
           await applyAndPersist((prev) => {
-            if (!prev.diveState) return prev;
-            const r = moveStep(prev, dir, rngRef.current!);
+            if (!prev.diveState) {
+              keepGoing = false;
+              return prev;
+            }
+            const fl = prev.towerState.floors[prev.diveState.depth]?.generated;
+            if (!fl) {
+              keepGoing = false;
+              return prev;
+            }
+            const path = pathTo(fl, prev.diveState.pos, target);
+            if (!path || path.length === 0) {
+              keepGoing = false;
+              return prev;
+            }
+            const dir = path[0];
+            if (!rngRef.current) {
+              keepGoing = false;
+              return prev;
+            }
+            const r = moveStep(prev, dir, rngRef.current);
             triggered = r.triggered;
             moved = r.moved;
+            // 目標に到達（path.length===1 の最後の1歩）後は停止
+            if (path.length === 1) keepGoing = false;
             return r.save;
           });
           if (triggered) {
+            setFlag(null);
             navigate({ name: 'battle' });
             return;
           }
-          if (!moved) return; // 進めなくなったら中断（経路上に想定外の障害）
+          if (!moved) break; // 進めなくなったら中断
+          if (!keepGoing) break;
           await sleep(110); // 1歩ずつ見えるように
         }
+        setFlag(null);
       } finally {
         walkingRef.current = false;
       }
@@ -257,11 +288,18 @@ export const Page = () => {
     (x: number, y: number) => {
       if (!dive || !floor || walkingRef.current) return;
       if (!rngRef.current) rngRef.current = createRng((save!.masterSeed ^ 0x9e3779b9) >>> 0);
-      // タップ先までの最短経路を求めて自動移動（隣接1マスも経路長1として扱う）。
-      const path = pathTo(floor, dive.pos, { x, y });
-      if (path && path.length > 0) void autoWalk(path);
+      // タップしたマスが現在の旗と同じなら旗を解除、異なるなら旗を移す（即移動しない）
+      setFlag((prev) => {
+        // 現在地へのタップは無視
+        if (dive.pos.x === x && dive.pos.y === y) return null;
+        // 到達不能なマスも旗設置対象外にする
+        const path = pathTo(floor, dive.pos, { x, y });
+        if (!path || path.length === 0) return null;
+        // 同じマスなら解除、異なるマスなら上書き
+        return nextFlagOnCellTap(prev, { x, y });
+      });
     },
-    [dive, floor, save, autoWalk]
+    [dive, floor, save]
   );
 
   if (!save) {
@@ -363,7 +401,7 @@ export const Page = () => {
           画面下端に固定（.mid 外）で、常に可視に保つ。 */}
       <div className={styles.mid}>
         <div className={styles.mapCard}>
-          <div className={styles.mapWrap}>
+          <div className={`${styles.mapWrap} ${styles.mapWrapRelative}`}>
             <DungeonMap
               floor={floor}
               explored={save.exploredCells[dive.depth] ?? []}
@@ -373,9 +411,56 @@ export const Page = () => {
               depletedGathers={depletedGathers}
               onCellClick={handleCellClick}
             />
+            {/* 旗 overlay: DungeonMap の canvas と同サイズの SVG を重ねて旗を描画 */}
+            {flag &&
+              (() => {
+                // DungeonMap と同じセルサイズ計算
+                const cellSize = Math.max(10, Math.min(26, Math.floor(360 / floor.width)));
+                const mapW = floor.width * cellSize;
+                const mapH = floor.height * cellSize;
+                const fx = flag.x * cellSize + cellSize / 2;
+                const fy = flag.y * cellSize;
+                return (
+                  <svg
+                    className={styles.flagOverlay}
+                    width={mapW}
+                    height={mapH}
+                    viewBox={`0 0 ${mapW} ${mapH}`}
+                    style={{ width: mapW, height: mapH }}
+                    aria-hidden="true"
+                  >
+                    {/* 旗: 縦棒 + 三角旗 */}
+                    <line
+                      x1={fx}
+                      y1={fy + 2}
+                      x2={fx}
+                      y2={fy + cellSize - 2}
+                      stroke="var(--danger, #b23c30)"
+                      strokeWidth={1.5}
+                    />
+                    <polygon
+                      points={`${fx},${fy + 2} ${fx + cellSize * 0.45},${fy + cellSize * 0.3} ${fx},${fy + cellSize * 0.55}`}
+                      fill="var(--danger, #b23c30)"
+                    />
+                  </svg>
+                );
+              })()}
           </div>
         </div>
-        <p className={styles.paletteHint}>マップのマスをタップすると、そこまで自動で移動します。</p>
+        <p className={styles.paletteHint}>
+          {flag
+            ? 'マスをタップして旗を移動。自動移動ボタンで移動開始。'
+            : 'マップのマスをタップすると旗を設置できます。'}
+        </p>
+        <ActionButton
+          label="自動移動"
+          sfx={null}
+          className={styles.autoWalkBtn}
+          disabled={isAutoMoveDisabled(flag, walkingRef.current)}
+          onClick={() => {
+            if (flag) void autoWalk(flag);
+          }}
+        />
       </div>
 
       {showStairsCard && (

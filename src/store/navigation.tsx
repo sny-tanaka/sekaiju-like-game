@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 export type Screen =
   | { name: 'title' }
   | { name: 'town' }
-  | { name: 'guild' }
+  | { name: 'guild'; tab?: 'create' | 'roster' | 'party' | 'banish' }
   | { name: 'guildChar'; id: string }
   | { name: 'shop' }
   | { name: 'forge' }
