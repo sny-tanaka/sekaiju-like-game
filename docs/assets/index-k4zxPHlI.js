@@ -27316,7 +27316,7 @@ const Ft = {
             (Y == null ? void 0 : Y.kind) === 'stairsUp' ||
             (Y == null ? void 0 : Y.kind) === 'stairsDown'
           ) {
-            const EA = Y.kind === 'stairsUp' ? Bs : ts;
+            const EA = Y.kind === 'stairsUp' ? ts : Bs;
             if (Zd(EA)) {
               const v = f * 0.9,
                 cA = mA + (f - v) / 2,
@@ -27609,7 +27609,7 @@ const G7 = {
             (b == null ? void 0 : b.kind) === 'stairsUp' ||
             (b == null ? void 0 : b.kind) === 'stairsDown'
           ) {
-            const X = b.kind === 'stairsUp' ? Bs : ts;
+            const X = b.kind === 'stairsUp' ? ts : Bs;
             if (Zd(X)) {
               const U = Math.max(20, (W.b - K.b) * 0.95),
                 z = T - U / 2,
@@ -33374,7 +33374,7 @@ const Vz = 2500,
                 i.jsxs('footer', {
                   className: SA.foot,
                   children: [
-                    i.jsxs('span', { className: SA.version, children: ['v', '1.0.7'] }),
+                    i.jsxs('span', { className: SA.version, children: ['v', '1.0.8'] }),
                     i.jsx(J, {
                       label: G ? '確認中…' : '更新を確認',
                       sfx: 'cursor',
