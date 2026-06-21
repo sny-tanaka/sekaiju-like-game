@@ -103,10 +103,17 @@ describe('dive', () => {
     expect(returnToTown(save).diveState).toBeNull();
   });
 
-  test('stairsAt は入口セルで stairsDown を返す', () => {
+  test('startDive（ワープ）は stairsUp セル（下り階段・深く進む方向）に着地する', () => {
     const save = startDive(saveWithParty(), 1);
-    // startDive は入口（stairsDown）に立つ
-    expect(stairsAt(save)).toBe('stairsDown');
+    // startDive はワープ扱い → stairsUp（概念上の「下り階段」）に着地
+    expect(stairsAt(save)).toBe('stairsUp');
+  });
+
+  test('goDeeper（徒歩）で進んだ先の階は stairsDown（入口）に着地する', () => {
+    const save = startDive(saveWithParty(), 1);
+    const deeper = goDeeper(save); // 1F -> 2F（stairsUp から出発）
+    // goDeeper は enterFloor(..., 'stairsDown') を使う（従来通り入口側）
+    expect(stairsAt(deeper)).toBe('stairsDown');
   });
 
   test('ensureFloor は foeRuntime を初期配置から構築する', () => {
