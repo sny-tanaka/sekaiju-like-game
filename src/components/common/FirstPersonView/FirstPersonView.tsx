@@ -171,10 +171,12 @@ export const FirstPersonView = ({
       ctx.fillStyle = darken(k);
       ctx.fillRect(far.l, far.t, far.r - far.l, far.b - far.t);
 
-      // セル上のオブジェクト（階段）を正面に表示。専用アイコン画像（上り/下り）。
+      // セル上のオブジェクト（階段）を正面に表示。専用アイコン画像。
+      // 新概念（地下に潜る）に合わせて、stairsUp（深さ +1 方向）= 下りアイコン、
+      // stairsDown（深さ -1 方向 / 拠点へ）= 上りアイコンを表示する（issue #86）。
       const ev = slice.event;
       if (ev?.kind === 'stairsUp' || ev?.kind === 'stairsDown') {
-        const img = ev.kind === 'stairsUp' ? stairsUpImg : stairsDownImg;
+        const img = ev.kind === 'stairsUp' ? stairsDownImg : stairsUpImg;
         if (stairsIconDrawable(img)) {
           // この奥行きの床帯（far.b〜near.b）の高さに合わせ、床の上に収まるよう中央へ置く。
           const size = Math.max(20, (near.b - far.b) * 0.95);

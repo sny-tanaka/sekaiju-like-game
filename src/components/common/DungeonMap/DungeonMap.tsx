@@ -124,10 +124,12 @@ export const DungeonMap = ({
         if (c.walls.W) line(px, py, px, py + cell);
         if (c.walls.E) line(px + cell, py, px + cell, py + cell);
 
-        // 階段マーク: 専用アイコン画像で描く（上り/下り）。
+        // 階段マーク: 専用アイコン画像で描く。
+        // 新概念（地下に潜る）に合わせて、stairsUp（深さ +1 方向）= 下りアイコン、
+        // stairsDown（深さ -1 方向 / 拠点へ）= 上りアイコンを表示する（issue #86）。
         const ev = c.event;
         if (ev?.kind === 'stairsUp' || ev?.kind === 'stairsDown') {
-          const img = ev.kind === 'stairsUp' ? stairsUpImg : stairsDownImg;
+          const img = ev.kind === 'stairsUp' ? stairsDownImg : stairsUpImg;
           if (stairsIconDrawable(img)) {
             const s = cell * 0.9;
             const ox = px + (cell - s) / 2;
