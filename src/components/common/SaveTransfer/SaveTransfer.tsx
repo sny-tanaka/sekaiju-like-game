@@ -16,7 +16,7 @@ import { decodeSaveTransfer, encodeSaveTransfer } from '@/store/saveTransfer';
 // ============================================================================
 
 export const SaveTransfer = () => {
-  const { save, applyAndPersist } = useGameState();
+  const { save, importSave } = useGameState();
   const { navigate } = useNavigation();
 
   const [error, setError] = useState('');
@@ -188,7 +188,7 @@ export const SaveTransfer = () => {
       if (!result.ok) return;
       setBusy(true);
       try {
-        await applyAndPersist(() => result.data);
+        await importSave(result.data);
         showToast('読み込みました');
         setPendingImportStr('');
         setConfirmOverwrite(false);
@@ -197,7 +197,7 @@ export const SaveTransfer = () => {
         setBusy(false);
       }
     },
-    [applyAndPersist, showToast, navigate]
+    [importSave, showToast, navigate]
   );
 
   const handleConfirmOk = useCallback(() => {

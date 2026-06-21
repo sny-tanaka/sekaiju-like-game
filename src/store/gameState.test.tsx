@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { deleteDB } from 'idb';
 import type { ReactNode } from 'react';
 
+import { createInitialSaveData } from '@/domain/saveData';
 import { GameStateProvider, useGameState } from '@/store/gameState';
 import { _resetDbForTest } from '@/store/saveStore';
 
@@ -87,6 +88,79 @@ describe('gameState store (単一セーブ)', () => {
       await result.current.continueGame();
     });
     expect(result.current.save?.guild.name).toBe('ギルド');
+  });
+
+  describe('importSave', () => {
+    test('メモリ save が null の状態で importSave を呼ぶと、save が引数の data になり saveGame が呼ばれる', async () => {
+      // applyAndPersist は prev が null のとき no-op だが、importSave はメモリ状態に関係なく反映する
+      const { result } = renderHook(() => useGameState(), { wrapper });
+
+      // 初期状態: save は null
+      expect(result.current.save).toBeNull();
+
+      const importData = createInitialSaveData('インポートギルド');
+
+      await act(async () => {
+        await result.current.importSave(importData);
+      });
+
+      // save が import したデータになっている
+      expect(result.current.save?.guild.name).toBe('インポートギルド');
+      // saving フラグが false に戻っている（saveGame が完了した証拠）
+      await waitFor(() => expect(result.current.saving).toBe(false));
+
+      // continueGame でディスクから読み直しても同じデータが復元できる
+      const reload = renderHook(() => useGameState(), { wrapper });
+      await act(async () => {
+        const r = await reload.result.current.continueGame();
+        expect(r.ok).toBe(true);
+      });
+      expect(reload.result.current.save?.guild.name).toBe('インポートギルド');
+    });
+
+    test('メモリ save が既に有る状態で importSave を呼ぶと上書きされる', async () => {
+      const { result } = renderHook(() => useGameState(), { wrapper });
+
+      // 先に既存セーブを作る
+      await act(async () => {
+        await result.current.startNewGame('既存ギルド');
+      });
+      expect(result.current.save?.guild.name).toBe('既存ギルド');
+
+      // 別の SaveData を importSave で上書き
+      const importData = createInitialSaveData('上書きギルド');
+      await act(async () => {
+        await result.current.importSave(importData);
+      });
+
+      // 上書き後は importSave に渡したデータになっている
+      expect(result.current.save?.guild.name).toBe('上書きギルド');
+      await waitFor(() => expect(result.current.saving).toBe(false));
+
+      // ディスクにも上書きデータが永続化されている
+      const reload = renderHook(() => useGameState(), { wrapper });
+      await act(async () => {
+        const r = await reload.result.current.continueGame();
+        expect(r.ok).toBe(true);
+      });
+      expect(reload.result.current.save?.guild.name).toBe('上書きギルド');
+    });
+
+    test('importSave は saveGame の stamped 結果（savedAt 付き）を最終 save として保持する', async () => {
+      const { result } = renderHook(() => useGameState(), { wrapper });
+
+      // savedAt を 0 にした data を渡す
+      const importData = { ...createInitialSaveData('スタンプギルド'), savedAt: 0 };
+
+      await act(async () => {
+        await result.current.importSave(importData);
+      });
+
+      await waitFor(() => expect(result.current.saving).toBe(false));
+
+      // saveGame が savedAt を現在時刻で上書きするので 0 より大きくなっているはず
+      expect(result.current.save?.savedAt).toBeGreaterThan(0);
+    });
   });
 
   describe('flag (探索画面の旗 / 戦闘を跨いで保持)', () => {

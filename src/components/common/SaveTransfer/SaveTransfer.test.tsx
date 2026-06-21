@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { mockWithParty } from '@/__stories__/mockSaves';
 import { SaveTransfer } from '@/components/common/SaveTransfer/SaveTransfer';
 import type { SaveData } from '@/domain/types';
+import * as gameStateModule from '@/store/gameState';
 import { GameStateProvider } from '@/store/gameState';
 import { NavigationProvider, useNavigation } from '@/store/navigation';
 import * as saveStore from '@/store/saveStore';
@@ -372,7 +373,7 @@ describe('SaveTransfer', () => {
     });
   });
 
-  test('インポート: 上書き確認 OK → applyAndPersist が呼ばれて navigate(town) される', async () => {
+  test('インポート: 上書き確認 OK → importSave が呼ばれて navigate(town) される', async () => {
     const user = userEvent.setup();
     renderSaveTransfer(mockWithParty);
 
@@ -398,7 +399,7 @@ describe('SaveTransfer', () => {
     });
   }, 10000);
 
-  test('インポート: 壊れた内容のファイル → error メッセージが表示され applyAndPersist は呼ばれない', async () => {
+  test('インポート: 壊れた内容のファイル → error メッセージが表示され importSave は呼ばれない', async () => {
     renderSaveTransfer(mockWithParty);
 
     const file = new File(['これは不正なデータです'], 'bad.txt', { type: 'text/plain' });
@@ -439,7 +440,7 @@ describe('SaveTransfer', () => {
     expect(input.className).toMatch(/fileInput/);
   });
 
-  test('file.text() が存在する場合はそれを呼び、applyAndPersist まで動く', async () => {
+  test('file.text() が存在する場合はそれを呼び、importSave まで動く', async () => {
     renderSaveTransfer(); // save=null で initialSave 無し（ディスク有りはデフォルト mock）
 
     const validStr = encodeSaveTransfer(mockWithParty);
@@ -456,7 +457,7 @@ describe('SaveTransfer', () => {
     Object.defineProperty(input, 'files', { value: [mockFile], configurable: true });
     fireEvent.change(input);
 
-    // save=null の場合は確認モーダルなしで直接 applyAndPersist が呼ばれ town へ遷移
+    // save=null の場合は確認モーダルなしで直接 importSave が呼ばれ town へ遷移
     await waitFor(() => {
       expect(screen.getByTestId('current-screen').textContent).toBe('town');
     });
@@ -464,7 +465,7 @@ describe('SaveTransfer', () => {
     expect(mockFile.text).toHaveBeenCalled();
   }, 10000);
 
-  test('file.text() が無い場合は FileReader にフォールバックして applyAndPersist まで動く', async () => {
+  test('file.text() が無い場合は FileReader にフォールバックして importSave まで動く', async () => {
     renderSaveTransfer(); // save=null
 
     const validStr = encodeSaveTransfer(mockWithParty);
@@ -503,7 +504,7 @@ describe('SaveTransfer', () => {
     });
   });
 
-  test('貼り付け経路: 確認 OK → applyAndPersist 呼出 → navigate(town)', async () => {
+  test('貼り付け経路: 確認 OK → importSave 呼出 → navigate(town)', async () => {
     const user = userEvent.setup();
     renderSaveTransfer(mockWithParty);
 
@@ -524,7 +525,7 @@ describe('SaveTransfer', () => {
     });
   }, 10000);
 
-  test('貼り付け経路: 壊れた文字列 → エラーメッセージ表示、applyAndPersist は呼ばれない', async () => {
+  test('貼り付け経路: 壊れた文字列 → エラーメッセージ表示、importSave は呼ばれない', async () => {
     const user = userEvent.setup();
     renderSaveTransfer(mockWithParty);
 
@@ -555,6 +556,113 @@ describe('SaveTransfer', () => {
     // 文字列を入れたら enabled
     fireEvent.change(textarea, { target: { value: 'abc' } });
     expect(btn).not.toBeDisabled();
+  });
+
+  // ============================================================
+  // 回帰テスト: メモリ save が null の動線で importSave が呼ばれる
+  // (applyAndPersist は prev=null で no-op になるため取込が drop される)
+  // ============================================================
+
+  describe('回帰: タイトル画面からの動線（メモリ save = null）', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    function renderWithMockedGameState(importSaveMock: ReturnType<typeof vi.fn>) {
+      const applyAndPersistMock = vi.fn(async () => {});
+      vi.spyOn(gameStateModule, 'useGameState').mockReturnValue({
+        save: null,
+        saving: false,
+        flag: null,
+        startNewGame: vi.fn(async () => {}),
+        continueGame: vi.fn(async () => ({ ok: true as const })),
+        applySave: vi.fn(),
+        applyAndPersist: applyAndPersistMock,
+        importSave: importSaveMock,
+        persist: vi.fn(async () => {}),
+        exitToTitle: vi.fn(),
+        setFlag: vi.fn(),
+      });
+      vi.mocked(saveStore.getSaveMeta).mockResolvedValue({
+        guildName: 'ディスクギルド',
+        deepestReached: 1,
+        memberCount: 5,
+        savedAt: Date.now(),
+        corrupted: false,
+      });
+
+      return { applyAndPersistMock };
+    }
+
+    test('ファイル経路: メモリ null でも importSave が SaveData で呼ばれ town に遷移する', async () => {
+      const importSaveMock = vi.fn(async (_data: SaveData) => {});
+      const { applyAndPersistMock } = renderWithMockedGameState(importSaveMock);
+
+      render(
+        <NavigationProvider>
+          <NavigationDisplay />
+          <SaveTransfer />
+        </NavigationProvider>
+      );
+
+      const validStr = encodeSaveTransfer(mockWithParty);
+      const file = new File([validStr], 'save.txt', { type: 'text/plain' });
+
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      Object.defineProperty(input, 'files', { value: [file], configurable: true });
+      fireEvent.change(input);
+
+      // メモリ save が null なので確認モーダルなしで直接 importSave が呼ばれる
+      await waitFor(() => {
+        expect(importSaveMock).toHaveBeenCalledTimes(1);
+      });
+
+      // importSave に渡された data のギルド名が元と一致する
+      const calledData = (importSaveMock.mock.calls[0] as unknown as [SaveData])[0];
+      expect(calledData.guild.name).toBe(mockWithParty.guild.name);
+
+      // town へ遷移する
+      await waitFor(() => {
+        expect(screen.getByTestId('current-screen').textContent).toBe('town');
+      });
+
+      // applyAndPersist は一切呼ばれない（旧実装の null ガード経路を踏まない）
+      expect(applyAndPersistMock).not.toHaveBeenCalled();
+    }, 10000);
+
+    test('貼り付け経路: メモリ null でも importSave が SaveData で呼ばれ town に遷移する', async () => {
+      const importSaveMock = vi.fn(async (_data: SaveData) => {});
+      const { applyAndPersistMock } = renderWithMockedGameState(importSaveMock);
+
+      render(
+        <NavigationProvider>
+          <NavigationDisplay />
+          <SaveTransfer />
+        </NavigationProvider>
+      );
+
+      const validStr = encodeSaveTransfer(mockWithParty);
+      const textarea = screen.getByPlaceholderText('ここに引き継ぎ文字列を貼り付け');
+      fireEvent.change(textarea, { target: { value: validStr } });
+
+      const btn = screen.getByRole('button', { name: '貼り付けた文字列を読み込む' });
+      await userEvent.setup().click(btn);
+
+      // メモリ save が null なので確認モーダルなしで直接 importSave が呼ばれる
+      await waitFor(() => {
+        expect(importSaveMock).toHaveBeenCalledTimes(1);
+      });
+
+      const calledData = (importSaveMock.mock.calls[0] as unknown as [SaveData])[0];
+      expect(calledData.guild.name).toBe(mockWithParty.guild.name);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('current-screen').textContent).toBe('town');
+      });
+
+      // applyAndPersist は一切呼ばれない
+      expect(applyAndPersistMock).not.toHaveBeenCalled();
+    }, 10000);
   });
 
   test('インポート: file input は同じファイル 2 回連続選択に対応 (onChange 後に value がリセットされる)', () => {
