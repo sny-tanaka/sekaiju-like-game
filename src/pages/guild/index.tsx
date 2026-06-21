@@ -39,7 +39,7 @@ function positionOf(save: SaveData, charId: string): Pos {
   return '控え';
 }
 
-// ギルド管理（[01 §9]・issue #26）。作成 / 一覧 / 編成 / 追放の4タブ構成。
+// ギルド管理（[01 §9]・issue #26）。一覧 / 作成 / 編成 / 追放の4タブ構成。
 export const Page = ({ tab: initialTab }: { tab?: Tab }) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
@@ -47,7 +47,7 @@ export const Page = ({ tab: initialTab }: { tab?: Tab }) => {
 
   const raceIds = Object.keys(RACES);
   const classIds = Object.keys(CLASSES);
-  const [tab, setTab] = useState<Tab>(initialTab ?? 'create');
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'roster');
 
   // 作成フォーム
   const [name, setName] = useState('');
@@ -119,7 +119,7 @@ export const Page = ({ tab: initialTab }: { tab?: Tab }) => {
 
       {/* タブバー */}
       <div className={styles.tabs}>
-        {(['create', 'roster', 'party', 'banish'] as const).map((t) => {
+        {(['roster', 'create', 'party', 'banish'] as const).map((t) => {
           const labels: Record<Tab, string> = {
             create: '作成',
             roster: '一覧',
