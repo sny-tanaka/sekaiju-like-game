@@ -40,14 +40,14 @@ function positionOf(save: SaveData, charId: string): Pos {
 }
 
 // ギルド管理（[01 §9]・issue #26）。作成 / 一覧 / 編成 / 追放の4タブ構成。
-export const Page = () => {
+export const Page = ({ tab: initialTab }: { tab?: Tab }) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
   const play = useSfx();
 
   const raceIds = Object.keys(RACES);
   const classIds = Object.keys(CLASSES);
-  const [tab, setTab] = useState<Tab>('create');
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'create');
 
   // 作成フォーム
   const [name, setName] = useState('');
