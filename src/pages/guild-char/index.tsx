@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { getSiblingCharIds } from './memberNavigation';
 import styles from './style.module.scss';
 
 import { useSfx } from '@/audio/useSfx';
@@ -82,10 +83,7 @@ export const Page = ({ id }: { id: string }) => {
 
   // 左右矢印: guild.members の順序で前後の団員 ID を取得（循環）
   const memberIds = save.guild.members.map((m) => m.id);
-  const currentIdx = memberIds.indexOf(id);
-  const prevId = memberIds[(currentIdx - 1 + memberIds.length) % memberIds.length];
-  const nextId = memberIds[(currentIdx + 1) % memberIds.length];
-  const hasSiblings = memberIds.length > 1;
+  const { prev: prevId, next: nextId, hasSiblings } = getSiblingCharIds(memberIds, id);
 
   // ポジション判定
   const pos = save.guild.party.front.includes(id)
@@ -137,7 +135,7 @@ export const Page = ({ id }: { id: string }) => {
         {hasSiblings ? (
           <ActionButton
             className={styles.navArrow}
-            onClick={() => navigate({ name: 'guildChar', id: prevId })}
+            onClick={() => navigate({ name: 'guildChar', id: prevId! })}
             aria-label="前の団員"
           >
             ←
@@ -160,7 +158,7 @@ export const Page = ({ id }: { id: string }) => {
         {hasSiblings ? (
           <ActionButton
             className={styles.navArrow}
-            onClick={() => navigate({ name: 'guildChar', id: nextId })}
+            onClick={() => navigate({ name: 'guildChar', id: nextId! })}
             aria-label="次の団員"
           >
             →
