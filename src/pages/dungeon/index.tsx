@@ -209,7 +209,7 @@ export const Page = () => {
         await applyAndPersist((s) => goShallower(s));
       }
     }
-  }, [save, applyAndPersist, navigate, play]);
+  }, [save, applyAndPersist, navigate, play, setFlag]);
 
   const handleUseItem = useCallback(
     (itemId: string, charId?: string) => {
@@ -224,14 +224,18 @@ export const Page = () => {
         navigate({ name: 'town' });
       }
     },
-    [save, applyAndPersist, navigate]
+    [save, applyAndPersist, navigate, setFlag]
   );
 
   // 旗の位置まで自動で歩く（issue #80）。1歩ずつ解決し、エンカウント時は中断して戦闘へ。
   const autoWalk = useCallback(
     async (target: { x: number; y: number }) => {
       if (walkingRef.current) return;
-      if (!rngRef.current) return;
+      if (!save) return;
+      // 戦闘から戻った直後は dungeon が remount されていて rngRef が null。
+      // doMove / handleGather / handleCellClick を経ずに自動移動ボタンを直接押した
+      // ケースをカバーするため、ここで lazy init する（旗は戦闘を跨いで残る仕様）。
+      if (!rngRef.current) rngRef.current = createRng((save.masterSeed ^ 0x9e3779b9) >>> 0);
       walkingRef.current = true;
       setNotice(null);
       try {
@@ -282,7 +286,7 @@ export const Page = () => {
         walkingRef.current = false;
       }
     },
-    [applyAndPersist, navigate]
+    [save, applyAndPersist, navigate, setFlag]
   );
 
   const handleCellClick = useCallback(
@@ -300,7 +304,7 @@ export const Page = () => {
         return nextFlagOnCellTap(prev, { x, y });
       });
     },
-    [dive, floor, save]
+    [dive, floor, save, setFlag]
   );
 
   if (!save) {
