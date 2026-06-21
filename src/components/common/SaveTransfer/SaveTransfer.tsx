@@ -9,25 +9,26 @@ import { getSaveMeta, loadGame } from '@/store/saveStore';
 import { decodeSaveTransfer, encodeSaveTransfer } from '@/store/saveTransfer';
 
 // ============================================================================
-// SaveTransfer — セーブの引き継ぎ UI
+// SaveTransfer — セーブの引き継ぎ UI（ファイル方式）
 // タイトル画面の ⚙ モーダル内、SoundSettings の下に配置する。
+// Web Share API → ダウンロードリンクの 2 段フォールバックでエクスポート。
+// インポートは <input type="file"> 経由。
 // ============================================================================
-
-type Mode = 'idle' | 'export' | 'import';
 
 export const SaveTransfer = () => {
   const { save, applyAndPersist } = useGameState();
   const { navigate } = useNavigation();
 
-  const [mode, setMode] = useState<Mode>('idle');
-  const [exportStr, setExportStr] = useState('');
-  const [importInput, setImportInput] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState('');
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
+  // インポートで読み込んだデータを一時保持（上書き確認 OK 時に使う）
+  const [pendingImportStr, setPendingImportStr] = useState('');
   // null = ロード中、true = ディスクに有効セーブあり、false = なし or 破損
   const [hasSaveOnDisk, setHasSaveOnDisk] = useState<boolean | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // toast を 2 秒で消す
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,6 +65,18 @@ export const SaveTransfer = () => {
     };
   }, [save]);
 
+  // ---- ファイル名生成 -------------------------------------------------------
+
+  const buildFilename = useCallback((guildName: string): string => {
+    const sanitized = guildName.replace(/[\\/:*?"<>|]/g, '_') || 'noguild';
+    const now = new Date();
+    const pad = (n: number, d = 2) => String(n).padStart(d, '0');
+    const datePart =
+      `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +
+      `-${pad(now.getHours())}${pad(now.getMinutes())}`;
+    return `sekaiju-save-${sanitized}-${datePart}.txt`;
+  }, []);
+
   // ---- エクスポート --------------------------------------------------------
 
   const handleExport = useCallback(async () => {
@@ -79,74 +92,118 @@ export const SaveTransfer = () => {
         working = result.data;
       }
       const str = encodeSaveTransfer(working);
-      try {
-        await navigator.clipboard.writeText(str);
-        setExportStr(str);
-        showToast('コピーしました');
-        setMode('idle');
-      } catch {
-        // clipboard API が使えない場合はフォールバック表示
-        setExportStr(str);
-        setMode('export');
+      const filename = buildFilename(working.guild.name);
+
+      // Web Share API（iOS で推奨）を最優先で試す
+      const shareFile = new File([str], filename, { type: 'text/plain' });
+      if (
+        typeof navigator !== 'undefined' &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [shareFile] }) &&
+        typeof navigator.share === 'function'
+      ) {
+        try {
+          await navigator.share({ files: [shareFile], title: 'セーブの引き継ぎ' });
+          showToast('共有しました');
+          return;
+        } catch (err) {
+          // AbortError はユーザーキャンセル → silently return
+          // DOMException は環境によって Error のサブクラスでない場合があるため
+          // instanceof チェックをせず name プロパティだけで判定する
+          if ((err as { name?: string }).name === 'AbortError') {
+            return;
+          }
+          // その他のエラーはダウンロードフォールバックへ
+        }
       }
+
+      // ダウンロードフォールバック
+      const blob = new Blob([str], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('ダウンロードしました');
     } finally {
       setBusy(false);
     }
-  }, [save, showToast]);
+  }, [save, showToast, buildFilename]);
 
   // ---- インポート ----------------------------------------------------------
 
-  const handlePaste = useCallback(async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      setImportInput(text);
-    } catch {
-      // 手動貼り付けを促す（エラー表示不要）
-    }
+  /** File をテキストとして読む。FileReader を使って確実に非同期で読み込む。 */
+  const readFileAsText = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
+      reader.readAsText(file);
+    });
   }, []);
 
-  const handleLoad = useCallback(() => {
-    if (!importInput.trim()) {
-      setError('文字列を入力してください');
-      return;
-    }
-    const result = decodeSaveTransfer(importInput);
-    if (!result.ok) {
-      setError(result.reason);
-      return;
-    }
-    setError('');
-    if (save) {
-      // 既存セーブがある場合は確認モーダルを出す
-      setConfirmOverwrite(true);
-    } else {
-      void doApply();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [importInput, save]);
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      // 同じファイルを 2 回連続で選べるよう input をリセット
+      e.target.value = '';
+      if (!file) return;
 
-  const doApply = useCallback(async () => {
-    const result = decodeSaveTransfer(importInput);
-    if (!result.ok) return;
-    setBusy(true);
-    try {
-      await applyAndPersist(() => result.data);
-      showToast('読み込みました');
-      setMode('idle');
-      setImportInput('');
-      setConfirmOverwrite(false);
-      navigate({ name: 'town' });
-    } finally {
-      setBusy(false);
-    }
-  }, [importInput, applyAndPersist, showToast, navigate]);
+      setError('');
+      let text: string;
+      try {
+        text = await readFileAsText(file);
+      } catch {
+        setError('ファイルを読み込めませんでした');
+        return;
+      }
+
+      const result = decodeSaveTransfer(text);
+      if (!result.ok) {
+        setError(result.reason);
+        return;
+      }
+
+      setPendingImportStr(text);
+      if (save) {
+        // 既存セーブがある場合は確認モーダルを出す
+        setConfirmOverwrite(true);
+      } else {
+        void doApplyWithStr(text);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [save, readFileAsText]
+  );
+
+  const doApplyWithStr = useCallback(
+    async (str: string) => {
+      const result = decodeSaveTransfer(str);
+      if (!result.ok) return;
+      setBusy(true);
+      try {
+        await applyAndPersist(() => result.data);
+        showToast('読み込みました');
+        setPendingImportStr('');
+        setConfirmOverwrite(false);
+        navigate({ name: 'town' });
+      } finally {
+        setBusy(false);
+      }
+    },
+    [applyAndPersist, showToast, navigate]
+  );
 
   const handleConfirmOk = useCallback(() => {
-    void doApply();
-  }, [doApply]);
+    void doApplyWithStr(pendingImportStr);
+  }, [doApplyWithStr, pendingImportStr]);
 
   const handleConfirmCancel = useCallback(() => {
     setConfirmOverwrite(false);
+    setPendingImportStr('');
   }, []);
 
   // ---- 確認モーダル（上書き確認） -----------------------------------------
@@ -187,92 +244,43 @@ export const SaveTransfer = () => {
       <h3 className={styles.sectionTitle}>セーブの引き継ぎ</h3>
       <p className={styles.description}>
         端末を変えたり、PWA を入れ直すときに使います。
-        セーブを文字列にしてメモ・メールなどに貼っておけば、新しい端末で復元できます。
+        セーブをファイルに書き出して保管しておけば、新しい端末で読み込んで復元できます。
       </p>
 
       {/* toast */}
       {toast ? <p className={styles.toast}>{toast}</p> : null}
 
       {/* エクスポート */}
-      {mode !== 'import' && (
-        <div className={styles.section}>
-          <ActionButton
-            label="セーブをコピー"
-            className={styles.primaryBtn}
-            disabled={!hasSaveOnDisk || busy}
-            onClick={() => void handleExport()}
-          />
-          {mode === 'export' && exportStr && (
-            <div className={styles.fallback}>
-              <p className={styles.fallbackNote}>長押しコピーしてください</p>
-              <textarea
-                className={styles.codeArea}
-                readOnly
-                rows={6}
-                value={exportStr}
-                onFocus={(e) => e.currentTarget.select()}
-              />
-            </div>
-          )}
-        </div>
-      )}
+      <div className={styles.section}>
+        <ActionButton
+          label="セーブをファイルに保存"
+          className={styles.primaryBtn}
+          disabled={!hasSaveOnDisk || busy}
+          onClick={() => void handleExport()}
+        />
+      </div>
 
       {/* インポート */}
-      {mode !== 'export' && (
-        <div className={styles.section}>
-          {mode === 'idle' ? (
-            <ActionButton
-              label="セーブを読み込む"
-              className={styles.subBtn}
-              sfx="cursor"
-              onClick={() => {
-                setMode('import');
-                setError('');
-                setImportInput('');
-              }}
-            />
-          ) : (
-            <>
-              <textarea
-                className={styles.codeArea}
-                rows={6}
-                value={importInput}
-                placeholder="引き継ぎ文字列を貼り付けてください"
-                onChange={(e) => {
-                  setImportInput(e.target.value);
-                  setError('');
-                }}
-              />
-              {error ? <p className={styles.errorMsg}>{error}</p> : null}
-              <div className={styles.importActions}>
-                <ActionButton
-                  label="貼り付け"
-                  className={styles.subBtn}
-                  sfx="cursor"
-                  onClick={() => void handlePaste()}
-                />
-                <ActionButton
-                  label="読み込む"
-                  className={styles.primaryBtn}
-                  disabled={busy}
-                  onClick={handleLoad}
-                />
-                <ActionButton
-                  label="キャンセル"
-                  className={styles.cancelBtn}
-                  sfx="cancel"
-                  disabled={busy}
-                  onClick={() => {
-                    setMode('idle');
-                    setError('');
-                    setImportInput('');
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      )}
+      <div className={styles.section}>
+        {/* 非表示の file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".txt,.json,.dat,text/plain"
+          style={{ display: 'none' }}
+          onChange={(e) => void handleFileChange(e)}
+        />
+        <ActionButton
+          label="セーブのファイルを読み込む"
+          className={styles.subBtn}
+          sfx="cursor"
+          onClick={() => {
+            setError('');
+            fileInputRef.current?.click();
+          }}
+        />
+        {error ? <p className={styles.errorMsg}>{error}</p> : null}
+      </div>
     </div>
   );
 };

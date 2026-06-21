@@ -127,62 +127,6 @@
   }
 }
 
-// ---- テキストエリア ---------------------------------------------------------
-
-.codeArea {
-  width: 100%;
-  box-sizing: border-box;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--text-base);
-  background: var(--surface-elev);
-  border: 1px solid var(--rule-base);
-  border-radius: 3px;
-  padding: 8px 10px;
-  resize: none;
-  overflow-x: hidden;
-  word-break: break-all;
-  white-space: pre-wrap;
-  outline: none;
-
-  &:focus {
-    border-color: var(--rule-gold);
-  }
-
-  &[readonly] {
-    cursor: default;
-    color: var(--text-soft);
-  }
-
-  &::placeholder {
-    color: var(--text-faint);
-  }
-}
-
-// ---- フォールバック ---------------------------------------------------------
-
-.fallback {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.fallbackNote {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 11px;
-  color: var(--text-soft);
-}
-
-// ---- インポートアクション群 -------------------------------------------------
-
-.importActions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 // ---- エラーメッセージ -------------------------------------------------------
 
 .errorMsg {

@@ -11,7 +11,7 @@ import * as saveStore from '@/store/saveStore';
 import { decodeSaveTransfer, encodeSaveTransfer } from '@/store/saveTransfer';
 
 // ============================================================================
-// SaveTransfer.tsx の単体テスト
+// SaveTransfer.tsx の単体テスト（ファイル方式）
 // ============================================================================
 
 // audio 系のモック（useSfx が Web Audio を参照するため）
@@ -55,61 +55,114 @@ function renderSaveTransfer(initialSave?: SaveData) {
   );
 }
 
-// --- clipboard モックのセットアップ ---
-// jsdom の navigator.clipboard は getter 経由 + configurable:false のことが多い。
-// saveTransfer.ts で呼ぶ navigator.clipboard.writeText をモジュールレベルでモックするため、
-// saveTransfer.ts から clipboard アクセスを分離したラッパーを経由する方法が取れない。
-// 代わりに、コンポーネントが依存する navigator.clipboard を直接書き換える。
-// 書き換えに失敗した場合（configurable:false）は、コンポーネント自体のコードテストは
-// DOM の変化（toast / textarea）で検証する。
+// --- navigator.share / navigator.canShare / URL モックのセットアップ ---
 
-let capturedWrittenText = '';
+type ShareMock = {
+  shareFn: ReturnType<typeof vi.fn>;
+  canShareFn: ReturnType<typeof vi.fn>;
+};
 
-function setupClipboardMock(shouldReject = false) {
-  capturedWrittenText = '';
-  const writeTextFn = shouldReject
-    ? vi.fn().mockRejectedValue(new Error('clipboard not allowed'))
-    : vi.fn().mockImplementation((text: string) => {
-        capturedWrittenText = text;
-        return Promise.resolve();
-      });
-  const readTextFn = vi.fn().mockResolvedValue('');
+function setupShareMock(behavior: 'success' | 'abort' | 'error' | 'none'): ShareMock {
+  let shareFn: ReturnType<typeof vi.fn>;
+  let canShareFn: ReturnType<typeof vi.fn>;
 
-  try {
-    // まず clipboard プロパティ自体を設定してみる
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: writeTextFn, readText: readTextFn },
-      configurable: true,
-      writable: true,
-    });
-  } catch {
-    // 失敗した場合は window.navigator ごと置き換える
-    try {
-      Object.defineProperty(window, 'navigator', {
-        value: Object.create(Object.getPrototypeOf(window.navigator), {
-          ...Object.getOwnPropertyDescriptors(window.navigator),
-          clipboard: {
-            value: { writeText: writeTextFn, readText: readTextFn },
-            configurable: true,
-            writable: true,
-          },
-        }),
-        configurable: true,
-        writable: true,
-      });
-    } catch {
-      // どちらも失敗した場合はスキップ（テストは DOM 変化で検証）
+  if (behavior === 'none') {
+    // Web Share API が存在しない環境
+    canShareFn = vi.fn().mockReturnValue(false);
+    shareFn = vi.fn();
+  } else {
+    canShareFn = vi.fn().mockReturnValue(true);
+    if (behavior === 'success') {
+      shareFn = vi.fn().mockResolvedValue(undefined);
+    } else if (behavior === 'abort') {
+      const err = new DOMException('User cancelled', 'AbortError');
+      shareFn = vi.fn().mockRejectedValue(err);
+    } else {
+      // 'error'
+      shareFn = vi.fn().mockRejectedValue(new Error('share failed'));
     }
   }
 
-  return { writeTextFn, readTextFn };
+  Object.defineProperty(navigator, 'canShare', {
+    value: canShareFn,
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(navigator, 'share', {
+    value: shareFn,
+    configurable: true,
+    writable: true,
+  });
+
+  return { shareFn, canShareFn };
+}
+
+// document.createElement の <a> click スパイ
+let clickedAnchors: HTMLAnchorElement[] = [];
+
+function setupDownloadSpy() {
+  clickedAnchors = [];
+  const originalCreate = document.createElement.bind(document);
+  const createSpy = vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+    const el = originalCreate(tag);
+    if (tag === 'a') {
+      const origClick = el.click.bind(el);
+      el.click = () => {
+        clickedAnchors.push(el as HTMLAnchorElement);
+        origClick();
+      };
+    }
+    return el;
+  });
+  return createSpy;
+}
+
+// Blob/File の text() が jsdom で動作しない場合に備えた安全な読み取りヘルパー
+function readBlobAsText(blob: Blob): Promise<string> {
+  // text() が実装されていれば使う、なければ FileReader で代替
+  if (typeof blob.text === 'function') {
+    return blob.text();
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsText(blob);
+  });
+}
+
+// URL.createObjectURL / revokeObjectURL のモック
+// jsdom には createObjectURL が存在しないため、直接プロパティとして定義する。
+let createdObjectUrls: { blob: Blob; url: string }[] = [];
+let createObjectUrlFn: ReturnType<typeof vi.fn>;
+let revokeObjectUrlFn: ReturnType<typeof vi.fn>;
+
+function setupUrlMocks() {
+  createdObjectUrls = [];
+  createObjectUrlFn = vi.fn((blob: Blob) => {
+    const url = `blob:http://localhost/${Math.random().toString(36).slice(2)}`;
+    createdObjectUrls.push({ blob, url });
+    return url;
+  });
+  revokeObjectUrlFn = vi.fn();
+  // jsdom では URL.createObjectURL が未定義のため Object.defineProperty で設定
+  Object.defineProperty(URL, 'createObjectURL', {
+    value: createObjectUrlFn,
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(URL, 'revokeObjectURL', {
+    value: revokeObjectUrlFn,
+    configurable: true,
+    writable: true,
+  });
 }
 
 // --- テスト ---
 
 describe('SaveTransfer', () => {
   beforeEach(() => {
-    setupClipboardMock();
+    setupUrlMocks();
   });
 
   afterEach(() => {
@@ -117,156 +170,23 @@ describe('SaveTransfer', () => {
     cleanup();
   });
 
-  test('save が無い状態では「セーブをコピー」が disabled になる', () => {
+  // ============================================================
+  // エクスポートボタンの disabled 状態チェック
+  // ============================================================
+
+  test('save が無い状態では「セーブをファイルに保存」が disabled になる', async () => {
+    vi.mocked(saveStore.getSaveMeta).mockResolvedValue(null);
     renderSaveTransfer();
-    const btn = screen.getByRole('button', { name: 'セーブをコピー' });
+    // getSaveMeta の解決まで待つ
+    await waitFor(() => {
+      expect(saveStore.getSaveMeta).toHaveBeenCalled();
+    });
+    const btn = screen.getByRole('button', { name: 'セーブをファイルに保存' });
     expect(btn).toBeDisabled();
   });
 
-  test('save がある状態で「セーブをコピー」をクリックすると clipboard.writeText が呼ばれる', async () => {
-    const { writeTextFn } = setupClipboardMock(false);
-    const user = userEvent.setup();
-    renderSaveTransfer(mockWithParty);
-
-    const btn = screen.getByRole('button', { name: 'セーブをコピー' });
-    expect(btn).not.toBeDisabled();
-    await user.click(btn);
-
-    // 「コピーしました」トーストが出れば writeText が成功したことを示す
-    await waitFor(() => {
-      expect(screen.getByText('コピーしました')).toBeInTheDocument();
-    });
-
-    // writeText が実際に呼ばれ、渡した文字列が decode できることを確認
-    if (writeTextFn.mock.calls.length > 0) {
-      // モックが効いた場合
-      const written = writeTextFn.mock.calls[0][0] as string;
-      const result = decodeSaveTransfer(written);
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.guild.name).toBe(mockWithParty.guild.name);
-      }
-    } else if (capturedWrittenText) {
-      // 別実装でキャプチャできた場合
-      const result = decodeSaveTransfer(capturedWrittenText);
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.guild.name).toBe(mockWithParty.guild.name);
-      }
-    }
-    // どちらでもなければ、「コピーしました」toast の存在が writeText 成功の証拠
-  });
-
-  test('clipboard が使えない環境ではフォールバック textarea に引き継ぎ文字列が表示される', async () => {
-    // writeText を reject させる
-    setupClipboardMock(true);
-
-    const user = userEvent.setup();
-    renderSaveTransfer(mockWithParty);
-
-    await user.click(screen.getByRole('button', { name: 'セーブをコピー' }));
-
-    // フォールバック: 長押しコピー案内か textarea のどちらかが出る
-    // （clipboard が reject された場合 mode='export' になり fallback が表示される）
-    await waitFor(() => {
-      const hasFallback = !!screen.queryByText('長押しコピーしてください');
-      const hasTextarea = !!screen.queryByRole('textbox');
-      // clipboard reject → fallback textarea が出る
-      // clipboard が mock されていなければ成功 toast が出る
-      expect(hasFallback || hasTextarea || screen.queryByText('コピーしました')).toBeTruthy();
-    });
-
-    // フォールバック textarea が出た場合: 有効な引き継ぎ文字列が入っている
-    const textarea = screen.queryByRole('textbox');
-    if (textarea) {
-      const value = (textarea as HTMLTextAreaElement).value;
-      if (value) {
-        expect(value.startsWith('SLG1.')).toBe(true);
-        const result = decodeSaveTransfer(value);
-        expect(result.ok).toBe(true);
-      }
-    }
-  });
-
-  test('不正な文字列を入れて「読み込む」→ エラーメッセージが出て applyAndPersist は呼ばれない', async () => {
-    const user = userEvent.setup();
-    renderSaveTransfer(mockWithParty);
-
-    // インポートモードを開く
-    await user.click(screen.getByRole('button', { name: 'セーブを読み込む' }));
-
-    // textarea に不正な文字列を fireEvent.change で素早く入力
-    const textarea = await screen.findByPlaceholderText('引き継ぎ文字列を貼り付けてください');
-    fireEvent.change(textarea, { target: { value: 'これは不正な文字列です' } });
-
-    await user.click(screen.getByRole('button', { name: '読み込む' }));
-
-    // エラーメッセージが出る
-    await waitFor(() => {
-      expect(screen.getByText(/セーブの文字列ではありません/)).toBeInTheDocument();
-    });
-
-    // 画面が town に遷移していない = applyAndPersist も呼ばれていない
-    expect(screen.getByTestId('current-screen').textContent).not.toBe('town');
-  });
-
-  test('正しい文字列で既存セーブありのとき「読み込む」→ 確認モーダルが表示される', async () => {
-    const user = userEvent.setup();
-    renderSaveTransfer(mockWithParty);
-
-    const validStr = encodeSaveTransfer(mockWithParty);
-
-    await user.click(screen.getByRole('button', { name: 'セーブを読み込む' }));
-    const textarea = await screen.findByPlaceholderText('引き継ぎ文字列を貼り付けてください');
-
-    // userEvent.type は1文字ずつ入力するため大きな文字列はタイムアウトする
-    // → fireEvent.change で直接 value をセットする
-    fireEvent.change(textarea, { target: { value: validStr } });
-
-    await user.click(screen.getByRole('button', { name: '読み込む' }));
-
-    // 確認モーダルが出る
-    await waitFor(() => {
-      expect(screen.getByText(/は上書きされて元に戻せません/)).toBeInTheDocument();
-    });
-  }, 10000);
-
-  test('確認モーダルで OK すると applyAndPersist が呼ばれて town へ遷移する', async () => {
-    const user = userEvent.setup();
-    renderSaveTransfer(mockWithParty);
-
-    const validStr = encodeSaveTransfer(mockWithParty);
-
-    // インポートモードを開き正しい文字列を入れる
-    await user.click(screen.getByRole('button', { name: 'セーブを読み込む' }));
-    const textarea = await screen.findByPlaceholderText('引き継ぎ文字列を貼り付けてください');
-
-    fireEvent.change(textarea, { target: { value: validStr } });
-
-    await user.click(screen.getByRole('button', { name: '読み込む' }));
-
-    // 確認モーダルが出る
-    await waitFor(() => {
-      expect(screen.getByText(/は上書きされて元に戻せません/)).toBeInTheDocument();
-    });
-
-    // OK（読み込む）ボタンを押す
-    const confirmBtn = screen.getByRole('button', { name: '読み込む' });
-    await user.click(confirmBtn);
-
-    // town へ遷移している
-    await waitFor(() => {
-      expect(screen.getByTestId('current-screen').textContent).toBe('town');
-    });
-  }, 10000);
-
-  // ============================================================
-  // ディスク上セーブ存在チェックの回帰テスト
-  // ============================================================
-
   test('メモリ null + ディスクに valid セーブ → disabled が解け、クリックで loadGame が呼ばれる', async () => {
-    const { writeTextFn } = setupClipboardMock(false);
-    // getSaveMeta: valid meta、loadGame: ok:true を返すようにリセット
+    setupShareMock('success');
     vi.mocked(saveStore.getSaveMeta).mockResolvedValue({
       guildName: mockWithParty.guild.name,
       deepestReached: 1,
@@ -280,50 +200,27 @@ describe('SaveTransfer', () => {
     renderSaveTransfer();
 
     // getSaveMeta が解決するまで待つ → ボタンが enabled になる
-    const btn = screen.getByRole('button', { name: 'セーブをコピー' });
+    const btn = screen.getByRole('button', { name: 'セーブをファイルに保存' });
     await waitFor(() => {
       expect(btn).not.toBeDisabled();
     });
 
-    // クリックすると loadGame が呼ばれ、clipboard に有効な引き継ぎ文字列が渡される
     const user = userEvent.setup();
     await user.click(btn);
 
     await waitFor(() => {
       expect(saveStore.loadGame).toHaveBeenCalled();
     });
-
-    // clipboard に書き込まれた文字列が decodeSaveTransfer で復元できる
-    if (writeTextFn.mock.calls.length > 0) {
-      const written = writeTextFn.mock.calls[0][0] as string;
-      const result = decodeSaveTransfer(written);
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.guild.name).toBe(mockWithParty.guild.name);
-      }
-    } else {
-      // clipboard モックが効かなくても「コピーしました」toast で成功確認
-      await waitFor(() => {
-        expect(screen.getByText('コピーしました')).toBeInTheDocument();
-      });
-    }
   });
 
   test('メモリ null + ディスクも空 → disabled のまま', async () => {
     vi.mocked(saveStore.getSaveMeta).mockResolvedValue(null);
 
-    // initialSave を渡さない → useGameState().save = null
     renderSaveTransfer();
 
-    // getSaveMeta が null を解決するまで待つ
     await waitFor(() => {
-      // hasSaveOnDisk が false になるまで待つ（初期値 null → false）
-      // ボタンは null のときも false のときも disabled なので、
-      // 一度 false に確定したあとも disabled のまま
-      expect(screen.getByRole('button', { name: 'セーブをコピー' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'セーブをファイルに保存' })).toBeDisabled();
     });
-
-    // getSaveMeta が呼ばれたことを確認（ディスクを見に行った）
     expect(saveStore.getSaveMeta).toHaveBeenCalled();
   });
 
@@ -338,12 +235,228 @@ describe('SaveTransfer', () => {
 
     renderSaveTransfer();
 
-    // getSaveMeta が corrupted meta を返した後もボタンは disabled
     await waitFor(() => {
       expect(saveStore.getSaveMeta).toHaveBeenCalled();
     });
 
-    const btn = screen.getByRole('button', { name: 'セーブをコピー' });
+    const btn = screen.getByRole('button', { name: 'セーブをファイルに保存' });
     expect(btn).toBeDisabled();
+  });
+
+  // ============================================================
+  // エクスポート: Web Share API
+  // ============================================================
+
+  test('エクスポート: Web Share API が使えるとき navigator.share が files:[File] で呼ばれ、中身が decode できる', async () => {
+    const { shareFn } = setupShareMock('success');
+    const user = userEvent.setup();
+    renderSaveTransfer(mockWithParty);
+
+    const btn = await screen.findByRole('button', { name: 'セーブをファイルに保存' });
+    await waitFor(() => expect(btn).not.toBeDisabled());
+    await user.click(btn);
+
+    await waitFor(() => {
+      expect(shareFn).toHaveBeenCalled();
+    });
+
+    // 引数に files 配列があることを確認
+    const callArg = shareFn.mock.calls[0][0] as { files: File[]; title: string };
+    expect(callArg.files).toHaveLength(1);
+    const file = callArg.files[0];
+    expect(file.name).toMatch(/\.txt$/);
+
+    // File の中身を decode すると元の SaveData が戻る
+    // jsdom 環境で File.text() が使えない場合は FileReader 経由で読む
+    const text = await readBlobAsText(file);
+    const result = decodeSaveTransfer(text);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.guild.name).toBe(mockWithParty.guild.name);
+    }
+
+    // 「共有しました」toast
+    await waitFor(() => {
+      expect(screen.getByText('共有しました')).toBeInTheDocument();
+    });
+  });
+
+  test('エクスポート: Web Share API が無い (canShare=false) → ダウンロードフォールバック', async () => {
+    setupShareMock('none');
+    const downloadSpy = setupDownloadSpy();
+    const user = userEvent.setup();
+    renderSaveTransfer(mockWithParty);
+
+    const btn = await screen.findByRole('button', { name: 'セーブをファイルに保存' });
+    await waitFor(() => expect(btn).not.toBeDisabled());
+    await user.click(btn);
+
+    await waitFor(() => {
+      expect(clickedAnchors).toHaveLength(1);
+    });
+
+    const anchor = clickedAnchors[0];
+    expect(anchor.download).toMatch(/sekaiju-save-.+\.txt$/);
+
+    // URL.createObjectURL に渡した Blob の中身が decode できる
+    expect(createdObjectUrls).toHaveLength(1);
+    const blobText = await readBlobAsText(createdObjectUrls[0].blob);
+    const result = decodeSaveTransfer(blobText);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.guild.name).toBe(mockWithParty.guild.name);
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('ダウンロードしました')).toBeInTheDocument();
+    });
+
+    downloadSpy.mockRestore();
+  });
+
+  test('エクスポート: Web Share API が AbortError でキャンセルしてもエラーにならない', async () => {
+    setupShareMock('abort');
+    const user = userEvent.setup();
+    renderSaveTransfer(mockWithParty);
+
+    const btn = await screen.findByRole('button', { name: 'セーブをファイルに保存' });
+    await waitFor(() => expect(btn).not.toBeDisabled());
+    await user.click(btn);
+
+    // エラー toast や error メッセージが出ないこと
+    await waitFor(() => {
+      expect(screen.queryByText('エラー')).not.toBeInTheDocument();
+    });
+    // toast が出ないことを確認（共有しましたもダウンロードしましたも無い）
+    expect(screen.queryByText('共有しました')).not.toBeInTheDocument();
+    expect(screen.queryByText('ダウンロードしました')).not.toBeInTheDocument();
+  });
+
+  test('エクスポート: Web Share API が通常エラーでもダウンロードフォールバックが動く', async () => {
+    setupShareMock('error');
+    const downloadSpy = setupDownloadSpy();
+    const user = userEvent.setup();
+    renderSaveTransfer(mockWithParty);
+
+    const btn = await screen.findByRole('button', { name: 'セーブをファイルに保存' });
+    await waitFor(() => expect(btn).not.toBeDisabled());
+    await user.click(btn);
+
+    await waitFor(() => {
+      expect(clickedAnchors).toHaveLength(1);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('ダウンロードしました')).toBeInTheDocument();
+    });
+
+    downloadSpy.mockRestore();
+  });
+
+  // ============================================================
+  // インポート
+  // ============================================================
+
+  test('インポート: 正しい内容のファイルを選択した状態 + 既存セーブあり → 上書き確認モーダル', async () => {
+    renderSaveTransfer(mockWithParty);
+
+    const validStr = encodeSaveTransfer(mockWithParty);
+    const file = new File([validStr], 'save.txt', { type: 'text/plain' });
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(screen.getByText(/は上書きされて元に戻せません/)).toBeInTheDocument();
+    });
+  });
+
+  test('インポート: 上書き確認 OK → applyAndPersist が呼ばれて navigate(town) される', async () => {
+    const user = userEvent.setup();
+    renderSaveTransfer(mockWithParty);
+
+    const validStr = encodeSaveTransfer(mockWithParty);
+    const file = new File([validStr], 'save.txt', { type: 'text/plain' });
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    // 確認モーダルが出る
+    await waitFor(() => {
+      expect(screen.getByText(/は上書きされて元に戻せません/)).toBeInTheDocument();
+    });
+
+    // 「読み込む」ボタン（dangerBtn）を押す
+    const confirmBtn = screen.getByRole('button', { name: '読み込む' });
+    await user.click(confirmBtn);
+
+    // town へ遷移
+    await waitFor(() => {
+      expect(screen.getByTestId('current-screen').textContent).toBe('town');
+    });
+  }, 10000);
+
+  test('インポート: 壊れた内容のファイル → error メッセージが表示され applyAndPersist は呼ばれない', async () => {
+    renderSaveTransfer(mockWithParty);
+
+    const file = new File(['これは不正なデータです'], 'bad.txt', { type: 'text/plain' });
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(screen.getByText(/セーブの文字列ではありません/)).toBeInTheDocument();
+    });
+
+    // 画面が town に遷移していない = applyAndPersist は呼ばれていない
+    expect(screen.getByTestId('current-screen').textContent).not.toBe('town');
+  });
+
+  test('インポート: file input は同じファイル 2 回連続選択に対応 (onChange 後に value がリセットされる)', () => {
+    // コンポーネントが onChange ハンドラーの先頭で e.target.value = '' を実行していることを
+    // コードレベルで確認するためのテスト。
+    // jsdom では「同じ value のファイルを再選択すると change が発火しない」制御がないため、
+    // fireEvent.change で 2 回呼べるが、実際の動作はコード検証で担保する。
+    //
+    // 検証方法: input.value setter をスパイして、fireEvent.change 後に
+    // value = '' が呼ばれることを確認する。
+    // ただし FileReader は async なので、value リセットは FileReader より先（sync）に実行される。
+    renderSaveTransfer(mockWithParty);
+
+    const validStr = encodeSaveTransfer(mockWithParty);
+    const file = new File([validStr], 'save.txt', { type: 'text/plain' });
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+    // input.value セッターをスパイ
+    const valueSetter = vi.fn();
+    const originalDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(input, 'value', {
+      set: valueSetter,
+      get: () => '',
+      configurable: true,
+    });
+
+    try {
+      // 1 回目
+      Object.defineProperty(input, 'files', { value: [file], configurable: true });
+      fireEvent.change(input);
+      // handleFileChange は async だが value = '' は同期的に実行される
+      expect(valueSetter).toHaveBeenCalledWith('');
+
+      // 2 回目
+      valueSetter.mockClear();
+      Object.defineProperty(input, 'files', { value: [file], configurable: true });
+      fireEvent.change(input);
+      expect(valueSetter).toHaveBeenCalledWith('');
+    } finally {
+      // プロパティを元に戻す
+      if (originalDescriptor) {
+        Object.defineProperty(input, 'value', originalDescriptor);
+      }
+    }
   });
 });
