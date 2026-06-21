@@ -209,7 +209,7 @@ export const Page = () => {
         await applyAndPersist((s) => goShallower(s));
       }
     }
-  }, [save, applyAndPersist, navigate, play]);
+  }, [save, applyAndPersist, navigate, play, setFlag]);
 
   const handleUseItem = useCallback(
     (itemId: string, charId?: string) => {
@@ -224,7 +224,7 @@ export const Page = () => {
         navigate({ name: 'town' });
       }
     },
-    [save, applyAndPersist, navigate]
+    [save, applyAndPersist, navigate, setFlag]
   );
 
   // 旗の位置まで自動で歩く（issue #80）。1歩ずつ解決し、エンカウント時は中断して戦闘へ。
@@ -304,7 +304,7 @@ export const Page = () => {
         return nextFlagOnCellTap(prev, { x, y });
       });
     },
-    [dive, floor, save]
+    [dive, floor, save, setFlag]
   );
 
   if (!save) {
