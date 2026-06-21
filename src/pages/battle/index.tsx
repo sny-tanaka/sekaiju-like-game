@@ -556,6 +556,10 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   // mountFxFor: event 種別に応じて Fx state を発火する
   useEffect(() => {
     if (!state || !anim) return;
+    // skipBattleAnim=ON のときは上の useEffect が即座に setAnim(null) する。
+    // ここで前進アニメ等を発火すると先頭イベントの actor が前進したまま残る race condition
+    // が起きるため、何もせずに早期 return する。
+    if (skipBattleAnim) return;
     const { events, eventIdx, baseSnapshot } = anim;
 
     // 全イベント再生完了

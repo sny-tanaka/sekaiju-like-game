@@ -268,7 +268,8 @@ export const Page = () => {
             return r.save;
           });
           if (triggered) {
-            setFlag(null);
+            // 自動移動中にエンカウントしても旗は残す（戦闘終了後に同じ目的地を
+            // 引き継げるように。旗は階層移動・拠点帰還でしか消えない仕様）。
             navigate({ name: 'battle' });
             return;
           }
