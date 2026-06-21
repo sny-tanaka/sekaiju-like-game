@@ -7,6 +7,7 @@ import { SaveTransfer } from '@/components/common/SaveTransfer/SaveTransfer';
 import type { SaveData } from '@/domain/types';
 import { GameStateProvider } from '@/store/gameState';
 import { NavigationProvider, useNavigation } from '@/store/navigation';
+import * as saveStore from '@/store/saveStore';
 import { decodeSaveTransfer, encodeSaveTransfer } from '@/store/saveTransfer';
 
 // ============================================================================
@@ -19,11 +20,20 @@ vi.mock('@/audio/useSfx', () => ({
 }));
 
 // saveStore のモック（IndexedDB を使わない）
+// デフォルトでは getSaveMeta が valid な meta を返すようにして
+// 既存テスト（initialSave あり）でボタンが enabled になるケースを維持する。
+// 「ディスクなし」「破損」シナリオは各テスト内で mockResolvedValueOnce で上書きする。
 vi.mock('@/store/saveStore', () => ({
   saveGame: vi.fn(async (data: SaveData) => data),
   loadGame: vi.fn(async () => ({ ok: false as const, reason: 'empty' as const })),
   deleteGame: vi.fn(async () => undefined),
-  getSaveMeta: vi.fn(async () => null),
+  getSaveMeta: vi.fn(async () => ({
+    guildName: 'テストギルド',
+    deepestReached: 1,
+    memberCount: 5,
+    savedAt: Date.now(),
+    corrupted: false,
+  })),
   _resetDbForTest: vi.fn(async () => undefined),
 }));
 
@@ -249,4 +259,91 @@ describe('SaveTransfer', () => {
       expect(screen.getByTestId('current-screen').textContent).toBe('town');
     });
   }, 10000);
+
+  // ============================================================
+  // ディスク上セーブ存在チェックの回帰テスト
+  // ============================================================
+
+  test('メモリ null + ディスクに valid セーブ → disabled が解け、クリックで loadGame が呼ばれる', async () => {
+    const { writeTextFn } = setupClipboardMock(false);
+    // getSaveMeta: valid meta、loadGame: ok:true を返すようにリセット
+    vi.mocked(saveStore.getSaveMeta).mockResolvedValue({
+      guildName: mockWithParty.guild.name,
+      deepestReached: 1,
+      memberCount: 5,
+      savedAt: Date.now(),
+      corrupted: false,
+    });
+    vi.mocked(saveStore.loadGame).mockResolvedValue({ ok: true, data: mockWithParty });
+
+    // initialSave を渡さない → useGameState().save = null
+    renderSaveTransfer();
+
+    // getSaveMeta が解決するまで待つ → ボタンが enabled になる
+    const btn = screen.getByRole('button', { name: 'セーブをコピー' });
+    await waitFor(() => {
+      expect(btn).not.toBeDisabled();
+    });
+
+    // クリックすると loadGame が呼ばれ、clipboard に有効な引き継ぎ文字列が渡される
+    const user = userEvent.setup();
+    await user.click(btn);
+
+    await waitFor(() => {
+      expect(saveStore.loadGame).toHaveBeenCalled();
+    });
+
+    // clipboard に書き込まれた文字列が decodeSaveTransfer で復元できる
+    if (writeTextFn.mock.calls.length > 0) {
+      const written = writeTextFn.mock.calls[0][0] as string;
+      const result = decodeSaveTransfer(written);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.guild.name).toBe(mockWithParty.guild.name);
+      }
+    } else {
+      // clipboard モックが効かなくても「コピーしました」toast で成功確認
+      await waitFor(() => {
+        expect(screen.getByText('コピーしました')).toBeInTheDocument();
+      });
+    }
+  });
+
+  test('メモリ null + ディスクも空 → disabled のまま', async () => {
+    vi.mocked(saveStore.getSaveMeta).mockResolvedValue(null);
+
+    // initialSave を渡さない → useGameState().save = null
+    renderSaveTransfer();
+
+    // getSaveMeta が null を解決するまで待つ
+    await waitFor(() => {
+      // hasSaveOnDisk が false になるまで待つ（初期値 null → false）
+      // ボタンは null のときも false のときも disabled なので、
+      // 一度 false に確定したあとも disabled のまま
+      expect(screen.getByRole('button', { name: 'セーブをコピー' })).toBeDisabled();
+    });
+
+    // getSaveMeta が呼ばれたことを確認（ディスクを見に行った）
+    expect(saveStore.getSaveMeta).toHaveBeenCalled();
+  });
+
+  test('メモリ null + ディスクが corrupted → disabled のまま', async () => {
+    vi.mocked(saveStore.getSaveMeta).mockResolvedValue({
+      guildName: '',
+      deepestReached: 0,
+      memberCount: 0,
+      savedAt: 0,
+      corrupted: true,
+    });
+
+    renderSaveTransfer();
+
+    // getSaveMeta が corrupted meta を返した後もボタンは disabled
+    await waitFor(() => {
+      expect(saveStore.getSaveMeta).toHaveBeenCalled();
+    });
+
+    const btn = screen.getByRole('button', { name: 'セーブをコピー' });
+    expect(btn).toBeDisabled();
+  });
 });
