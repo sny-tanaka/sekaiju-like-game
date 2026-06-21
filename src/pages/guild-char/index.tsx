@@ -80,6 +80,13 @@ export const Page = ({ id }: { id: string }) => {
   const sp = availableSP(char);
   const deepestReached = save.towerState.record.deepestReached;
 
+  // 左右矢印: guild.members の順序で前後の団員 ID を取得（循環）
+  const memberIds = save.guild.members.map((m) => m.id);
+  const currentIdx = memberIds.indexOf(id);
+  const prevId = memberIds[(currentIdx - 1 + memberIds.length) % memberIds.length];
+  const nextId = memberIds[(currentIdx + 1) % memberIds.length];
+  const hasSiblings = memberIds.length > 1;
+
   // ポジション判定
   const pos = save.guild.party.front.includes(id)
     ? '前衛'
@@ -127,6 +134,15 @@ export const Page = ({ id }: { id: string }) => {
     <div className={styles.layout}>
       {/* ヘッダー */}
       <header className={styles.head}>
+        {hasSiblings ? (
+          <ActionButton
+            className={styles.navArrow}
+            onClick={() => navigate({ name: 'guildChar', id: prevId })}
+            aria-label="前の団員"
+          >
+            ←
+          </ActionButton>
+        ) : null}
         <div className={styles.headPortrait}>
           <CharacterPortrait
             raceId={char.raceId}
@@ -141,6 +157,15 @@ export const Page = ({ id }: { id: string }) => {
           </span>
           {pos ? <span className={styles.posTag}>{pos}</span> : null}
         </div>
+        {hasSiblings ? (
+          <ActionButton
+            className={styles.navArrow}
+            onClick={() => navigate({ name: 'guildChar', id: nextId })}
+            aria-label="次の団員"
+          >
+            →
+          </ActionButton>
+        ) : null}
 
         {/* EXP 進捗ブロック（v5: 案A v3 取り込み）。Lv キャップ到達済みは MAX 表示。 */}
         {canGainExp(char.level) ? (
@@ -436,7 +461,7 @@ export const Page = ({ id }: { id: string }) => {
         <ActionButton
           label="一覧へ戻る"
           className={styles.back}
-          onClick={() => navigate({ name: 'guild' })}
+          onClick={() => navigate({ name: 'guild', tab: 'roster' })}
         />
       </footer>
 

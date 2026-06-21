@@ -103,6 +103,32 @@
   letter-spacing: 0.08em;
 }
 
+// 左右矢印ナビゲーション
+.navArrow {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--text-mute);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  transition: color var(--motion-quick), border-color var(--motion-quick);
+
+  &:hover {
+    color: var(--gold);
+    border-color: var(--rule-gold);
+  }
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
 // ---- body（唯一の可変スクロール領域） ----
 .body {
   flex: 1 1 auto;
@@ -406,9 +432,7 @@
   border: 1px solid var(--rule-soft);
   border-radius: 4px;
   padding: 10px;
-  height: 268px;
   position: relative;
-  overflow: hidden;
 }
 
 .skillTreeLegend {
