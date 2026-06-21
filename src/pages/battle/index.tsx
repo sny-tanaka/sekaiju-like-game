@@ -310,6 +310,27 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   const [sealOut, setSealOut] = useState(false);
   // J/K: 逃走時フラグ
   const [fleeActive, setFleeActive] = useState(false);
+  // にげる確認ダイアログ表示フラグ
+  const [fleeConfirm, setFleeConfirm] = useState(false);
+
+  // ---- スキップ永続化 ----
+  // localStorage キー: 'sekaiju:settings:skipBattleAnim'
+  const SKIP_ANIM_KEY = 'sekaiju:settings:skipBattleAnim';
+  const [skipBattleAnim, setSkipBattleAnimState] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(SKIP_ANIM_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const setSkipBattleAnim = useCallback((val: boolean) => {
+    try {
+      localStorage.setItem(SKIP_ANIM_KEY, val ? '1' : '0');
+    } catch {
+      // ignore
+    }
+    setSkipBattleAnimState(val);
+  }, []);
   // L/M: buff / debuff Fx — actor ごとの発火シーケンス番号 Map
   const [buffFxMap, setBuffFxMap] = useState<Map<string, number>>(new Map());
   const [debuffFxMap, setDebuffFxMap] = useState<Map<string, number>>(new Map());
@@ -503,6 +524,15 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     }
   }, [state, introFx, runTurn, turnOrderPreview]);
 
+  // スキップ永続化: skipBattleAnim=ON かつ anim がセットされたら即座にスキップ
+  useEffect(() => {
+    if (!anim || !skipBattleAnim) return;
+    setAnim(null);
+    setShakeIds(new Set());
+    setHits(new Map());
+    setAdvancingActorId(null);
+  }, [anim, skipBattleAnim]);
+
   // tryComplete: fxDoneRef + loggerDoneRef の両方が true のときのみ次イベントへ進む（設計書 §2.5）。
   // actionCompletedRef で重複実行を防ぐ（複数 Fx 同時 onDone でも 1 回のみ）。
   const tryComplete = useCallback(() => {
@@ -631,7 +661,15 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
 
       if (event.kind === 'tick') {
         if (event.defeated) play('down');
-        if (event.effectType === 'buff-expire' || event.effectType === 'regen') {
+        // 防御コマンド由来のバフ（pdef/mdef, stackGroup:'guard'）の期限切れは演出なし。
+        // その他のバフ（攻撃力UP等）は通常通り BuffFx を発火する。
+        const isGuardBuffExpire =
+          event.effectType === 'buff-expire' &&
+          (event.effect === 'pdef' || event.effect === 'mdef');
+        if (
+          (event.effectType === 'buff-expire' && !isGuardBuffExpire) ||
+          event.effectType === 'regen'
+        ) {
           setBuffFxMap((prev) => {
             const next = new Map(prev);
             next.set(event.targetId, eventIdx);
@@ -973,6 +1011,11 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
   ]);
 
   const handleFlee = useCallback(() => {
+    setFleeConfirm(true);
+  }, []);
+
+  const handleFleeConfirmed = useCallback(() => {
+    setFleeConfirm(false);
     if (!state || !rngRef.current || state.outcome !== 'ongoing') return;
     const a = aliveAllies[0];
     if (!a) return;
@@ -1143,8 +1186,15 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
         return eventIdx > 0 ? (events[eventIdx - 1]?.snapshotAfter ?? baseSnapshot) : baseSnapshot;
       })()
     : null;
-  const dispOf = (c: Combatant): { hp: number; isDown: boolean } =>
-    dispMap?.[c.id] ?? { hp: c.hp, isDown: c.isDown };
+  // dispOf: HP 表示値を返す。
+  // reactions イベントには snapshotAfter が付かないため、reaction 再生中に dispMap が
+  // baseSnapshot（ターン開始値）を参照し、倒した敵の HP が一瞬元に戻るフレームが生じる。
+  // これを防ぐため、deadActorIds（そのターンのイベント列で死亡確定済み）の actor は
+  // dispMap の値にかかわらず HP=0/isDown=true を強制する。
+  const dispOf = (c: Combatant): { hp: number; isDown: boolean } => {
+    if (anim && deadActorIds.has(c.id)) return { hp: 0, isDown: true };
+    return dispMap?.[c.id] ?? { hp: c.hp, isDown: c.isDown };
+  };
 
   // そのキャラが発動できるユニオンスキル（種族スキルツリーのうち UNION_SKILLS に該当・習得済み）。
   const unionSkillOf = (ally: Combatant): UnionSkillDef | null => {
@@ -1994,6 +2044,15 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                     onClick={handleFlee}
                   />
                 </div>
+                <label className={styles.skipAnimLabel}>
+                  <input
+                    type="checkbox"
+                    className={styles.skipAnimCheckbox}
+                    checked={skipBattleAnim}
+                    onChange={(e) => setSkipBattleAnim(e.target.checked)}
+                  />
+                  アニメをスキップ
+                </label>
               </div>
             </>
           )}
@@ -2414,6 +2473,29 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
 
       {/* K. dustRise — 逃走時の足元砂塵（fled フェーズのみ） */}
       <DustRiseFx visible={fleeActive} />
+
+      {/* にげる確認ダイアログ */}
+      {fleeConfirm && (
+        <div className={styles.fleeConfirmOverlay}>
+          <div className={styles.fleeConfirmDialog}>
+            <p className={styles.fleeConfirmText}>本当に逃げますか？</p>
+            <div className={styles.fleeConfirmButtons}>
+              <ActionButton
+                className={styles.fleeConfirmYes}
+                label="はい"
+                sfx="cancel"
+                onClick={handleFleeConfirmed}
+              />
+              <ActionButton
+                className={styles.fleeConfirmNo}
+                label="キャンセル"
+                sfx="cursor"
+                onClick={() => setFleeConfirm(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* エンカウント/戦闘終了の暗転エフェクト（issue #18） */}
       {introFx ? <div className={styles.fxIntro} /> : null}
