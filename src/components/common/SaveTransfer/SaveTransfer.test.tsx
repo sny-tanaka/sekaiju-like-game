@@ -483,6 +483,80 @@ describe('SaveTransfer', () => {
     });
   }, 10000);
 
+  // ============================================================
+  // 貼り付け経路
+  // ============================================================
+
+  test('貼り付け経路: 正しい文字列 + 既存セーブあり → 上書き確認モーダル', async () => {
+    renderSaveTransfer(mockWithParty);
+
+    const validStr = encodeSaveTransfer(mockWithParty);
+    const textarea = screen.getByPlaceholderText('ここに引き継ぎ文字列を貼り付け');
+    fireEvent.change(textarea, { target: { value: validStr } });
+
+    const btn = screen.getByRole('button', { name: '貼り付けた文字列を読み込む' });
+    expect(btn).not.toBeDisabled();
+    await userEvent.setup().click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/は上書きされて元に戻せません/)).toBeInTheDocument();
+    });
+  });
+
+  test('貼り付け経路: 確認 OK → applyAndPersist 呼出 → navigate(town)', async () => {
+    const user = userEvent.setup();
+    renderSaveTransfer(mockWithParty);
+
+    const validStr = encodeSaveTransfer(mockWithParty);
+    const textarea = screen.getByPlaceholderText('ここに引き継ぎ文字列を貼り付け');
+    fireEvent.change(textarea, { target: { value: validStr } });
+
+    await user.click(screen.getByRole('button', { name: '貼り付けた文字列を読み込む' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/は上書きされて元に戻せません/)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: '読み込む' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-screen').textContent).toBe('town');
+    });
+  }, 10000);
+
+  test('貼り付け経路: 壊れた文字列 → エラーメッセージ表示、applyAndPersist は呼ばれない', async () => {
+    const user = userEvent.setup();
+    renderSaveTransfer(mockWithParty);
+
+    const textarea = screen.getByPlaceholderText('ここに引き継ぎ文字列を貼り付け');
+    fireEvent.change(textarea, { target: { value: 'これは不正なデータです' } });
+
+    await user.click(screen.getByRole('button', { name: '貼り付けた文字列を読み込む' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/セーブの文字列ではありません/)).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('current-screen').textContent).not.toBe('town');
+  });
+
+  test('貼り付け経路: 空文字 / 空白だけ → ボタンが disabled', () => {
+    renderSaveTransfer(mockWithParty);
+
+    const btn = screen.getByRole('button', { name: '貼り付けた文字列を読み込む' });
+    // 初期状態（空）
+    expect(btn).toBeDisabled();
+
+    // 空白だけ
+    const textarea = screen.getByPlaceholderText('ここに引き継ぎ文字列を貼り付け');
+    fireEvent.change(textarea, { target: { value: '   ' } });
+    expect(btn).toBeDisabled();
+
+    // 文字列を入れたら enabled
+    fireEvent.change(textarea, { target: { value: 'abc' } });
+    expect(btn).not.toBeDisabled();
+  });
+
   test('インポート: file input は同じファイル 2 回連続選択に対応 (onChange 後に value がリセットされる)', () => {
     // コンポーネントが onChange ハンドラーの先頭で e.target.value = '' を実行していることを
     // コードレベルで確認するためのテスト。

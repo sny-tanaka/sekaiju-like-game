@@ -12,7 +12,8 @@ export type Screen =
   | { name: 'forge' }
   | { name: 'codex' }
   | { name: 'dungeon' }
-  | { name: 'battle' };
+  | { name: 'battle' }
+  | { name: 'saveTransfer' };
 
 export type ScreenName = Screen['name'];
 
