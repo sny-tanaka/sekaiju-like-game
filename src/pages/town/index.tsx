@@ -77,9 +77,6 @@ export const Page = () => {
 
   // bottom-sheet に並べる選択肢: 1F + 解放済みチェックポイント (昇順)
   const sheetFloors: number[] = [1, ...checkpoints.filter((d) => d !== 1)].sort((a, b) => a - b);
-  // モック準拠表示: 1F は「最初から潜る」、それ以外は「第 N 帯」
-  const floorLabel = (d: number) =>
-    d === 1 ? '第1階から（最初から潜る）' : `第 ${Math.ceil(d / 10)} 帯`;
   // 最深チェックポイント（1F 以外で最大）: bottom-sheet で金箔ハイライトする
   const deepestSheetFloor = sheetFloors.length > 1 ? sheetFloors[sheetFloors.length - 1] : null;
 
@@ -114,7 +111,9 @@ export const Page = () => {
           <span className={styles.statGold}>◇ {guild.gold.toLocaleString()} G</span>
           <span className={styles.statFaint}>
             最高{' '}
-            {towerState.record.deepestReached > 0 ? `${towerState.record.deepestReached}F` : '−'}
+            {towerState.record.deepestReached > 0
+              ? `地下${towerState.record.deepestReached}階`
+              : '−'}
           </span>
           <span className={hasMembers ? styles.statFaint : styles.statWarn}>
             団員 {guild.members.length} 人
@@ -144,7 +143,7 @@ export const Page = () => {
             className={styles.diveDecor}
             aria-hidden="true"
           >
-            塔
+            潜
           </span>
           <span className={styles.diveBadge}>{diveState ? 'RESUME' : 'DIVE'}</span>
           <span className={styles.diveTitle}>{diveState ? '潜行を再開' : 'ダイブ開始'}</span>
@@ -152,10 +151,10 @@ export const Page = () => {
             {!hasMembers
               ? '団員が必要です'
               : diveState
-                ? `${diveState.depth}F から再開`
+                ? `地下${diveState.depth}階から再開`
                 : checkpoints.length > 0
-                  ? `第1階から潜る ・ 解放階(${Math.max(...checkpoints)}F)も選択可`
-                  : '第1階から潜る'}
+                  ? `地下1階から潜る ・ 解放階(地下${Math.max(...checkpoints)}階)も選択可`
+                  : '地下1階から潜る'}
           </span>
         </ActionButton>
 
@@ -304,11 +303,13 @@ export const Page = () => {
                     className={`${styles.sheetItem} ${isDeepest ? styles.sheetItemHilight : ''}`}
                     onClick={() => void handleSelectFloor(d)}
                   >
-                    <span className={styles.sheetDepth}>{d}F</span>
+                    <span className={styles.sheetDepth}>地下{d}階</span>
                     <span className={styles.sheetItemLabel}>
                       {isDeepest
                         ? `第 ${Math.ceil(d / 10)} 帯・最深チェックポイント`
-                        : floorLabel(d)}
+                        : d === 1
+                          ? '地下1階から（最初から潜る）'
+                          : `第 ${Math.ceil(d / 10)} 帯`}
                     </span>
                   </ActionButton>
                 );
@@ -363,7 +364,7 @@ export const Page = () => {
       {sealActive ? (
         <SealStampFx
           variant="seal"
-          caption={`SEALING… ${sealingDepth}F へ`}
+          caption={`SEALING… 地下${sealingDepth}階 へ`}
         />
       ) : null}
     </div>

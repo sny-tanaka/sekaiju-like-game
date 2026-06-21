@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { canWarpReturnFromHere, isReturnThreadDisabled } from './checkpointWarp';
 import { isAutoMoveDisabled, nextFlagOnCellTap } from './flag';
 import styles from './style.module.scss';
 
@@ -47,7 +48,7 @@ import { Redirect, useNavigation } from '@/store/navigation';
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // 探索（ダンジョン）。自動生成1階のグリッド移動＋自動マップ＋エンカウントゲージ。
-// 階段で上下移動、帰還で拠点へ。オートセーブは階移動・帰還時（[05 §4]）。
+// 階段で上下移動（下り階段=深く進む方向、上り階段=浅く拠点へ戻る方向）、帰還で拠点へ。オートセーブは階移動・帰還時（[05 §4]）。
 export const Page = () => {
   const { navigate } = useNavigation();
   const { save, applySave, applyAndPersist, flag, setFlag } = useGameState();
@@ -333,7 +334,7 @@ export const Page = () => {
         <div className={styles.depthWrap}>
           <span className={styles.depthChapterMark}>❦ 探索</span>
           <div className={styles.depth}>
-            {dive.depth}F <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
+            地下{dive.depth}階 <span className={styles.theme}>{bandThemeFor(dive.depth).name}</span>
           </div>
         </div>
         <EncounterGauge level={gaugeLevel(dive.encounter.stepsUntilEncounter)} />
@@ -473,17 +474,17 @@ export const Page = () => {
           <div className={styles.stairsCardHeader}>
             <span className={styles.stairsCardTitle}>
               {stairKind === 'stairsUp'
-                ? '▲ 上り階段'
+                ? '▼ 下り階段'
                 : dive.depth <= 1
-                  ? '▼ 下り階段（拠点へ）'
-                  : '▼ 下り階段'}
+                  ? '▲ 上り階段（拠点へ）'
+                  : '▲ 上り階段'}
             </span>
             <span className={styles.stairsCardSub}>
               {stairKind === 'stairsUp'
-                ? `F${dive.depth} → F${dive.depth + 1}`
+                ? `地下${dive.depth}階 → 地下${dive.depth + 1}階`
                 : dive.depth <= 1
-                  ? 'F1 → 拠点'
-                  : `F${dive.depth} → F${dive.depth - 1}`}
+                  ? '地下1階 → 拠点'
+                  : `地下${dive.depth}階 → 地下${dive.depth - 1}階`}
             </span>
           </div>
           <div className={styles.stairsCardActions}>
@@ -495,6 +496,23 @@ export const Page = () => {
                 setDismissedStairsAt({ depth: dive.depth, x: dive.pos.x, y: dive.pos.y })
               }
             />
+            {canWarpReturnFromHere(
+              save.towerState.warp.unlockedCheckpoints,
+              dive.depth,
+              stairKind
+            ) && (
+              <ActionButton
+                label="拠点に戻る"
+                sfx="warp"
+                className={styles.stairsCancel}
+                onClick={() => {
+                  setFlag(null);
+                  void applyAndPersist((s) => returnToTown(s)).then(() =>
+                    navigate({ name: 'town' })
+                  );
+                }}
+              />
+            )}
             <ActionButton
               label={
                 stairKind === 'stairsUp'
@@ -732,7 +750,7 @@ export const Page = () => {
                       <div>
                         <div className={styles.menuTitle}>メニュー</div>
                         <div className={styles.menuSubtitle}>
-                          {dive.depth}F ・ {bandThemeFor(dive.depth).name}
+                          地下{dive.depth}階 ・ {bandThemeFor(dive.depth).name}
                         </div>
                       </div>
                       <ActionButton
@@ -773,12 +791,10 @@ export const Page = () => {
                         </ActionButton>
                         <ActionButton
                           sfx={null}
+                          disabled={isReturnThreadDisabled(threadCount)}
                           className={`${styles.menuGridItem} ${styles.menuGridItemThread} ${styles.menuGridItemFull}`}
                           onClick={() => {
-                            if (threadCount === 0) {
-                              setNotice('帰還の糸がない');
-                              return;
-                            }
+                            setMenuOpen(false);
                             setConfirm({
                               message: '帰還の糸を使いますか？拠点へ即帰還します。',
                               okLabel: '使う',

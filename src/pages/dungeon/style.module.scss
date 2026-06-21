@@ -1095,10 +1095,11 @@
 }
 
 // 消費系操作の確認ダイアログ（誤タップ防止）
+// z-index 70: menuOverlay(50) / modalBackdrop(60) より上に出す
 .confirmOverlay {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: 70;
   display: flex;
   align-items: center;
   justify-content: center;

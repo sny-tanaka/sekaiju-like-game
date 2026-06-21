@@ -94,12 +94,21 @@ function reveal(save: SaveData, depth: number, x: number, y: number): SaveData {
   };
 }
 
-/** 階に入った瞬間の diveState を作る（入口に立ち、最初の開口方向を向く）。 */
-function enterFloor(save: SaveData, depth: number, encounterRng: Rng): SaveData {
+/**
+ * 階に入った瞬間の diveState を作る（指定セルに立ち、最初の開口方向を向く）。
+ * @param entranceKind 着地するセルの種別。拠点ワープ時は 'stairsUp'（下り階段）、
+ *   goDeeper（徒歩で深く進む）時は 'stairsDown'（入口側）を指定する。
+ */
+function enterFloor(
+  save: SaveData,
+  depth: number,
+  encounterRng: Rng,
+  entranceKind: 'stairsDown' | 'stairsUp' = 'stairsDown'
+): SaveData {
   const ensured = ensureFloor(save, depth);
   let next = ensured.save;
   const floor = ensured.floor.generated;
-  const entrance = findEventCell(floor, 'stairsDown') ?? { x: 0, y: 0 };
+  const entrance = findEventCell(floor, entranceKind) ?? { x: 0, y: 0 };
   const facing: Dir = openDirs(floor, entrance.x, entrance.y)[0] ?? 'N';
 
   // 最深到達記録の更新
@@ -132,7 +141,11 @@ function enterFloor(save: SaveData, depth: number, encounterRng: Rng): SaveData 
   return reveal(next, depth, entrance.x, entrance.y);
 }
 
-/** 拠点から第 startDepth 階へ潜行開始。挑戦回数を加算。 */
+/**
+ * 拠点から第 startDepth 階へ潜行開始。挑戦回数を加算。
+ * 着地点は stairsUp（下り階段 = 深く進む方向の階段）。
+ * goDeeper（徒歩移動）と区別するため入口種別を明示的に指定する。
+ */
 export function startDive(save: SaveData, startDepth = 1): SaveData {
   const rng = createRng(save.masterSeed).fork(`dive:${save.towerState.record.totalDives}`);
   const withCount: SaveData = {
@@ -143,7 +156,7 @@ export function startDive(save: SaveData, startDepth = 1): SaveData {
       record: { ...save.towerState.record, totalDives: save.towerState.record.totalDives + 1 },
     },
   };
-  return enterFloor(withCount, startDepth, rng);
+  return enterFloor(withCount, startDepth, rng, 'stairsUp');
 }
 
 /** 向きだけ変える（移動・エンカウントなし）。 */
