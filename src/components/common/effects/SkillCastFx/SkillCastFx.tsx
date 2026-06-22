@@ -30,16 +30,24 @@ export const SkillCastFx = ({
   const play = useSfx();
   const prevVisibleRef = useRef(false);
 
+  // onDone は ref で逃がしているので deps に含めない。
+  // 含めると親の毎 render での onDone 再生成で setTimeout が cleanup され、
+  // 単独 Fx 経路（TP 回復のようなダメージなし行動）で進行不能になる。
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
   useEffect(() => {
     if (visible && !prevVisibleRef.current) {
       if (!silent) play('skill');
-      const t = setTimeout(() => onDone?.(), ANIM_MS + 50);
+      const t = setTimeout(() => onDoneRef.current?.(), ANIM_MS + 50);
       prevVisibleRef.current = true;
       return () => clearTimeout(t);
     }
     if (!visible) prevVisibleRef.current = false;
     return undefined;
-  }, [visible, silent, play, onDone]);
+  }, [visible, silent, play]); // onDone は ref 経由で呼ぶため deps に含めない（含めると cleanup で setTimeout が消える）
 
   if (!visible) return null;
   return (

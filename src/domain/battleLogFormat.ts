@@ -9,6 +9,8 @@
 import type { BattleEvent, BuffKind, DebuffKind, HitResult } from './battleEvent';
 import type { BattleState } from './types';
 
+import { ENEMIES } from '@/data/enemies';
+import { ENEMY_KITS } from '@/data/enemySkills';
 import { ITEMS } from '@/data/items';
 import { SKILLS } from '@/data/skills';
 
@@ -27,9 +29,32 @@ const resolveName = (id: string, state: BattleState): string => {
   return all.find((c) => c.id === id)?.name ?? '?';
 };
 
-/** SKILLS マスタからスキル名を取得する。未定義なら skillId をそのまま返す。 */
+// 敵スキル ID → 名前の lookup（最初の呼び出し時に 1 回だけ構築）
+let enemySkillNameMapCache: Map<string, string> | null = null;
+const getEnemySkillNameMap = (): Map<string, string> => {
+  if (enemySkillNameMapCache) return enemySkillNameMapCache;
+  const m = new Map<string, string>();
+  // 雑魚・FOE 向け kit
+  for (const actions of Object.values(ENEMY_KITS)) {
+    for (const a of actions) m.set(a.id, a.name);
+  }
+  // ボス専用 actions（ENEMIES[].actions が定義されている敵のみ）
+  for (const enemy of Object.values(ENEMIES)) {
+    const actions = (enemy as { actions?: Array<{ id: string; name: string }> }).actions;
+    if (!actions) continue;
+    for (const a of actions) m.set(a.id, a.name);
+  }
+  enemySkillNameMapCache = m;
+  return m;
+};
+
+/** SKILLS マスタ → 敵スキルマスタの順で名前を引く。両方未定義なら skillId をそのまま返す。 */
 const resolveSkillName = (skillId: string): string => {
-  return (SKILLS as Record<string, { name: string } | undefined>)[skillId]?.name ?? skillId;
+  const fromAlly = (SKILLS as Record<string, { name: string } | undefined>)[skillId]?.name;
+  if (fromAlly) return fromAlly;
+  const fromEnemy = getEnemySkillNameMap().get(skillId);
+  if (fromEnemy) return fromEnemy;
+  return skillId;
 };
 
 /** ITEMS マスタからアイテム名を取得する。未定義なら itemId をそのまま返す。 */
