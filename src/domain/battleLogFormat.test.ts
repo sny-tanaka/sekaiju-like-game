@@ -536,6 +536,69 @@ describe('fmt: summon', () => {
 });
 
 // ----------------------------------------------------------------------------
+// resolveSkillName: 敵スキル名解決
+// ----------------------------------------------------------------------------
+
+describe('fmt: resolveSkillName — 敵スキル名解決', () => {
+  test('雑魚スキル ea_double_strike が日本語名「二連撃」で表示される', () => {
+    const state = mockState({
+      allies: [],
+      enemies: [mkCombatant('gob', 'ゴブリン', 'enemy')],
+    });
+    const event: SkillEvent = {
+      kind: 'skill',
+      actorId: 'gob',
+      skillId: 'ea_double_strike',
+      targetIds: [],
+      hits: [],
+      heals: [],
+      buffs: [],
+      debuffs: [],
+      reactions: [],
+    };
+    expect(fmt(event, state).pre).toBe('ゴブリンは二連撃を放った！');
+  });
+
+  test('ボス専用スキル eb_gk_sig が日本語名「大地割り」で表示される', () => {
+    const state = mockState({
+      allies: [],
+      enemies: [mkCombatant('boss', '門番', 'enemy')],
+    });
+    const event: SkillEvent = {
+      kind: 'skill',
+      actorId: 'boss',
+      skillId: 'eb_gk_sig',
+      targetIds: [],
+      hits: [],
+      heals: [],
+      buffs: [],
+      debuffs: [],
+      reactions: [],
+    };
+    expect(fmt(event, state).pre).toBe('門番は大地割りを放った！');
+  });
+
+  test('未定義スキル ID はそのまま pre に含まれる（フォールバック維持）', () => {
+    const state = mockState({
+      allies: [],
+      enemies: [mkCombatant('gob', 'ゴブリン', 'enemy')],
+    });
+    const event: SkillEvent = {
+      kind: 'skill',
+      actorId: 'gob',
+      skillId: 'totally_unknown_skill',
+      targetIds: [],
+      hits: [],
+      heals: [],
+      buffs: [],
+      debuffs: [],
+      reactions: [],
+    };
+    expect(fmt(event, state).pre).toContain('totally_unknown_skill');
+  });
+});
+
+// ----------------------------------------------------------------------------
 // resolveName: summons からも解決できるか
 // ----------------------------------------------------------------------------
 

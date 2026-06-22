@@ -107,3 +107,57 @@ describe('BuffFx', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('BuffFx onDone stability', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('onDone が毎 render 新規関数でも setTimeout がキャンセルされず呼ばれる', () => {
+    const onDoneA = vi.fn();
+    const { rerender } = render(
+      <BuffFx
+        visible
+        silent
+        onDone={onDoneA}
+      />
+    );
+
+    // ANIM_MS(400) の途中で、親が再 render して onDone を新しい関数に差し替える
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    const onDoneB = vi.fn();
+    rerender(
+      <BuffFx
+        visible
+        silent
+        onDone={onDoneB}
+      />
+    );
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    const onDoneC = vi.fn();
+    rerender(
+      <BuffFx
+        visible
+        silent
+        onDone={onDoneC}
+      />
+    );
+
+    // ANIM_MS + 50 を超えるまで時間を進める（残り）
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    // 最新の onDone（C）が 1 回呼ばれる。古い A/B は呼ばれない。
+    expect(onDoneA).not.toHaveBeenCalled();
+    expect(onDoneB).not.toHaveBeenCalled();
+    expect(onDoneC).toHaveBeenCalledTimes(1);
+  });
+});
