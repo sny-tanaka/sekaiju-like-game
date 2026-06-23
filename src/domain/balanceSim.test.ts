@@ -456,10 +456,14 @@ function runSim(
 
 describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
   /**
-   * 設計目標（新TP経済向け更新）:
-   * 自然回復廃止＋消費TP経済では適正Lv+5・TP回復アイテム前提で勝利できることを保証する基準。
-   * - 全5ボス win===true かつ turns <= 40 かつ minPartyHpRatio > 0（全滅でない）
-   * - 旧「18〜22ターン・最低HP率 ≤ 15%」は廃止（TP管理コストでターン数が増えるため）
+   * 設計目標 (v2: ボス個別 baseStats 引き上げ後):
+   * - 適正Lv+10: 全 5 ボスで負ける
+   *   - expect(result.win).toBe(false)
+   * - 適正Lv+20: 全 5 ボスで勝つ。turns<=40, minPartyHpRatio>0
+   *   - expect(result.win).toBe(true)
+   *   - expect(result.turns).toBeLessThanOrEqual(40)
+   *   - expect(result.minPartyHpRatio).toBeGreaterThan(0)
+   * 旧「+5 で win」(SIM_LEVEL_MARGIN=5) は廃止。AC3 のみ SIM_LEVEL_MARGIN を引き続き参照する。
    */
   const BOSS_CASES = [
     {
@@ -490,12 +494,19 @@ describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
   ];
 
   for (const boss of BOSS_CASES) {
-    test(`F${boss.floor} ${boss.name}: win / turns <= 40 / minHpRatio > 0`, () => {
+    test(`F${boss.floor} ${boss.name}: 適正Lv+10 で defeat する`, () => {
       const app = APPROPRIATE[boss.floor];
-      const allies = buildParty(app.lv + SIM_LEVEL_MARGIN, app.tier);
+      const allies = buildParty(app.lv + 10, app.tier);
       const enemies = [buildEnemyCombatant(boss.enemyId, 0, boss.floor)];
       const result = runSim(allies, enemies, boss.floor);
+      expect(result.win).toBe(false);
+    });
 
+    test(`F${boss.floor} ${boss.name}: 適正Lv+20 で win する`, () => {
+      const app = APPROPRIATE[boss.floor];
+      const allies = buildParty(app.lv + 20, app.tier);
+      const enemies = [buildEnemyCombatant(boss.enemyId, 0, boss.floor)];
+      const result = runSim(allies, enemies, boss.floor);
       expect(result.win).toBe(true);
       expect(result.turns).toBeLessThanOrEqual(40);
       expect(result.minPartyHpRatio).toBeGreaterThan(0);
