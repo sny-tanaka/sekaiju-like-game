@@ -50,12 +50,6 @@ export const BALANCE = {
   HEAL_MATK_COEF_ALL: 0.45, // 全体回復
   HEAL_MATK_COEF_MINOR: 0.3, // 歌・救護等の軽回復
   SURPLUS_SP_PER_STAT: 4, // 余剰SP 4 ごとに全ステ +1（§10）
-  /**
-   * ボス階の敵ステータスに掛ける係数 (全ステに乗算)。
-   * 雑魚・FOE には掛けない。effectiveEnemyStats() が enemy.kind === 'boss' のときだけ参照する。
-   * 値はバランスシミュ (AC1) で iterate して決定する。基準: 適正Lv+10 では負け、+20 では勝てる。
-   */
-  BOSS_STAT_MULT: 2.2,
 } as const;
 
 // ----------------------------------------------------------------------------

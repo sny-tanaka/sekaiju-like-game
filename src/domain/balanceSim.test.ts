@@ -456,13 +456,14 @@ function runSim(
 
 describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
   /**
-   * 設計目標（ボス難易度引き上げ更新 – BOSS_STAT_MULT 導入）:
-   * 「適正Lv+10 では負ける」を全 5 ボスで保証することを最優先とする。
-   * +20 で勝てるかは倍率と各ボス性能の兼ね合いで変わる:
-   *   - F10（門番のゴーレム）:   +20 で win=true, turns<=40 を確認
-   *   - F20（山嶺の大猿王）:    +20 で win=true を確認（ターン数は長い）
-   *   - F30/F40/F50: BOSS_STAT_MULT=2.2 では +20 でも勝てない（個別調整の余地）
-   * +20 で勝てないボスは本ファイルの「実装結果」セクション参照。
+   * 設計目標 (v2: ボス個別 baseStats 引き上げ後):
+   * - 適正Lv+10: 全 5 ボスで負ける
+   *   - expect(result.win).toBe(false)
+   * - 適正Lv+20: 全 5 ボスで勝つ。turns<=40, minPartyHpRatio>0
+   *   - expect(result.win).toBe(true)
+   *   - expect(result.turns).toBeLessThanOrEqual(40)
+   *   - expect(result.minPartyHpRatio).toBeGreaterThan(0)
+   * 旧「+5 で win」(SIM_LEVEL_MARGIN=5) は廃止。AC3 のみ SIM_LEVEL_MARGIN を引き続き参照する。
    */
   const BOSS_CASES = [
     {
@@ -492,7 +493,6 @@ describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
     },
   ];
 
-  // ── +10 defeat ケース: 全 5 ボス共通 ──────────────────────────────────────
   for (const boss of BOSS_CASES) {
     test(`F${boss.floor} ${boss.name}: 適正Lv+10 で defeat する`, () => {
       const app = APPROPRIATE[boss.floor];
@@ -501,55 +501,17 @@ describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
       const result = runSim(allies, enemies, boss.floor);
       expect(result.win).toBe(false);
     });
+
+    test(`F${boss.floor} ${boss.name}: 適正Lv+20 で win する`, () => {
+      const app = APPROPRIATE[boss.floor];
+      const allies = buildParty(app.lv + 20, app.tier);
+      const enemies = [buildEnemyCombatant(boss.enemyId, 0, boss.floor)];
+      const result = runSim(allies, enemies, boss.floor);
+      expect(result.win).toBe(true);
+      expect(result.turns).toBeLessThanOrEqual(40);
+      expect(result.minPartyHpRatio).toBeGreaterThan(0);
+    });
   }
-
-  // ── +20 ケース: ボス個別（BOSS_STAT_MULT=2.2 での実測値を期待値として記録）───
-  // F10: 適正Lv+20 で win=true, turns<=40
-  test('F10 門番のゴーレム: 適正Lv+20 で win する (turns<=40)', () => {
-    const app = APPROPRIATE[10];
-    const allies = buildParty(app.lv + 20, app.tier);
-    const enemies = [buildEnemyCombatant('enemy_boss_gatekeeper', 0, 10)];
-    const result = runSim(allies, enemies, 10);
-    expect(result.win).toBe(true);
-    expect(result.turns).toBeLessThanOrEqual(40);
-    expect(result.minPartyHpRatio).toBeGreaterThan(0);
-  });
-
-  // F20: 適正Lv+20 で win=true（ターン長めだが勝利できる）
-  test('F20 山嶺の大猿王: 適正Lv+20 で win する', () => {
-    const app = APPROPRIATE[20];
-    const allies = buildParty(app.lv + 20, app.tier);
-    const enemies = [buildEnemyCombatant('enemy_t1_boss_mountain_lord', 0, 20)];
-    const result = runSim(allies, enemies, 20);
-    expect(result.win).toBe(true);
-    expect(result.minPartyHpRatio).toBeGreaterThan(0);
-  });
-
-  // F30/F40/F50: BOSS_STAT_MULT=2.2 では +20 でも win 不可（+10 不可を優先した代償）。
-  // 個別ボスの調整は別途ディレクターが行う。
-  test('F30 氷晶の女王: 適正Lv+20 でも敗北する（BOSS_STAT_MULT=2.2 の場合）', () => {
-    const app = APPROPRIATE[30];
-    const allies = buildParty(app.lv + 20, app.tier);
-    const enemies = [buildEnemyCombatant('enemy_t2_boss_frost_monarch', 0, 30)];
-    const result = runSim(allies, enemies, 30);
-    expect(result.win).toBe(false);
-  });
-
-  test('F40 雷霆の覇王: 適正Lv+20 でも敗北する（BOSS_STAT_MULT=2.2 の場合）', () => {
-    const app = APPROPRIATE[40];
-    const allies = buildParty(app.lv + 20, app.tier);
-    const enemies = [buildEnemyCombatant('enemy_t3_boss_tempest_sovereign', 0, 40)];
-    const result = runSim(allies, enemies, 40);
-    expect(result.win).toBe(false);
-  });
-
-  test('F50 瘴気を統べる腐王: 適正Lv+20 でも敗北する（BOSS_STAT_MULT=2.2 の場合）', () => {
-    const app = APPROPRIATE[50];
-    const allies = buildParty(app.lv + 20, app.tier);
-    const enemies = [buildEnemyCombatant('enemy_t4_boss_blight_sovereign', 0, 50)];
-    const result = runSim(allies, enemies, 50);
-    expect(result.win).toBe(false);
-  });
 });
 
 // ============================================================================

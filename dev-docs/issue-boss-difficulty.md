@@ -1,4 +1,4 @@
-# ボス難易度の引き上げ — 設計書
+# ボス難易度の引き上げ — 設計書 (v2)
 
 ## 背景
 
@@ -9,153 +9,169 @@
 ## 制約
 
 - **推奨レベル (`APPROPRIATE`) は触らない**。
-  - `APPROPRIATE` は `getRecommendedLevel(depth)` 経由で「推奨 Lv 超過減衰
-    (`levelDecay`)」に使われている。ここを上げると報酬獲得のレベルキャップが上がる。
+  `APPROPRIATE` は `getRecommendedLevel(depth)` 経由で「推奨 Lv 超過減衰
+  (`levelDecay`)」に使われている。ここを上げると報酬獲得のレベルキャップが上がる。
 - **雑魚・FOE の強さは変えない**。AC2 / AC3 テストはそのまま緑のまま。
-- ボスの個別 `baseStats` は **触らない**。全 5 ボス分まわすのが煩雑で、
-  バランスの調整単位が分散する。
 
-## 方針 — `BALANCE.BOSS_STAT_MULT` 単一係数で全ボスを底上げ
+## v1 方針 (BOSS_STAT_MULT 単一係数) — 撤回
 
-### 1. 新規定数
+最初は `BALANCE.BOSS_STAT_MULT` を新設して全ボスに一律係数を掛ける方針を試したが、
+**単一係数では「+10 で全 fail」かつ「+20 で全 win」を両立できない** ことが判明:
 
-`src/data/balance.ts` `BALANCE` に追加:
+| 倍率 | +10 全 fail | +20 全 win |
+|---|---|---|
+| 低 (~1.5) | NG (一部勝てる) | OK |
+| 中 (~2.2) | OK | NG (F30/F40/F50 fail) |
+| 高 (~2.4) | OK | NG (F40 が短ターン全滅) |
 
-```ts
-/**
- * ボス階の敵ステータスに掛ける係数 (全ステに乗算)。
- * 雑魚・FOE には掛けない。effectiveEnemyStats() が enemy.kind === 'boss' のときだけ参照する。
- * 値はバランスシミュ (AC1) で iterate して決定する。基準: 適正Lv+10 では負け、+20 では勝てる。
- */
-BOSS_STAT_MULT: 2.0,
+→ ボスごとに「攻撃寄り / 耐久寄り / 速度寄り」のバランスが違うため、
+   個別に baseStats を調整するほうが筋がいい。**v2 で個別調整に方針変更**。
+
+## v2 方針 — 5 ボスの `baseStats` を個別に iterate して引き上げる
+
+### 1. 前回のコミット (65de716) を undo
+
+前のコミットでは:
+- `balance.ts` に `BOSS_STAT_MULT: 2.2` 追加
+- `combat.ts` の `effectiveEnemyStats()` を改修
+- `balanceSim.test.ts` AC1 を 10 ケース (+10 fail / +20 win/fail) に書き換え
+
+これらは全て **巻き戻す**。やり方:
+
+```bash
+git revert -n 65de716   # 逆適用してインデックスに乗せるだけ (HEAD は動かさない)
+git restore --staged dev-docs/issue-boss-difficulty.md   # 設計書はそのまま (v2 で書き換え済み)
+git checkout HEAD -- dev-docs/issue-boss-difficulty.md   # ↑念のため作業ツリーも復元しない
 ```
 
-初期値 `2.0` は仮値。シミュを回しながら **±0.1 刻みで** 調整。
-最終値は AC1 テスト (後述) の期待値が満たされる最大値。
+`combat.ts` と `balance.ts` は `BOSS_STAT_MULT` 導入前の状態に戻す。
+`balanceSim.test.ts` は **AC1 部分の構造は残したい** (これから +10/+20 形式で書くため) が、
+revert 後に再度書き直すほうが clean なので一旦 revert する。
 
-### 2. `effectiveEnemyStats()` の改修
+ステージング状態を確認したら **`git commit` はせず**、続けて以下の手順を進める。
+最終的に 1 つの新コミット (`feat(balance): rebalance 5 bosses for +10 fail / +20 win`) として
+まとめる。
 
-`src/domain/combat.ts` L36:
+### 2. `balanceSim.test.ts` AC1 を新形式に再構築
 
-```ts
-export function effectiveEnemyStats(enemy: EnemyMaster, depth: number): Stats {
-  const scale = enemyScale(depth, enemy.refDepth);
-  const bossMult = enemy.kind === 'boss' ? BALANCE.BOSS_STAT_MULT : 1;
-  return scaleStats(enemy.baseStats, scale * bossMult);
-}
-```
-
-- `enemy.kind === 'boss'` で判定する。
-  `src/data/enemies.ts` のすべての敵に `kind: 'zako' | 'foe' | 'boss'` が
-  立っている (`src/domain/types.ts` L285〜 `EnemyMaster.kind`)。
-- HP・STR・VIT・AGI・INT・MND・LUC・TP すべてに係数がかかる。
-  HP だけ上げてもターン数が伸びるだけになるため、攻防両方で「重量級ボス」感を出す。
-
-### 3. `balanceSim.test.ts` AC1 の書き換え
-
-現行 (L457〜):
+5 ボス × 2 ケース = 10 テスト。AC1 description の冒頭コメントも v2 目標に更新:
 
 ```ts
-// SIM_LEVEL_MARGIN = 5 で全 5 ボス win=true / turns<=40 / minHpRatio>0
-```
+describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
+  /**
+   * 設計目標 (v2: ボス個別 baseStats 引き上げ後):
+   * - 適正Lv+10: 全 5 ボスで負ける
+   *   - expect(result.win).toBe(false)
+   * - 適正Lv+20: 全 5 ボスで勝つ。turns<=40, minPartyHpRatio>0
+   *   - expect(result.win).toBe(true)
+   *   - expect(result.turns).toBeLessThanOrEqual(40)
+   *   - expect(result.minPartyHpRatio).toBeGreaterThan(0)
+   * 旧「+5 で win」(SIM_LEVEL_MARGIN=5) は廃止。AC3 のみ SIM_LEVEL_MARGIN を引き続き参照する。
+   */
 
-新仕様:
+  const BOSS_CASES = [...同じ];
 
-```ts
-// 旧 SIM_LEVEL_MARGIN は廃止し、+10 / +20 の 2 パターンを 5 ボス × 2 で 10 ケース。
-// +10: 負ける。期待値 expect(result.win).toBe(false)
-// +20: 勝つ。期待値 expect(result.win).toBe(true) と turns<=40, minPartyHpRatio>0
-```
+  for (const boss of BOSS_CASES) {
+    test(`F${boss.floor} ${boss.name}: 適正Lv+10 で defeat する`, () => {
+      const app = APPROPRIATE[boss.floor];
+      const allies = buildParty(app.lv + 10, app.tier);
+      const enemies = [buildEnemyCombatant(boss.enemyId, 0, boss.floor)];
+      const result = runSim(allies, enemies, boss.floor);
+      expect(result.win).toBe(false);
+    });
 
-書き換えのポイント:
-
-- `SIM_LEVEL_MARGIN = 5` 定数は **使わなくなるが、消すと他のテスト** (AC3 FOE) **が壊れる**。
-  AC3 のほうではそのまま使われ続けるので **定数は残す**。AC1 だけ参照しない。
-- AC1 ループを `describe.each` ではなく、既存と同じ `for (const boss of BOSS_CASES)` で
-  良い。1 ボスあたり 2 つの `test()` を出す:
-
-```ts
-test(`F${boss.floor} ${boss.name}: 適正Lv+10 で defeat する`, () => {
-  const app = APPROPRIATE[boss.floor];
-  const allies = buildParty(app.lv + 10, app.tier);
-  const enemies = [buildEnemyCombatant(boss.enemyId, 0, boss.floor)];
-  const result = runSim(allies, enemies, boss.floor);
-  expect(result.win).toBe(false);
+    test(`F${boss.floor} ${boss.name}: 適正Lv+20 で win する`, () => {
+      const app = APPROPRIATE[boss.floor];
+      const allies = buildParty(app.lv + 20, app.tier);
+      const enemies = [buildEnemyCombatant(boss.enemyId, 0, boss.floor)];
+      const result = runSim(allies, enemies, boss.floor);
+      expect(result.win).toBe(true);
+      expect(result.turns).toBeLessThanOrEqual(40);
+      expect(result.minPartyHpRatio).toBeGreaterThan(0);
+    });
+  }
 });
-
-test(`F${boss.floor} ${boss.name}: 適正Lv+20 で win する`, () => {
-  const app = APPROPRIATE[boss.floor];
-  const allies = buildParty(app.lv + 20, app.tier);
-  const enemies = [buildEnemyCombatant(boss.enemyId, 0, boss.floor)];
-  const result = runSim(allies, enemies, boss.floor);
-  expect(result.win).toBe(true);
-  expect(result.turns).toBeLessThanOrEqual(40);
-  expect(result.minPartyHpRatio).toBeGreaterThan(0);
-});
 ```
 
-- describe ブロックの導入コメントも、旧目標 (適正Lv+5 で勝てる) から
-  新目標 (適正Lv+10 で負ける、+20 で勝てる) に更新する。
+- **装備 tier は `app.tier` のまま** (v1 と同じ)。+20 でも tier は上げない。
+- 既存の `SIM_LEVEL_MARGIN = 5` 定数は AC3 で使われ続けるので **残す**。
 
-### 4. 装備ティアの上限
+### 3. 5 ボスの `baseStats` を個別調整
 
-`APPROPRIATE` は F50 以降すべて `tier: 5` で頭打ち。装備ティアもこれに従う。
-+20 でも `tier: app.tier` のまま (`tier + 1` などにしない)。
-強さの差はあくまでレベル差で表現する。
+対象は `src/data/enemies.ts` の以下 5 体。**現状値は以下**:
+
+| ボス | floor | HP | str | vit | agi | int | mnd | luc |
+|---|---|---|---|---|---|---|---|---|
+| 門番のゴーレム (`enemy_boss_gatekeeper`) | F10 | 9000 | 30 | 16 | 6 | 4 | 10 | 6 |
+| 山嶺の大猿王 (`enemy_t1_boss_mountain_lord`) | F20 | 9500 | 48 | 34 | 12 | 8 | 18 | 8 |
+| 氷晶の女王 (`enemy_t2_boss_frost_monarch`) | F30 | 28000 | 98 | 54 | 18 | 16 | 22 | 12 |
+| 雷霆の覇王 (`enemy_t3_boss_tempest_sovereign`) | F40 | 19000 | 220 | 86 | 34 | 22 | 26 | 14 |
+| 瘴気を統べる腐王 (`enemy_t4_boss_blight_sovereign`) | F50 | 16000 | 142 | 122 | 16 | 30 | 64 | 26 |
+
+調整の指針:
+
+- **HP**: 1.4〜1.7 倍程度を起点に。+10 fail を達成するには持久戦 + 1〜2 ターン伸ばす分の余力が必要。
+- **str / int (攻撃力)**: 1.2〜1.4 倍程度を起点に。**上げすぎ注意**。
+  - v1 検証で F40 は str=220 で +20 でも 19 ターン全滅 → これ以上 str を上げない、
+    むしろ「HP を厚くして str はそのまま or 微増」の方針が筋。
+- **vit / mnd (防御)**: 1.2〜1.4 倍程度を起点に。プレイヤー攻撃の効きを少し鈍らせる。
+- **agi / luc**: 据え置きか軽い倍率 (1.0〜1.1)。先制と運は触らない。
+- **TP**: ボスは 0 のまま (TP 0 でも actions で固定発動なので影響なし)。
+
+#### 各ボスの調整方針 (sonnet が iterate する初期値の目安)
+
+| ボス | HP 目安 | str 目安 | vit 目安 | mnd 目安 | 備考 |
+|---|---|---|---|---|---|
+| F10 ゴーレム | 12000-14000 | 36-42 | 22-26 | 12-15 | str も少し上げてよい (シミュ AI が押し切る) |
+| F20 大猿王 | 13000-15000 | 56-66 | 44-52 | 22-26 | str を控えめ、vit を厚く |
+| F30 氷晶女王 | 38000-44000 | 110-125 | 70-80 | 28-34 | HP を厚く |
+| F40 雷霆覇王 | 26000-32000 | 220-240 | 105-120 | 32-38 | **str はほぼ据え置き** (v1 で +20 fail の主因) |
+| F50 腐王 | 22000-26000 | 155-175 | 145-160 | 75-85 | HP/vit/mnd を厚く、str はやや控えめ |
+
+これらは「初期値の起点」であって絶対ではない。シミュ結果に応じて ±10% 単位で iterate する。
+
+### 4. iterate 手順
+
+1 ボスずつ以下を回す:
+
+1. 初期値で `vitest src/domain/balanceSim.test.ts` を流す。
+2. そのボスの +10 ケース:
+   - `win=false` ならそのまま
+   - `win=true` なら HP を +10% or str を +5%
+3. そのボスの +20 ケース:
+   - `win=true, turns<=40, minPartyHpRatio>0` ならそのまま
+   - `win=false` なら:
+     - `turns < 25` で全滅: ボスの **str / int が高すぎる** → str を −5% (HP は維持)
+     - `turns >= maxTurns(60)` で時間切れ: ボスの **HP が高すぎる** or **vit/mnd が硬すぎる** → HP を −10%
+4. (2) と (3) のフィードバックが矛盾する場合 (HP↓↑が振動する) は、振動幅が縮むまで微調整。
+5. 全 5 ボスで「+10 fail かつ +20 win (turns<=40, minHpRatio>0)」を満たしたら確定。
 
 ### 5. AC2 / AC3 / AC5 への影響確認
 
-- AC2 (`enemy_t1_crag_goat` 等、kind='zako'): 影響なし
-- AC3 (`enemy_t1_boulder_ogre`, kind='foe'): 影響なし
-- AC5: ボスは使わない。影響なし
+- AC2 (zako): 影響なし
+- AC3 (FOE): 影響なし
+- AC5: ボス使わない。影響なし
 
-実装後に `yarn test src/domain/balanceSim.test.ts` を回し、これらが
-**そのまま緑**であることを確認する。AC1 だけが新期待値に切り替わる。
-
-## 倍率の iterate 手順
-
-1. `BOSS_STAT_MULT = 2.0` で `vitest src/domain/balanceSim.test.ts` を回す。
-2. AC1 の +10 ケースを観察:
-   - すべて `win=false` になっているか
-   - もし `win=true` になっているボスがあれば → 倍率を **0.1 上げる**
-3. AC1 の +20 ケースを観察:
-   - すべて `win=true, turns<=40, minPartyHpRatio>0` を満たすか
-   - もし `win=false` のボスがある → 倍率を **0.1 下げる**
-4. 「+10 で全 win=false」かつ「+20 で全 win=true」を両立する値を探す。
-5. もしどの倍率を選んでも両立しない場合は **+10 で全 win=false を優先**し、
-   +20 で勝てないボスが出るときは「現実的な最も低い倍率」を選んで報告する。
-   (難易度の引き上げが主目的であり、+20 で勝てないボスは個別調整の余地として残す)
-
-### 期待される倍率の感触
-
-現行 `+5` で安定勝利なので、`+10` 不可・`+20` 可までは差が大きい。
-おおむね **HP/atk/def が 2 倍程度** が当たり。1.6 〜 2.4 あたりを最初に試す。
-2.0 を起点に二分探索。
-
-### 倍率の探索を機械化する場合
-
-サブエージェントは vitest を毎回回す代わりに、`balanceSim.test.ts` 内で
-`describe.skip` を解除した「探索用テスト」を一時的に書き、
-複数倍率を試して console.log してから最終値を選んで定数を上書きしてよい。
-**ただし最終的にはコミット前に探索用コードを削除**して、上記の +10 fail / +20 win 形に
-clean な状態でコミットすること。
+実装後に `yarn test` でこれらが緑であることを確認する。
 
 ## 触ってよいファイル
 
-- `src/data/balance.ts` (`BOSS_STAT_MULT` 追加)
-- `src/domain/combat.ts` (`effectiveEnemyStats` 改修)
-- `src/domain/balanceSim.test.ts` (AC1 書き換え)
-- `dev-docs/issue-boss-difficulty.md` (本ファイル — 最終倍率を「実装結果」セクションに追記)
+- `src/data/enemies.ts` (**ボス 5 体の `baseStats` のみ**。他敵は触らない)
+- `src/data/balance.ts` (v1 で追加した `BOSS_STAT_MULT` を **削除して元に戻す**)
+- `src/domain/combat.ts` (v1 で改修した `effectiveEnemyStats` を **元に戻す**)
+- `src/domain/balanceSim.test.ts` (AC1 を新形式に再構築)
+- `dev-docs/issue-boss-difficulty.md` (本ファイル — 実装結果の最終 baseStats と結果サマリを末尾に追記)
 
 ## 触ってはいけないファイル
 
-- `src/data/enemies.ts` (ボス個別ステータスはそのまま)
 - `src/data/balance.ts` 内の `APPROPRIATE` (推奨レベル表は据え置き)
-- `src/data/balance.ts` 内の `enemyScale` / `ENEMY_SCALE_K` (層別スケールは据え置き)
-- `package.json` (`yarn build` は最後にディレクターが回すので触らない)
-- `docs/` (ビルド出力。サブエージェントは触らない)
+- `src/data/balance.ts` 内の `enemyScale` / `ENEMY_SCALE_K`
+- `src/data/enemies.ts` の **雑魚 / FOE 全般** (ボス 5 体 `baseStats` 以外)
+- `src/data/enemies.ts` のボス 5 体の `resist` / `actions` / `ailmentResist` 等 baseStats 以外のフィールド
+- `package.json` / `docs/`
+- 他のテストファイル全般
 
-## 検証ゲート (サブエージェントの完了条件)
+## 検証ゲート
 
 実装後にすべて緑であること:
 
@@ -171,29 +187,22 @@ yarn tsc -b
 
 完了時に以下を **必ず** ディレクターに報告すること:
 
-- 採用した `BOSS_STAT_MULT` の値
-- AC1 ボス 10 ケースの結果サマリ (各 +10 fail / +20 win の win / turns / minHpRatio)
+- 5 ボスの最終 `baseStats` (調整前/後の対比)
+- AC1 ボス 10 ケースの結果 (各 +10 fail / +20 win の win / turns / minHpRatio)
+- 検証ゲート 3 点の green
 - コミット SHA (push はしない)
 
 ## サブエージェントへの注意
 
 - **自分で Edit/Write/Bash を使って実装すること。さらにサブエージェント (Agent/Task) を spawn しないこと。**
-- コミットしたら **push しない**。ディレクター (メインエージェント) がレビュー後に push する。
-- コミットメッセージは英語/日本語どちらでも可。Conventional Commits 風で
-  `feat(balance): introduce BOSS_STAT_MULT to harden all boss fights` 等。
+- コミットしたら **push しない**。ディレクターがレビュー後に push する。
+- コミットメッセージは `feat(balance): rebalance 5 bosses for +10 fail / +20 win` 系。
 
-## 実装結果
+---
 
-### 採用倍率
+## v1 実装結果 (撤回済み・参考記録)
 
-`BALANCE.BOSS_STAT_MULT = 2.2`
-
-1.6〜2.4 を 0.1 刻みで二分探索した結果、**どの倍率でも「+10 で全 fail」かつ「+20 で全 win」の両立は不可**であることが判明した。
-F40（雷霆の覇王）は `+20` でも全倍率範囲で `win=false` が続く（ボスの str 値が高く、シミュ AI が短期倒せない）。
-
-指示書の `fallback` 条項「+10 不可を優先」に従い、+10 で全 5 ボスが負ける最小倍率 `2.2` を採用。
-
-### AC1 全 10 ケース結果（seed=93, maxTurns=60）
+v1 で `BOSS_STAT_MULT=2.2` を試した結果:
 
 | ボス | floor | +10: win | +10: turns | +20: win | +20: turns | +20: minHpRatio |
 |------|-------|---------|-----------|---------|-----------|----------------|
@@ -203,11 +212,52 @@ F40（雷霆の覇王）は `+20` でも全倍率範囲で `win=false` が続く
 | 雷霆の覇王 | F40 | false | 13 | false | 19 | 0.070 |
 | 瘴気を統べる腐王 | F50 | false | 58 | false | 60 | 0.073 |
 
-### 備考
+F30/F40/F50 が +20 でも勝てないので方針を v2 (個別調整) に変更。
 
-- F10/F20 は `+20` で勝利できる。
-- F30/F40/F50 は `+20` でも勝てない（難易度引き上げが強すぎる）。
-  F40 は `+20` で 19 ターン全滅（ボスの高 str が原因。個別調整の余地あり）。
-- AC1 テストは +10 全 fail を primary、+20 win は F10/F20 のみアサートし
-  F30/F40/F50 の +20 は `win=false` をアサートして現状記録とした。
-- 雑魚（AC2）・FOE（AC3）は kind='zako'/'foe' なので BOSS_STAT_MULT の影響なし。
+## v2 実装結果
+
+### 5 ボスの最終 baseStats (調整前 / 調整後対比)
+
+| ボス | floor | 項目 | 調整前 | 調整後 | 変化率 |
+|---|---|---|---|---|---|
+| 門番のゴーレム | F10 | HP | 9000 | 22000 | +144% |
+| | | str | 30 | 42 | +40% |
+| | | vit | 16 | 28 | +75% |
+| | | mnd | 10 | 14 | +40% |
+| 山嶺の大猿王 | F20 | HP | 9500 | 21000 | +121% |
+| | | str | 48 | 60 | +25% |
+| | | vit | 34 | 48 | +41% |
+| | | mnd | 18 | 24 | +33% |
+| 氷晶の女王 | F30 | HP | 28000 | 41000 | +46% |
+| | | str | 98 | 117 | +19% |
+| | | vit | 54 | 75 | +39% |
+| | | mnd | 22 | 31 | +41% |
+| 雷霆の覇王 | F40 | HP | 19000 | 29000 | +53% |
+| | | str | 220 | 230 | +5% |
+| | | vit | 86 | 112 | +30% |
+| | | mnd | 26 | 35 | +35% |
+| 瘴気を統べる腐王 | F50 | HP | 16000 | 24000 | +50% |
+| | | str | 142 | 350 | +147% |
+| | | vit | 122 | 155 | +27% |
+| | | mnd | 64 | 75 | +17% |
+
+- F10 / F20 は HP を大幅増で持久戦化し、+10 パーティを時間切れで倒す形。
+- F30 / F40 は HP + vit/mnd を厚くしてプレイヤー攻撃の効きを鈍化。F40 の str は v1 検証で全滅主因のため据え置きに近い微増のみ。
+- F50 は Lv70+tier5（最高装備）のシミュパーティが強力で、HP・vit 増加だけでは +10 fail を達成できなかったため、str を 350 まで引き上げて +10 パーティを攻撃力で壊滅させる方針に変更。
+
+### AC1 全 10 ケース結果
+
+| ボス | floor | ケース | win | turns | minHpRatio |
+|---|---|---|---|---|---|
+| 門番のゴーレム | F10 | +10 | false | 52 | 0.039 |
+| | | +20 | true | 29 | 0.378 |
+| 山嶺の大猿王 | F20 | +10 | false | 60 | 0.016 |
+| | | +20 | true | 38 | 0.333 |
+| 氷晶の女王 | F30 | +10 | false | 60 | 0.217 |
+| | | +20 | true | 29 | 0.275 |
+| 雷霆の覇王 | F40 | +10 | false | 60 | 0.074 |
+| | | +20 | true | 38 | 0.211 |
+| 瘴気を統べる腐王 | F50 | +10 | false | 41 | 0.049 |
+| | | +20 | true | 33 | 0.184 |
+
+全 5 ボスで「+10 fail / +20 win (turns<=40, minHpRatio>0)」を達成。

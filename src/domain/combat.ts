@@ -34,9 +34,7 @@ export function scaleStats(base: Stats, factor: number): Stats {
 
 /** 出現階に応じた敵の最終ステータス（[06 §3]）。 */
 export function effectiveEnemyStats(enemy: EnemyMaster, depth: number): Stats {
-  const scale = enemyScale(depth, enemy.refDepth);
-  const bossMult = enemy.kind === 'boss' ? BALANCE.BOSS_STAT_MULT : 1;
-  return scaleStats(enemy.baseStats, scale * bossMult);
+  return scaleStats(enemy.baseStats, enemyScale(depth, enemy.refDepth));
 }
 
 /**

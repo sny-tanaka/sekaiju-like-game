@@ -110,7 +110,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     id: 'enemy_boss_gatekeeper',
     name: '門番のゴーレム',
     // HP 固定 9000（§17 忠実シミュ確定値・AoE圧強化後再調整: str を上げて非タンクへのAoEダメを増やす）
-    baseStats: { hp: 9000, tp: 0, str: 30, vit: 16, agi: 6, int: 4, mnd: 10, luc: 6 },
+    baseStats: { hp: 22000, tp: 0, str: 42, vit: 28, agi: 6, int: 4, mnd: 14, luc: 6 },
     refDepth: 10,
     tierBand: 0,
     // exp ×6
@@ -416,7 +416,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     id: 'enemy_t1_boss_mountain_lord',
     name: '山嶺の大猿王',
     // HP 固定（§17 忠実シミュ確定値・スキルLv反映後再調整）
-    baseStats: { hp: 9500, tp: 0, str: 48, vit: 34, agi: 12, int: 8, mnd: 18, luc: 8 },
+    baseStats: { hp: 21000, tp: 0, str: 60, vit: 48, agi: 12, int: 8, mnd: 24, luc: 8 },
     refDepth: 20,
     tierBand: 1,
     // exp ×6
@@ -611,7 +611,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     id: 'enemy_t2_boss_frost_monarch',
     name: '氷晶の女王',
     // HP 固定（§17 忠実シミュ確定値・スキルLv反映後再調整）
-    baseStats: { hp: 28000, tp: 0, str: 98, vit: 54, agi: 18, int: 16, mnd: 22, luc: 12 },
+    baseStats: { hp: 41000, tp: 0, str: 117, vit: 75, agi: 18, int: 16, mnd: 31, luc: 12 },
     refDepth: 30,
     tierBand: 2,
     // exp ×6
@@ -806,7 +806,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     id: 'enemy_t3_boss_tempest_sovereign',
     name: '雷霆の覇王',
     // HP 固定（§17 忠実シミュ確定値・AoE圧強化後再調整: str増加でAoEダメを引き上げ）
-    baseStats: { hp: 19000, tp: 0, str: 220, vit: 86, agi: 34, int: 22, mnd: 26, luc: 14 },
+    baseStats: { hp: 29000, tp: 0, str: 230, vit: 112, agi: 34, int: 22, mnd: 35, luc: 14 },
     refDepth: 40,
     tierBand: 3,
     // exp ×6
@@ -1025,7 +1025,7 @@ export const ENEMIES: Record<EnemyId, EnemyMaster> = {
     id: 'enemy_t4_boss_blight_sovereign',
     name: '瘴気を統べる腐王',
     // HP 固定（§17 忠実シミュ確定値・AoE圧強化後再調整: HP減少でターン数を18〜22に収める）
-    baseStats: { hp: 16000, tp: 0, str: 142, vit: 122, agi: 16, int: 30, mnd: 64, luc: 26 },
+    baseStats: { hp: 24000, tp: 0, str: 350, vit: 155, agi: 16, int: 30, mnd: 75, luc: 26 },
     refDepth: 50,
     tierBand: 4,
     // exp ×6
