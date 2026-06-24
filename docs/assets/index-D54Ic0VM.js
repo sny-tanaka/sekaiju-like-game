@@ -33803,7 +33803,7 @@ const yz = 2500,
                 i.jsxs('footer', {
                   className: SA.foot,
                   children: [
-                    i.jsxs('span', { className: SA.version, children: ['v', '1.0.16'] }),
+                    i.jsxs('span', { className: SA.version, children: ['v', '1.0.17'] }),
                     i.jsx(F, {
                       label: T ? '確認中…' : '更新を確認',
                       sfx: 'cursor',
