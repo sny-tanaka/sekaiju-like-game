@@ -456,7 +456,11 @@ function runSim(
 
 describe('AC1: Boss fights (faithful sim – real resolveTurn)', () => {
   /**
-   * 設計目標 (v2: ボス個別 baseStats 引き上げ後):
+   * 設計目標 (v3: ボス火力強化 & 物理/魔法防御反転後):
+   * - str↑(+20〜35%): 物理攻撃火力引き上げ
+   * - int↑(+20〜35%): 魔法全体攻撃火力引き上げ（F30/F40 の魔法 AoE を強化）
+   * - vit↓(-15〜25%): 物理 DPS が増加し物理メタが復権
+   * - mnd↑(+20〜30%): 魔法メタ対抗（F50 は例外: ボス攻撃が全物理のため mnd 据え置き/下げ）
    * - 適正Lv+10: 全 5 ボスで負ける
    *   - expect(result.win).toBe(false)
    * - 適正Lv+20: 全 5 ボスで勝つ。turns<=40, minPartyHpRatio>0
