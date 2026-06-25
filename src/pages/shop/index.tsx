@@ -1,5 +1,14 @@
 import { useState } from 'react';
 
+import {
+  buyRowStats,
+  compareRows,
+  EMPTY_STATS,
+  instanceRowStats,
+  SORT_LABEL,
+  type RowStats,
+  type SortKey,
+} from './sort';
 import styles from './style.module.scss';
 
 import { ActionButton } from '@/components/common/ActionButton/ActionButton';
@@ -64,14 +73,6 @@ const CAT_LABEL: Record<ShopCat, string> = {
 };
 const CAT_ORDER: ShopCat[] = ['weapon', 'armor', 'accessory', 'item', 'material'];
 
-// 並び替えキー。
-type SortKey = 'priceDesc' | 'priceAsc' | 'qtyDesc';
-const SORT_LABEL: Record<SortKey, string> = {
-  priceDesc: '金額が高い順',
-  priceAsc: '金額が安い順',
-  qtyDesc: '所持数が多い順',
-};
-
 /** アイテムのショップ用カテゴリ（消費系=アイテム / 素材・ドロップ=素材）。 */
 const itemCategory = (id: string): ShopCat => {
   const c = ITEMS[id]?.category;
@@ -113,6 +114,7 @@ export const Page = () => {
     maxStack?: number;
     /** 所持が上限に達しているか（購入ボタン disabled 判定）。 */
     atStockMax: boolean;
+    stats: RowStats;
   };
   const buyRows: BuyRow[] = shopCatalog(save).map((e) => {
     const qty =
@@ -130,6 +132,7 @@ export const Page = () => {
       qty,
       maxStack,
       atStockMax,
+      stats: e.kind === 'equip' ? buyRowStats(e.id, shopEquipGrade(save, e.id)) : EMPTY_STATS,
     };
   });
 
@@ -144,6 +147,7 @@ export const Page = () => {
         price: number;
         category: ShopCat;
         qty: number;
+        stats: RowStats;
       }
     | {
         key: string;
@@ -155,6 +159,7 @@ export const Page = () => {
         price: number;
         category: ShopCat;
         qty: number;
+        stats: RowStats;
       }
     | {
         key: string;
@@ -165,6 +170,7 @@ export const Page = () => {
         price: number;
         category: ShopCat;
         qty: number;
+        stats: RowStats;
       };
 
   // 装備中の個体 id → 装備者名 のマップ。
@@ -189,6 +195,7 @@ export const Page = () => {
         price: equipSellValue(e),
         category: (EQUIPMENT[e.masterId]?.slot ?? 'item') as ShopCat,
         qty: 1,
+        stats: instanceRowStats(e),
       };
     }
     return {
@@ -199,6 +206,7 @@ export const Page = () => {
       price: equipSellValue(e),
       category: (EQUIPMENT[e.masterId]?.slot ?? 'item') as ShopCat,
       qty: 1,
+      stats: instanceRowStats(e),
     };
   });
 
@@ -216,6 +224,7 @@ export const Page = () => {
           price: sellPriceOf(s.itemId, s.grade ?? 1),
           category: itemCategory(s.itemId),
           qty: s.qty,
+          stats: EMPTY_STATS,
         })
       ),
     // ロック行（装備中個体）は常に末尾に配置。
@@ -231,19 +240,15 @@ export const Page = () => {
   // 切替で消えたカテゴリを選んでいたら全件表示に倒す。
   const effFilter = filter !== 'all' && !presentCats.includes(filter) ? 'all' : filter;
 
-  function view<T extends { category: ShopCat; price: number; qty: number }>(rows: T[]): T[] {
+  function view<T extends { category: ShopCat; price: number; qty: number; stats: RowStats }>(
+    rows: T[]
+  ): T[] {
     const filtered = effFilter === 'all' ? rows : rows.filter((r) => r.category === effFilter);
     // ロック行（装備中個体）があれば常に末尾に固定し、ソート対象から外す。
     const isLocked = (r: T) => 'locked' in r && (r as { locked?: boolean }).locked === true;
     const lockedRows = filtered.filter(isLocked);
     const normalRows = filtered.filter((r) => !isLocked(r));
-    const sorted = [...normalRows].sort((a, b) =>
-      sort === 'priceAsc'
-        ? a.price - b.price
-        : sort === 'qtyDesc'
-          ? b.qty - a.qty
-          : b.price - a.price
-    );
+    const sorted = [...normalRows].sort((a, b) => compareRows(sort, a, b));
     return [...sorted, ...lockedRows];
   }
 
