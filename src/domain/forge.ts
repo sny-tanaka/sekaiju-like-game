@@ -32,21 +32,31 @@ export function forgeBonusFor(masterId: string, forgeLevel: number): EquipBonuse
   return {};
 }
 
-/** 周回グレードによる装備ボーナス倍率（[06 §3]）。Lv ごとに +50%。未指定=1.0。 */
+// 周回グレード倍率の指数ベース（[06 §3]）。
+// Lv2 = +5 ティア相当のジャンプ: atk/mat 系 ×1.62^5 ≈ 10.66、def/mdf 系 ×1.55^5 ≈ 8.59。
+const GRADE_TIER_JUMP = 5;
+const TIER_BASE_ATK = 1.62;
+const TIER_BASE_DEF = 1.55;
+
+/** 周回グレードによる装備ボーナス倍率（atk/mat 系）（[06 §3]）。Lv2 = +5 ティア相当。未指定=1.0。 */
 export function gradeMult(grade?: number): number {
-  return 1 + 0.5 * (Math.max(1, grade ?? 1) - 1);
+  const g = Math.max(1, grade ?? 1);
+  return Math.pow(TIER_BASE_ATK, GRADE_TIER_JUMP * (g - 1));
 }
 
-/** 装備マスターの基礎ボーナスを周回グレードで倍化した値（[06 §3]）。 */
+/** 装備マスターの基礎ボーナスを周回グレードで倍化した値（[06 §3]）。atk/mat と def/mdf で倍率を分離。 */
 export function gradedBaseBonuses(masterId: string, grade?: number): EquipBonuses {
   const eq = EQUIPMENT[masterId];
   if (!eq) return {};
-  const m = gradeMult(grade);
+  const g = Math.max(1, grade ?? 1);
+  const expSteps = GRADE_TIER_JUMP * (g - 1);
+  const atkMult = Math.pow(TIER_BASE_ATK, expSteps); // ×1.62^N
+  const defMult = Math.pow(TIER_BASE_DEF, expSteps); // ×1.55^N
   const out: EquipBonuses = {};
-  if (eq.bonuses.atk) out.atk = Math.round(eq.bonuses.atk * m);
-  if (eq.bonuses.mat) out.mat = Math.round(eq.bonuses.mat * m);
-  if (eq.bonuses.def) out.def = Math.round(eq.bonuses.def * m);
-  if (eq.bonuses.mdf) out.mdf = Math.round(eq.bonuses.mdf * m);
+  if (eq.bonuses.atk) out.atk = Math.round(eq.bonuses.atk * atkMult);
+  if (eq.bonuses.mat) out.mat = Math.round(eq.bonuses.mat * atkMult);
+  if (eq.bonuses.def) out.def = Math.round(eq.bonuses.def * defMult);
+  if (eq.bonuses.mdf) out.mdf = Math.round(eq.bonuses.mdf * defMult);
   // statMods（「STR+N」等）は周回グレード倍化しない（現データは未使用。付与時はここで要対応）。
   if (eq.bonuses.statMods) out.statMods = eq.bonuses.statMods;
   return out;
