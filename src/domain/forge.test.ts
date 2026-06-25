@@ -3,6 +3,8 @@ import {
   forgeIncPerLevel,
   forgeBonusFor,
   forgeWithIngot,
+  gradeMult,
+  gradedBaseBonuses,
   recycle,
   recycleFragments,
   recycleMany,
@@ -191,5 +193,55 @@ describe('forge: recycleMany', () => {
     const res = recycleMany(save, []);
     expect(res.ok).toBe(true);
     expect(res.save.guild.equipment).toHaveLength(before);
+  });
+});
+
+// ============================================================================
+// Lv2 装備の +5 tier 相当ジャンプ（[06 §3] 改修）
+// ============================================================================
+
+describe('gradeMult: +5 tier 相当の指数式', () => {
+  test('grade=1 は 1.0 (既存挙動を破壊しない)', () => {
+    expect(gradeMult(1)).toBe(1);
+    expect(gradeMult(undefined)).toBe(1);
+  });
+
+  test('grade=2 は +5 tier 相当 (≈10.66 = 1.62^5)', () => {
+    expect(gradeMult(2)).toBeCloseTo(Math.pow(1.62, 5), 5);
+  });
+
+  test('grade=3 は +10 tier 相当 (≈113.6 = 1.62^10)', () => {
+    expect(gradeMult(3)).toBeCloseTo(Math.pow(1.62, 10), 5);
+  });
+});
+
+describe('gradedBaseBonuses: Lv2 で +5 tier 相当の効果値', () => {
+  test('Lv1 は base 値そのまま (golem_blade: atk=13)', () => {
+    expect(gradedBaseBonuses('equip_golem_blade', 1)).toEqual({ atk: 13 });
+  });
+
+  test('ゴーレムの大剣 Lv2 は atk≈139 (T6 sword 相当)', () => {
+    const b = gradedBaseBonuses('equip_golem_blade', 2);
+    expect(b.atk).toBeGreaterThanOrEqual(135);
+    expect(b.atk).toBeLessThanOrEqual(145);
+  });
+
+  test('t5 竜鱗の鎧 Lv2 は def/mdf も拡張される (def>500, mdf>200)', () => {
+    const b = gradedBaseBonuses('equip_t5_heavy', 2);
+    expect(b.def).toBeGreaterThan(500);
+    expect(b.mdf).toBeGreaterThan(200);
+  });
+
+  test('atk と def で倍率が異なる (atk=×1.62^5, def=×1.55^5)', () => {
+    const sword = gradedBaseBonuses('equip_t5_sword', 2); // atk=86
+    const armor = gradedBaseBonuses('equip_t5_heavy', 2); // def=72
+    // 竜鱗の剣 Lv2: atk/86 ≈ 1.62^5 ≈ 10.66
+    expect(sword.atk! / 86).toBeCloseTo(Math.pow(1.62, 5), 1);
+    // 竜鱗の鎧 Lv2: def/72 ≈ 1.55^5 ≈ 8.59
+    expect(armor.def! / 72).toBeCloseTo(Math.pow(1.55, 5), 1);
+  });
+
+  test('存在しない ID は空オブジェクトを返す', () => {
+    expect(gradedBaseBonuses('nonexistent_id', 2)).toEqual({});
   });
 });
