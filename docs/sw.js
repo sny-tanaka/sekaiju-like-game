@@ -1,27 +1,27 @@
 if (!self.define) {
   let s,
     n = {};
-  const r = (r, e) => (
-    (r = new URL(r + '.js', e).href),
-    n[r] ||
+  const e = (e, r) => (
+    (e = new URL(e + '.js', r).href),
+    n[e] ||
       new Promise((n) => {
         if ('document' in self) {
           const s = document.createElement('script');
-          ((s.src = r), (s.onload = n), document.head.appendChild(s));
-        } else ((s = r), importScripts(r), n());
+          ((s.src = e), (s.onload = n), document.head.appendChild(s));
+        } else ((s = e), importScripts(e), n());
       }).then(() => {
-        let s = n[r];
-        if (!s) throw new Error(`Module ${r} didn’t register its module`);
+        let s = n[e];
+        if (!s) throw new Error(`Module ${e} didn’t register its module`);
         return s;
       })
   );
-  self.define = (e, l) => {
+  self.define = (r, l) => {
     const a = s || ('document' in self ? document.currentScript.src : '') || location.href;
     if (n[a]) return;
     let i = {};
-    const _ = (s) => r(s, a),
+    const _ = (s) => e(s, a),
       u = { module: { uri: a }, exports: i, require: _ };
-    n[a] = Promise.all(e.map((s) => u[s] || _(s))).then((s) => (l(...s), i));
+    n[a] = Promise.all(r.map((s) => u[s] || _(s))).then((s) => (l(...s), i));
   };
 }
 define(['./workbox-1ef09536'], function (s) {
@@ -31,7 +31,7 @@ define(['./workbox-1ef09536'], function (s) {
   }),
     s.precacheAndRoute(
       [
-        { url: 'index.html', revision: '9231c5b298c7dc36a28180560107367a' },
+        { url: 'index.html', revision: '012e54c982d7f88c9a459dfcdd00564f' },
         { url: 'icon-512.png', revision: '5316052a37fc817af9f7cd34b7f0d35d' },
         { url: 'icon-192.png', revision: '60fb1f9ababc08708199d504d57fffb0' },
         { url: 'favicon.ico', revision: '2e16a14e5099649dda716dd699ef613b' },
@@ -103,8 +103,8 @@ define(['./workbox-1ef09536'], function (s) {
         { url: 'assets/item_mat_t0_soft_pelt-B45_Umk6.png', revision: null },
         { url: 'assets/item_mat_t0_faint_ember-mc7xjJJ1.png', revision: null },
         { url: 'assets/item_bat_wing-DSYSFTv5.png', revision: null },
+        { url: 'assets/index-Do95CTNl.js', revision: null },
         { url: 'assets/index-D-f26BQh.css', revision: null },
-        { url: 'assets/index-CxwaUv2M.js', revision: null },
         { url: 'assets/equip_t2_light-CoHmd7sL.png', revision: null },
         { url: 'assets/equip_cloth_robe-DNIpUHZ8.png', revision: null },
         { url: 'favicon.ico', revision: '2e16a14e5099649dda716dd699ef613b' },

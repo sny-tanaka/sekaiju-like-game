@@ -40,6 +40,11 @@ export const PartiallyExplored: StoryObj<T> = {
   args: { explored: partial },
 };
 
+// 全未探索（下り階段アイコンだけ霧の中に薄く表示されることを確認）
+export const AllUnexplored: StoryObj<T> = {
+  args: { explored: [] },
+};
+
 // FOE（徘徊敵）を自動表示。未感知=くすんだ赤、追跡中=鮮やかな赤。
 export const WithFoes: StoryObj<T> = {
   args: {
