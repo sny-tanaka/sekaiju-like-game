@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { MouseEvent } from 'react';
 
+import { shouldShowUnexploredStairs } from './helpers';
 import styles from './style.module.scss';
 
 import {
@@ -155,6 +156,19 @@ export const DungeonMap = ({
           ctx.fillText(COOKING_GLYPH, px + cell / 2, py + cell / 2 + 1);
         }
       }
+    }
+
+    // 下り階段 (= 深層方向, kind: 'stairsUp') は未探索でも常時表示 (目的地が分かるように)。
+    // 上り階段 (拠点帰還, kind: 'stairsDown') は既存通り探索済みでのみ表示。
+    const unexploredDownStairs = shouldShowUnexploredStairs(floor, exploredSet);
+    if (unexploredDownStairs && stairsIconDrawable(stairsDownImg)) {
+      const s = cell * 0.9;
+      const ox = unexploredDownStairs.x * cell + (cell - s) / 2;
+      const oy = unexploredDownStairs.y * cell + (cell - s) / 2;
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = 0.7; // 未踏なので少し薄く描画（踏破済みと区別）
+      ctx.drawImage(stairsDownImg, ox, oy, s, s);
+      ctx.globalAlpha = 1;
     }
 
     // プレイヤーが手動配置したアイコン（探索済みセルのみ表示）
