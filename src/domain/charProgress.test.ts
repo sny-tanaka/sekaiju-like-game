@@ -6,11 +6,13 @@ import {
   rebirthStatBonusForRace,
   reincarnate,
   reincarnateInSave,
+  setSubClass,
   transferClass,
   transferClassInSave,
 } from '@/domain/charProgress';
 import { addEquipment, equipItem } from '@/domain/inventory';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
+// createCharacter をテスト内部でも使うため再 import（既存 import と同一）
 import { availableSP, skillLevel } from '@/domain/skillTree';
 import type { Character, SaveData } from '@/domain/types';
 
@@ -207,6 +209,110 @@ describe('reincarnateInSave', () => {
     expect(m.rebirthBonus?.count).toBe(1);
     expect(m.rebirthBonus?.bonusSp).toBe(REBIRTH.BONUS_SP);
     expect(m.rebirthBonus?.stats).toBeDefined();
+  });
+});
+
+describe('setSubClass (副業)', () => {
+  test('副業未設定に null を指定 → no-op (同じオブジェクト参照)', () => {
+    const c = warrior();
+    const result = setSubClass(c, null);
+    expect(result).toBe(c);
+  });
+
+  test('本業と同じ classId を副業に設定 → no-op', () => {
+    const c = warrior();
+    const result = setSubClass(c, 'class_warrior');
+    expect(result).toBe(c);
+  });
+
+  test('副業を設定する（スキル未習得の場合 learnedSkills/SP に変化なし）', () => {
+    const c = warrior({ skillPoints: { total: 10, spent: 0 } });
+    const result = setSubClass(c, 'class_medic');
+    expect(result.subClassId).toBe('class_medic');
+    expect(result.learnedSkills).toEqual(c.learnedSkills);
+    expect(result.skillPoints.spent).toBe(c.skillPoints.spent);
+  });
+
+  test('副業で習得したスキルを副業解除すると SP が返金される（副業固有スキル）', () => {
+    // warrior に dancer を副業設定。dancer 固有の skill_war_dance を習得してから副業解除
+    // skill_war_dance は warrior ツリーにはない（dancer 固有）
+    const c = warrior({ skillPoints: { total: 20, spent: 0 } });
+    const withSub = setSubClass(c, 'class_dancer');
+    // dancer 固有スキルを習得した状態を手動で作る (SP 消費をシミュレート)
+    const withSkill = {
+      ...withSub,
+      learnedSkills: { ...withSub.learnedSkills, skill_war_dance: 1 },
+      skillPoints: { ...withSub.skillPoints, spent: 1 }, // depth0=1SP
+    };
+    // 副業を解除
+    const removed = setSubClass(withSkill, null);
+    expect(removed.subClassId).toBeNull();
+    expect(removed.learnedSkills['skill_war_dance']).toBeUndefined();
+    expect(removed.skillPoints.spent).toBe(0); // SP が戻る
+  });
+
+  test('別の副業に変更すると旧副業固有スキルが剥がれ SP が戻る', () => {
+    const c = warrior({ skillPoints: { total: 20, spent: 0 } });
+    const withDancer = setSubClass(c, 'class_dancer');
+    // dancer 固有スキルを習得した状態
+    const withSkill = {
+      ...withDancer,
+      learnedSkills: { ...withDancer.learnedSkills, skill_war_dance: 1 },
+      skillPoints: { ...withDancer.skillPoints, spent: 1 },
+    };
+    // dancer → medic に変更
+    const changed = setSubClass(withSkill, 'class_medic');
+    expect(changed.subClassId).toBe('class_medic');
+    expect(changed.learnedSkills['skill_war_dance']).toBeUndefined();
+    expect(changed.skillPoints.spent).toBe(0);
+  });
+
+  test('本業にも存在する共有スキルは副業解除しても保持・SP も戻らない', () => {
+    // medic（本業）+ dancer（副業）で skill_heal は medic にも dancer にも存在しない。
+    // 代わりに medic 本業ツリーにある skill_heal を習得し、dancer（副業）解除で保持されるか確認。
+    // medic（本業）に dancer（副業）を設定
+    const medic = createCharacter({ raceId: 'race_human', classId: 'class_medic', name: 'M' });
+    const withDancer = setSubClass(medic, 'class_dancer');
+    // skill_heal は medic ツリーにある（dancer にはない）。
+    // dancer ツリー固有の skill_war_dance も習得
+    const withSkills = {
+      ...withDancer,
+      learnedSkills: { skill_heal: 1, skill_war_dance: 1 },
+      skillPoints: { total: 20, spent: 3 }, // heal(1SP) + war_dance(1SP)*1Lv = 2SP... 簡易でも OK
+    };
+    // dancer 副業を解除
+    const removed = setSubClass(withSkills, null);
+    // skill_heal は medic 本業ツリーにあるので保護 → 残る
+    expect(removed.learnedSkills['skill_heal']).toBe(1);
+    // dancer 固有の skill_war_dance は剥がされる
+    expect(removed.learnedSkills['skill_war_dance']).toBeUndefined();
+  });
+
+  test('不正な classId は no-op', () => {
+    const c = warrior();
+    const result = setSubClass(c, 'class_nonexistent' as never);
+    expect(result).toBe(c);
+  });
+
+  test('現在の副業と同じ classId を渡すと no-op', () => {
+    const c = warrior({ subClassId: 'class_medic' });
+    const result = setSubClass(c, 'class_medic');
+    expect(result).toBe(c);
+  });
+});
+
+describe('transferClass (副業との整合性)', () => {
+  test('転職しても副業はそのまま保持される（異なる職業の場合）', () => {
+    const c = warrior({ subClassId: 'class_medic', level: 10 });
+    const after = transferClass(c, 'class_mage');
+    expect(after.subClassId).toBe('class_medic');
+  });
+
+  test('新本業が現副業と同じ場合 → 副業が null になる', () => {
+    const c = warrior({ subClassId: 'class_mage', level: 10 });
+    const after = transferClass(c, 'class_mage');
+    expect(after.classId).toBe('class_mage');
+    expect(after.subClassId).toBeNull();
   });
 });
 

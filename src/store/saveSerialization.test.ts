@@ -87,4 +87,68 @@ describe('saveSerialization', () => {
     expect(meta.savedAt).toBe(1234);
     expect(meta.corrupted).toBeUndefined();
   });
+
+  test('v4→v5 migration: 既存メンバーに subClassId: null が補完される', () => {
+    // v4 形式のセーブを手作り（subClassId フィールドなし）
+    const v4 = {
+      ...serializeSave(makeSave()),
+      schemaVersion: 4,
+    } as Record<string, unknown>;
+    const guild = v4.guild as Record<string, unknown>;
+    guild.members = [
+      {
+        id: 'c1',
+        name: 'A',
+        raceId: 'race_human',
+        classId: 'class_warrior',
+        titleId: null,
+        // subClassId は v4 には存在しない
+        level: 1,
+        exp: 0,
+        skillPoints: { total: 0, spent: 0 },
+        learnedSkills: {},
+        equipment: { weapon: null, armor: null, accessory: null },
+        strategy: 'batchiri',
+      },
+    ];
+
+    const result = deserializeSave(v4);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+      expect(result.data.guild.members[0].subClassId).toBeNull();
+    }
+  });
+
+  test('v4→v5 migration の冪等性: 既に subClassId フィールドがある場合は上書きしない', () => {
+    // 既に subClassId が設定済みのデータを v4 バージョンで送り込む
+    const v4 = {
+      ...serializeSave(makeSave()),
+      schemaVersion: 4,
+    } as Record<string, unknown>;
+    const guild = v4.guild as Record<string, unknown>;
+    guild.members = [
+      {
+        id: 'c1',
+        name: 'A',
+        raceId: 'race_human',
+        classId: 'class_warrior',
+        titleId: null,
+        subClassId: 'class_medic', // 既に設定済み（冪等性テスト）
+        level: 1,
+        exp: 0,
+        skillPoints: { total: 0, spent: 0 },
+        learnedSkills: {},
+        equipment: { weapon: null, armor: null, accessory: null },
+        strategy: 'batchiri',
+      },
+    ];
+
+    const result = deserializeSave(v4);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      // 既に subClassId がある場合は上書きしない（'class_medic' のまま）
+      expect(result.data.guild.members[0].subClassId).toBe('class_medic');
+    }
+  });
 });

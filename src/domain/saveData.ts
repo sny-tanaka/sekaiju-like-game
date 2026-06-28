@@ -30,7 +30,8 @@ import type {
 // v2: 装備のインスタンス化（Phase 4-5b）。採集/食材枠（4-5a）も v2 で正規化する。
 // v3: 転生ボーナスを per-stat 化（issue #55）。
 // v4: Character.strategy を追加（issue #61）。
-export const CURRENT_SCHEMA_VERSION = 4;
+// v5: Character.subClassId を追加（v2.0.0 副業システム）。
+export const CURRENT_SCHEMA_VERSION = 5;
 
 export const DEFAULT_SETTINGS: GameSettings = {
   autoMap: 'on',
@@ -81,6 +82,7 @@ export function createCharacter(params: {
     raceId,
     classId,
     titleId: null,
+    subClassId: null,
     level: 1,
     exp: 0,
     skillPoints: { total: 0, spent: 0 },

@@ -22,7 +22,7 @@ export function spCostForDepth(depth: number): number {
   return SP_COST_BY_DEPTH[Math.min(Math.max(0, depth), SP_COST_BY_DEPTH.length - 1)];
 }
 
-/** そのキャラが触れるスキルツリーの全ノード（職業＋種族＋称号）。 */
+/** そのキャラが触れるスキルツリーの全ノード（職業＋種族＋称号＋副業）。 */
 export function skillNodesFor(char: Character): SkillTreeNode[] {
   const nodes: SkillTreeNode[] = [
     ...(CLASSES[char.classId]?.skillTree.skills ?? []),
@@ -30,6 +30,10 @@ export function skillNodesFor(char: Character): SkillTreeNode[] {
   ];
   if (char.titleId && TITLES[char.titleId]) {
     nodes.push(...TITLES[char.titleId].skillTree.skills);
+  }
+  // 副業ツリーを合成 (本業と同じ ID は setSubClass で弾いてあるため重複なし)
+  if (char.subClassId && CLASSES[char.subClassId]) {
+    nodes.push(...CLASSES[char.subClassId].skillTree.skills);
   }
   return nodes;
 }

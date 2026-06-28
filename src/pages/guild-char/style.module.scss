@@ -477,9 +477,10 @@
   color: var(--text-faint);
 }
 
-// ---- 育成 3列ボタン ----
+// ---- 育成 2×2 グリッドボタン ----
 .growthBtns {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
@@ -506,6 +507,11 @@
 .growthBtnTransfer {
   border: 1px solid var(--rule-base);
   color: var(--text-soft);
+}
+
+.growthBtnSubclass {
+  border: 1px solid rgba(130, 160, 220, 0.45);
+  color: #9ab4e0;
 }
 
 .growthBtnTitle {
