@@ -382,6 +382,22 @@ export const mockBossBattle: SaveData = (() => {
 })();
 
 // ============================================================
+// mockSubClass — mockWithParty + 先頭メンバー（戦士）に副業「薬師」を設定済み
+// GuildChar の副業タブ確認用。
+// ============================================================
+export const mockSubClass: SaveData = (() => {
+  return {
+    ...mockWithParty,
+    guild: {
+      ...mockWithParty.guild,
+      members: mockWithParty.guild.members.map((m, i) =>
+        i === 0 ? { ...m, subClassId: 'class_medic' } : m
+      ),
+    },
+  };
+})();
+
+// ============================================================
 // mockBattleSkillMenu — mockBattle と同じ状況だが、戦士が複数スキルを習得済み
 // （スキル選択画面のスクショ用。2列レイアウト + TP 不足のグレーアウトを確認できる）
 // ============================================================

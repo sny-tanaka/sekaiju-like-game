@@ -1,9 +1,12 @@
+import { setSubClass } from '@/domain/charProgress';
 import { createCharacter } from '@/domain/saveData';
 import {
   availableSP,
   canLearnSkill,
   learnSkill,
+  skillDepth,
   skillLevel,
+  skillNodesFor,
   skillSpCost,
 } from '@/domain/skillTree';
 import type { Character } from '@/domain/types';
@@ -59,5 +62,48 @@ describe('skillTree', () => {
   test('種族のユニオンスキルツリーも習得対象（ピクスは魔光爆裂）', () => {
     const c = mage(3);
     expect(canLearnSkill(c, 'skill_union_nova')).toBe(true);
+  });
+});
+
+describe('skillNodesFor (副業ツリー合成)', () => {
+  function warrior(sp = 20): Character {
+    const c = createCharacter({ raceId: 'race_human', classId: 'class_warrior', name: 'W' });
+    return { ...c, skillPoints: { total: sp, spent: 0 } };
+  }
+
+  test('副業なしのとき副業スキルはノードに含まれない', () => {
+    const c = warrior();
+    const nodes = skillNodesFor(c);
+    const hasWarDance = nodes.some((n) => n.skillId === 'skill_war_dance');
+    expect(hasWarDance).toBe(false);
+  });
+
+  test('副業設定後は副業ツリーのスキルが skillNodesFor に含まれる', () => {
+    const c = setSubClass(warrior(), 'class_dancer');
+    const nodes = skillNodesFor(c);
+    const hasWarDance = nodes.some((n) => n.skillId === 'skill_war_dance');
+    expect(hasWarDance).toBe(true);
+  });
+
+  test('副業ツリーのみのスキルが canLearnSkill で習得可能になる', () => {
+    // warrior 単体では skill_war_dance は習得不可
+    const c = warrior(20);
+    expect(canLearnSkill(c, 'skill_war_dance')).toBe(false);
+    // dancer を副業に設定すると習得可能になる
+    const withDancer = setSubClass(c, 'class_dancer');
+    expect(canLearnSkill(withDancer, 'skill_war_dance')).toBe(true);
+  });
+
+  test('共有スキル（本業+副業の両方に存在）があっても skillDepth が破綻しない', () => {
+    // medic（本業）+ dancer（副業）: skill_heal は medic にのみ存在するが、
+    // fire_bolt 等の共有スキルがある組み合わせでも depth が NaN や Infinity にならないことを確認
+    // warrior + dancer は共有スキルなしだが、nodes 内に重複エントリがある場合の念押し
+    const medic = createCharacter({ raceId: 'race_human', classId: 'class_medic', name: 'M' });
+    const withDancer = setSubClass(medic, 'class_dancer');
+    const nodes = skillNodesFor(withDancer);
+    // skill_heal の depth を計算 → 有限数であること
+    const healDepth = skillDepth(nodes, 'skill_heal');
+    expect(Number.isFinite(healDepth)).toBe(true);
+    expect(healDepth).toBeGreaterThanOrEqual(0);
   });
 });

@@ -24,6 +24,8 @@ const MIGRATIONS: Record<number, (old: Record<string, unknown>) => Record<string
   2: (old) => migrateV2toV3(old),
   // v3 → v4: Character.strategy を追加（issue #61）。
   3: (old) => migrateV3toV4(old),
+  // v4 → v5: Character.subClassId を追加（v2.0.0 副業システム）。
+  4: (old) => migrateV4toV5(old),
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
@@ -99,6 +101,19 @@ function migrateV3toV4(old: Record<string, unknown>): Record<string, unknown> {
   if (Array.isArray(guild.members)) {
     guild.members = guild.members.map((m) =>
       isObj(m) && typeof m.strategy !== 'string' ? { ...m, strategy: 'batchiri' } : m
+    );
+  }
+  next.guild = guild;
+  return next;
+}
+
+/** v4→v5: Character.subClassId を追加。既存メンバー全員に subClassId: null を補完。 */
+function migrateV4toV5(old: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...old, schemaVersion: 5 };
+  const guild = isObj(next.guild) ? { ...next.guild } : {};
+  if (Array.isArray(guild.members)) {
+    guild.members = guild.members.map((m) =>
+      isObj(m) && !('subClassId' in m) ? { ...m, subClassId: null } : m
     );
   }
   next.guild = guild;

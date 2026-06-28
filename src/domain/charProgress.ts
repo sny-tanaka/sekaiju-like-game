@@ -7,6 +7,7 @@ import {
 } from '@/data/balance';
 import { CLASSES } from '@/data/classes';
 import { RACES } from '@/data/races';
+import { TITLES } from '@/data/titles';
 import { canEquip, unequipItem } from '@/domain/inventory';
 import { createCharacter } from '@/domain/saveData';
 import { skillSpCost } from '@/domain/skillTree';
@@ -58,6 +59,8 @@ const spentForLearned = (char: Character, learned: Record<string, number>): numb
  */
 export function transferClass(char: Character, newClassId: ClassId): Character {
   if (!CLASSES[newClassId]) return char;
+  // 新本業が現副業と同じなら、副業は null にする (本業 == 副業 の二重保有を防ぐ)
+  const subClassId = char.subClassId === newClassId ? null : char.subClassId;
   const keepIds = raceSkillIds(char.raceId);
   let learned: Record<string, number> = {};
   for (const [sid, lv] of Object.entries(char.learnedSkills)) {
@@ -71,7 +74,13 @@ export function transferClass(char: Character, newClassId: ClassId): Character {
   // SP 総量は新レベル基準に再計算（転職コスト=レベル低下を SP にも反映。増殖を防ぐ）。
   const total = spTotalForLevel(level);
   // 深さ別コストで消費SPを再計算。開始スキルの無料 Lv1 は spent に含めない。
-  const ctx: Character = { ...char, classId: newClassId, titleId: null, learnedSkills: learned };
+  const ctx: Character = {
+    ...char,
+    classId: newClassId,
+    titleId: null,
+    subClassId,
+    learnedSkills: learned,
+  };
   let spent =
     spentForLearned(ctx, learned) - (starter && learned[starter] ? skillSpCost(ctx, starter) : 0);
   // 低レベル化で種族スキル投資を払い切れない場合は剥奪（負の SP を作らない）
@@ -84,6 +93,7 @@ export function transferClass(char: Character, newClassId: ClassId): Character {
     ...char,
     classId: newClassId,
     titleId: null,
+    subClassId, // 新本業 == 旧副業 なら null
     level,
     exp: 0, // MVP: 新レベル開始時点に丸める（設計の「該当Lvに合わせて再計算」の簡略）
     learnedSkills: learned,
@@ -211,4 +221,71 @@ export function acquireTitle(char: Character, titleId: TitleId, deepestReached: 
     titleId,
     skillPoints: { ...char.skillPoints, total: char.skillPoints.total + TITLE_BONUS_SP },
   };
+}
+
+// ---- 副業 (v2.0.0) -------------------------------------------------------
+
+/**
+ * 副業を設定/変更/解除する (v2.0.0)。
+ * - newSubClassId === null: 副業を解除
+ * - newSubClassId === char.classId: 本業と同じは無効 → no-op
+ * - newSubClassId === char.subClassId: 変化なし → no-op
+ * - 旧副業ツリーのみに存在していたスキル (= 本業/種族/称号で届かない skillId) を learnedSkills から
+ *   剥がし、その分の SP を spent から戻す。
+ * - 共有 skillId (本業ツリー等にも存在) は剥がさない。
+ */
+export function setSubClass(char: Character, newSubClassId: ClassId | null): Character {
+  if (newSubClassId !== null && !CLASSES[newSubClassId]) return char;
+  if (newSubClassId === char.classId) return char;
+  if (newSubClassId === char.subClassId) return char;
+
+  // 旧副業ツリーの skillId 集合
+  const oldSubIds = new Set(
+    (char.subClassId ? (CLASSES[char.subClassId]?.skillTree.skills ?? []) : []).map(
+      (n) => n.skillId
+    )
+  );
+
+  // 「副業を外しても本業/種族/称号で到達可能」な skillId 集合
+  const protectedIds = new Set<string>();
+  for (const n of CLASSES[char.classId]?.skillTree.skills ?? []) protectedIds.add(n.skillId);
+  for (const n of RACES[char.raceId]?.raceSkillTree.skills ?? []) protectedIds.add(n.skillId);
+  if (char.titleId) {
+    for (const n of TITLES[char.titleId]?.skillTree.skills ?? []) protectedIds.add(n.skillId);
+  }
+
+  // 剥がす対象 = 旧副業特有のスキル
+  const removeIds = [...oldSubIds].filter((id) => !protectedIds.has(id));
+
+  const learned = { ...char.learnedSkills };
+  let refund = 0;
+  for (const sid of removeIds) {
+    const lv = learned[sid] ?? 0;
+    if (lv > 0) {
+      // 旧 char コンテキストで cost を計算 (旧副業ツリー上の depth に基づく)
+      refund += skillSpCost(char, sid) * lv;
+      delete learned[sid];
+    }
+  }
+
+  return {
+    ...char,
+    subClassId: newSubClassId,
+    learnedSkills: learned,
+    skillPoints: {
+      ...char.skillPoints,
+      spent: Math.max(0, char.skillPoints.spent - refund),
+    },
+  };
+}
+
+/** SaveData 経由で副業を設定/変更/解除する。 */
+export function setSubClassInSave(
+  save: SaveData,
+  charId: string,
+  newSubClassId: ClassId | null
+): SaveData {
+  const char = save.guild.members.find((m) => m.id === charId);
+  if (!char) return save;
+  return replaceMember(save, charId, setSubClass(char, newSubClassId));
 }

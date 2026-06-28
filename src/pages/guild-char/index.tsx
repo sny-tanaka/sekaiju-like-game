@@ -21,6 +21,7 @@ import {
   canReincarnate,
   rebirthStatBonusForRace,
   reincarnateInSave,
+  setSubClassInSave,
   transferClassInSave,
 } from '@/domain/charProgress';
 import { equipDisplayName, gradedBaseBonuses } from '@/domain/forge';
@@ -52,15 +53,16 @@ const STAT_ROWS: { key: StatKey; label: string }[] = [
   { key: 'luc', label: 'LUC' },
 ];
 
-type GrowthMode = 'transfer' | 'title' | 'rebirth' | null;
+type GrowthMode = 'transfer' | 'title' | 'rebirth' | 'subclass' | null;
 
 // キャラ詳細（[01 §10]）。ステータス・装備・スキル振り。
 export const Page = ({ id }: { id: string }) => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
   const play = useSfx();
-  const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
+  const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title' | 'sub'>('class');
   const [transferTo, setTransferTo] = useState<ClassId>(CLASS_IDS[0]);
+  const [subTo, setSubTo] = useState<ClassId | ''>('');
   const [rbName, setRbName] = useState('');
   const [rbRace, setRbRace] = useState<RaceId>(RACE_IDS[0]);
   const [rbClass, setRbClass] = useState<ClassId>(CLASS_IDS[0]);
@@ -115,18 +117,18 @@ export const Page = ({ id }: { id: string }) => {
     return parts.join(' ');
   };
 
-  // 習得済みスキル一覧（現タブのみ）
-  const learnedSkills = (() => {
-    const tree =
-      skillTab === 'class'
-        ? (CLASSES[char.classId]?.skillTree.skills ?? [])
-        : skillTab === 'race'
-          ? (RACES[char.raceId]?.raceSkillTree.skills ?? [])
-          : char.titleId
-            ? (TITLES[char.titleId]?.skillTree.skills ?? [])
-            : [];
-    return tree.filter((s) => (char.learnedSkills[s.skillId] ?? 0) > 0);
+  // 現タブのスキルノード一覧
+  const tabNodes = (() => {
+    if (skillTab === 'class') return CLASSES[char.classId]?.skillTree.skills ?? [];
+    if (skillTab === 'race') return RACES[char.raceId]?.raceSkillTree.skills ?? [];
+    if (skillTab === 'title' && char.titleId) return TITLES[char.titleId]?.skillTree.skills ?? [];
+    if (skillTab === 'sub' && char.subClassId)
+      return CLASSES[char.subClassId]?.skillTree.skills ?? [];
+    return [];
   })();
+
+  // 習得済みスキル一覧（現タブのみ）
+  const learnedSkills = tabNodes.filter((s) => (char.learnedSkills[s.skillId] ?? 0) > 0);
 
   return (
     <div className={styles.layout}>
@@ -372,6 +374,14 @@ export const Page = ({ id }: { id: string }) => {
                 onClick={() => setSkillTab('title')}
               />
             ) : null}
+            {char.subClassId ? (
+              <ActionButton
+                label="副業"
+                sfx="cursor"
+                className={`${styles.skillSubTab} ${skillTab === 'sub' ? styles.skillSubTabActive : ''}`}
+                onClick={() => setSkillTab('sub')}
+              />
+            ) : null}
           </div>
 
           {/* スキルツリー */}
@@ -382,15 +392,7 @@ export const Page = ({ id }: { id: string }) => {
               <span>□未開放</span>
             </div>
             <SkillTree
-              nodes={
-                skillTab === 'class'
-                  ? (CLASSES[char.classId]?.skillTree.skills ?? [])
-                  : skillTab === 'race'
-                    ? (RACES[char.raceId]?.raceSkillTree.skills ?? [])
-                    : char.titleId
-                      ? (TITLES[char.titleId]?.skillTree.skills ?? [])
-                      : []
-              }
+              nodes={tabNodes}
               char={char}
               onLearn={(skillId) => {
                 play('create');
@@ -420,7 +422,7 @@ export const Page = ({ id }: { id: string }) => {
           ) : null}
         </section>
 
-        {/* 育成 3列ボタン */}
+        {/* 育成 2×2 ボタン */}
         <section>
           <div className={styles.growthBtns}>
             <ActionButton
@@ -431,6 +433,16 @@ export const Page = ({ id }: { id: string }) => {
               <span className={styles.growthBtnLabel}>転職</span>
               <span className={styles.growthBtnSub}>
                 Lv-{CLASS_CHANGE_LEVEL_PENALTY}/技リセット
+              </span>
+            </ActionButton>
+            <ActionButton
+              sfx="cursor"
+              className={`${styles.growthBtn} ${styles.growthBtnSubclass}`}
+              onClick={() => setGrowthMode('subclass')}
+            >
+              <span className={styles.growthBtnLabel}>副業</span>
+              <span className={styles.growthBtnSub}>
+                {char.subClassId ? CLASSES[char.subClassId]?.name : 'なし'}
               </span>
             </ActionButton>
             <ActionButton
@@ -510,6 +522,61 @@ export const Page = ({ id }: { id: string }) => {
                     disabled={transferTo === char.classId}
                     onClick={() => {
                       void applyAndPersist((s) => transferClassInSave(s, id, transferTo));
+                      setGrowthMode(null);
+                    }}
+                  />
+                </div>
+              </>
+            ) : null}
+
+            {/* 副業 */}
+            {growthMode === 'subclass' ? (
+              <>
+                <p className={styles.sheetTitle}>副業</p>
+                <p className={styles.sheetNote}>
+                  本業と別に職業を 1
+                  つ持てます。副業のスキルツリーから習得可能になりますが、装備制限は本業のままです。
+                  副業を変更/解除すると、副業のスキルツリーで取得していた分の SP
+                  は戻ります（共有スキルは保持）。
+                </p>
+                {char.subClassId ? (
+                  <p className={styles.titleHave}>現在の副業: {CLASSES[char.subClassId]?.name}</p>
+                ) : (
+                  <p className={styles.titleHave}>現在: なし</p>
+                )}
+                <select
+                  className={styles.sheetSelect}
+                  value={subTo}
+                  onChange={(e) => setSubTo(e.target.value as ClassId)}
+                >
+                  <option value="">（選んでください）</option>
+                  {CLASS_IDS.filter((cid) => cid !== char.classId).map((cid) => (
+                    <option
+                      key={cid}
+                      value={cid}
+                    >
+                      {CLASSES[cid].name}
+                    </option>
+                  ))}
+                </select>
+                <div className={styles.sheetActionRow}>
+                  <ActionButton
+                    label="解除する"
+                    sfx="cancel"
+                    className={styles.sheetActCancel}
+                    disabled={!char.subClassId}
+                    onClick={() => {
+                      void applyAndPersist((s) => setSubClassInSave(s, id, null));
+                      if (skillTab === 'sub') setSkillTab('class');
+                      setGrowthMode(null);
+                    }}
+                  />
+                  <ActionButton
+                    label="設定する"
+                    className={styles.sheetActPrimary}
+                    disabled={!subTo || subTo === char.subClassId || subTo === char.classId}
+                    onClick={() => {
+                      void applyAndPersist((s) => setSubClassInSave(s, id, subTo as ClassId));
                       setGrowthMode(null);
                     }}
                   />

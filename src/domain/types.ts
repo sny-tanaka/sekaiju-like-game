@@ -578,6 +578,7 @@ export interface Character {
   raceId: RaceId; // 不変（作成時に確定）
   classId: ClassId; // 転職で変更される
   titleId: TitleId | null; // 称号（第2スキルツリー）。未習得は null
+  subClassId: ClassId | null; // 副業（v2.0.0）。未設定は null。本業と同じ ID は許可しない
   level: number;
   exp: number;
   skillPoints: { total: number; spent: number };
