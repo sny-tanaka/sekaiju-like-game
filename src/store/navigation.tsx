@@ -11,6 +11,7 @@ export type Screen =
   | { name: 'shop' }
   | { name: 'forge' }
   | { name: 'codex' }
+  | { name: 'tavern' }
   | { name: 'dungeon' }
   | { name: 'battle' }
   | { name: 'saveTransfer' };
