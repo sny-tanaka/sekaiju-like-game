@@ -8,6 +8,7 @@ import { SealStampFx } from '@/components/common/effects/SealStampFx';
 import { WarpScanFx } from '@/components/common/effects/WarpScanFx';
 import { SoundSettings } from '@/components/common/SoundSettings';
 import { startDive } from '@/domain/dive';
+import { reportableCount } from '@/domain/quest';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
@@ -30,6 +31,7 @@ export const Page = () => {
   const { guild, towerState, diveState } = save;
   const hasMembers = guild.members.length > 0;
   const checkpoints = towerState.warp.unlockedCheckpoints;
+  const tavernBadge = reportableCount(save);
 
   const handleExit = () => {
     exitToTitle();
@@ -69,8 +71,8 @@ export const Page = () => {
     navigate({ name: 'dungeon' });
   };
 
-  // 2x2 タイル押下
-  const goto = (target: 'guild' | 'shop' | 'forge' | 'codex') => () => {
+  // 2x2 タイル押下 / 酒場カード押下
+  const goto = (target: 'guild' | 'shop' | 'forge' | 'codex' | 'tavern') => () => {
     if (diveState) return;
     navigate({ name: target });
   };
@@ -109,6 +111,7 @@ export const Page = () => {
         </div>
         <div className={styles.stats}>
           <span className={styles.statGold}>◇ {guild.gold.toLocaleString()} G</span>
+          <span className={styles.statGems}>✦ {guild.gems.toLocaleString()}</span>
           <span className={styles.statFaint}>
             最高{' '}
             {towerState.record.deepestReached > 0
@@ -156,6 +159,34 @@ export const Page = () => {
                   ? `地下1階から潜る ・ 解放階(地下${Math.max(...checkpoints)}階)も選択可`
                   : '地下1階から潜る'}
           </span>
+        </ActionButton>
+
+        {/* 酒場 — 依頼掲示板（全幅カード。達成済み依頼があれば赤バッジ）*/}
+        <ActionButton
+          className={styles.tavern}
+          disabled={!!diveState}
+          onClick={goto('tavern')}
+        >
+          <span
+            className={styles.tavernIcon}
+            aria-hidden="true"
+          >
+            🍺
+          </span>
+          <span className={styles.tavernBody}>
+            <span className={styles.tavernLabel}>酒場 — 依頼掲示板</span>
+            <span className={styles.tavernDesc}>
+              {diveState ? '🔒 潜行中不可' : '依頼の受注・報告'}
+            </span>
+          </span>
+          {tavernBadge > 0 && (
+            <span
+              className={styles.tavernBadge}
+              aria-label={`報告可能な依頼 ${tavernBadge} 件`}
+            >
+              {tavernBadge}
+            </span>
+          )}
         </ActionButton>
 
         {/* 団員 0 のときはギルド管理を横長ガイドカードに切り替え */}

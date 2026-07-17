@@ -111,6 +111,7 @@
 }
 
 .statGold  { color: var(--gold); }
+.statGems  { color: #b99ee8; }
 .statFaint { color: var(--text-faint); }
 .statWarn  { color: var(--danger-text); }
 
@@ -266,6 +267,70 @@
 .tileDesc {
   font-size: 11px;
   color: #7c7a74;
+}
+
+// ---- 酒場カード（全幅・依頼掲示板への導線）----
+.tavern {
+  grid-column: 1 / span 2;
+  position: relative;
+  height: 76px;
+  border-radius: 4px;
+  border: 1px solid var(--rule-soft);
+  background: var(--surface-panel);
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.tavern[disabled] {
+  background: #101218;
+  border-color: var(--rule-soft);
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tavern[disabled] .tavernIcon  { filter: grayscale(1); }
+.tavern[disabled] .tavernLabel { color: #7c7a74; }
+.tavern[disabled] .tavernDesc  { color: #5d5a52; font-size: 10px; }
+
+.tavernIcon { font-size: 26px; flex-shrink: 0; }
+
+.tavernBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tavernLabel {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: #e8e6e0;
+}
+
+.tavernDesc {
+  font-size: 11px;
+  color: #7c7a74;
+}
+
+.tavernBadge {
+  flex-shrink: 0;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--danger);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 // ---- 団員 0 時のギルド管理ガイドカード ----
@@ -621,6 +686,7 @@
   .menu    { padding-top: 10px; gap: 10px; }
   .tile    { height: 104px; }
   .tileGuide { height: 84px; }
+  .tavern  { height: 64px; }
   .autosave  { margin-top: 8px; }
   .foot    { padding-top: 8px; }
 }

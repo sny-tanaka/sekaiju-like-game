@@ -3,7 +3,13 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Page } from './index';
 
 import { withGameContext } from '@/__stories__/decorators';
-import { mockEmpty, mockMidDive, mockPostBoss, mockWithParty } from '@/__stories__/mockSaves';
+import {
+  mockEmpty,
+  mockMidDive,
+  mockPostBoss,
+  mockTavern,
+  mockWithParty,
+} from '@/__stories__/mockSaves';
 
 const meta = {
   title: 'Pages/Town',
@@ -34,4 +40,9 @@ export const MidDive: Story = {
 /** ボス撃破後（ワープチェックポイント解放済み） */
 export const PostBoss: Story = {
   decorators: [withGameContext(mockPostBoss, { name: 'town' })],
+};
+
+/** 達成済み依頼あり（✦ ジェム表示 + 酒場カードの赤バッジを確認） */
+export const WithReportableQuests: Story = {
+  decorators: [withGameContext(mockTavern, { name: 'town' })],
 };

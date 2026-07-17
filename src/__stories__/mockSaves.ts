@@ -8,7 +8,7 @@ import { startDive } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
 import { createRng } from '@/domain/rng';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
-import type { EquipInstance, SaveData } from '@/domain/types';
+import type { EquipInstance, QuestState, SaveData } from '@/domain/types';
 
 const GUILD_NAME = 'うつくしき台帳';
 
@@ -422,3 +422,53 @@ export const mockBattleSkillMenu: SaveData = {
     ),
   },
 };
+
+// ============================================================
+// mockTavern — mockWithParty + 依頼の受注/達成/完了/くり返し済み状態
+// 酒場（tavern）ストーリー用。掲示板・受注中（達成済み+進行中+上限3件目）・
+// 記録（一回限り完了1件 + くり返し累計2件）の各タブを一目で確認できる構成。
+// ============================================================
+const MOCK_TAVERN_QUEST_STATES: QuestState[] = [
+  // 達成済み（報告する導線の確認用）
+  { id: 'quest_first_hunt', status: 'active', progress: { baseKills: 0 } },
+  // 進行中（破棄導線の確認用）
+  { id: 'quest_rat_patrol', status: 'active', progress: { baseKills: 0 } },
+  // reach 系の達成済み（受注3件目 = 同時上限の確認用）
+  { id: 'quest_reach_f15', status: 'active' },
+  // 完了済みの一回限り依頼（記録タブの確認用）
+  { id: 'quest_reach_f5', status: 'done' },
+  // くり返し依頼の累計達成（記録タブ + 掲示板の「達成N回」表示の確認用）
+  { id: 'quest_r_hunt_t0', status: 'unaccepted', progress: { timesCompleted: 3 } },
+  { id: 'quest_r_ore', status: 'unaccepted', progress: { timesCompleted: 1 } },
+];
+
+export const mockTavern: SaveData = (() => {
+  return {
+    ...mockWithParty,
+    guild: {
+      ...mockWithParty.guild,
+      gems: 25,
+    },
+    towerState: {
+      ...mockWithParty.towerState,
+      record: {
+        ...mockWithParty.towerState.record,
+        deepestReached: 20,
+      },
+      bossGates: {
+        ...mockWithParty.towerState.bossGates,
+        10: { depth: 10, defeated: true },
+      },
+    },
+    bestiary: {
+      monsters: {
+        // quest_first_hunt（スライム×3）: baseKills 0 起点で 5 討伐 → 達成済み
+        enemy_slime: { seen: true, defeated: true, dropsFound: [], kills: 5 },
+        // quest_rat_patrol（おおねずみ×5）: baseKills 0 起点で 2 討伐 → 進行中
+        enemy_giant_rat: { seen: true, defeated: true, dropsFound: [], kills: 2 },
+      },
+      items: {},
+    },
+    questStates: MOCK_TAVERN_QUEST_STATES,
+  };
+})();
