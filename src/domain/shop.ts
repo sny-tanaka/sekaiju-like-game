@@ -1,5 +1,5 @@
 import { CLASSES } from '@/data/classes';
-import { EQUIPMENT } from '@/data/equipment';
+import { EQUIPMENT, isPreciousEquip } from '@/data/equipment';
 import { ITEMS, sellPrice as itemSellPrice } from '@/data/items';
 import { gradeMult, gradedBaseBonuses } from '@/domain/forge';
 import { addEquipment, addItem, itemCount, removeItem } from '@/domain/inventory';
@@ -89,7 +89,11 @@ export function shopCatalog(save: SaveData): ShopEntry[] {
     .map((it) => ({ id: it.id, name: it.name, price: it.buyPrice, kind: 'item' }));
   const equips: ShopEntry[] = Object.values(EQUIPMENT)
     // v3.0.0 §6: gemPrice を持つ装備（ジェム限定）は通常カタログに出さない（交換所のみ）。
-    .filter((eq) => eq.gemPrice === undefined && (eq.tier <= tier || unlockedIds.has(eq.id)))
+    // buyPrice <= 0（蒐集王の宝冠など、購入経路を持たない装備）も除外する。
+    .filter(
+      (eq) =>
+        eq.gemPrice === undefined && eq.buyPrice > 0 && (eq.tier <= tier || unlockedIds.has(eq.id))
+    )
     .map((eq) => {
       const grade = shopEquipGrade(save, eq.id);
       return {
@@ -147,6 +151,8 @@ export function equipSellValue(inst: EquipInstance): number {
 export function sellEquipment(save: SaveData, instanceId: string): SaveData {
   const inst = save.guild.equipment.find((e) => e.id === instanceId);
   if (!inst) return save;
+  // v3.0.0 §6: ジェム限定装備・蒐集王の宝冠は再入手不可のため売却不可（no-op）。
+  if (isPreciousEquip(inst.masterId)) return save;
   const gain = equipSellValue(inst);
   const equipment = save.guild.equipment.filter((e) => e.id !== instanceId);
   return { ...save, guild: { ...save.guild, equipment, gold: save.guild.gold + gain } };
@@ -286,8 +292,7 @@ export function gemExchangeList(save: SaveData): GemExchangeEntry[] {
 export function exchangeForGems(save: SaveData, itemId: ItemId): SaveData {
   const gemValue = ITEMS[itemId]?.gemValue;
   if (!gemValue) return save;
-  const stacks = save.guild.storage.filter((s) => s.itemId === itemId);
-  const totalQty = stacks.reduce((a, s) => a + s.qty, 0);
+  const totalQty = itemCount(save, itemId);
   if (totalQty <= 0) return save;
   const storage = save.guild.storage.filter((s) => s.itemId !== itemId);
   return {

@@ -28,7 +28,7 @@ import type {
   NormalAttackEvent,
   SkillEvent,
 } from '@/domain/battleEvent';
-import { applyCollectionRewards } from '@/domain/collection';
+import { applyCollectionRewards, collectibleDupGems } from '@/domain/collection';
 import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { initEncounter } from '@/domain/encounter';
 import { enemyLapForDepth } from '@/domain/encounterTable';
@@ -1272,38 +1272,55 @@ export function resolveTurn(
         if (!item || !item.useContext?.includes('battle')) continue;
         const target = find(next, cmd.targetId) ?? actor;
         let itemEffect: import('@/domain/battleEvent').ItemEffect | undefined;
+        // 実際に効果が適用されたか（[issue] 空振り時はアイテムを消費しない・ログも出さない）。
+        let applied = false;
         for (const eff of item.effects ?? []) {
           if (eff.kind === 'heal') {
             const healAmt = eff.amount(1);
             target.hp = clamp(target.hp + healAmt, 0, target.maxHp);
             itemEffect = { kind: 'heal', amount: healAmt };
+            applied = true;
           } else if (eff.kind === 'restoreTp') {
             // ratio 指定があれば最大TPの割合で回復（高レベルでも有効）。なければ固定値。
             const add = eff.ratio ? Math.round(target.maxTp * eff.ratio) : eff.amount(1);
             target.tp = clamp(target.tp + add, 0, target.maxTp);
             itemEffect = { kind: 'tp-restore', amount: add };
+            applied = true;
           } else if (eff.kind === 'cleanse') {
             // スキルと同じ効果リゾルバ（applySkillEffect）を通す（v3.0.0 §8）。
+            // applySkillEffect の no-op 条件（isDown || ailments.length===0）と一致させる。
             const hadAilments = target.ailments.map((a) => a.type);
+            const willApply = !target.isDown && hadAilments.length > 0;
             applySkillEffect(next, actor, eff, 'almighty', 1, [target], rng, 'allyOne');
-            if (hadAilments.length > 0) itemEffect = { kind: 'cure', cureEffects: hadAilments };
+            if (willApply) {
+              itemEffect = { kind: 'cure', cureEffects: hadAilments };
+              applied = true;
+            }
           } else if (eff.kind === 'revive') {
             const r = applySkillEffect(next, actor, eff, 'almighty', 1, [target], rng, 'allyOne');
-            if (r.heals[0]) itemEffect = { kind: 'revive', hpRestore: r.heals[0].amount };
+            if (r.heals[0]) {
+              itemEffect = { kind: 'revive', hpRestore: r.heals[0].amount };
+              applied = true;
+            }
           } else if (eff.kind === 'buff') {
             const r = applySkillEffect(next, actor, eff, 'almighty', 1, [target], rng, 'allyOne');
-            if (r.buffs[0]) itemEffect = { kind: 'buff', stat: eff.stat, turns: eff.turns };
+            if (r.buffs[0]) {
+              itemEffect = { kind: 'buff', stat: eff.stat, turns: eff.turns };
+              applied = true;
+            }
           }
         }
-        next.consumedItems.push(cmd.itemId);
-        if (itemEffect) {
-          pushEvent({
-            kind: 'item-use',
-            actorId: actor.id,
-            itemId: cmd.itemId,
-            targetId: target.id,
-            effect: itemEffect,
-          });
+        if (applied) {
+          next.consumedItems.push(cmd.itemId);
+          if (itemEffect) {
+            pushEvent({
+              kind: 'item-use',
+              actorId: actor.id,
+              itemId: cmd.itemId,
+              targetId: target.id,
+              effect: itemEffect,
+            });
+          }
         }
       }
     }
@@ -1643,7 +1660,9 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
       if (dropItem?.collectible) {
         const before = nextCollection[d.itemId] ?? 0;
         nextCollection[d.itemId] = before + 1;
-        if (before >= 1) dupGems += BALANCE.COLLECT_DUP_GEMS;
+        // v3.0.0 §5: 重複入手ジェム変換式は collection.ts の collectibleDupGems に集約
+        // （1件ずつ処理するためここでは count=1 で呼ぶ）。
+        dupGems += collectibleDupGems(before, 1);
       } else {
         nonCollectibleDrops.push(d);
       }

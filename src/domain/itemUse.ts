@@ -50,8 +50,12 @@ export function applyFieldItem(save: SaveData, itemId: string, charId?: string):
   let applied = false;
   for (const eff of item.effects ?? []) {
     if (eff.kind === 'heal') {
-      hp = Math.min(stats.hp, hp + eff.amount(1));
-      applied = true;
+      // v3.0.0 §8: heal は戦闘不能（hp<=0）を復帰させない（事実上の蘇生の禁止）。
+      // フィールドでの蘇生は item_revive_drop（revive 分岐）のみ。
+      if (hp > 0) {
+        hp = Math.min(stats.hp, hp + eff.amount(1));
+        applied = true;
+      }
     } else if (eff.kind === 'restoreTp') {
       // ratio 指定があれば最大TP（=stats.tp）の割合で回復。なければ固定値。
       const add = eff.ratio ? Math.round(stats.tp * eff.ratio) : eff.amount(1);

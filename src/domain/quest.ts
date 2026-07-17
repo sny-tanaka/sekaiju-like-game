@@ -55,10 +55,12 @@ export function activeQuests(save: SaveData): ActiveQuestEntry[] {
     if (qs.status !== 'active') continue;
     const quest = QUESTS[qs.id];
     if (!quest) continue;
+    // questProgress は1回だけ呼び、complete はその結果から導出する（isQuestComplete の二重計算を避ける）。
+    const progress = questProgress(save, qs.id);
     entries.push({
       quest,
-      progress: questProgress(save, qs.id),
-      complete: isQuestComplete(save, qs.id),
+      progress,
+      complete: progress.required > 0 && progress.current >= progress.required,
     });
   }
   return entries;

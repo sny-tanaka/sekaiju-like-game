@@ -117,4 +117,24 @@ describe('applyFieldItem', () => {
     expect(res.ok).toBe(false);
     expect(itemCount(res.save, 'item_revive_drop')).toBe(1);
   });
+
+  // --- v3.0.0 §8: heal はフィールドでも事実上の蘇生を禁止する ---
+  test('やくすり（heal）は戦闘不能（hp0）の対象には不発（消費しない・蘇生させない）', () => {
+    const _d = diveSave();
+    const charId = _d.charId;
+    let save = _d.save;
+    save = addItem(save, 'item_potion', 1);
+    save = {
+      ...save,
+      diveState: {
+        ...save.diveState!,
+        party: save.diveState!.party.map((p) => (p.charId === charId ? { ...p, hp: 0 } : p)),
+      },
+    };
+    const res = applyFieldItem(save, 'item_potion', charId);
+    expect(res.ok).toBe(false);
+    const member = res.save.diveState!.party.find((p) => p.charId === charId)!;
+    expect(member.hp).toBe(0);
+    expect(itemCount(res.save, 'item_potion')).toBe(1);
+  });
 });

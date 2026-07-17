@@ -50,6 +50,7 @@ import type { LevelUpResult } from '@/domain/battle';
 import type { BattleEvent, CombatantSnapshot } from '@/domain/battleEvent';
 import { fmt } from '@/domain/battleLogFormat';
 import { battleCollectibleGains, bossGatePrismGain } from '@/domain/collection';
+import type { CollectibleGain } from '@/domain/collection';
 import { previewTurnOrder } from '@/domain/combat';
 import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
@@ -59,6 +60,7 @@ import { computeSkillTpCost } from '@/domain/skillCost';
 import { pickAutoCommand, STRATEGY_LIST, STRATEGY_SHORT_LABEL } from '@/domain/strategy';
 import type { Strategy } from '@/domain/strategy';
 import { trophyGains } from '@/domain/trophy';
+import type { TrophyGain } from '@/domain/trophy';
 import type {
   BattleCommand,
   BattleState,
@@ -189,9 +191,6 @@ const STAT_LABEL: Record<string, string> = {
   mnd: '精神',
   luc: '幸運',
 };
-
-// 討伐勲章ランクのラベル（v3.0.0 §10.5・戦闘リザルト表示用）。
-const TROPHY_RANK_LABEL: Record<number, string> = { 1: '銅', 2: '銀', 3: '金', 4: '虹' };
 
 /** 戦闘員の現在 HP/戦闘不能のスナップショット（逐次再生の起点。issue #18）。 */
 function snapshotOf(s: BattleState): CombatantSnapshot {
@@ -749,23 +748,49 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     () => (state && state.outcome === 'win' && save ? partyExpResults(save, state) : []),
     [state, save]
   );
-  // リザルト用の討伐勲章・秘宝重複ジェム・ボスゲート初回撃破ボーナス（v3.0.0 §10.5）。
+  // リザルト用の討伐勲章・秘宝重複ジェム・ボスゲート初回撃破ボーナス・獲得ジェム合計（v3.0.0 §10.5）。
   // applyBattleResult 適用前の save + state から算出する純関数（partyExpResults と同じパターン）。
-  const resultTrophyGains = useMemo(
-    () => (state && state.outcome === 'win' && save ? trophyGains(save, state) : []),
-    [state, save]
-  );
-  const resultCollectibleGains = useMemo(
-    () => (state && state.outcome === 'win' && save ? battleCollectibleGains(save, state) : []),
-    [state, save]
-  );
-  const resultPrismGain = useMemo(
-    () => Boolean(state && state.outcome === 'win' && save && bossGatePrismGain(save, state)),
-    [state, save]
-  );
-  const resultGemsTotal =
-    resultTrophyGains.reduce((a, g) => a + g.gems, 0) +
-    resultCollectibleGains.reduce((a, g) => a + g.gems, 0);
+  // 1つの useMemo にまとめ、state?.outcome==='win' && save ガードの重複を解消する。
+  const battleResultGains = useMemo<{
+    trophyGains: TrophyGain[];
+    collectibleGains: CollectibleGain[];
+    prismGain: boolean;
+    gemsTotal: number;
+    bonusGems: number;
+  }>(() => {
+    if (!state || state.outcome !== 'win' || !save) {
+      return {
+        trophyGains: [],
+        collectibleGains: [],
+        prismGain: false,
+        gemsTotal: 0,
+        bonusGems: 0,
+      };
+    }
+    const trophy = trophyGains(save, state);
+    const collectible = battleCollectibleGains(save, state);
+    const prism = bossGatePrismGain(save, state);
+    // 実際の付与額（applyBattleResult 前後の gems 差分）を正とする。帯コンプ✦30・全種コンプ✦100 等の
+    // 収集達成ボーナスも自動で含まれ、以後ロジックが変わっても表示と実付与が一致し続ける。
+    const gemsTotal = applyBattleResult(save, state).guild.gems - save.guild.gems;
+    const breakdown =
+      trophy.reduce((a, g) => a + g.gems, 0) + collectible.reduce((a, g) => a + g.gems, 0);
+    const bonusGems = Math.max(0, gemsTotal - breakdown);
+    return {
+      trophyGains: trophy,
+      collectibleGains: collectible,
+      prismGain: prism,
+      gemsTotal,
+      bonusGems,
+    };
+  }, [state, save]);
+  const {
+    trophyGains: resultTrophyGains,
+    collectibleGains: resultCollectibleGains,
+    prismGain: resultPrismGain,
+    gemsTotal: resultGemsTotal,
+    bonusGems: resultBonusGems,
+  } = battleResultGains;
   // 経験値バーのアニメーション(EXP_ANIM_MS)が終わってからレベルアップダイアログを積む（issue #52）。
   // 「バーが伸び切ってからレベルアップ」が自然なため、ダイアログ表示を遅延させる。
   useEffect(() => {
@@ -1938,21 +1963,28 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   <TrophyMedal
                     rank={g.rank}
                     size="sm"
+                    showLabel
                   />
-                  <span className={styles.resultTrophyText}>
-                    {g.name}【{TROPHY_RANK_LABEL[g.rank]}】
-                  </span>
+                  <span className={styles.resultTrophyText}>{g.name}</span>
                   <span className={styles.resultTrophyGems}>+✦{g.gems}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* この戦闘で得たジェム合計（討伐勲章 + 秘宝重複変換。v3.0.0 §10.5）。 */}
+          {/* この戦闘で得たジェム合計（討伐勲章 + 秘宝重複変換 + 蒐集達成ボーナス。v3.0.0 §10.5）。
+              gemsTotal は applyBattleResult 前後の実差分のため、内訳（勲章+重複）を超える分があれば
+              帯コンプ✦30・全種コンプ✦100 等の蒐集達成ボーナスとして別行表示する。 */}
           {resultGemsTotal > 0 && (
             <div className={styles.resultGems}>
               <span className={styles.resultGemsLabel}>獲得ジェム</span>
               <span className={styles.resultGemsValue}>✦ +{resultGemsTotal}</span>
+            </div>
+          )}
+          {resultBonusGems > 0 && (
+            <div className={styles.resultGems}>
+              <span className={styles.resultGemsLabel}>蒐集達成ボーナス</span>
+              <span className={styles.resultGemsValue}>+✦{resultBonusGems}</span>
             </div>
           )}
 

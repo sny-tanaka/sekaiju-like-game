@@ -10,7 +10,7 @@ import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { FORGE } from '@/data/balance';
 import { EQUIP_SLOT_LABEL } from '@/data/equipLabels';
-import { EQUIPMENT } from '@/data/equipment';
+import { EQUIPMENT, isPreciousEquip } from '@/data/equipment';
 import {
   equipDisplayName,
   forgeBonusFor,
@@ -96,6 +96,9 @@ export const Page = () => {
   const { copper, silver, gold } = save.forgeInventory.ingots;
   const fragments = save.forgeInventory.fragments.common ?? 0;
   const pool = save.guild.equipment;
+  // v3.0.0 §6: ジェム限定装備・蒐集王の宝冠は再入手不可のため分解対象から除外する（強化は可能）。
+  const recyclablePool = pool.filter((e) => !isPreciousEquip(e.masterId));
+  const listPool = tab === 'forge' ? pool : recyclablePool;
 
   const toggleSelect = (id: string) => {
     play('cursor');
@@ -173,11 +176,13 @@ export const Page = () => {
 
       {/* リスト本体 */}
       <div className={styles.list}>
-        {pool.length === 0 ? (
-          <p className={styles.empty}>所有している装備がありません。</p>
+        {listPool.length === 0 ? (
+          <p className={styles.empty}>
+            {tab === 'forge' ? '所有している装備がありません。' : '分解できる装備がありません。'}
+          </p>
         ) : (
           <>
-            {pool.map((e, index) => {
+            {listPool.map((e, index) => {
               const eq = EQUIPMENT[e.masterId];
               const maxed = e.forgeLevel >= FORGE.MAX_LEVEL;
               const isSelected = selected.has(e.id);
@@ -364,7 +369,7 @@ export const Page = () => {
         <div className={styles.bulkBar}>
           <span className={styles.bulkInfo}>
             {selected.size} 件選択 ・ 断片+
-            {pool
+            {recyclablePool
               .filter((e) => selected.has(e.id))
               .reduce((s, e) => s + recycleFragments(e.masterId), 0)}
           </span>
@@ -378,8 +383,8 @@ export const Page = () => {
             label="一括分解"
             className={styles.bulkRecycle}
             onClick={() => {
-              const ids = pool.filter((e) => selected.has(e.id)).map((e) => e.id);
-              const totalFragments = pool
+              const ids = recyclablePool.filter((e) => selected.has(e.id)).map((e) => e.id);
+              const totalFragments = recyclablePool
                 .filter((e) => selected.has(e.id))
                 .reduce((s, e) => s + recycleFragments(e.masterId), 0);
               setPending({ kind: 'recycleBulk', ids, totalFragments });

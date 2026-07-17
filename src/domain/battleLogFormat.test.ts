@@ -418,6 +418,22 @@ describe('fmt: item-use', () => {
     };
     expect(fmt(event, state).post).toEqual(['アリスのHPが30回復！']);
   });
+
+  test('buff: post にバフ付与行', () => {
+    const state = mockState({
+      allies: [mkCombatant('alice', 'アリス'), mkCombatant('bob', 'ボブ')],
+    });
+    const event: ItemUseEvent = {
+      kind: 'item-use',
+      actorId: 'alice',
+      itemId: 'item_power_water',
+      targetId: 'bob',
+      effect: { kind: 'buff', stat: 'patk', turns: 3 },
+    };
+    const { pre, post } = fmt(event, state);
+    expect(pre).toBe('アリスは力の水を使った！');
+    expect(post).toEqual(['ボブに物理攻撃力アップが付与された！']);
+  });
 });
 
 // ----------------------------------------------------------------------------

@@ -896,6 +896,37 @@ describe('battle: applyBattleResult 拡張（v3.0.0 討伐勲章・秘宝コレ�
     });
     expect(again.guild.gems).toBe(after.guild.gems);
   });
+
+  // A4 回帰: リザルトの「獲得ジェム」表示は applyBattleResult の実付与差分から算出する方式に
+  // 変更したため、勲章クロス・秘宝重複・帯コンプ報酬が同一戦闘で重なっても差分が一致することを検証する。
+  test('勲章クロス・秘宝重複・帯コンプが同一戦闘で重なっても gems 差分が合計と一致する', () => {
+    const tierBand0Ids = [
+      'item_col_giant_rat',
+      'item_col_cave_bat',
+      'item_col_forest_rabbit',
+      'item_col_glow_mushroom',
+      'item_col_wood_caracal',
+      'item_col_pale_wisp',
+      'item_col_bristle_boar',
+      'item_col_thicket_stag',
+      'item_col_cave_crawler',
+      'item_col_elder_treant',
+      'item_col_gatekeeper',
+      // item_col_slime は未所持のまま最後に入手させる（帯コンプのトリガー）
+    ];
+    const collection = Object.fromEntries(tierBand0Ids.map((id) => [id, 1]));
+    // enemy_slime の kills を9にしておき、この戦闘の1体討伐で銅ランク(10体)を跨がせる（勲章ジェム）。
+    const save = withKills({ ...diveSave(), collection }, 'enemy_slime', 9);
+    const state = resultState(save, 'enemy_slime', 1, 'win', [
+      { enemyId: 'enemy_slime', itemId: 'item_col_slime' }, // 未所持 → 帯コンプ(band0)達成、重複なし
+      { enemyId: 'enemy_slime', itemId: 'item_col_giant_rat' }, // 所持済み → 重複ジェムに変換
+    ]);
+    const after = applyBattleResult(save, state);
+    const expectedGems =
+      BALANCE.TROPHY_GEMS[0] + BALANCE.COLLECT_DUP_GEMS + BALANCE.COLLECT_BAND_GEMS;
+    expect(after.guild.gems - save.guild.gems).toBe(expectedGems);
+    expect(after.flags.collectionBand0).toBe(true);
+  });
 });
 
 describe('battle: アイテム経由の buff / cleanse / revive（v3.0.0 §8）', () => {
@@ -1012,6 +1043,69 @@ describe('battle: アイテム経由の buff / cleanse / revive（v3.0.0 §8）'
     expect(target.hp).toBe(Math.round(target.maxHp * 0.4));
     const evt = findItemUseEvent(after);
     expect(evt?.kind === 'item-use' && evt.effect.kind).toBe('revive');
+  });
+
+  // ------------------------------------------------------------------------
+  // 空振り（no-op）時はアイテムを消費せず、item-use イベントも出さない（issue）。
+  // ------------------------------------------------------------------------
+
+  test('item_panacea を状態異常なしの味方に使うと未消費・item-use イベントなし', () => {
+    let save = diveSave();
+    save = addItem(save, 'item_panacea', 1);
+    const state = startBattle(save, ['enemy_slime']);
+    const ally = state.allies[0];
+    expect(ally.ailments).toHaveLength(0);
+    const after = resolveTurn(
+      state,
+      [{ kind: 'item', actorId: ally.id, itemId: 'item_panacea', targetId: ally.id }],
+      createRng(1)
+    );
+    expect(after.consumedItems).not.toContain('item_panacea');
+    expect(findItemUseEvent(after)).toBeUndefined();
+  });
+
+  test('item_revive_drop を生存している味方に使うと未消費（no-op）', () => {
+    let save = twoCharDiveSave();
+    save = addItem(save, 'item_revive_drop', 1);
+    const state = startBattle(save, ['enemy_slime']);
+    const [target, reviver] = state.allies;
+    expect(target.isDown).toBe(false);
+    const after = resolveTurn(
+      state,
+      [{ kind: 'item', actorId: reviver.id, itemId: 'item_revive_drop', targetId: target.id }],
+      createRng(1)
+    );
+    expect(after.consumedItems).not.toContain('item_revive_drop');
+    expect(findItemUseEvent(after)).toBeUndefined();
+  });
+
+  test('item_panacea を戦闘不能かつ毒持ちの味方に使うと未消費・cureイベントなし・毒は残る（虚偽cureログの防止）', () => {
+    let save = twoCharDiveSave();
+    save = addItem(save, 'item_panacea', 1);
+    const state0 = startBattle(save, ['enemy_slime']);
+    const [downedAlly, healer] = state0.allies;
+    const downedAndPoisoned: BattleState = {
+      ...state0,
+      allies: state0.allies.map((a) =>
+        a.id === downedAlly.id
+          ? {
+              ...a,
+              hp: 0,
+              isDown: true,
+              ailments: [{ type: 'poison', remainingTurns: 3 } as ActiveAilment],
+            }
+          : a
+      ),
+    };
+    const after = resolveTurn(
+      downedAndPoisoned,
+      [{ kind: 'item', actorId: healer.id, itemId: 'item_panacea', targetId: downedAlly.id }],
+      createRng(1)
+    );
+    expect(after.consumedItems).not.toContain('item_panacea');
+    expect(findItemUseEvent(after)).toBeUndefined();
+    const target = after.allies.find((a) => a.id === downedAlly.id)!;
+    expect(target.ailments.some((a) => a.type === 'poison')).toBe(true);
   });
 });
 

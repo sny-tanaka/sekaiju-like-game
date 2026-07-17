@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   buyRowStats,
@@ -16,7 +16,7 @@ import { CoinPopFx } from '@/components/common/effects/CoinPopFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ARMOR_TYPE_LABEL, EQUIP_SLOT_LABEL, WEAPON_TYPE_LABEL } from '@/data/equipLabels';
-import { EQUIPMENT } from '@/data/equipment';
+import { EQUIPMENT, isPreciousEquip } from '@/data/equipment';
 import { ITEMS } from '@/data/items';
 import { equipDisplayName, gradedBaseBonuses } from '@/domain/forge';
 import { itemCount } from '@/domain/inventory';
@@ -98,6 +98,8 @@ export const Page = () => {
   const [equipDetail, setEquipDetail] = useState<EquipDetail | null>(null);
   // 購入確定演出（Phase 2）: damage（墨色）variant の InkSplatter + チェックマーク。
   const [buyConfirmed, setBuyConfirmed] = useState(false);
+  // v3.0.0 §10.3: ジェム限定装備カタログ（save に依存せず不変のため useMemo で1回だけ算出）。
+  const gemEquips = useMemo(() => gemEquipCatalog(), []);
 
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
@@ -107,7 +109,6 @@ export const Page = () => {
   const gems = save.guild.gems;
   // v3.0.0 §10.3: 交換所（ジェム換金・秘宝交換）。
   const exchangeList = gemExchangeList(save);
-  const gemEquips = gemEquipCatalog();
 
   const nameOf = (id: string, grade = 1) => {
     const base = ITEMS[id]?.name ?? EQUIPMENT[id]?.name ?? id;
@@ -193,14 +194,28 @@ export const Page = () => {
     }
   }
 
-  const allEquipRows: SellRow[] = save.guild.equipment.map((e): SellRow => {
-    const ownerName = equipOwnerMap.get(e.id);
-    if (ownerName) {
+  // v3.0.0 §6: ジェム限定装備・蒐集王の宝冠は再入手不可のため売却行から除外する。
+  const allEquipRows: SellRow[] = save.guild.equipment
+    .filter((e) => !isPreciousEquip(e.masterId))
+    .map((e): SellRow => {
+      const ownerName = equipOwnerMap.get(e.id);
+      if (ownerName) {
+        return {
+          key: `eq_${e.id}`,
+          kind: 'equip',
+          locked: true,
+          ownerName,
+          inst: e,
+          name: equipDisplayName(e),
+          price: equipSellValue(e),
+          category: (EQUIPMENT[e.masterId]?.slot ?? 'item') as ShopCat,
+          qty: 1,
+          stats: instanceRowStats(e),
+        };
+      }
       return {
         key: `eq_${e.id}`,
         kind: 'equip',
-        locked: true,
-        ownerName,
         inst: e,
         name: equipDisplayName(e),
         price: equipSellValue(e),
@@ -208,18 +223,7 @@ export const Page = () => {
         qty: 1,
         stats: instanceRowStats(e),
       };
-    }
-    return {
-      key: `eq_${e.id}`,
-      kind: 'equip',
-      inst: e,
-      name: equipDisplayName(e),
-      price: equipSellValue(e),
-      category: (EQUIPMENT[e.masterId]?.slot ?? 'item') as ShopCat,
-      qty: 1,
-      stats: instanceRowStats(e),
-    };
-  });
+    });
 
   const sellRows: SellRow[] = [
     ...allEquipRows.filter((r) => !(r.kind === 'equip' && r.locked)),

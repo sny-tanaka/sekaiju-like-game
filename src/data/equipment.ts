@@ -643,3 +643,12 @@ export const EQUIPMENT: Record<ItemId, EquipmentMaster> = {
     // gemPrice なし: 入手経路は秘宝全種コンプ報酬のみ（v3.0.0 §5）。
   },
 };
+
+/**
+ * 恒久的に希少な装備か（ジェム限定装備・蒐集王の宝冠）。buyPrice が 0 の装備がこれに該当する
+ * （通常ショップでの購入経路を持たない = 分解/売却で失うと再入手できない）。
+ * 鍛冶の分解・ショップの売却対象からこれらを除外するために使う（v3.0.0 §6）。
+ */
+export function isPreciousEquip(masterId: ItemId): boolean {
+  return EQUIPMENT[masterId]?.buyPrice === 0;
+}

@@ -6,6 +6,7 @@ import {
   applyCollectionRewards,
   battleCollectibleGains,
   bossGatePrismGain,
+  collectibleDupGems,
   collectionEntries,
   collectionSummary,
 } from '@/domain/collection';
@@ -153,6 +154,26 @@ function winState(base: BattleState, drops: { enemyId: string; itemId: ItemId }[
     drops: drops as BattleState['drops'],
   };
 }
+
+// B2: 重複秘宝→ジェム変換式（applyBattleResult / battleCollectibleGains 共通ロジック）。
+describe('collectibleDupGems', () => {
+  test('before=0（未所持）・count=1: 最初の1個は無変換（0）', () => {
+    expect(collectibleDupGems(0, 1)).toBe(0);
+  });
+
+  test('before=0（未所持）・count=3: 最初の1個を除いた2個ぶんが変換される', () => {
+    expect(collectibleDupGems(0, 3)).toBe(2 * BALANCE.COLLECT_DUP_GEMS);
+  });
+
+  test('before>=1（所持済み）・count=2: 2個とも変換される', () => {
+    expect(collectibleDupGems(1, 2)).toBe(2 * BALANCE.COLLECT_DUP_GEMS);
+  });
+
+  test('count=0: 常に0', () => {
+    expect(collectibleDupGems(0, 0)).toBe(0);
+    expect(collectibleDupGems(1, 0)).toBe(0);
+  });
+});
 
 describe('battleCollectibleGains（applyBattleResult と同一ロジックの表示用純関数）', () => {
   test('未勝利（outcome !== win）なら空配列', () => {

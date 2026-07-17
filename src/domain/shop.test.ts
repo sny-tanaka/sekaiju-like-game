@@ -1,4 +1,4 @@
-import { itemCount } from '@/domain/inventory';
+import { addEquipment, itemCount } from '@/domain/inventory';
 import { createInitialSaveData } from '@/domain/saveData';
 import {
   buy,
@@ -65,6 +65,23 @@ describe('shop', () => {
   test('持っていない物は売れない', () => {
     const save = richSave(0);
     expect(sell(save, 'item_potion', 1)).toBe(save);
+  });
+
+  // v3.0.0 §6: ジェム限定装備・蒐集王の宝冠は再入手不可のため売却不可（no-op）。
+  test('sellEquipment: ジェム限定装備（equip_gem_sword）は売却できない（save を変更しない）', () => {
+    const save = addEquipment(createInitialSaveData('g'), 'equip_gem_sword');
+    const id = save.guild.equipment[0].id;
+    const after = sellEquipment(save, id);
+    expect(after).toBe(save);
+    expect(after.guild.equipment).toHaveLength(1);
+  });
+
+  test('sellEquipment: 蒐集王の宝冠（equip_collector_crown）は売却できない（save を変更しない）', () => {
+    const save = addEquipment(createInitialSaveData('g'), 'equip_collector_crown');
+    const id = save.guild.equipment[0].id;
+    const after = sellEquipment(save, id);
+    expect(after).toBe(save);
+    expect(after.guild.equipment).toHaveLength(1);
   });
 
   test('素材を売ると関連装備がショップに並ぶ（恒久解放）', () => {
@@ -280,6 +297,19 @@ describe('shop', () => {
       const catalog = shopCatalog(save);
       expect(catalog.some((e) => e.id === 'equip_gem_sword')).toBe(false);
       expect(catalog.some((e) => e.id === 'equip_gem_ring')).toBe(false);
+    });
+
+    test('shopCatalog は buyPrice=0 の装備（equip_collector_crown）を到達階に関わらず除外する', () => {
+      let save = createInitialSaveData('g');
+      save = {
+        ...save,
+        towerState: {
+          ...save.towerState,
+          record: { ...save.towerState.record, deepestReached: 50 },
+        },
+      };
+      const catalog = shopCatalog(save);
+      expect(catalog.some((e) => e.id === 'equip_collector_crown')).toBe(false);
     });
 
     test('buyWithGems: gems が足りれば減算し装備プールに個体が追加される', () => {

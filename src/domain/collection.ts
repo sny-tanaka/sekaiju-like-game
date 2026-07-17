@@ -10,15 +10,23 @@ import type { BattleState, EnemyId, ItemId, SaveData } from '@/domain/types';
 // 図鑑 UI 向けの集計を扱う純関数群。
 // ============================================================================
 
-/** tierBand（0..4）ごとの秘宝 itemId 一覧。COLLECTIBLE_BY_ENEMY と ENEMIES.tierBand から動的に算出する。 */
+/**
+ * tierBand（0..N）ごとの秘宝 itemId 一覧。COLLECTIBLE_BY_ENEMY と ENEMIES.tierBand から動的に算出する。
+ * 帯数はハードコードせず ENEMIES の tierBand 最大値+1 から導出する。モジュールレベルで遅延初期化し、
+ * 一度計算した結果をキャッシュする（マスタデータは実行中に変わらないため）。
+ */
+let bandItemIdsCache: ItemId[][] | null = null;
 function bandItemIds(): ItemId[][] {
-  const bands: ItemId[][] = [[], [], [], [], []];
+  if (bandItemIdsCache) return bandItemIdsCache;
+  const maxBand = Object.values(ENEMIES).reduce((max, e) => Math.max(max, e.tierBand ?? 0), 0);
+  const bands: ItemId[][] = Array.from({ length: maxBand + 1 }, () => []);
   for (const [enemyId, itemId] of Object.entries(COLLECTIBLE_BY_ENEMY)) {
     const band = ENEMIES[enemyId]?.tierBand;
     if (band === undefined || !bands[band]) continue;
     bands[band].push(itemId);
   }
-  return bands;
+  bandItemIdsCache = bands;
+  return bandItemIdsCache;
 }
 
 const bandFlagKey = (band: number): string => `collectionBand${band}`;
@@ -112,6 +120,18 @@ export function collectionEntries(save: SaveData): CollectionEntry[] {
     .sort((a, b) => a.band - b.band || a.itemId.localeCompare(b.itemId));
 }
 
+/**
+ * 秘宝の重複入手ジェム変換式（v3.0.0 §5）。applyBattleResult と battleCollectibleGains の
+ * 両方から呼ぶ共通ロジック。before はこの戦闘より前の save.collection[itemId]（未所持=0）、
+ * count はこの戦闘でドロップした個数。
+ * - before>=1（既に1個以上所持）: count 個すべてが重複としてジェムに変換される。
+ * - before===0（未所持）: 最初の1個は新規入手として無変換、2個目以降が重複としてジェムに変換される。
+ */
+export function collectibleDupGems(before: number, count: number): number {
+  const dupCount = before >= 1 ? count : Math.max(0, count - 1);
+  return dupCount * BALANCE.COLLECT_DUP_GEMS;
+}
+
 export interface CollectibleGain {
   itemId: ItemId;
   name: string;
@@ -145,7 +165,7 @@ export function battleCollectibleGains(save: SaveData, state: BattleState): Coll
       name: ITEMS[itemId]?.name ?? itemId,
       count,
       dupCount,
-      gems: dupCount * BALANCE.COLLECT_DUP_GEMS,
+      gems: collectibleDupGems(before, count),
     });
   }
   return gains;

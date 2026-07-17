@@ -1,5 +1,5 @@
 import { FORGE } from '@/data/balance';
-import { EQUIPMENT } from '@/data/equipment';
+import { EQUIPMENT, isPreciousEquip } from '@/data/equipment';
 import type { EquipBonuses, EquipInstance, EquipSlotKey, SaveData } from '@/domain/types';
 
 // ============================================================================
@@ -129,6 +129,8 @@ export function forgeWithIngot(save: SaveData, instanceId: string, ingot: IngotT
 export function recycle(save: SaveData, instanceId: string): ForgeResult {
   const inst = save.guild.equipment.find((e) => e.id === instanceId);
   if (!inst) return { ok: false, save, reason: 'notFound' };
+  // v3.0.0 §6: ジェム限定装備・蒐集王の宝冠は再入手不可のため分解不可（no-op）。
+  if (isPreciousEquip(inst.masterId)) return { ok: false, save, reason: 'notFound' };
   const pool = save.guild.equipment.filter((e) => e.id !== instanceId);
 
   const fragments = { ...save.forgeInventory.fragments };
