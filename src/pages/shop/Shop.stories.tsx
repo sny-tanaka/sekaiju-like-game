@@ -25,3 +25,34 @@ export const Default: Story = {
 export const Sell: Story = {
   decorators: [withGameContext(mockShopWithEquipped, { name: 'shop' })],
 };
+
+// ============================================================
+// mockShopExchange — mockShop + 所持✦150 + 換金アイテム所持（交換所タブ確認用。v3.0.0 §10.3）
+// ============================================================
+const mockShopExchange = {
+  ...mockShop,
+  guild: {
+    ...mockShop.guild,
+    gems: 150,
+    storage: [
+      ...mockShop.guild.storage,
+      { itemId: 'item_gem_shard' as const, qty: 4 },
+      { itemId: 'item_gem_stone' as const, qty: 2 },
+      { itemId: 'item_gem_cluster' as const, qty: 1 },
+    ],
+  },
+};
+
+/** 交換所タブ（✦150所持・換金アイテム所持。ジェム限定装備の disabled/有効を確認） */
+export const Exchange: Story = {
+  decorators: [withGameContext(mockShopExchange, { name: 'shop' })],
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    const buttons = canvasElement.querySelectorAll<HTMLElement>('button');
+    for (const b of buttons) {
+      if (b.textContent?.trim() === '交換所') {
+        b.click();
+        break;
+      }
+    }
+  },
+};

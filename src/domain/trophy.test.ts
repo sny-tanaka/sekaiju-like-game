@@ -1,7 +1,7 @@
 import { startBattle } from '@/domain/battle';
 import { startDive } from '@/domain/dive';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
-import { trophyGains, trophyGemsForCrossing, trophyRank } from '@/domain/trophy';
+import { trophyCounts, trophyGains, trophyGemsForCrossing, trophyRank } from '@/domain/trophy';
 import type { BattleState, SaveData } from '@/domain/types';
 
 function diveSave(): SaveData {
@@ -109,5 +109,59 @@ describe('trophyGains（表示用・applyBattleResult と同一ロジック）',
     // isDown のまま変更しない（撃破していない）
     const gains = trophyGains(save, base);
     expect(gains).toEqual([]);
+  });
+});
+
+describe('trophyCounts（図鑑サマリ用・ランク別カウントは累積）', () => {
+  test('討伐記録が無ければ全て0', () => {
+    const save = diveSave();
+    expect(trophyCounts(save)).toEqual({ bronze: 0, silver: 0, gold: 0, rainbow: 0 });
+  });
+
+  test('銅到達のみのモンスターは bronze だけ+1（silver 以上は増えない）', () => {
+    let save = diveSave();
+    save = {
+      ...save,
+      bestiary: {
+        ...save.bestiary,
+        // enemy_slime（zako。銅=10）: kills=10 で銅到達・銀未到達
+        monsters: {
+          enemy_slime: { seen: true, defeated: true, dropsFound: [], kills: 10 },
+        },
+      },
+    };
+    expect(trophyCounts(save)).toEqual({ bronze: 1, silver: 0, gold: 0, rainbow: 0 });
+  });
+
+  test('銀到達のモンスターは bronze・silver 両方にカウントされる（累積）', () => {
+    let save = diveSave();
+    save = {
+      ...save,
+      bestiary: {
+        ...save.bestiary,
+        // enemy_slime（zako。銀=50）: kills=50 で銀到達（銅も通過済み）
+        monsters: {
+          enemy_slime: { seen: true, defeated: true, dropsFound: [], kills: 50 },
+        },
+      },
+    };
+    expect(trophyCounts(save)).toEqual({ bronze: 1, silver: 1, gold: 0, rainbow: 0 });
+  });
+
+  test('複数モンスターのランクを合算する', () => {
+    let save = diveSave();
+    save = {
+      ...save,
+      bestiary: {
+        ...save.bestiary,
+        monsters: {
+          // 銅のみ
+          enemy_slime: { seen: true, defeated: true, dropsFound: [], kills: 10 },
+          // 虹まで到達（boss: [1,5,15,40]）
+          enemy_boss_gatekeeper: { seen: true, defeated: true, dropsFound: [], kills: 40 },
+        },
+      },
+    };
+    expect(trophyCounts(save)).toEqual({ bronze: 2, silver: 1, gold: 1, rainbow: 1 });
   });
 });

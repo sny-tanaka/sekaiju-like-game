@@ -22,8 +22,12 @@ import { equipDisplayName, gradedBaseBonuses } from '@/domain/forge';
 import { itemCount } from '@/domain/inventory';
 import {
   buyMany,
+  buyWithGems,
   equipableClassNames,
   equipSellValue,
+  exchangeForGems,
+  gemEquipCatalog,
+  gemExchangeList,
   sell,
   sellEquipment,
   sellPriceOf,
@@ -48,7 +52,10 @@ type Pending =
       currentQty: number;
     }
   | { kind: 'sellItem'; itemId: string; grade: number; name: string; price: number; maxQty: number }
-  | { kind: 'sellEquip'; id: string; name: string; price: number };
+  | { kind: 'sellEquip'; id: string; name: string; price: number }
+  // v3.0.0 §10.3: 交換所（ジェム換金・秘宝交換）。全数一括 / 単体購入のため数量ステッパーは持たない。
+  | { kind: 'exchangeGem'; itemId: ItemId; name: string; qty: number; gemValue: number }
+  | { kind: 'buyGemEquip'; id: ItemId; name: string; gemPrice: number };
 
 // 装備詳細モーダル用（#31）。
 type EquipDetail = {
@@ -83,7 +90,7 @@ const itemCategory = (id: string): ShopCat => {
 export const Page = () => {
   const { navigate } = useNavigation();
   const { save, applyAndPersist } = useGameState();
-  const [tab, setTab] = useState<'buy' | 'sell'>('buy');
+  const [tab, setTab] = useState<'buy' | 'sell' | 'exchange'>('buy');
   const [pending, setPending] = useState<Pending | null>(null);
   const [pendingQty, setPendingQty] = useState(1);
   const [filter, setFilter] = useState<ShopCat | 'all'>('all');
@@ -97,6 +104,10 @@ export const Page = () => {
   }
 
   const gold = save.guild.gold;
+  const gems = save.guild.gems;
+  // v3.0.0 §10.3: 交換所（ジェム換金・秘宝交換）。
+  const exchangeList = gemExchangeList(save);
+  const gemEquips = gemEquipCatalog();
 
   const nameOf = (id: string, grade = 1) => {
     const base = ITEMS[id]?.name ?? EQUIPMENT[id]?.name ?? id;
@@ -234,8 +245,9 @@ export const Page = () => {
     ),
   ];
 
-  // 現タブで存在するカテゴリだけチップに出す。
-  const activeRows: { category: ShopCat }[] = tab === 'buy' ? buyRows : sellRows;
+  // 現タブで存在するカテゴリだけチップに出す（交換所タブはカテゴリ絞り込み無し）。
+  const activeRows: { category: ShopCat }[] =
+    tab === 'buy' ? buyRows : tab === 'sell' ? sellRows : [];
   const presentCats = CAT_ORDER.filter((c) => activeRows.some((r) => r.category === c));
   // 切替で消えたカテゴリを選んでいたら全件表示に倒す。
   const effFilter = filter !== 'all' && !presentCats.includes(filter) ? 'all' : filter;
@@ -252,7 +264,7 @@ export const Page = () => {
     return [...sorted, ...lockedRows];
   }
 
-  const switchTab = (t: 'buy' | 'sell') => {
+  const switchTab = (t: 'buy' | 'sell' | 'exchange') => {
     setTab(t);
     setFilter('all');
   };
@@ -273,8 +285,12 @@ export const Page = () => {
       setBuyConfirmed(true);
     } else if (pending.kind === 'sellItem') {
       void applyAndPersist((s) => sell(s, pending.itemId, pendingQty, pending.grade));
-    } else {
+    } else if (pending.kind === 'sellEquip') {
       void applyAndPersist((s) => sellEquipment(s, pending.id));
+    } else if (pending.kind === 'exchangeGem') {
+      void applyAndPersist((s) => exchangeForGems(s, pending.itemId));
+    } else {
+      void applyAndPersist((s) => buyWithGems(s, pending.id));
     }
     setPending(null);
   };
@@ -283,8 +299,9 @@ export const Page = () => {
   const sellView = view(sellRows);
 
   // 数量ステッパーの上限（buy: floor(gold/price) かつ maxStack 空き、sellItem: 所持 qty）。
+  // sellEquip / exchangeGem（全数一括） / buyGemEquip（単体購入）は数量ステッパー無し（常に1）。
   const pendingMax = (() => {
-    if (!pending || pending.kind === 'sellEquip') return 1;
+    if (!pending) return 1;
     if (pending.kind === 'buy') {
       const affordableMax = Math.max(1, Math.floor(gold / pending.price));
       // maxStack がある消費アイテムは「上限 - 現在所持数」も考慮する
@@ -294,7 +311,8 @@ export const Page = () => {
           : affordableMax;
       return Math.min(affordableMax, stockRoom) || 1;
     }
-    return pending.maxQty;
+    if (pending.kind === 'sellItem') return pending.maxQty;
+    return 1;
   })();
 
   // 装備詳細モーダル用情報の組み立て（#31）。
@@ -390,7 +408,10 @@ export const Page = () => {
     <div className={styles.layout}>
       <header className={styles.head}>
         <h1 className={styles.title}>ショップ</h1>
-        <span className={styles.gold}>{gold} G</span>
+        <div className={styles.headStats}>
+          <span className={styles.gold}>{gold} G</span>
+          <span className={styles.gems}>✦ {gems}</span>
+        </div>
       </header>
 
       <div className={styles.tabs}>
@@ -406,44 +427,52 @@ export const Page = () => {
           className={tab === 'sell' ? styles.activeTab : ''}
           onClick={() => switchTab('sell')}
         />
+        <ActionButton
+          label="交換所"
+          sfx="cursor"
+          className={tab === 'exchange' ? styles.activeTab : ''}
+          onClick={() => switchTab('exchange')}
+        />
       </div>
 
-      {/* カテゴリ絞り込み＋並び替え */}
-      <div className={styles.controls}>
-        <div className={styles.filters}>
-          <ActionButton
-            label="すべて"
-            sfx="cursor"
-            className={`${styles.chip} ${effFilter === 'all' ? styles.activeTab : ''}`}
-            onClick={() => setFilter('all')}
-          />
-          {presentCats.map((c) => (
+      {/* カテゴリ絞り込み＋並び替え（交換所タブには無い） */}
+      {tab !== 'exchange' && (
+        <div className={styles.controls}>
+          <div className={styles.filters}>
             <ActionButton
-              key={c}
-              label={CAT_LABEL[c]}
+              label="すべて"
               sfx="cursor"
-              className={`${styles.chip} ${effFilter === c ? styles.activeTab : ''}`}
-              onClick={() => setFilter(c)}
+              className={`${styles.chip} ${effFilter === 'all' ? styles.activeTab : ''}`}
+              onClick={() => setFilter('all')}
             />
-          ))}
-        </div>
-        <label className={styles.sortRow}>
-          <select
-            className={styles.sort}
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-          >
-            {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
-              <option
-                key={k}
-                value={k}
-              >
-                {SORT_LABEL[k]}
-              </option>
+            {presentCats.map((c) => (
+              <ActionButton
+                key={c}
+                label={CAT_LABEL[c]}
+                sfx="cursor"
+                className={`${styles.chip} ${effFilter === c ? styles.activeTab : ''}`}
+                onClick={() => setFilter(c)}
+              />
             ))}
-          </select>
-        </label>
-      </div>
+          </div>
+          <label className={styles.sortRow}>
+            <select
+              className={styles.sort}
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+            >
+              {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
+                <option
+                  key={k}
+                  value={k}
+                >
+                  {SORT_LABEL[k]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
 
       <div className={styles.list}>
         {tab === 'buy' ? (
@@ -507,85 +536,161 @@ export const Page = () => {
               </div>
             ))
           )
-        ) : sellView.length === 0 ? (
-          <p className={styles.empty}>売れる物がありません。</p>
-        ) : (
-          sellView.map((r) => {
-            // 装備中ロック行（売却不可）
-            if (r.kind === 'equip' && r.locked) {
+        ) : tab === 'sell' ? (
+          sellView.length === 0 ? (
+            <p className={styles.empty}>売れる物がありません。</p>
+          ) : (
+            sellView.map((r) => {
+              // 装備中ロック行（売却不可）
+              if (r.kind === 'equip' && r.locked) {
+                return (
+                  <div
+                    key={r.key}
+                    className={styles.rowLocked}
+                  >
+                    <ItemSprite
+                      itemId={r.inst.masterId as ItemId}
+                      size="sm"
+                    />
+                    <div className={styles.info}>
+                      <span className={styles.noteName}>{r.name}</span>
+                      <span className={styles.noteLocked}>装備中（{r.ownerName}）・ 売却不可</span>
+                    </div>
+                    <span className={styles.lockIcon}>🔒</span>
+                  </div>
+                );
+              }
+              // 通常の売却行
               return (
                 <div
                   key={r.key}
-                  className={styles.rowLocked}
+                  className={styles.row}
                 >
                   <ItemSprite
-                    itemId={r.inst.masterId as ItemId}
+                    itemId={(r.kind === 'equip' ? r.inst.masterId : r.itemId) as ItemId}
                     size="sm"
                   />
                   <div className={styles.info}>
-                    <span className={styles.noteName}>{r.name}</span>
-                    <span className={styles.noteLocked}>装備中（{r.ownerName}）・ 売却不可</span>
+                    {r.kind === 'equip' ? (
+                      <ActionButton
+                        label={r.name}
+                        sfx="cursor"
+                        className={styles.nameBtn}
+                        onClick={() =>
+                          setEquipDetail({
+                            masterId: r.inst.masterId as ItemId,
+                            name: r.name,
+                            ownedQty: 1,
+                            price: r.price,
+                            mode: 'sell',
+                            grade: r.inst.grade ?? 1,
+                          })
+                        }
+                      />
+                    ) : (
+                      <span className={styles.name}>{r.name}</span>
+                    )}
+                    <span className={styles.note}>
+                      {CAT_LABEL[r.category]}
+                      {r.kind === 'item' ? ` ・ 所持 ${r.qty}` : ''}
+                    </span>
                   </div>
-                  <span className={styles.lockIcon}>🔒</span>
+                  <ActionButton
+                    label={`売却 ${r.price} G`}
+                    className={styles.action}
+                    onClick={() =>
+                      openPending(
+                        r.kind === 'equip'
+                          ? { kind: 'sellEquip', id: r.inst.id, name: r.name, price: r.price }
+                          : {
+                              kind: 'sellItem',
+                              itemId: r.itemId,
+                              grade: r.grade,
+                              name: r.name,
+                              price: r.price,
+                              maxQty: r.qty,
+                            }
+                      )
+                    }
+                  />
                 </div>
               );
-            }
-            // 通常の売却行
-            return (
-              <div
-                key={r.key}
-                className={styles.row}
-              >
-                <ItemSprite
-                  itemId={(r.kind === 'equip' ? r.inst.masterId : r.itemId) as ItemId}
-                  size="sm"
-                />
-                <div className={styles.info}>
-                  {r.kind === 'equip' ? (
+            })
+          )
+        ) : (
+          // v3.0.0 §10.3: 交換所（ジェム換金・秘宝交換）。
+          <div className={styles.exchangeArea}>
+            <section className={styles.exchangeSection}>
+              <h2 className={styles.exchangeSectionTitle}>ジェム換金</h2>
+              {exchangeList.length === 0 ? (
+                <p className={styles.empty}>換金できる品はない</p>
+              ) : (
+                exchangeList.map((e) => (
+                  <div
+                    key={e.itemId}
+                    className={styles.row}
+                  >
+                    <ItemSprite
+                      itemId={e.itemId}
+                      size="sm"
+                    />
+                    <div className={styles.info}>
+                      <span className={styles.name}>
+                        {e.name} ×{e.qty}
+                      </span>
+                      <span className={styles.note}>✦{e.gemValue * e.qty} になる</span>
+                    </div>
                     <ActionButton
-                      label={r.name}
-                      sfx="cursor"
-                      className={styles.nameBtn}
+                      label="換金"
+                      className={styles.action}
                       onClick={() =>
-                        setEquipDetail({
-                          masterId: r.inst.masterId as ItemId,
-                          name: r.name,
-                          ownedQty: 1,
-                          price: r.price,
-                          mode: 'sell',
-                          grade: r.inst.grade ?? 1,
+                        openPending({
+                          kind: 'exchangeGem',
+                          itemId: e.itemId,
+                          name: e.name,
+                          qty: e.qty,
+                          gemValue: e.gemValue,
                         })
                       }
                     />
-                  ) : (
-                    <span className={styles.name}>{r.name}</span>
-                  )}
-                  <span className={styles.note}>
-                    {CAT_LABEL[r.category]}
-                    {r.kind === 'item' ? ` ・ 所持 ${r.qty}` : ''}
-                  </span>
+                  </div>
+                ))
+              )}
+            </section>
+
+            <section className={styles.exchangeSection}>
+              <h2 className={styles.exchangeSectionTitle}>秘宝交換</h2>
+              <p className={styles.exchangeNote}>交換した装備は所持品（装備プール）に入ります。</p>
+              {gemEquips.map((eq) => (
+                <div
+                  key={eq.id}
+                  className={styles.row}
+                >
+                  <ItemSprite
+                    itemId={eq.id}
+                    size="sm"
+                  />
+                  <div className={styles.info}>
+                    <span className={styles.name}>{eq.name}</span>
+                    <span className={styles.note}>{eq.note}</span>
+                  </div>
+                  <ActionButton
+                    label={`✦${eq.gemPrice}`}
+                    className={styles.action}
+                    disabled={gems < eq.gemPrice}
+                    onClick={() =>
+                      openPending({
+                        kind: 'buyGemEquip',
+                        id: eq.id,
+                        name: eq.name,
+                        gemPrice: eq.gemPrice,
+                      })
+                    }
+                  />
                 </div>
-                <ActionButton
-                  label={`売却 ${r.price} G`}
-                  className={styles.action}
-                  onClick={() =>
-                    openPending(
-                      r.kind === 'equip'
-                        ? { kind: 'sellEquip', id: r.inst.id, name: r.name, price: r.price }
-                        : {
-                            kind: 'sellItem',
-                            itemId: r.itemId,
-                            grade: r.grade,
-                            name: r.name,
-                            price: r.price,
-                            maxQty: r.qty,
-                          }
-                    )
-                  }
-                />
-              </div>
-            );
-          })
+              ))}
+            </section>
+          </div>
         )}
       </div>
 
@@ -616,6 +721,14 @@ export const Page = () => {
                 <>
                   <strong>{pending.name}</strong> を {pending.price} G で売却しますか？
                 </>
+              ) : pending.kind === 'exchangeGem' ? (
+                <>
+                  <strong>{pending.name}</strong> ×{pending.qty} を換金しますか？
+                </>
+              ) : pending.kind === 'buyGemEquip' ? (
+                <>
+                  <strong>{pending.name}</strong> と交換しますか？
+                </>
               ) : (
                 <>
                   <strong>{pending.name}</strong> を売却しますか？
@@ -624,8 +737,8 @@ export const Page = () => {
             </div>
             {/* coinPop 演出（buy 時のみ）— 5c */}
             <CoinPopFx visible={pending.kind === 'buy'} />
-            {/* 数量ステッパー（sellEquip は数量1固定なので非表示）。 */}
-            {pending.kind !== 'sellEquip' && (
+            {/* 数量ステッパー（buy / sellItem のみ。それ以外は数量1固定なので非表示）。 */}
+            {(pending.kind === 'buy' || pending.kind === 'sellItem') && (
               <div className={styles.stepperRow}>
                 <ActionButton
                   label="−"
@@ -658,10 +771,20 @@ export const Page = () => {
                 />
               </div>
             )}
-            {/* 合計金額（sellEquip 以外）。 */}
-            {pending.kind !== 'sellEquip' && (
+            {/* 合計金額・合計ジェム。 */}
+            {(pending.kind === 'buy' || pending.kind === 'sellItem') && (
               <div className={styles.totalRow}>
                 合計: <strong>{pending.price * pendingQty} G</strong>
+              </div>
+            )}
+            {pending.kind === 'exchangeGem' && (
+              <div className={styles.totalRow}>
+                合計: <strong>✦{pending.gemValue * pending.qty}</strong>
+              </div>
+            )}
+            {pending.kind === 'buyGemEquip' && (
+              <div className={styles.totalRow}>
+                合計: <strong>✦{pending.gemPrice}</strong>
               </div>
             )}
             <div className={styles.confirmActions}>
@@ -672,7 +795,13 @@ export const Page = () => {
                 onClick={() => setPending(null)}
               />
               <ActionButton
-                label={pending.kind === 'buy' ? '購入する' : '売却する'}
+                label={
+                  pending.kind === 'buy'
+                    ? '購入する'
+                    : pending.kind === 'exchangeGem' || pending.kind === 'buyGemEquip'
+                      ? '交換する'
+                      : '売却する'
+                }
                 className={styles.confirmOk}
                 onClick={confirmPending}
               />

@@ -7,9 +7,13 @@ import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
+import { TrophyMedal } from '@/components/common/TrophyMedal/TrophyMedal';
+import { BALANCE } from '@/data/balance';
 import { ENEMIES } from '@/data/enemies';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import { codexSummary, monsterCodex } from '@/domain/codex';
+import { collectionEntries, collectionSummary } from '@/domain/collection';
+import { trophyCounts, trophyRank } from '@/domain/trophy';
 import type { EnemyId, ItemId } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
@@ -30,6 +34,10 @@ export const Page = () => {
   const rec = save.towerState.record;
   const sum = codexSummary(save);
   const entries = monsterCodex(save);
+  // v3.0.0 §10.4: 討伐勲章（銅/銀/金/虹）と秘宝コレクションの集計。
+  const trophies = trophyCounts(save);
+  const collSummary = collectionSummary(save);
+  const collEntries = collectionEntries(save);
 
   const toggleEntry = (id: EnemyId, seen: boolean) => {
     if (!seen) return; // 未遭遇は展開しない
@@ -174,6 +182,23 @@ export const Page = () => {
             <span className={styles.codexSummaryPct}>{sum.completionPct}%</span>
           </div>
 
+          {/* v3.0.0 §10.4: 討伐勲章サマリ（銅/銀/金/虹の到達数）。 */}
+          <div className={styles.trophySummaryRow}>
+            <span className={styles.trophySummaryLabel}>勲章</span>
+            <span className={`${styles.trophyChip} ${styles.trophyChipBronze}`}>
+              銅{trophies.bronze}
+            </span>
+            <span className={`${styles.trophyChip} ${styles.trophyChipSilver}`}>
+              銀{trophies.silver}
+            </span>
+            <span className={`${styles.trophyChip} ${styles.trophyChipGold}`}>
+              金{trophies.gold}
+            </span>
+            <span className={`${styles.trophyChip} ${styles.trophyChipRainbow}`}>
+              虹{trophies.rainbow}
+            </span>
+          </div>
+
           {/* 詳細カード（選択中エントリ） */}
           {selectedEntry &&
             (() => {
@@ -192,6 +217,20 @@ export const Page = () => {
                       {selectedEntry.defeated && <span className={styles.badge}>撃破</span>}
                     </div>
                     <div className={styles.bossDetailMeta}>第{selectedEntry.tierBand + 1}帯</div>
+                    {/* v3.0.0 §10.4: 討伐数・討伐勲章メダル。 */}
+                    <div className={styles.bossDetailTrophy}>
+                      <span className={styles.bossDetailKills}>
+                        討伐 {save.bestiary.monsters[selectedEntry.id]?.kills ?? 0}体
+                      </span>
+                      <TrophyMedal
+                        rank={trophyRank(
+                          master?.kind ?? 'zako',
+                          save.bestiary.monsters[selectedEntry.id]?.kills ?? 0
+                        )}
+                        size="sm"
+                        showLabel
+                      />
+                    </div>
                     <div className={styles.bossDetailResist}>
                       {master && (
                         <>
@@ -250,6 +289,7 @@ export const Page = () => {
             {entries.map((e) => {
               const master = ENEMIES[e.id];
               const isBoss = master?.isBoss ?? false;
+              const kills = save.bestiary.monsters[e.id]?.kills ?? 0;
               const cellClass = [
                 styles.cell,
                 !e.seen ? styles.cellUnseen : '',
@@ -280,10 +320,70 @@ export const Page = () => {
                       alt={e.seen ? e.name : ''}
                     />
                   </span>
+                  {/* v3.0.0 §10.4: 討伐数・討伐勲章メダル（撃破済みのみ表示）。 */}
+                  {e.defeated && (
+                    <span className={styles.cellTrophy}>
+                      <TrophyMedal
+                        rank={trophyRank(master?.kind ?? 'zako', kills)}
+                        size="xs"
+                      />
+                      <span className={styles.cellKills}>{kills}</span>
+                    </span>
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* v3.0.0 §10.4: 秘宝コレクション（tierBand ごと 12 マスグリッド）。 */}
+          <div className={styles.gridLabel}>
+            <span className={styles.gridLabelText}>秘宝コレクション</span>
+            <span className={styles.gridLegend}>
+              計 {collSummary.totalOwned}/{collSummary.totalAll}
+            </span>
+          </div>
+          {collSummary.bands.map((band) => (
+            <div
+              key={band.band}
+              className={styles.collectionBand}
+            >
+              <div className={styles.collectionBandHead}>
+                <span className={styles.collectionBandTitle}>第{band.band + 1}帯</span>
+                <span className={styles.collectionBandCount}>
+                  {band.owned}/{band.total}
+                </span>
+                {band.complete && (
+                  <span className={styles.collectionBandBadge}>
+                    帯コンプ済 ✦{BALANCE.COLLECT_BAND_GEMS}
+                  </span>
+                )}
+              </div>
+              <div className={styles.collectionGrid}>
+                {collEntries
+                  .filter((e) => e.band === band.band)
+                  .map((e) => (
+                    <div
+                      key={e.itemId}
+                      className={`${styles.collectionCell} ${e.owned > 0 ? styles.collectionCellOwned : ''}`}
+                    >
+                      <ItemSprite
+                        itemId={e.itemId}
+                        size="sm"
+                        silhouette={e.owned === 0}
+                        alt={e.owned > 0 ? e.name : ''}
+                      />
+                      <span className={styles.collectionCellLabel}>
+                        {e.owned > 0 ? `${e.name}${e.owned > 1 ? ` ×${e.owned}` : ''}` : '？？？'}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ))}
+          <p className={styles.collectionAllNote}>
+            全{collSummary.totalAll}種コンプで ✦{BALANCE.COLLECT_ALL_GEMS} と「蒐集王の宝冠」を獲得
+            {collSummary.allComplete && <span className={styles.collectionAllBadge}>達成済み</span>}
+          </p>
         </div>
       )}
 
