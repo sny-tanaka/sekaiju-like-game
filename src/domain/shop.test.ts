@@ -1,10 +1,14 @@
-import { itemCount } from '@/domain/inventory';
+import { addEquipment, itemCount } from '@/domain/inventory';
 import { createInitialSaveData } from '@/domain/saveData';
 import {
   buy,
   buyMany,
+  buyWithGems,
   clampPurchaseQty,
   equipableClassNames,
+  exchangeForGems,
+  gemEquipCatalog,
+  gemExchangeList,
   sell,
   sellEquipment,
   sellPriceOf,
@@ -61,6 +65,23 @@ describe('shop', () => {
   test('持っていない物は売れない', () => {
     const save = richSave(0);
     expect(sell(save, 'item_potion', 1)).toBe(save);
+  });
+
+  // v3.0.0 §6: ジェム限定装備・蒐集王の宝冠は再入手不可のため売却不可（no-op）。
+  test('sellEquipment: ジェム限定装備（equip_gem_sword）は売却できない（save を変更しない）', () => {
+    const save = addEquipment(createInitialSaveData('g'), 'equip_gem_sword');
+    const id = save.guild.equipment[0].id;
+    const after = sellEquipment(save, id);
+    expect(after).toBe(save);
+    expect(after.guild.equipment).toHaveLength(1);
+  });
+
+  test('sellEquipment: 蒐集王の宝冠（equip_collector_crown）は売却できない（save を変更しない）', () => {
+    const save = addEquipment(createInitialSaveData('g'), 'equip_collector_crown');
+    const id = save.guild.equipment[0].id;
+    const after = sellEquipment(save, id);
+    expect(after).toBe(save);
+    expect(after.guild.equipment).toHaveLength(1);
   });
 
   test('素材を売ると関連装備がショップに並ぶ（恒久解放）', () => {
@@ -194,5 +215,123 @@ describe('shop', () => {
     const afterMat = sell(afterPotion, 'item_slime_jelly', 1);
     expect(afterMat.guild.gold).toBeGreaterThan(afterPotion.guild.gold);
     expect(itemCount(afterMat, 'item_slime_jelly')).toBe(0);
+  });
+
+  // --- v3.0.0 §6: ジェム交換所 ---
+  describe('v3.0.0 ジェム交換所（exchangeForGems / gemExchangeList / gemEquipCatalog / buyWithGems）', () => {
+    test('valuable カテゴリ（換金アイテム・秘宝）はゴールド売却不可', () => {
+      let save = richSave(0);
+      save = {
+        ...save,
+        guild: {
+          ...save.guild,
+          storage: [
+            { itemId: 'item_gem_shard', qty: 3 },
+            { itemId: 'item_col_slime', qty: 1 },
+          ],
+        },
+      };
+      const afterGem = sell(save, 'item_gem_shard', 1);
+      expect(afterGem).toBe(save); // 変更なし（no-op）
+      const afterCol = sell(save, 'item_col_slime', 1);
+      expect(afterCol).toBe(save);
+    });
+
+    test('gemExchangeList: 倉庫内の gemValue 付きアイテムを grade 問わず qty 合算して返す', () => {
+      let save = createInitialSaveData('g');
+      save = {
+        ...save,
+        guild: {
+          ...save.guild,
+          storage: [
+            { itemId: 'item_gem_shard', qty: 3 },
+            { itemId: 'item_gem_shard', qty: 2, grade: 2 },
+            { itemId: 'item_gem_stone', qty: 1 },
+            { itemId: 'item_potion', qty: 5 }, // gemValue 無し → 対象外
+          ],
+        },
+      };
+      const list = gemExchangeList(save);
+      expect(list.find((e) => e.itemId === 'item_gem_shard')?.qty).toBe(5);
+      expect(list.find((e) => e.itemId === 'item_gem_stone')?.qty).toBe(1);
+      expect(list.some((e) => e.itemId === 'item_potion')).toBe(false);
+    });
+
+    test('exchangeForGems: 該当アイテムを全数消費し gems += gemValue*qty する', () => {
+      let save = createInitialSaveData('g');
+      save = {
+        ...save,
+        guild: {
+          ...save.guild,
+          storage: [
+            { itemId: 'item_gem_shard', qty: 3 },
+            { itemId: 'item_gem_shard', qty: 2, grade: 2 },
+          ],
+        },
+      };
+      const after = exchangeForGems(save, 'item_gem_shard');
+      expect(after.guild.gems).toBe(5); // gemValue(1) * 5個
+      expect(itemCount(after, 'item_gem_shard')).toBe(0);
+    });
+
+    test('exchangeForGems: 所持していないアイテムは変更しない', () => {
+      const save = createInitialSaveData('g');
+      expect(exchangeForGems(save, 'item_gem_shard')).toBe(save);
+    });
+
+    test('gemEquipCatalog: gemPrice を持つ装備一覧を返す（equip_collector_crown は含まない）', () => {
+      const catalog = gemEquipCatalog();
+      expect(catalog.some((e) => e.id === 'equip_gem_sword' && e.gemPrice === 120)).toBe(true);
+      expect(catalog.some((e) => e.id === 'equip_collector_crown')).toBe(false);
+    });
+
+    test('gemEquipCatalog: note に statMods（STR/AGI 等）も含まれる', () => {
+      const catalog = gemEquipCatalog();
+      const sword = catalog.find((e) => e.id === 'equip_gem_sword')!;
+      expect(sword.note).toContain('ATK+93');
+      expect(sword.note).toContain('AGI+5');
+    });
+
+    test('shopCatalog は gemPrice を持つ装備を除外する（通常カタログに出さない）', () => {
+      const save = createInitialSaveData('g');
+      const catalog = shopCatalog(save);
+      expect(catalog.some((e) => e.id === 'equip_gem_sword')).toBe(false);
+      expect(catalog.some((e) => e.id === 'equip_gem_ring')).toBe(false);
+    });
+
+    test('shopCatalog は buyPrice=0 の装備（equip_collector_crown）を到達階に関わらず除外する', () => {
+      let save = createInitialSaveData('g');
+      save = {
+        ...save,
+        towerState: {
+          ...save.towerState,
+          record: { ...save.towerState.record, deepestReached: 50 },
+        },
+      };
+      const catalog = shopCatalog(save);
+      expect(catalog.some((e) => e.id === 'equip_collector_crown')).toBe(false);
+    });
+
+    test('buyWithGems: gems が足りれば減算し装備プールに個体が追加される', () => {
+      let save = createInitialSaveData('g');
+      save = { ...save, guild: { ...save.guild, gems: 200 } };
+      const after = buyWithGems(save, 'equip_gem_sword'); // gemPrice 120
+      expect(after.guild.gems).toBe(80);
+      expect(after.guild.equipment.some((e) => e.masterId === 'equip_gem_sword')).toBe(true);
+    });
+
+    test('buyWithGems: gems が不足していれば変更しない', () => {
+      let save = createInitialSaveData('g');
+      save = { ...save, guild: { ...save.guild, gems: 10 } };
+      const after = buyWithGems(save, 'equip_gem_sword'); // gemPrice 120
+      expect(after).toBe(save);
+    });
+
+    test('buyWithGems: gemPrice の無い装備（通常装備・equip_collector_crown）は購入不可', () => {
+      let save = createInitialSaveData('g');
+      save = { ...save, guild: { ...save.guild, gems: 99999 } };
+      expect(buyWithGems(save, 'equip_short_sword')).toBe(save);
+      expect(buyWithGems(save, 'equip_collector_crown')).toBe(save);
+    });
   });
 });

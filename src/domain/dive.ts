@@ -2,6 +2,7 @@ import { isBossFloor, levelDecay, partyAverageLevelFromDive } from '@/data/balan
 import { initEncounter, onStep } from '@/domain/encounter';
 import { stepFoes } from '@/domain/foe';
 import { findEventCell, generateFloor } from '@/domain/generateFloor';
+import { addItem } from '@/domain/inventory';
 import { openDirs, step } from '@/domain/movement';
 import { createRng } from '@/domain/rng';
 import { computeBaseStats } from '@/domain/stats';
@@ -300,6 +301,8 @@ export function defeatBoss(
   enemyId?: EnemyId
 ): SaveData {
   const ts = save.towerState;
+  // v3.0.0 §3: このゲートが未撃破→撃破に変わる初回のみボーナスを付与する。
+  const wasDefeated = ts.bossGates[depth]?.defeated === true;
   const bossGates = { ...ts.bossGates, [depth]: { depth, defeated: true } };
   const unlockedCheckpoints = ts.warp.unlockedCheckpoints.includes(depth)
     ? ts.warp.unlockedCheckpoints
@@ -312,10 +315,13 @@ export function defeatBoss(
       ? ts.record.bossDefeatLog
       : [...ts.record.bossDefeatLog, { depth, at, enemyId }],
   };
-  return {
+  let next: SaveData = {
     ...save,
     towerState: { ...ts, bossGates, warp: { ...ts.warp, unlockedCheckpoints }, record },
   };
+  // v3.0.0 §3: ボスゲート初回撃破ボーナス（虹輝の宝珠×1）。2回目以降の同ゲートでは付与しない。
+  if (!wasDefeated) next = addItem(next, 'item_gem_prism', 1);
+  return next;
 }
 
 /** その階の出口（上り階段）を通れるか（[06 §4]）。ボス階は撃破済みのみ通行可。 */

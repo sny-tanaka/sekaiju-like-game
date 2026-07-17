@@ -1,0 +1,72 @@
+// TrophyMedal — 討伐勲章メダル（●4連: 銅/銀/金/虹）
+
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 0;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.dot {
+  display: inline-block;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+// サイズバリアント
+.xs {
+  .dot {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+.sm {
+  .dot {
+    width: 7px;
+    height: 7px;
+  }
+}
+
+.md {
+  .dot {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+.dotEmpty {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+// 銅
+.dot1 {
+  background: #cd7f32;
+}
+
+// 銀
+.dot2 {
+  background: #c0c0c0;
+}
+
+// 金
+.dot3 {
+  background: #ffd700;
+}
+
+// 虹
+.dot4 {
+  background: linear-gradient(135deg, #ff5f6d, #ffc371, #47cf73, #4fa9ff, #a86bff);
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1;
+}

@@ -148,6 +148,25 @@ describe('forge: recycle', () => {
       9 + recycleFragments('equip_golem_blade') - 10
     );
   });
+
+  // v3.0.0 §6: ジェム限定装備・蒐集王の宝冠は再入手不可のため分解不可（no-op）。
+  test('ジェム限定装備（equip_gem_sword）は分解できない（save を変更しない）', () => {
+    const save = addEquipment(createInitialSaveData('g'), 'equip_gem_sword');
+    const id = save.guild.equipment[0].id;
+    const res = recycle(save, id);
+    expect(res.ok).toBe(false);
+    expect(res.save).toBe(save);
+    expect(res.save.guild.equipment).toHaveLength(1);
+  });
+
+  test('蒐集王の宝冠（equip_collector_crown）は分解できない（save を変更しない）', () => {
+    const save = addEquipment(createInitialSaveData('g'), 'equip_collector_crown');
+    const id = save.guild.equipment[0].id;
+    const res = recycle(save, id);
+    expect(res.ok).toBe(false);
+    expect(res.save).toBe(save);
+    expect(res.save.guild.equipment).toHaveLength(1);
+  });
 });
 
 describe('forge: recycleMany', () => {

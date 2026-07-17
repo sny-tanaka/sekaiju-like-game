@@ -151,4 +151,60 @@ describe('saveSerialization', () => {
       expect(result.data.guild.members[0].subClassId).toBe('class_medic');
     }
   });
+
+  test('v5→v6 migration: guild.gems / bestiary.monsters[].kills / collection / questStates が補完される', () => {
+    // v5 形式のセーブを手作り（gems/kills/collection/questStates 無し・bestiary は旧形の撃破記録あり）
+    const v5 = {
+      ...serializeSave(makeSave()),
+      schemaVersion: 5,
+    } as Record<string, unknown>;
+    delete (v5 as Record<string, unknown>).collection;
+    delete (v5 as Record<string, unknown>).questStates;
+    const guild = v5.guild as Record<string, unknown>;
+    delete guild.gems;
+    v5.bestiary = {
+      monsters: {
+        enemy_slime: { seen: true, defeated: true, dropsFound: ['item_slime_jelly'] },
+      },
+      items: {},
+    };
+
+    const result = deserializeSave(v5);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+      expect(result.data.guild.gems).toBe(0);
+      expect(result.data.collection).toEqual({});
+      expect(result.data.questStates).toEqual([]);
+      expect(result.data.bestiary.monsters.enemy_slime.kills).toBe(0);
+      // 既存フィールドは保持される
+      expect(result.data.bestiary.monsters.enemy_slime.defeated).toBe(true);
+    }
+  });
+
+  test('v5→v6 migration の冪等性: 既に gems/kills/collection/questStates がある場合は上書きしない', () => {
+    const v5 = {
+      ...serializeSave(makeSave()),
+      schemaVersion: 5,
+    } as Record<string, unknown>;
+    const guild = v5.guild as Record<string, unknown>;
+    guild.gems = 42;
+    v5.collection = { item_col_slime: 3 };
+    v5.questStates = [{ id: 'quest_first_hunt', status: 'active' }];
+    v5.bestiary = {
+      monsters: {
+        enemy_slime: { seen: true, defeated: true, dropsFound: [], kills: 7 },
+      },
+      items: {},
+    };
+
+    const result = deserializeSave(v5);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.guild.gems).toBe(42);
+      expect(result.data.collection).toEqual({ item_col_slime: 3 });
+      expect(result.data.questStates).toEqual([{ id: 'quest_first_hunt', status: 'active' }]);
+      expect(result.data.bestiary.monsters.enemy_slime.kills).toBe(7);
+    }
+  });
 });

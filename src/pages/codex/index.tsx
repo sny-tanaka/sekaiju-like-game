@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import styles from './style.module.scss';
 
@@ -7,12 +7,29 @@ import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { EnemySprite } from '@/components/common/EnemySprite/EnemySprite';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
+import { TrophyMedal } from '@/components/common/TrophyMedal/TrophyMedal';
+import { BALANCE } from '@/data/balance';
 import { ENEMIES } from '@/data/enemies';
 import { resolveEnemyAilmentResist } from '@/domain/ailment';
 import { codexSummary, monsterCodex } from '@/domain/codex';
+import {
+  collectionEntries,
+  collectionSummary,
+  type CollectionEntry,
+  type CollectionSummary,
+} from '@/domain/collection';
+import { trophyCounts, trophyRank, type TrophyCounts } from '@/domain/trophy';
 import type { EnemyId, ItemId } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
+
+const EMPTY_TROPHY_COUNTS: TrophyCounts = { bronze: 0, silver: 0, gold: 0, rainbow: 0 };
+const EMPTY_COLLECTION_SUMMARY: CollectionSummary = {
+  bands: [],
+  totalOwned: 0,
+  totalAll: 0,
+  allComplete: false,
+};
 
 // 図鑑 / 記録（[05 §1-2]）。到達記録（スコア）とモンスター図鑑の収集状況。
 export const Page = () => {
@@ -22,6 +39,25 @@ export const Page = () => {
   const [tab, setTab] = useState<'record' | 'codex'>('record');
   // 選択中のモンスター ID（グリッドタップで詳細表示）
   const [selectedId, setSelectedId] = useState<EnemyId | null>(null);
+
+  // v3.0.0 §10.4: 討伐勲章（銅/銀/金/虹）と秘宝コレクションの集計。save 非依存の描画にも
+  // 使うため useMemo 化し、早期 return より前（rules-of-hooks）に置く。
+  const trophies = useMemo(() => (save ? trophyCounts(save) : EMPTY_TROPHY_COUNTS), [save]);
+  const collSummary = useMemo(
+    () => (save ? collectionSummary(save) : EMPTY_COLLECTION_SUMMARY),
+    [save]
+  );
+  const collEntries = useMemo(() => (save ? collectionEntries(save) : []), [save]);
+  // 帯（tierBand）ごとの秘宝エントリを事前グルーピング（グリッド描画のたびに filter しない）。
+  const collEntriesByBand = useMemo(() => {
+    const map = new Map<number, CollectionEntry[]>();
+    for (const e of collEntries) {
+      const list = map.get(e.band);
+      if (list) list.push(e);
+      else map.set(e.band, [e]);
+    }
+    return map;
+  }, [collEntries]);
 
   if (!save) {
     return <Redirect to={{ name: 'title' }} />;
@@ -38,6 +74,8 @@ export const Page = () => {
   };
 
   const selectedEntry = selectedId ? (entries.find((e) => e.id === selectedId) ?? null) : null;
+  // 選択中エントリの討伐数（bossDetailTrophy の kills 表示・メダル計算で二重読み出ししないよう集約）。
+  const selectedKills = selectedEntry ? (save.bestiary.monsters[selectedEntry.id]?.kills ?? 0) : 0;
 
   return (
     <div className={styles.layout}>
@@ -174,6 +212,23 @@ export const Page = () => {
             <span className={styles.codexSummaryPct}>{sum.completionPct}%</span>
           </div>
 
+          {/* v3.0.0 §10.4: 討伐勲章サマリ（銅/銀/金/虹の到達数）。 */}
+          <div className={styles.trophySummaryRow}>
+            <span className={styles.trophySummaryLabel}>勲章</span>
+            <span className={`${styles.trophyChip} ${styles.trophyChipBronze}`}>
+              銅{trophies.bronze}
+            </span>
+            <span className={`${styles.trophyChip} ${styles.trophyChipSilver}`}>
+              銀{trophies.silver}
+            </span>
+            <span className={`${styles.trophyChip} ${styles.trophyChipGold}`}>
+              金{trophies.gold}
+            </span>
+            <span className={`${styles.trophyChip} ${styles.trophyChipRainbow}`}>
+              虹{trophies.rainbow}
+            </span>
+          </div>
+
           {/* 詳細カード（選択中エントリ） */}
           {selectedEntry &&
             (() => {
@@ -192,6 +247,15 @@ export const Page = () => {
                       {selectedEntry.defeated && <span className={styles.badge}>撃破</span>}
                     </div>
                     <div className={styles.bossDetailMeta}>第{selectedEntry.tierBand + 1}帯</div>
+                    {/* v3.0.0 §10.4: 討伐数・討伐勲章メダル。 */}
+                    <div className={styles.bossDetailTrophy}>
+                      <span className={styles.bossDetailKills}>討伐 {selectedKills}体</span>
+                      <TrophyMedal
+                        rank={trophyRank(master?.kind ?? 'zako', selectedKills)}
+                        size="sm"
+                        showLabel
+                      />
+                    </div>
                     <div className={styles.bossDetailResist}>
                       {master && (
                         <>
@@ -250,6 +314,7 @@ export const Page = () => {
             {entries.map((e) => {
               const master = ENEMIES[e.id];
               const isBoss = master?.isBoss ?? false;
+              const kills = save.bestiary.monsters[e.id]?.kills ?? 0;
               const cellClass = [
                 styles.cell,
                 !e.seen ? styles.cellUnseen : '',
@@ -280,10 +345,68 @@ export const Page = () => {
                       alt={e.seen ? e.name : ''}
                     />
                   </span>
+                  {/* v3.0.0 §10.4: 討伐数・討伐勲章メダル（撃破済みのみ表示）。 */}
+                  {e.defeated && (
+                    <span className={styles.cellTrophy}>
+                      <TrophyMedal
+                        rank={trophyRank(master?.kind ?? 'zako', kills)}
+                        size="xs"
+                      />
+                      <span className={styles.cellKills}>{kills}</span>
+                    </span>
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* v3.0.0 §10.4: 秘宝コレクション（tierBand ごと 12 マスグリッド）。 */}
+          <div className={styles.gridLabel}>
+            <span className={styles.gridLabelText}>秘宝コレクション</span>
+            <span className={styles.gridLegend}>
+              計 {collSummary.totalOwned}/{collSummary.totalAll}
+            </span>
+          </div>
+          {collSummary.bands.map((band) => (
+            <div
+              key={band.band}
+              className={styles.collectionBand}
+            >
+              <div className={styles.collectionBandHead}>
+                <span className={styles.collectionBandTitle}>第{band.band + 1}帯</span>
+                <span className={styles.collectionBandCount}>
+                  {band.owned}/{band.total}
+                </span>
+                {band.complete && (
+                  <span className={styles.collectionBandBadge}>
+                    帯コンプ済 ✦{BALANCE.COLLECT_BAND_GEMS}
+                  </span>
+                )}
+              </div>
+              <div className={styles.collectionGrid}>
+                {(collEntriesByBand.get(band.band) ?? []).map((e) => (
+                  <div
+                    key={e.itemId}
+                    className={`${styles.collectionCell} ${e.owned > 0 ? styles.collectionCellOwned : ''}`}
+                  >
+                    <ItemSprite
+                      itemId={e.itemId}
+                      size="sm"
+                      silhouette={e.owned === 0}
+                      alt={e.owned > 0 ? e.name : ''}
+                    />
+                    <span className={styles.collectionCellLabel}>
+                      {e.owned > 0 ? `${e.name}${e.owned > 1 ? ` ×${e.owned}` : ''}` : '？？？'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <p className={styles.collectionAllNote}>
+            全{collSummary.totalAll}種コンプで ✦{BALANCE.COLLECT_ALL_GEMS} と「蒐集王の宝冠」を獲得
+            {collSummary.allComplete && <span className={styles.collectionAllBadge}>達成済み</span>}
+          </p>
         </div>
       )}
 

@@ -31,6 +31,7 @@ import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
 import { ResistBadges } from '@/components/common/ResistBadges/ResistBadges';
 import { StatBar } from '@/components/common/StatBar/StatBar';
+import { TrophyMedal } from '@/components/common/TrophyMedal/TrophyMedal';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
 import { CLASSES } from '@/data/classes';
 import { ENEMIES } from '@/data/enemies';
@@ -48,6 +49,8 @@ import {
 import type { LevelUpResult } from '@/domain/battle';
 import type { BattleEvent, CombatantSnapshot } from '@/domain/battleEvent';
 import { fmt } from '@/domain/battleLogFormat';
+import { battleCollectibleGains, bossGatePrismGain } from '@/domain/collection';
+import type { CollectibleGain } from '@/domain/collection';
 import { previewTurnOrder } from '@/domain/combat';
 import { resolveFoeBattle, returnToTown } from '@/domain/dive';
 import { rollEncounter } from '@/domain/encounterTable';
@@ -56,6 +59,8 @@ import { createRng } from '@/domain/rng';
 import { computeSkillTpCost } from '@/domain/skillCost';
 import { pickAutoCommand, STRATEGY_LIST, STRATEGY_SHORT_LABEL } from '@/domain/strategy';
 import type { Strategy } from '@/domain/strategy';
+import { trophyGains } from '@/domain/trophy';
+import type { TrophyGain } from '@/domain/trophy';
 import type {
   BattleCommand,
   BattleState,
@@ -743,6 +748,49 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
     () => (state && state.outcome === 'win' && save ? partyExpResults(save, state) : []),
     [state, save]
   );
+  // リザルト用の討伐勲章・秘宝重複ジェム・ボスゲート初回撃破ボーナス・獲得ジェム合計（v3.0.0 §10.5）。
+  // applyBattleResult 適用前の save + state から算出する純関数（partyExpResults と同じパターン）。
+  // 1つの useMemo にまとめ、state?.outcome==='win' && save ガードの重複を解消する。
+  const battleResultGains = useMemo<{
+    trophyGains: TrophyGain[];
+    collectibleGains: CollectibleGain[];
+    prismGain: boolean;
+    gemsTotal: number;
+    bonusGems: number;
+  }>(() => {
+    if (!state || state.outcome !== 'win' || !save) {
+      return {
+        trophyGains: [],
+        collectibleGains: [],
+        prismGain: false,
+        gemsTotal: 0,
+        bonusGems: 0,
+      };
+    }
+    const trophy = trophyGains(save, state);
+    const collectible = battleCollectibleGains(save, state);
+    const prism = bossGatePrismGain(save, state);
+    // 実際の付与額（applyBattleResult 前後の gems 差分）を正とする。帯コンプ✦30・全種コンプ✦100 等の
+    // 収集達成ボーナスも自動で含まれ、以後ロジックが変わっても表示と実付与が一致し続ける。
+    const gemsTotal = applyBattleResult(save, state).guild.gems - save.guild.gems;
+    const breakdown =
+      trophy.reduce((a, g) => a + g.gems, 0) + collectible.reduce((a, g) => a + g.gems, 0);
+    const bonusGems = Math.max(0, gemsTotal - breakdown);
+    return {
+      trophyGains: trophy,
+      collectibleGains: collectible,
+      prismGain: prism,
+      gemsTotal,
+      bonusGems,
+    };
+  }, [state, save]);
+  const {
+    trophyGains: resultTrophyGains,
+    collectibleGains: resultCollectibleGains,
+    prismGain: resultPrismGain,
+    gemsTotal: resultGemsTotal,
+    bonusGems: resultBonusGems,
+  } = battleResultGains;
   // 経験値バーのアニメーション(EXP_ANIM_MS)が終わってからレベルアップダイアログを積む（issue #52）。
   // 「バーが伸び切ってからレベルアップ」が自然なため、ダイアログ表示を遅延させる。
   useEffect(() => {
@@ -1859,7 +1907,8 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
               );
             })()}
 
-          {/* ドロップ一覧（state.drops から取得） */}
+          {/* ドロップ一覧（state.drops から取得）。collectible（秘宝）は「✦秘宝」バッジ＋
+              2個目以降の重複ジェム変換量（→ ✦N）を添える（v3.0.0 §10.5）。 */}
           {state.drops.length > 0 && (
             <div className={styles.resultLoot}>
               <div className={styles.resultLootHead}>ドロップ品</div>
@@ -1870,22 +1919,72 @@ export const Page = ({ __storyMockOpenSkillMenu, __storyMockEnemyIds }: BattlePa
                   for (const d of state.drops) {
                     countMap.set(d.itemId, (countMap.get(d.itemId) ?? 0) + 1);
                   }
-                  return [...countMap.entries()].map(([itemId, count]) => (
-                    <div
-                      key={itemId}
-                      className={styles.resultLootItem}
-                    >
-                      <ItemSprite
-                        itemId={itemId as import('@/domain/types').ItemId}
-                        size="sm"
-                      />
-                      <span>
-                        {ITEMS[itemId as import('@/domain/types').ItemId]?.name ?? itemId} ×{count}
-                      </span>
-                    </div>
-                  ));
+                  return [...countMap.entries()].map(([itemId, count]) => {
+                    const item = ITEMS[itemId as import('@/domain/types').ItemId];
+                    const gain = resultCollectibleGains.find((g) => g.itemId === itemId);
+                    return (
+                      <div
+                        key={itemId}
+                        className={`${styles.resultLootItem} ${item?.collectible ? styles.resultLootCollectible : ''}`}
+                      >
+                        <ItemSprite
+                          itemId={itemId as import('@/domain/types').ItemId}
+                          size="sm"
+                        />
+                        <span>
+                          {item?.name ?? itemId} ×{count}
+                          {item?.collectible && (
+                            <span className={styles.resultLootCollectibleBadge}>✦秘宝</span>
+                          )}
+                          {item?.collectible && gain && gain.gems > 0 && (
+                            <span className={styles.resultLootDupGems}> → ✦{gain.gems}</span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  });
                 })()}
               </div>
+            </div>
+          )}
+
+          {/* ボスゲート初回撃破ボーナス（虹輝の宝珠。v3.0.0 §3・§10.5）。 */}
+          {resultPrismGain && <div className={styles.resultPrism}>虹輝の宝珠を手に入れた！</div>}
+
+          {/* 討伐勲章（v3.0.0 §4・§10.5）: この戦闘で新たに到達したランクのみ表示。 */}
+          {resultTrophyGains.length > 0 && (
+            <div className={styles.resultTrophy}>
+              <div className={styles.resultTrophyHead}>討伐勲章</div>
+              {resultTrophyGains.map((g) => (
+                <div
+                  key={g.enemyId}
+                  className={styles.resultTrophyRow}
+                >
+                  <TrophyMedal
+                    rank={g.rank}
+                    size="sm"
+                    showLabel
+                  />
+                  <span className={styles.resultTrophyText}>{g.name}</span>
+                  <span className={styles.resultTrophyGems}>+✦{g.gems}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* この戦闘で得たジェム合計（討伐勲章 + 秘宝重複変換 + 蒐集達成ボーナス。v3.0.0 §10.5）。
+              gemsTotal は applyBattleResult 前後の実差分のため、内訳（勲章+重複）を超える分があれば
+              帯コンプ✦30・全種コンプ✦100 等の蒐集達成ボーナスとして別行表示する。 */}
+          {resultGemsTotal > 0 && (
+            <div className={styles.resultGems}>
+              <span className={styles.resultGemsLabel}>獲得ジェム</span>
+              <span className={styles.resultGemsValue}>✦ +{resultGemsTotal}</span>
+            </div>
+          )}
+          {resultBonusGems > 0 && (
+            <div className={styles.resultGems}>
+              <span className={styles.resultGemsLabel}>蒐集達成ボーナス</span>
+              <span className={styles.resultGemsValue}>+✦{resultBonusGems}</span>
             </div>
           )}
 

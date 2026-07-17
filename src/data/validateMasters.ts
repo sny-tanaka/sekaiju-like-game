@@ -1,6 +1,8 @@
 import { BATTLE_SKILLS } from '@/data/battleSkills';
+import { COLLECTIBLE_BY_ENEMY } from '@/data/collectibles';
 import { MASTERS } from '@/data/index';
 import { PASSIVE_SKILLS } from '@/data/passives';
+import { QUESTS, type QuestMaster } from '@/data/quests';
 import { SELL_UNLOCKS } from '@/domain/shop';
 import type { SkillTreeDef } from '@/domain/types';
 
@@ -24,6 +26,50 @@ function checkIdConvention(domain: string, ids: string[], errors: string[]): voi
       errors.push(`[${domain}] ID 命名規約違反: "${id}"（期待: <domain>_<name>）`);
     }
   }
+}
+
+/**
+ * 依頼（v3.0.0 §7）マスタの検証。target の enemyId/itemId/depth・rewards の itemId が
+ * 実在すること、hunt/delivery は count>=1、reach/boss は depth>=1 であることを確認する。
+ * validateMasters() から呼ぶほか、テストから直接呼んでフェイルケースを検証できるよう分離する。
+ */
+export function validateQuestMasters(
+  quests: Record<string, QuestMaster>,
+  enemyIds: ReadonlySet<string>,
+  itemIds: ReadonlySet<string>
+): string[] {
+  const errors: string[] = [];
+  checkIdConvention('quests', Object.keys(quests), errors);
+  for (const [key, q] of Object.entries(quests)) {
+    if (key !== q.id) errors.push(`[quests] キー "${key}" と id "${q.id}" が不一致`);
+
+    if (q.kind === 'hunt') {
+      if (!q.target.enemyId || !enemyIds.has(q.target.enemyId)) {
+        errors.push(`[quests] "${q.id}" の target.enemyId "${q.target.enemyId}" が未定義`);
+      }
+      if ((q.target.count ?? 0) < 1) {
+        errors.push(`[quests] "${q.id}" (hunt) の target.count が 1 未満`);
+      }
+    } else if (q.kind === 'delivery') {
+      if (!q.target.itemId || !itemIds.has(q.target.itemId)) {
+        errors.push(`[quests] "${q.id}" の target.itemId "${q.target.itemId}" が未定義`);
+      }
+      if ((q.target.count ?? 0) < 1) {
+        errors.push(`[quests] "${q.id}" (delivery) の target.count が 1 未満`);
+      }
+    } else if (q.kind === 'reach' || q.kind === 'boss') {
+      if ((q.target.depth ?? 0) < 1) {
+        errors.push(`[quests] "${q.id}" (${q.kind}) の target.depth が 1 未満`);
+      }
+    }
+
+    for (const item of q.rewards.items ?? []) {
+      if (!itemIds.has(item.itemId)) {
+        errors.push(`[quests] "${q.id}" の報酬アイテム "${item.itemId}" が未定義`);
+      }
+    }
+  }
+  return errors;
 }
 
 function checkSkillTree(
@@ -268,6 +314,50 @@ export function validateMasters(): ValidationResult {
       if (!(eid in equipment)) errors.push(`[SELL_UNLOCKS] 解放先装備 "${eid}" が未定義`);
     }
   }
+
+  // 秘宝（v3.0.0 §5）: すべての敵に COLLECTIBLE_BY_ENEMY のエントリがあり、参照先アイテムが
+  // 実在し collectible===true かつ category==='valuable' であること。
+  for (const id of Object.keys(enemies)) {
+    const itemId = COLLECTIBLE_BY_ENEMY[id];
+    if (!itemId) {
+      errors.push(`[COLLECTIBLE_BY_ENEMY] 敵 "${id}" のエントリが無い`);
+      continue;
+    }
+    const item = items[itemId];
+    if (!item) {
+      errors.push(`[COLLECTIBLE_BY_ENEMY] "${id}" の参照先アイテム "${itemId}" が未定義`);
+      continue;
+    }
+    if (item.collectible !== true) {
+      errors.push(`[COLLECTIBLE_BY_ENEMY] "${itemId}" は collectible:true でない`);
+    }
+    if (item.category !== 'valuable') {
+      errors.push(`[COLLECTIBLE_BY_ENEMY] "${itemId}" は category:'valuable' でない`);
+    }
+  }
+
+  // 換金アイテム（v3.0.0 §3）: gemValue を持つアイテムは gemValue > 0 かつ category==='valuable'。
+  for (const it of Object.values(items)) {
+    if (it.gemValue === undefined) continue;
+    if (it.gemValue <= 0) errors.push(`[items] "${it.id}" の gemValue が正でない`);
+    if (it.category !== 'valuable') {
+      errors.push(`[items] "${it.id}" は gemValue を持つが category:'valuable' でない`);
+    }
+  }
+
+  // ジェム限定装備（v3.0.0 §6）: gemPrice を持つ装備は buyPrice===0。
+  for (const eq of Object.values(equipment)) {
+    if (eq.gemPrice === undefined) continue;
+    if (eq.buyPrice !== 0) {
+      errors.push(`[equipment] "${eq.id}" は gemPrice を持つが buyPrice が 0 でない`);
+    }
+  }
+
+  // 依頼（v3.0.0 §7）: キー一致、target の enemyId/itemId/depth・rewards の itemId が実在すること。
+  // hunt/delivery は count>=1。reach/boss は depth>=1。
+  errors.push(
+    ...validateQuestMasters(QUESTS, new Set(Object.keys(enemies)), new Set(Object.keys(items)))
+  );
 
   return { ok: errors.length === 0, errors };
 }

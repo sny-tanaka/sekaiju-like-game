@@ -8,6 +8,7 @@ import { Page as GuildCharPage } from '@/pages/guild-char';
 import { Page as NotFoundPage } from '@/pages/not-found';
 import { Page as SaveTransferPage } from '@/pages/save-transfer';
 import { Page as ShopPage } from '@/pages/shop';
+import { Page as TavernPage } from '@/pages/tavern';
 import { Page as TitlePage } from '@/pages/title';
 import { Page as TownPage } from '@/pages/town';
 import { useNavigation } from '@/store/navigation';
@@ -33,6 +34,8 @@ function App() {
         return <ForgePage />;
       case 'codex':
         return <CodexPage />;
+      case 'tavern':
+        return <TavernPage />;
       case 'dungeon':
         return <DungeonPage />;
       case 'battle':

@@ -21,7 +21,7 @@ describe('codex', () => {
 
   test('遭遇・撃破・ドロップが図鑑へ反映される', () => {
     const save = withBestiary({
-      enemy_slime: { seen: true, defeated: true, dropsFound: ['item_slime_jelly'] },
+      enemy_slime: { seen: true, defeated: true, dropsFound: ['item_slime_jelly'], kills: 1 },
     });
     const slime = monsterCodex(save).find((e) => e.id === 'enemy_slime')!;
     expect(slime.seen).toBe(true);

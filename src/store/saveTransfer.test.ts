@@ -42,11 +42,12 @@ describe('encodeSaveTransfer / decodeSaveTransfer', () => {
 
   test('checksum を 1 文字書き換えると ok:false（文字列が壊れています）', () => {
     const str = encodeSaveTransfer(mockMidDive);
-    // 末尾の checksum 8 文字の先頭を書き換える
+    // 末尾の checksum 8 文字の先頭を書き換える（元の文字と必ず異なる値にして確実に破損させる。
+    // 旧実装は末尾の文字を書き換えており、稀に元の文字と一致して無破損になるバグがあった）。
     const parts = str.split('.');
     const lastPart = parts[parts.length - 1]!;
-    const corruptedChecksum =
-      lastPart[0] === 'a' ? lastPart.slice(0, -1) + 'b' : lastPart.slice(0, -1) + 'a';
+    const flippedFirstChar = lastPart[0] === '0' ? '1' : '0';
+    const corruptedChecksum = flippedFirstChar + lastPart.slice(1);
     parts[parts.length - 1] = corruptedChecksum;
     const corrupted = parts.join('.');
     const result = decodeSaveTransfer(corrupted);

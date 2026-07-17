@@ -515,6 +515,10 @@ export interface ItemMaster {
   useContext?: ('battle' | 'field')[];
   /** 1スタックの所持上限。未指定は上限なし（素材等）。効果が高いほど低くする。 */
   maxStack?: number;
+  /** 換金アイテム（v3.0.0 §3）。ショップ交換所でジェムへ換金できる量。 */
+  gemValue?: number;
+  /** 秘宝（コレクション。v3.0.0 §5）。true のとき倉庫でなく SaveData.collection に記録する。 */
+  collectible?: boolean;
 }
 
 export interface EquipmentMaster {
@@ -526,6 +530,8 @@ export interface EquipmentMaster {
   weaponType?: WeaponType;
   armorType?: ArmorType;
   bonuses: EquipBonuses;
+  /** ジェム限定装備（v3.0.0 §6）。定義されている装備は通常カタログに出さず、交換所でのみ購入可。 */
+  gemPrice?: number;
 }
 
 // ============================================================================
@@ -604,6 +610,8 @@ export interface ItemStack {
 export interface Guild {
   name: string;
   gold: number;
+  /** ジェム（第2通貨。v3.0.0 §0）。表示記号 ✦。討伐勲章・秘宝重複・換金アイテムで得る。 */
+  gems: number;
   members: Character[]; // 上限あり（例: 30）
   party: PartyFormation; // 出撃中の編成
   storage: ItemStack[]; // 預かり所（消費アイテム・素材。装備は equipment 個体で管理）
@@ -623,7 +631,10 @@ export interface Guild {
 // ============================================================================
 
 export interface BestiaryState {
-  monsters: Record<string, { seen: boolean; defeated: boolean; dropsFound: string[] }>;
+  monsters: Record<
+    string,
+    { seen: boolean; defeated: boolean; dropsFound: string[]; kills: number }
+  >;
   items: Record<string, boolean>;
 }
 
@@ -889,7 +900,8 @@ export interface SaveData {
   guild: Guild;
   towerState: TowerState;
   diveState: DiveState | null; // 拠点にいるときは null
-  questStates?: QuestState[];
+  /** 依頼（クエスト。v3.0.0 §7）の受注状態。v6 で必須化。 */
+  questStates: QuestState[];
   bestiary: BestiaryState;
   playerMaps: Record<number, PlayerMap>; // depth -> 手描きマップ
   exploredCells: Record<number, CellKey[]>; // depth -> 視認済み cellKey[]
@@ -898,6 +910,8 @@ export interface SaveData {
   /** 解放済みの料理レシピ ID（[04 §6]）。 */
   unlockedRecipeIds: string[];
   flags: Record<string, boolean>; // 到達階トリガーの解放フラグ
+  /** 秘宝コレクション（v3.0.0 §5）。itemId → 入手累計数。倉庫とは別枠。 */
+  collection: Record<ItemId, number>;
 }
 
 /** タイトルの SaveCard に表示する編成メンバーの軽量プレビュー情報。 */

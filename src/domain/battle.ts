@@ -8,6 +8,7 @@ import {
   spGainOnLevelUp,
 } from '@/data/balance';
 import { BATTLE_SKILLS } from '@/data/battleSkills';
+import { COLLECTIBLE_BY_ENEMY } from '@/data/collectibles';
 import { ENEMIES } from '@/data/enemies';
 import { BASIC_WEIGHT, ENEMY_KITS } from '@/data/enemySkills';
 import { EQUIPMENT } from '@/data/equipment';
@@ -27,6 +28,7 @@ import type {
   NormalAttackEvent,
   SkillEvent,
 } from '@/domain/battleEvent';
+import { applyCollectionRewards, collectibleDupGems } from '@/domain/collection';
 import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { initEncounter } from '@/domain/encounter';
 import { enemyLapForDepth } from '@/domain/encounterTable';
@@ -36,6 +38,7 @@ import { computePassiveMods } from '@/domain/passives';
 import { createRng } from '@/domain/rng';
 import { computeSkillTpCost } from '@/domain/skillCost';
 import { computeBaseStats } from '@/domain/stats';
+import { trophyGemsForCrossing } from '@/domain/trophy';
 import type {
   ActiveAilment,
   ActiveBuff,
@@ -1269,27 +1272,55 @@ export function resolveTurn(
         if (!item || !item.useContext?.includes('battle')) continue;
         const target = find(next, cmd.targetId) ?? actor;
         let itemEffect: import('@/domain/battleEvent').ItemEffect | undefined;
+        // 実際に効果が適用されたか（[issue] 空振り時はアイテムを消費しない・ログも出さない）。
+        let applied = false;
         for (const eff of item.effects ?? []) {
           if (eff.kind === 'heal') {
             const healAmt = eff.amount(1);
             target.hp = clamp(target.hp + healAmt, 0, target.maxHp);
             itemEffect = { kind: 'heal', amount: healAmt };
+            applied = true;
           } else if (eff.kind === 'restoreTp') {
             // ratio 指定があれば最大TPの割合で回復（高レベルでも有効）。なければ固定値。
             const add = eff.ratio ? Math.round(target.maxTp * eff.ratio) : eff.amount(1);
             target.tp = clamp(target.tp + add, 0, target.maxTp);
             itemEffect = { kind: 'tp-restore', amount: add };
+            applied = true;
+          } else if (eff.kind === 'cleanse') {
+            // スキルと同じ効果リゾルバ（applySkillEffect）を通す（v3.0.0 §8）。
+            // applySkillEffect の no-op 条件（isDown || ailments.length===0）と一致させる。
+            const hadAilments = target.ailments.map((a) => a.type);
+            const willApply = !target.isDown && hadAilments.length > 0;
+            applySkillEffect(next, actor, eff, 'almighty', 1, [target], rng, 'allyOne');
+            if (willApply) {
+              itemEffect = { kind: 'cure', cureEffects: hadAilments };
+              applied = true;
+            }
+          } else if (eff.kind === 'revive') {
+            const r = applySkillEffect(next, actor, eff, 'almighty', 1, [target], rng, 'allyOne');
+            if (r.heals[0]) {
+              itemEffect = { kind: 'revive', hpRestore: r.heals[0].amount };
+              applied = true;
+            }
+          } else if (eff.kind === 'buff') {
+            const r = applySkillEffect(next, actor, eff, 'almighty', 1, [target], rng, 'allyOne');
+            if (r.buffs[0]) {
+              itemEffect = { kind: 'buff', stat: eff.stat, turns: eff.turns };
+              applied = true;
+            }
           }
         }
-        next.consumedItems.push(cmd.itemId);
-        if (itemEffect) {
-          pushEvent({
-            kind: 'item-use',
-            actorId: actor.id,
-            itemId: cmd.itemId,
-            targetId: target.id,
-            effect: itemEffect,
-          });
+        if (applied) {
+          next.consumedItems.push(cmd.itemId);
+          if (itemEffect) {
+            pushEvent({
+              kind: 'item-use',
+              actorId: actor.id,
+              itemId: cmd.itemId,
+              targetId: target.id,
+              effect: itemEffect,
+            });
+          }
         }
       }
     }
@@ -1374,11 +1405,34 @@ export function resolveTurn(
     if (!e.isDown || !e.enemyId) continue;
     const wasDown = state.enemies.find((se) => se.id === e.id)?.isDown ?? false;
     if (wasDown) continue; // 既に倒れていた敵は対象外
-    for (const d of ENEMIES[e.enemyId].drops ?? []) {
+    const master = ENEMIES[e.enemyId];
+    for (const d of master.drops ?? []) {
       if (rng.next() < d.rate) {
         next.drops.push({ enemyId: e.enemyId, itemId: d.itemId });
         // ドロップはログなし（リザルト画面で表示する）
       }
+    }
+    // v3.0.0 §3: 換金アイテム抽選（通常ドロップとは独立に1回。kind 別確率・tierBand 別品目）。
+    const kind = master.kind ?? 'zako';
+    if (kind === 'boss') {
+      if (rng.next() < BALANCE.GEM_DROP_RATE.boss) {
+        next.drops.push({ enemyId: e.enemyId, itemId: 'item_gem_cluster' });
+      }
+    } else if (kind === 'foe') {
+      if (rng.next() < BALANCE.GEM_DROP_RATE.foe) {
+        const itemId = master.tierBand <= 1 ? 'item_gem_stone' : 'item_gem_cluster';
+        next.drops.push({ enemyId: e.enemyId, itemId });
+      }
+    } else {
+      if (rng.next() < BALANCE.GEM_DROP_RATE.zako) {
+        const itemId = master.tierBand <= 1 ? 'item_gem_shard' : 'item_gem_stone';
+        next.drops.push({ enemyId: e.enemyId, itemId });
+      }
+    }
+    // v3.0.0 §5: 秘宝（コレクション）抽選（§3 と同じ箇所で、さらに独立に1回）。
+    if (rng.next() < BALANCE.COLLECT_DROP_RATE[kind]) {
+      const colItemId = COLLECTIBLE_BY_ENEMY[e.enemyId];
+      if (colItemId) next.drops.push({ enemyId: e.enemyId, itemId: colItemId });
     }
   }
 
@@ -1558,15 +1612,33 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
   let gold = save.guild.gold;
 
   // 図鑑: 遭遇した敵は seen、撃破した敵は defeated（勝敗を問わず記録）。
+  // 併せて、この戦闘で新たに倒れた敵の kills を加算する（v3.0.0 §4。勝敗を問わない）。
   // 勝利時は入手したドロップを dropsFound に記録。bestiary 確定前にまとめて構築する。
   const monsters = { ...save.bestiary.monsters };
+  const newlyDownedCounts = new Map<EnemyId, number>();
   for (const e of state.enemies) {
     if (!e.enemyId) continue;
-    const prev = monsters[e.enemyId] ?? { seen: false, defeated: false, dropsFound: [] };
+    const prev = monsters[e.enemyId] ?? { seen: false, defeated: false, dropsFound: [], kills: 0 };
     monsters[e.enemyId] = { ...prev, seen: true, defeated: prev.defeated || e.isDown };
+    if (e.isDown) {
+      newlyDownedCounts.set(e.enemyId, (newlyDownedCounts.get(e.enemyId) ?? 0) + 1);
+    }
+  }
+  // 討伐勲章（v3.0.0 §4）: kills を確定し、越えた全ランク分のジェムを合算する。
+  let trophyGems = 0;
+  for (const [enemyId, count] of newlyDownedCounts) {
+    const prev = monsters[enemyId];
+    const before = prev.kills;
+    const after = before + count;
+    monsters[enemyId] = { ...prev, kills: after };
+    const kind = ENEMIES[enemyId]?.kind ?? 'zako';
+    trophyGems += trophyGemsForCrossing(kind, before, after);
   }
   if (win) {
     for (const d of state.drops) {
+      const dropItem = ITEMS[d.itemId];
+      // v3.0.0 §3: 換金アイテム・秘宝は図鑑 dropsFound の記録対象から除外する（汚染防止）。
+      if (dropItem?.gemValue !== undefined || dropItem?.collectible) continue;
       const prev = monsters[d.enemyId];
       if (prev && !prev.dropsFound.includes(d.itemId)) {
         monsters[d.enemyId] = { ...prev, dropsFound: [...prev.dropsFound, d.itemId] };
@@ -1574,6 +1646,31 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
     }
   }
   const bestiary = { ...save.bestiary, monsters };
+
+  // 秘宝（コレクション。v3.0.0 §5）: collectible なドロップは倉庫に入れず collection に記録する。
+  // 2個目以降（加算前の値が1以上）は 1個につき COLLECT_DUP_GEMS ジェムへ自動変換する。
+  let collection = save.collection;
+  let dupGems = 0;
+  let storageDrops = state.drops;
+  if (win) {
+    const nextCollection = { ...save.collection };
+    const nonCollectibleDrops: typeof state.drops = [];
+    for (const d of state.drops) {
+      const dropItem = ITEMS[d.itemId];
+      if (dropItem?.collectible) {
+        const before = nextCollection[d.itemId] ?? 0;
+        nextCollection[d.itemId] = before + 1;
+        // v3.0.0 §5: 重複入手ジェム変換式は collection.ts の collectibleDupGems に集約
+        // （1件ずつ処理するためここでは count=1 で呼ぶ）。
+        dupGems += collectibleDupGems(before, 1);
+      } else {
+        nonCollectibleDrops.push(d);
+      }
+    }
+    collection = nextCollection;
+    storageDrops = nonCollectibleDrops;
+  }
+  const gems = save.guild.gems + trophyGems + dupGems;
 
   if (win) {
     const deepestReached = save.towerState.record.deepestReached;
@@ -1609,8 +1706,9 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
 
   let next: SaveData = {
     ...save,
-    guild: { ...save.guild, members, gold, bestiary },
+    guild: { ...save.guild, members, gold, gems, bestiary },
     bestiary,
+    collection,
     diveState: {
       ...save.diveState,
       party,
@@ -1621,9 +1719,12 @@ export function applyBattleResult(save: SaveData, state: BattleState): SaveData 
 
   // 倉庫: 戦闘で使ったアイテムを減算（勝敗問わず）
   for (const id of state.consumedItems) next = removeItem(next, id, 1);
-  // 倉庫: 勝利時のみドロップを加算（周回数=グレード。2周目以降は素材が LvN 化。[06 §3]）
+  // 倉庫: 勝利時のみドロップを加算（周回数=グレード。2周目以降は素材が LvN 化。[06 §3]）。
+  // collectible なドロップ（storageDrops から除外済み）は倉庫に入らず collection のみに記録される。
   const dropGrade = enemyLapForDepth(state.depth);
-  if (win) for (const d of state.drops) next = addItem(next, d.itemId, 1, dropGrade);
+  if (win) for (const d of storageDrops) next = addItem(next, d.itemId, 1, dropGrade);
+  // 秘宝の帯コンプ・全種コンプ報酬（v3.0.0 §5）。collection 確定後に判定する。
+  if (win) next = applyCollectionRewards(next);
   return next;
 }
 

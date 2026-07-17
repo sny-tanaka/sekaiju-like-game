@@ -31,7 +31,8 @@ import type {
 // v3: 転生ボーナスを per-stat 化（issue #55）。
 // v4: Character.strategy を追加（issue #61）。
 // v5: Character.subClassId を追加（v2.0.0 副業システム）。
-export const CURRENT_SCHEMA_VERSION = 5;
+// v6: guild.gems / bestiary.monsters[].kills / collection / questStates を追加・必須化（v3.0.0 依頼と秘宝）。
+export const CURRENT_SCHEMA_VERSION = 6;
 
 export const DEFAULT_SETTINGS: GameSettings = {
   autoMap: 'on',
@@ -172,6 +173,7 @@ export function createInitialSaveData(guildName: string): SaveData {
     guild: {
       name: guildName,
       gold: STARTING_GOLD,
+      gems: 0,
       members: [], // 初期 0 人。プレイヤーが作成する
       party: emptyFormation(),
       storage: [],
@@ -186,6 +188,7 @@ export function createInitialSaveData(guildName: string): SaveData {
       record: emptyTowerRecord(),
     },
     diveState: null, // 開始時は拠点
+    questStates: [],
     bestiary: emptyBestiary(),
     playerMaps: {},
     exploredCells: {},
@@ -193,5 +196,6 @@ export function createInitialSaveData(guildName: string): SaveData {
     shopStock: { unlockedTier: 0, unlockedItemIds: [] },
     unlockedRecipeIds: defaultUnlockedRecipeIds(),
     flags: {},
+    collection: {},
   };
 }
