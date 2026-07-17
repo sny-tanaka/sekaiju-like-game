@@ -252,9 +252,9 @@ export const mockPostBoss: SaveData = (() => {
     },
     bestiary: {
       monsters: {
-        enemy_boss_gatekeeper: { seen: true, defeated: true, dropsFound: [] },
-        enemy_slime: { seen: true, defeated: true, dropsFound: [] },
-        enemy_giant_rat: { seen: true, defeated: false, dropsFound: [] },
+        enemy_boss_gatekeeper: { seen: true, defeated: true, dropsFound: [], kills: 1 },
+        enemy_slime: { seen: true, defeated: true, dropsFound: [], kills: 3 },
+        enemy_giant_rat: { seen: true, defeated: false, dropsFound: [], kills: 0 },
       },
       items: {},
     },

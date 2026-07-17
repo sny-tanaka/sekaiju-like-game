@@ -1,4 +1,5 @@
 import { BATTLE_SKILLS } from '@/data/battleSkills';
+import { COLLECTIBLE_BY_ENEMY } from '@/data/collectibles';
 import { MASTERS } from '@/data/index';
 import { PASSIVE_SKILLS } from '@/data/passives';
 import { SELL_UNLOCKS } from '@/domain/shop';
@@ -266,6 +267,44 @@ export function validateMasters(): ValidationResult {
     if (!(matId in items)) errors.push(`[SELL_UNLOCKS] キー素材 "${matId}" が未定義`);
     for (const eid of equipIds) {
       if (!(eid in equipment)) errors.push(`[SELL_UNLOCKS] 解放先装備 "${eid}" が未定義`);
+    }
+  }
+
+  // 秘宝（v3.0.0 §5）: すべての敵に COLLECTIBLE_BY_ENEMY のエントリがあり、参照先アイテムが
+  // 実在し collectible===true かつ category==='valuable' であること。
+  for (const id of Object.keys(enemies)) {
+    const itemId = COLLECTIBLE_BY_ENEMY[id];
+    if (!itemId) {
+      errors.push(`[COLLECTIBLE_BY_ENEMY] 敵 "${id}" のエントリが無い`);
+      continue;
+    }
+    const item = items[itemId];
+    if (!item) {
+      errors.push(`[COLLECTIBLE_BY_ENEMY] "${id}" の参照先アイテム "${itemId}" が未定義`);
+      continue;
+    }
+    if (item.collectible !== true) {
+      errors.push(`[COLLECTIBLE_BY_ENEMY] "${itemId}" は collectible:true でない`);
+    }
+    if (item.category !== 'valuable') {
+      errors.push(`[COLLECTIBLE_BY_ENEMY] "${itemId}" は category:'valuable' でない`);
+    }
+  }
+
+  // 換金アイテム（v3.0.0 §3）: gemValue を持つアイテムは gemValue > 0 かつ category==='valuable'。
+  for (const it of Object.values(items)) {
+    if (it.gemValue === undefined) continue;
+    if (it.gemValue <= 0) errors.push(`[items] "${it.id}" の gemValue が正でない`);
+    if (it.category !== 'valuable') {
+      errors.push(`[items] "${it.id}" は gemValue を持つが category:'valuable' でない`);
+    }
+  }
+
+  // ジェム限定装備（v3.0.0 §6）: gemPrice を持つ装備は buyPrice===0。
+  for (const eq of Object.values(equipment)) {
+    if (eq.gemPrice === undefined) continue;
+    if (eq.buyPrice !== 0) {
+      errors.push(`[equipment] "${eq.id}" は gemPrice を持つが buyPrice が 0 でない`);
     }
   }
 

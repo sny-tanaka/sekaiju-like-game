@@ -1,5 +1,5 @@
 import { startDive } from '@/domain/dive';
-import { addItem } from '@/domain/inventory';
+import { addItem, itemCount } from '@/domain/inventory';
 import { applyFieldItem } from '@/domain/itemUse';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
 import type { SaveData } from '@/domain/types';
@@ -56,5 +56,65 @@ describe('applyFieldItem', () => {
     const res = applyFieldItem(save, 'item_potion', charId);
     expect(res.ok).toBe(false);
     expect(res.save).toBe(save);
+  });
+
+  // --- v3.0.0 §8: 万能薬（cleanse）・気付けの雫（revive）のフィールド使用 ---
+  test('万能薬（item_panacea）で状態異常が解除される', () => {
+    const _d = diveSave();
+    const charId = _d.charId;
+    let save = _d.save;
+    save = addItem(save, 'item_panacea', 1);
+    save = {
+      ...save,
+      diveState: {
+        ...save.diveState!,
+        party: save.diveState!.party.map((p) =>
+          p.charId === charId ? { ...p, ailments: [{ type: 'poison', remainingTurns: 3 }] } : p
+        ),
+      },
+    };
+    const res = applyFieldItem(save, 'item_panacea', charId);
+    expect(res.ok).toBe(true);
+    const member = res.save.diveState!.party.find((p) => p.charId === charId)!;
+    expect(member.ailments).toHaveLength(0);
+    expect(res.save.guild.storage.find((s) => s.itemId === 'item_panacea')).toBeUndefined();
+  });
+
+  test('万能薬（item_panacea）は状態異常が無ければ不発（消費しない）', () => {
+    const _d = diveSave();
+    const charId = _d.charId;
+    let save = _d.save;
+    save = addItem(save, 'item_panacea', 1);
+    const res = applyFieldItem(save, 'item_panacea', charId);
+    expect(res.ok).toBe(false);
+    expect(itemCount(res.save, 'item_panacea')).toBe(1);
+  });
+
+  test('気付けの雫（item_revive_drop）で戦闘不能の対象が最大HPの40%で復活する', () => {
+    const _d = diveSave();
+    const charId = _d.charId;
+    let save = _d.save;
+    save = addItem(save, 'item_revive_drop', 1);
+    save = {
+      ...save,
+      diveState: {
+        ...save.diveState!,
+        party: save.diveState!.party.map((p) => (p.charId === charId ? { ...p, hp: 0 } : p)),
+      },
+    };
+    const res = applyFieldItem(save, 'item_revive_drop', charId);
+    expect(res.ok).toBe(true);
+    const member = res.save.diveState!.party.find((p) => p.charId === charId)!;
+    expect(member.hp).toBeGreaterThan(0);
+  });
+
+  test('気付けの雫（item_revive_drop）は生存者には無効（不発・消費しない）', () => {
+    const _d = diveSave();
+    const charId = _d.charId;
+    let save = _d.save;
+    save = addItem(save, 'item_revive_drop', 1);
+    const res = applyFieldItem(save, 'item_revive_drop', charId);
+    expect(res.ok).toBe(false);
+    expect(itemCount(res.save, 'item_revive_drop')).toBe(1);
   });
 });

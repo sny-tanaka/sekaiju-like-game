@@ -50,6 +50,26 @@ export const BALANCE = {
   HEAL_MATK_COEF_ALL: 0.45, // 全体回復
   HEAL_MATK_COEF_MINOR: 0.3, // 歌・救護等の軽回復
   SURPLUS_SP_PER_STAT: 4, // 余剰SP 4 ごとに全ステ +1（§10）
+  // ---- v3.0.0 依頼と秘宝 ----
+  // 換金アイテムのドロップ（kind 別の確率と、tierBand 別の品目）
+  GEM_DROP_RATE: { zako: 0.12, foe: 0.5, boss: 1.0 } as const,
+  // 秘宝（コレクション）のドロップ確率（kind 別）
+  COLLECT_DROP_RATE: { zako: 0.04, foe: 0.12, boss: 0.25 } as const,
+  // 秘宝の重複入手 1 個あたりのジェム自動変換量
+  COLLECT_DUP_GEMS: 2,
+  // 討伐勲章のしきい値（kind 別、[銅, 銀, 金, 虹]）
+  TROPHY_THRESHOLDS: {
+    zako: [10, 50, 150, 400],
+    foe: [3, 10, 30, 80],
+    boss: [1, 5, 15, 40],
+  } as const,
+  // 勲章到達時のジェム付与（[銅, 銀, 金, 虹]）
+  TROPHY_GEMS: [2, 5, 15, 50] as const,
+  // 秘宝の帯（tierBand）コンプリート報酬ジェム / 全 60 種コンプ報酬ジェム
+  COLLECT_BAND_GEMS: 30,
+  COLLECT_ALL_GEMS: 100,
+  // 同時に受注できる依頼数
+  QUEST_MAX_ACTIVE: 3,
 } as const;
 
 // ----------------------------------------------------------------------------

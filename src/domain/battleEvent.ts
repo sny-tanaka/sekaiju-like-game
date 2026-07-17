@@ -59,7 +59,8 @@ export type ItemEffect =
   | { kind: 'heal'; amount: number }
   | { kind: 'cure'; cureEffects: DebuffKind[] }
   | { kind: 'tp-restore'; amount: number }
-  | { kind: 'revive'; hpRestore: number };
+  | { kind: 'revive'; hpRestore: number }
+  | { kind: 'buff'; stat: BuffStatTarget; turns: number };
 
 // ----------------------------------------------------------------------------
 // BattleEvent の各バリアント

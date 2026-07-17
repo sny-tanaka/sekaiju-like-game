@@ -26,6 +26,8 @@ const MIGRATIONS: Record<number, (old: Record<string, unknown>) => Record<string
   3: (old) => migrateV3toV4(old),
   // v4 → v5: Character.subClassId を追加（v2.0.0 副業システム）。
   4: (old) => migrateV4toV5(old),
+  // v5 → v6: guild.gems / bestiary.monsters[].kills / collection / questStates を追加（v3.0.0）。
+  5: (old) => migrateV5toV6(old),
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
@@ -117,6 +119,37 @@ function migrateV4toV5(old: Record<string, unknown>): Record<string, unknown> {
     );
   }
   next.guild = guild;
+  return next;
+}
+
+/**
+ * v5→v6: guild.gems（無ければ 0）、bestiary.monsters の各エントリに kills（無ければ 0）、
+ * collection（無ければ {}）、questStates（配列でなければ []）を補完する（v3.0.0 依頼と秘宝）。
+ * bestiary は SaveData.bestiary（正典）・guild.bestiary（ミラー）の両方を補完する。
+ */
+function migrateV5toV6(old: Record<string, unknown>): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...old, schemaVersion: 6 };
+
+  const fixBestiary = (b: unknown): unknown => {
+    if (!isObj(b)) return b;
+    const monsters = isObj(b.monsters) ? { ...b.monsters } : {};
+    for (const [id, entry] of Object.entries(monsters)) {
+      if (isObj(entry) && typeof entry.kills !== 'number') {
+        monsters[id] = { ...entry, kills: 0 };
+      }
+    }
+    return { ...b, monsters };
+  };
+
+  const guild = isObj(next.guild) ? { ...next.guild } : {};
+  if (typeof guild.gems !== 'number') guild.gems = 0;
+  if ('bestiary' in guild) guild.bestiary = fixBestiary(guild.bestiary);
+  next.guild = guild;
+
+  next.bestiary = fixBestiary(next.bestiary);
+  if (!isObj(next.collection)) next.collection = {};
+  if (!Array.isArray(next.questStates)) next.questStates = [];
+
   return next;
 }
 

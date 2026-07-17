@@ -219,6 +219,9 @@ export const fmt = (event: BattleEvent, state: BattleState): FmtResult => {
         case 'revive':
           post = [`${targetName}が蘇生した！(HP+${event.effect.hpRestore})`];
           break;
+        case 'buff':
+          post = [`${targetName}に${buffLabel(event.effect.stat)}が付与された！`];
+          break;
       }
       return { pre, post };
     }

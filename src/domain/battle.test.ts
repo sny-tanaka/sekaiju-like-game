@@ -1,3 +1,5 @@
+import { BALANCE } from '@/data/balance';
+import { ITEMS } from '@/data/items';
 import {
   applyBattleResult,
   battleRewards,
@@ -653,9 +655,15 @@ describe('battle: drops & items', () => {
     }
     expect(state.outcome).toBe('win');
     const after = applyBattleResult(save, state);
-    // state.drops に乗った分だけ倉庫に入る
+    // state.drops に乗った分だけ倉庫・collection に入る（換金アイテム・秘宝を除き図鑑にも記録される。v3.0.0 §3/§5）
     for (const d of state.drops) {
+      const item = ITEMS[d.itemId];
+      if (item?.collectible) {
+        expect(after.collection[d.itemId]).toBeGreaterThanOrEqual(1);
+        continue;
+      }
       expect(itemCount(after, d.itemId)).toBeGreaterThanOrEqual(1);
+      if (item?.gemValue !== undefined) continue; // 換金アイテムは dropsFound の記録対象外（v3.0.0 §3）
       expect(after.bestiary.monsters[d.enemyId]?.dropsFound).toContain(d.itemId);
     }
   });
@@ -690,6 +698,320 @@ describe('battle: drops & items', () => {
     expect(next.allies.find((a) => a.id === ally.id)!.hp).toBeGreaterThan(1);
     const after = applyBattleResult(save, next);
     expect(itemCount(after, 'item_potion')).toBe(1); // 2 → 1
+  });
+});
+
+describe('battle: v3.0.0 換金アイテム・秘宝のドロップ抽選（§3・§5）', () => {
+  /** enemyId を1体だけ配置し、HP を1にした BattleState を返す（1ターンで確実に倒せる状態）。 */
+  function oneHitReadyState(enemyId: string): BattleState {
+    const state = startBattle(diveSave(), [enemyId]);
+    return { ...state, enemies: state.enemies.map((e) => ({ ...e, hp: 1 })) };
+  }
+
+  test('zako・tierBand<=1（enemy_slime）は当選時 item_gem_shard をドロップする', () => {
+    const state = oneHitReadyState('enemy_slime');
+    const after = resolveTurn(state, attackAll(state), createRng(10));
+    expect(after.enemies[0].isDown).toBe(true);
+    expect(after.drops).toContainEqual({ enemyId: 'enemy_slime', itemId: 'item_gem_shard' });
+  });
+
+  test('zako は落選時ジェムアイテム・秘宝をドロップしない（同シードで再現）', () => {
+    const state = oneHitReadyState('enemy_slime');
+    const after = resolveTurn(state, attackAll(state), createRng(4));
+    expect(after.enemies[0].isDown).toBe(true);
+    expect(after.drops).toEqual([]);
+  });
+
+  test('zako・tierBand>=2（enemy_t2_frostfang_wolf）は当選時 item_gem_stone をドロップする', () => {
+    const state = oneHitReadyState('enemy_t2_frostfang_wolf');
+    const after = resolveTurn(state, attackAll(state), createRng(10));
+    expect(after.drops).toContainEqual({
+      enemyId: 'enemy_t2_frostfang_wolf',
+      itemId: 'item_gem_stone',
+    });
+  });
+
+  test('foe・tierBand<=1（enemy_t0_elder_treant）は当選時 item_gem_stone をドロップする', () => {
+    const state = oneHitReadyState('enemy_t0_elder_treant');
+    const after = resolveTurn(state, attackAll(state), createRng(9));
+    expect(after.drops).toContainEqual({
+      enemyId: 'enemy_t0_elder_treant',
+      itemId: 'item_gem_stone',
+    });
+  });
+
+  test('foe・tierBand>=2（enemy_t2_glacial_bear）は当選時 item_gem_cluster をドロップする', () => {
+    const state = oneHitReadyState('enemy_t2_glacial_bear');
+    const after = resolveTurn(state, attackAll(state), createRng(5));
+    expect(after.drops).toContainEqual({
+      enemyId: 'enemy_t2_glacial_bear',
+      itemId: 'item_gem_cluster',
+    });
+  });
+
+  test('boss（enemy_boss_gatekeeper）は確率1.0で常に item_gem_cluster をドロップする', () => {
+    for (const seed of [3, 7, 10, 20, 30]) {
+      const state = oneHitReadyState('enemy_boss_gatekeeper');
+      const after = resolveTurn(state, attackAll(state), createRng(seed));
+      expect(after.enemies[0].isDown).toBe(true);
+      expect(after.drops).toContainEqual({
+        enemyId: 'enemy_boss_gatekeeper',
+        itemId: 'item_gem_cluster',
+      });
+    }
+  });
+
+  test('秘宝（collectible）は COLLECTIBLE_BY_ENEMY の品目が当選時ドロップする', () => {
+    const state = oneHitReadyState('enemy_slime');
+    const after = resolveTurn(state, attackAll(state), createRng(22));
+    expect(after.drops).toContainEqual({ enemyId: 'enemy_slime', itemId: 'item_col_slime' });
+  });
+});
+
+describe('battle: applyBattleResult 拡張（v3.0.0 討伐勲章・秘宝コレクション §4・§5）', () => {
+  /** 指定 enemyId を defeatCount 体討伐した想定の「決着済み」BattleState を rng に依らず直接組み立てる。 */
+  function resultState(
+    save: SaveData,
+    enemyId: string,
+    defeatCount: number,
+    outcome: 'win' | 'lose',
+    drops: { enemyId: string; itemId: string }[] = []
+  ): BattleState {
+    const base = startBattle(save, Array<string>(defeatCount).fill(enemyId));
+    return {
+      ...base,
+      outcome,
+      enemies: base.enemies.map((e) => ({ ...e, isDown: true, hp: 0 })),
+      drops,
+    };
+  }
+
+  function withKills(save: SaveData, enemyId: string, kills: number): SaveData {
+    return {
+      ...save,
+      bestiary: {
+        ...save.bestiary,
+        monsters: {
+          ...save.bestiary.monsters,
+          [enemyId]: { seen: true, defeated: true, dropsFound: [], kills },
+        },
+      },
+    };
+  }
+
+  test('新たに倒した敵の数だけ kills が加算される（同戦闘で複数体撃破の合算）', () => {
+    const save = diveSave();
+    const state = resultState(save, 'enemy_slime', 3, 'win');
+    const after = applyBattleResult(save, state);
+    expect(after.bestiary.monsters.enemy_slime.kills).toBe(3);
+  });
+
+  test('勲章ランクを跨ぐと guild.gems に TROPHY_GEMS が加算される（zako 銅=10体で+2）', () => {
+    const save = withKills(diveSave(), 'enemy_slime', 9);
+    const state = resultState(save, 'enemy_slime', 1, 'win');
+    const after = applyBattleResult(save, state);
+    expect(after.bestiary.monsters.enemy_slime.kills).toBe(10);
+    expect(after.guild.gems).toBe(save.guild.gems + BALANCE.TROPHY_GEMS[0]);
+  });
+
+  test('敗北(lose)でも新たに倒れた敵の kills・勲章ジェムは加算される（勝敗を問わない）', () => {
+    const save = withKills(diveSave(), 'enemy_slime', 9);
+    const state = resultState(save, 'enemy_slime', 1, 'lose');
+    const after = applyBattleResult(save, state);
+    expect(after.bestiary.monsters.enemy_slime.kills).toBe(10);
+    expect(after.guild.gems).toBe(save.guild.gems + BALANCE.TROPHY_GEMS[0]);
+  });
+
+  test('敗北(lose)では collection・倉庫ドロップは反映されない', () => {
+    const save = diveSave();
+    const state = resultState(save, 'enemy_slime', 1, 'lose', [
+      { enemyId: 'enemy_slime', itemId: 'item_col_slime' },
+      { enemyId: 'enemy_slime', itemId: 'item_gem_shard' },
+    ]);
+    const after = applyBattleResult(save, state);
+    expect(after.collection.item_col_slime).toBeUndefined();
+    expect(itemCount(after, 'item_gem_shard')).toBe(0);
+  });
+
+  test('collectible なドロップは倉庫に入らず save.collection に記録される', () => {
+    const save = diveSave();
+    const state = resultState(save, 'enemy_slime', 1, 'win', [
+      { enemyId: 'enemy_slime', itemId: 'item_col_slime' },
+    ]);
+    const after = applyBattleResult(save, state);
+    expect(after.collection.item_col_slime).toBe(1);
+    expect(itemCount(after, 'item_col_slime')).toBe(0);
+  });
+
+  test('秘宝の重複入手（2個目以降）は COLLECT_DUP_GEMS ジェムに変換される', () => {
+    const save = { ...diveSave(), collection: { item_col_slime: 1 } };
+    const state = resultState(save, 'enemy_slime', 1, 'win', [
+      { enemyId: 'enemy_slime', itemId: 'item_col_slime' },
+    ]);
+    const after = applyBattleResult(save, state);
+    expect(after.collection.item_col_slime).toBe(2);
+    expect(after.guild.gems).toBe(save.guild.gems + BALANCE.COLLECT_DUP_GEMS);
+  });
+
+  test('換金アイテム・秘宝は図鑑 dropsFound の記録対象から除外される（汚染防止）', () => {
+    const save = diveSave();
+    const state = resultState(save, 'enemy_slime', 1, 'win', [
+      { enemyId: 'enemy_slime', itemId: 'item_gem_shard' },
+      { enemyId: 'enemy_slime', itemId: 'item_col_slime' },
+      { enemyId: 'enemy_slime', itemId: 'item_slime_jelly' },
+    ]);
+    const after = applyBattleResult(save, state);
+    expect(after.bestiary.monsters.enemy_slime.dropsFound).toEqual(['item_slime_jelly']);
+  });
+
+  test('秘宝の帯(tierBand)コンプで COLLECT_BAND_GEMS が1回だけ付与される', () => {
+    // tierBand0 の秘宝は 12 種。11種まで所持済みの状態で最後の1種を入手する。
+    const tierBand0Ids = [
+      'item_col_slime',
+      'item_col_giant_rat',
+      'item_col_cave_bat',
+      'item_col_forest_rabbit',
+      'item_col_glow_mushroom',
+      'item_col_wood_caracal',
+      'item_col_pale_wisp',
+      'item_col_bristle_boar',
+      'item_col_thicket_stag',
+      'item_col_cave_crawler',
+      'item_col_elder_treant',
+      // item_col_gatekeeper は未所持のまま最後に入手させる
+    ];
+    const collection = Object.fromEntries(tierBand0Ids.map((id) => [id, 1]));
+    // ボスの kills を事前に1（勲章銅ランク到達済み）にしておき、勲章ジェムの混入を避ける
+    const save = withKills({ ...diveSave(), collection }, 'enemy_boss_gatekeeper', 1);
+    const state = resultState(save, 'enemy_boss_gatekeeper', 1, 'win', [
+      { enemyId: 'enemy_boss_gatekeeper', itemId: 'item_col_gatekeeper' },
+    ]);
+    const after = applyBattleResult(save, state);
+    expect(after.guild.gems).toBe(save.guild.gems + BALANCE.COLLECT_BAND_GEMS);
+    expect(after.flags.collectionBand0).toBe(true);
+    // 再度同じ状況になっても再付与しない（フラグで防止）
+    const again = applyBattleResult(after, {
+      ...state,
+      drops: [],
+    });
+    expect(again.guild.gems).toBe(after.guild.gems);
+  });
+});
+
+describe('battle: アイテム経由の buff / cleanse / revive（v3.0.0 §8）', () => {
+  function twoCharDiveSave(): SaveData {
+    let save = createInitialSaveData('二人PT');
+    save = addCharacterToGuild(
+      save,
+      createCharacter({ raceId: 'race_garon', classId: 'class_warrior', name: 'A' })
+    );
+    save = addCharacterToGuild(
+      save,
+      createCharacter({ raceId: 'race_human', classId: 'class_medic', name: 'B' })
+    );
+    return startDive(save, 1);
+  }
+
+  function findItemUseEvent(state: BattleState) {
+    return state.events.find((e) => e.kind === 'item-use');
+  }
+
+  test('item_power_water で patk バフ(atkBuff)が付与される', () => {
+    let save = diveSave();
+    save = addItem(save, 'item_power_water', 1);
+    const state = startBattle(save, ['enemy_slime']);
+    const ally = state.allies[0];
+    const after = resolveTurn(
+      state,
+      [{ kind: 'item', actorId: ally.id, itemId: 'item_power_water', targetId: ally.id }],
+      createRng(1)
+    );
+    const target = after.allies.find((a) => a.id === ally.id)!;
+    const buff = target.buffs.find((b) => b.stat === 'patk');
+    expect(buff).toBeDefined();
+    expect(buff!.modifier).toBeCloseTo(1.3);
+    expect(buff!.stackGroup).toBe('atkBuff');
+    // turns:3 で付与されるが、同ターンのターン終了処理で1減算されるため2になる
+    expect(buff!.remainingTurns).toBe(2);
+    const evt = findItemUseEvent(after);
+    expect(evt?.kind === 'item-use' && evt.effect.kind).toBe('buff');
+  });
+
+  test('item_guard_water は defBuff、item_magic_water は matkBuff の stackGroup で付与される', () => {
+    let save = diveSave();
+    save = addItem(save, 'item_guard_water', 1);
+    save = addItem(save, 'item_magic_water', 1);
+    const state = startBattle(save, ['enemy_slime']);
+    const ally = state.allies[0];
+    const afterGuard = resolveTurn(
+      state,
+      [{ kind: 'item', actorId: ally.id, itemId: 'item_guard_water', targetId: ally.id }],
+      createRng(1)
+    );
+    const guardBuff = afterGuard.allies
+      .find((a) => a.id === ally.id)!
+      .buffs.find((b) => b.stat === 'pdef');
+    expect(guardBuff?.stackGroup).toBe('defBuff');
+
+    const afterMagic = resolveTurn(
+      state,
+      [{ kind: 'item', actorId: ally.id, itemId: 'item_magic_water', targetId: ally.id }],
+      createRng(1)
+    );
+    const magicBuff = afterMagic.allies
+      .find((a) => a.id === ally.id)!
+      .buffs.find((b) => b.stat === 'matk');
+    expect(magicBuff?.stackGroup).toBe('matkBuff');
+  });
+
+  test('item_panacea で状態異常がすべて解除される', () => {
+    let save = diveSave();
+    save = addItem(save, 'item_panacea', 1);
+    const state0 = startBattle(save, ['enemy_slime']);
+    const ally = state0.allies[0];
+    const poisoned: BattleState = {
+      ...state0,
+      allies: state0.allies.map((a) =>
+        a.id === ally.id
+          ? { ...a, ailments: [{ type: 'poison', remainingTurns: 3 } as ActiveAilment] }
+          : a
+      ),
+    };
+    const after = resolveTurn(
+      poisoned,
+      [{ kind: 'item', actorId: ally.id, itemId: 'item_panacea', targetId: ally.id }],
+      createRng(1)
+    );
+    const target = after.allies.find((a) => a.id === ally.id)!;
+    expect(target.ailments).toHaveLength(0);
+    const evt = findItemUseEvent(after);
+    expect(evt?.kind === 'item-use' && evt.effect).toEqual({
+      kind: 'cure',
+      cureEffects: ['poison'],
+    });
+  });
+
+  test('item_revive_drop で戦闘不能の味方が最大HPの40%で復活する', () => {
+    let save = twoCharDiveSave();
+    save = addItem(save, 'item_revive_drop', 1);
+    const state0 = startBattle(save, ['enemy_slime']);
+    const [downedAlly, reviver] = state0.allies;
+    const wounded: BattleState = {
+      ...state0,
+      allies: state0.allies.map((a) =>
+        a.id === downedAlly.id ? { ...a, hp: 0, isDown: true } : a
+      ),
+    };
+    const after = resolveTurn(
+      wounded,
+      [{ kind: 'item', actorId: reviver.id, itemId: 'item_revive_drop', targetId: downedAlly.id }],
+      createRng(1)
+    );
+    const target = after.allies.find((a) => a.id === downedAlly.id)!;
+    expect(target.isDown).toBe(false);
+    expect(target.hp).toBe(Math.round(target.maxHp * 0.4));
+    const evt = findItemUseEvent(after);
+    expect(evt?.kind === 'item-use' && evt.effect.kind).toBe('revive');
   });
 });
 

@@ -1,5 +1,7 @@
 import styles from './style.module.scss';
 
+import { COLLECTIBLE_BY_ENEMY } from '@/data/collectibles';
+import { ENEMIES } from '@/data/enemies';
 import { EQUIPMENT } from '@/data/equipment';
 import type { ItemId } from '@/domain/types';
 import { itemSpriteUrl } from '@/sprites/itemSpriteUrl';
@@ -20,13 +22,58 @@ const TIER_HUE_SHIFTS: readonly number[] = [0, 40, 100, 180, 240, 290];
 
 // 同一ベース画像を使う「アイテム素材」の hue-rotate 個別指定（毛皮 3 個）。
 // 茶色ベースの毛皮画像を、tier の特性（やわらか/霜降り/帯電）に合わせて色相を回す。
+// v3.0.0 §9: 換金アイテム・ジェム限定装備・新消耗品の個別 hue もここに追加する。
 const ITEM_HUE_OVERRIDES: Record<string, number> = {
   item_mat_t0_soft_pelt: 0, // 茶のまま（やわらかな毛皮）
   item_mat_t2_frost_pelt: 180, // 青系（霜降りの毛皮）
   item_mat_t3_charged_hide: 240, // 紫系（帯電した獣皮）
+  // 換金アイテム（ジェム原石系）
+  item_gem_shard: 120,
+  item_gem_stone: 30,
+  item_gem_cluster: 280,
+  item_gem_prism: 320,
+  // ジェム限定装備（11種。equip_collector_crown は含まない）。charm のみ個別上書き。
+  equip_gem_sword: 315,
+  equip_gem_spear: 315,
+  equip_gem_axe: 315,
+  equip_gem_bow: 315,
+  equip_gem_fist: 315,
+  equip_gem_staff: 315,
+  equip_gem_heavy: 315,
+  equip_gem_light: 315,
+  equip_gem_clothes: 315,
+  equip_gem_ring: 315,
+  equip_gem_charm: 45,
+  equip_collector_crown: 0,
+  // 新消耗品
+  item_ex_potion: 40,
+  item_miracle_potion: 300,
+  item_panacea: 90,
+  item_revive_drop: 200,
+  item_power_water: 0,
+  item_guard_water: 120,
+  item_magic_water: 260,
+  item_tp_elixir: 320,
 };
 
+// 秘宝（item_col_*）の tierBand 別 hue（帯0..4）。
+const COLLECTIBLE_BAND_HUES: readonly number[] = [0, 60, 180, 260, 320];
+
+// item_col_* の itemId → 敵の tierBand の逆引き（COLLECTIBLE_BY_ENEMY + ENEMIES から算出）。
+const COLLECTIBLE_ITEM_BAND: Record<string, number> = Object.fromEntries(
+  Object.entries(COLLECTIBLE_BY_ENEMY).map(([enemyId, itemId]) => [
+    itemId,
+    ENEMIES[enemyId].tierBand,
+  ])
+);
+
 function getHueShift(itemId: ItemId): number {
+  // 秘宝（item_col_*）は個別列挙ではなく、敵の tierBand から動的算出する。
+  const band = COLLECTIBLE_ITEM_BAND[itemId];
+  if (band !== undefined) return COLLECTIBLE_BAND_HUES[band] ?? 0;
+  // ITEM_HUE_OVERRIDES を最初に見る（EQUIPMENT 分岐より優先）。
+  const override = ITEM_HUE_OVERRIDES[itemId];
+  if (override !== undefined) return override;
   const eq = EQUIPMENT[itemId as keyof typeof EQUIPMENT];
   if (eq) {
     if (eq.slot === 'weapon') {
@@ -39,9 +86,6 @@ function getHueShift(itemId: ItemId): number {
       return TIER_HUE_SHIFTS[eq.tier] ?? 0;
     }
   }
-  // アイテム素材の個別 hue 指定
-  const override = ITEM_HUE_OVERRIDES[itemId];
-  if (override !== undefined) return override;
   return 0;
 }
 

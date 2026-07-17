@@ -45,6 +45,17 @@ export const SELL_UNLOCKS: Record<ItemId, ItemId[]> = {
   item_mat_t4_sovereign_crown: ['equip_t5_sword', 'equip_t5_heavy'],
 };
 
+const STAT_MOD_LABEL: Record<string, string> = {
+  hp: 'HP',
+  tp: 'TP',
+  str: 'STR',
+  vit: 'VIT',
+  agi: 'AGI',
+  int: 'INT',
+  mnd: 'MND',
+  luc: 'LUC',
+};
+
 const equipNote = (id: ItemId, grade = 1): string => {
   const b = gradedBaseBonuses(id, grade);
   const parts: string[] = [];
@@ -52,6 +63,12 @@ const equipNote = (id: ItemId, grade = 1): string => {
   if (b.mat) parts.push(`MAT+${b.mat}`);
   if (b.def) parts.push(`DEF+${b.def}`);
   if (b.mdf) parts.push(`MDF+${b.mdf}`);
+  // v3.0.0 §6: ジェム限定装備は statMods（STR+5 等）を持つため note に含める。
+  if (b.statMods) {
+    for (const [k, v] of Object.entries(b.statMods)) {
+      if (v) parts.push(`${STAT_MOD_LABEL[k] ?? k.toUpperCase()}+${v}`);
+    }
+  }
   return parts.join(' ');
 };
 
@@ -71,7 +88,8 @@ export function shopCatalog(save: SaveData): ShopEntry[] {
     .filter((it) => it.buyPrice > 0)
     .map((it) => ({ id: it.id, name: it.name, price: it.buyPrice, kind: 'item' }));
   const equips: ShopEntry[] = Object.values(EQUIPMENT)
-    .filter((eq) => eq.tier <= tier || unlockedIds.has(eq.id))
+    // v3.0.0 §6: gemPrice を持つ装備（ジェム限定）は通常カタログに出さない（交換所のみ）。
+    .filter((eq) => eq.gemPrice === undefined && (eq.tier <= tier || unlockedIds.has(eq.id)))
     .map((eq) => {
       const grade = shopEquipGrade(save, eq.id);
       return {
@@ -190,6 +208,8 @@ export function buyMany(save: SaveData, id: ItemId, qty: number): SaveData {
  * 素材なら関連装備を恒久解放し、その装備のショップ表示グレードを「売った素材の周回グレード」に引き上げる（[06 §3]）。
  */
 export function sell(save: SaveData, id: ItemId, qty = 1, grade = 1): SaveData {
+  // v3.0.0 §3: 換金アイテム・秘宝（category:'valuable'）はゴールド売却不可（換金はジェムのみ）。
+  if (ITEMS[id]?.category === 'valuable') return save;
   const have = save.guild.storage
     .filter((s) => s.itemId === id && (s.grade ?? 1) === grade)
     .reduce((a, s) => a + s.qty, 0);
@@ -234,4 +254,67 @@ export function equipableClassNames(masterId: ItemId): string[] {
   return Object.values(CLASSES)
     .filter((c) => eq.armorType !== undefined && c.equipableArmorTypes.includes(eq.armorType))
     .map((c) => c.name);
+}
+
+// ============================================================================
+// v3.0.0 §6: ジェム交換所。換金アイテム→ジェム／ジェムでのみ購入できる限定装備。
+// ============================================================================
+
+export interface GemExchangeEntry {
+  itemId: ItemId;
+  name: string;
+  qty: number;
+  gemValue: number;
+}
+
+/** 倉庫内の gemValue 付きアイテム（換金アイテム）一覧。grade は無視し qty を合算する。 */
+export function gemExchangeList(save: SaveData): GemExchangeEntry[] {
+  const totals = new Map<ItemId, number>();
+  for (const s of save.guild.storage) {
+    if (!ITEMS[s.itemId]?.gemValue) continue;
+    totals.set(s.itemId, (totals.get(s.itemId) ?? 0) + s.qty);
+  }
+  return [...totals.entries()].map(([itemId, qty]) => ({
+    itemId,
+    name: ITEMS[itemId].name,
+    qty,
+    gemValue: ITEMS[itemId].gemValue!,
+  }));
+}
+
+/** 該当アイテムを（grade 問わず）全数消費し、gems += gemValue * qty する。所持していなければ変更しない。 */
+export function exchangeForGems(save: SaveData, itemId: ItemId): SaveData {
+  const gemValue = ITEMS[itemId]?.gemValue;
+  if (!gemValue) return save;
+  const stacks = save.guild.storage.filter((s) => s.itemId === itemId);
+  const totalQty = stacks.reduce((a, s) => a + s.qty, 0);
+  if (totalQty <= 0) return save;
+  const storage = save.guild.storage.filter((s) => s.itemId !== itemId);
+  return {
+    ...save,
+    guild: { ...save.guild, storage, gems: save.guild.gems + gemValue * totalQty },
+  };
+}
+
+export interface GemEquipEntry {
+  id: ItemId;
+  name: string;
+  note: string;
+  gemPrice: number;
+}
+
+/** gemPrice を持つ装備一覧（ジェム限定装備。§6）。equip_collector_crown は gemPrice 無しなので自然に除外される。 */
+export function gemEquipCatalog(): GemEquipEntry[] {
+  return Object.values(EQUIPMENT)
+    .filter((eq) => eq.gemPrice !== undefined)
+    .map((eq) => ({ id: eq.id, name: eq.name, note: equipNote(eq.id, 1), gemPrice: eq.gemPrice! }));
+}
+
+/** ジェムでジェム限定装備を購入する。gems が不足、または gemPrice 未設定の装備なら変更しない。 */
+export function buyWithGems(save: SaveData, equipId: ItemId): SaveData {
+  const eq = EQUIPMENT[equipId];
+  if (!eq || eq.gemPrice === undefined) return save;
+  if (save.guild.gems < eq.gemPrice) return save;
+  const next = addEquipment(save, equipId, 0, 1);
+  return { ...next, guild: { ...next.guild, gems: next.guild.gems - eq.gemPrice } };
 }

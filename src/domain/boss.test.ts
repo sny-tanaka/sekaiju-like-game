@@ -1,5 +1,6 @@
 import { canAscend, defeatBoss, goDeeper, resolveFoeBattle, startDive } from '@/domain/dive';
 import { generateFloor } from '@/domain/generateFloor';
+import { itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
 import type { EnemyId, SaveData } from '@/domain/types';
@@ -57,6 +58,26 @@ describe('canAscend / defeatBoss（[06 §4-5・§7]）', () => {
     save = defeatBoss(save, 10);
     expect(save.towerState.warp.unlockedCheckpoints.filter((d) => d === 10)).toHaveLength(1);
     expect(save.towerState.record.bossDefeatLog.filter((b) => b.depth === 10)).toHaveLength(1);
+  });
+
+  // --- v3.0.0 §3: ボスゲート初回撃破ボーナス（虹輝の宝珠） ---
+  test('defeatBoss: ゲート初回撃破で item_gem_prism が1個倉庫に加わる', () => {
+    const save = createInitialSaveData('g');
+    const next = defeatBoss(save, 10);
+    expect(itemCount(next, 'item_gem_prism')).toBe(1);
+  });
+
+  test('defeatBoss: 同じゲートを2回目以降撃破しても item_gem_prism は増えない', () => {
+    let save = defeatBoss(createInitialSaveData('g'), 10);
+    expect(itemCount(save, 'item_gem_prism')).toBe(1);
+    save = defeatBoss(save, 10);
+    expect(itemCount(save, 'item_gem_prism')).toBe(1);
+  });
+
+  test('defeatBoss: 異なるゲートはそれぞれ初回撃破で item_gem_prism が加算される', () => {
+    let save = defeatBoss(createInitialSaveData('g'), 10);
+    save = defeatBoss(save, 20);
+    expect(itemCount(save, 'item_gem_prism')).toBe(2);
   });
 });
 

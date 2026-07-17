@@ -46,6 +46,7 @@ export function applyFieldItem(save: SaveData, itemId: string, charId?: string):
   const stats = computeBaseStats(char);
   let hp = member.hp;
   let tp = member.tp;
+  let ailments = member.ailments;
   let applied = false;
   for (const eff of item.effects ?? []) {
     if (eff.kind === 'heal') {
@@ -56,11 +57,25 @@ export function applyFieldItem(save: SaveData, itemId: string, charId?: string):
       const add = eff.ratio ? Math.round(stats.tp * eff.ratio) : eff.amount(1);
       tp = Math.min(stats.tp, tp + add);
       applied = true;
+    } else if (eff.kind === 'cleanse') {
+      // v3.0.0 §8: 状態異常・部位封じを全解除（item_panacea）。無ければ不発。
+      if (ailments.length > 0) {
+        ailments = [];
+        applied = true;
+      }
+    } else if (eff.kind === 'revive') {
+      // v3.0.0 §8: 戦闘不能（hp<=0）の対象のみ復帰させる（item_revive_drop）。生存者には無効。
+      if (hp <= 0) {
+        hp = Math.max(1, Math.round(stats.hp * eff.ratio(1)));
+        applied = true;
+      }
     }
   }
   if (!applied) return { save, ok: false, message: 'いま使う効果がない' };
 
-  const party = save.diveState.party.map((p) => (p.charId === charId ? { ...p, hp, tp } : p));
+  const party = save.diveState.party.map((p) =>
+    p.charId === charId ? { ...p, hp, tp, ailments } : p
+  );
   const consumed = consume({ ...save, diveState: { ...save.diveState, party } });
   return { save: consumed, ok: true, message: `${char.name} に ${item.name} を使った` };
 }
