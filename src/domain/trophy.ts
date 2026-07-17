@@ -40,6 +40,35 @@ export interface TrophyGain {
   gems: number;
 }
 
+export interface TrophyCounts {
+  bronze: number;
+  silver: number;
+  gold: number;
+  rainbow: number;
+}
+
+/**
+ * 図鑑サマリ用（v3.0.0 §10.4）: 全モンスターの勲章ランク集計。
+ * 各ランクは「そのランク以上に到達したモンスターの数」（銀に到達していれば銅の数にも含む）。
+ * しきい値は単調増加のため、ある敵が銀に到達していれば必ず銅も通過済み。
+ */
+export function trophyCounts(save: SaveData): TrophyCounts {
+  let bronze = 0;
+  let silver = 0;
+  let gold = 0;
+  let rainbow = 0;
+  for (const enemy of Object.values(ENEMIES)) {
+    const kind: TrophyKind = enemy.kind ?? 'zako';
+    const kills = save.bestiary.monsters[enemy.id]?.kills ?? 0;
+    const rank = trophyRank(kind, kills);
+    if (rank >= 1) bronze += 1;
+    if (rank >= 2) silver += 1;
+    if (rank >= 3) gold += 1;
+    if (rank >= 4) rainbow += 1;
+  }
+  return { bronze, silver, gold, rainbow };
+}
+
 /** この戦闘で新たに倒した敵の enemyId ごとの撃破数を集計する（勝敗を問わない）。 */
 function newlyDefeatedCounts(state: BattleState): Map<EnemyId, number> {
   const counts = new Map<EnemyId, number>();

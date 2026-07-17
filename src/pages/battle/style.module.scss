@@ -1859,6 +1859,104 @@
   color: rgba(255,255,255,0.8);
 }
 
+// v3.0.0 §10.5: 秘宝（collectible）ドロップの強調枠
+.resultLootCollectible {
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.resultLootCollectibleBadge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #1a1200;
+  background: var(--gold, #c9a86a);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+
+.resultLootDupGems {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold-bright, #e0c080);
+}
+
+// v3.0.0 §3・§10.5: ボスゲート初回撃破ボーナス（虹輝の宝珠）
+.resultPrism {
+  width: 100%;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(255, 95, 109, 0.12), rgba(79, 169, 255, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.06em;
+}
+
+// v3.0.0 §4・§10.5: 討伐勲章リザルト表示
+.resultTrophy {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resultTrophyHead {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: rgba(255,255,255,0.4);
+}
+
+.resultTrophyRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 3px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.resultTrophyText {
+  flex: 1;
+  color: rgba(255,255,255,0.85);
+}
+
+.resultTrophyGems {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-weight: 700;
+  color: var(--gold-bright, #e0c080);
+}
+
+// v3.0.0 §10.5: この戦闘で得たジェム合計
+.resultGems {
+  width: 100%;
+  background: rgba(143, 111, 224, 0.1);
+  border: 1px solid rgba(143, 111, 224, 0.35);
+  border-radius: 3px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resultGemsLabel {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.45);
+}
+
+.resultGemsValue {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 16px;
+  font-weight: 700;
+  color: #c9a8ff;
+}
+
 .resultGold {
   width: 100%;
   background: rgba(201, 168, 106, 0.08);

@@ -1,8 +1,9 @@
 import { BALANCE } from '@/data/balance';
 import { COLLECTIBLE_BY_ENEMY } from '@/data/collectibles';
 import { ENEMIES } from '@/data/enemies';
+import { ITEMS } from '@/data/items';
 import { addEquipment } from '@/domain/inventory';
-import type { ItemId, SaveData } from '@/domain/types';
+import type { BattleState, EnemyId, ItemId, SaveData } from '@/domain/types';
 
 // ============================================================================
 // 秘宝コレクション（v3.0.0 §5）。帯（tierBand）コンプ・全種コンプ報酬の付与と、
@@ -84,4 +85,80 @@ export function collectionSummary(save: SaveData): CollectionSummary {
   const totalAll = Object.keys(COLLECTIBLE_BY_ENEMY).length;
   const totalOwned = bands.reduce((a, b) => a + b.owned, 0);
   return { bands, totalOwned, totalAll, allComplete: totalAll > 0 && totalOwned === totalAll };
+}
+
+export interface CollectionEntry {
+  band: number;
+  itemId: ItemId;
+  enemyId: EnemyId;
+  name: string;
+  /** 累計入手数（0=未入手）。 */
+  owned: number;
+}
+
+/**
+ * 図鑑「秘宝コレクション」グリッド用の全 60 エントリ（v3.0.0 §10.4）。
+ * tierBand 昇順・同帯内は itemId 昇順で安定ソートする。
+ */
+export function collectionEntries(save: SaveData): CollectionEntry[] {
+  return Object.entries(COLLECTIBLE_BY_ENEMY)
+    .map(([enemyId, itemId]) => ({
+      band: ENEMIES[enemyId]?.tierBand ?? 0,
+      itemId,
+      enemyId: enemyId as EnemyId,
+      name: ITEMS[itemId]?.name ?? itemId,
+      owned: save.collection[itemId] ?? 0,
+    }))
+    .sort((a, b) => a.band - b.band || a.itemId.localeCompare(b.itemId));
+}
+
+export interface CollectibleGain {
+  itemId: ItemId;
+  name: string;
+  /** この戦闘でドロップした数。 */
+  count: number;
+  /** うち重複入手（applyBattleResult の COLLECT_DUP_GEMS 変換対象）としてジェムに変わった個数。 */
+  dupCount: number;
+  gems: number;
+}
+
+/**
+ * 戦闘リザルト表示用の純関数（v3.0.0 §10.5）。この戦闘でドロップした秘宝（collectible）を
+ * itemId ごとに集計し、applyBattleResult と同一ロジックで重複入手ジェムを算出する。
+ * 呼び出しは applyBattleResult 適用前の save（save.collection が戦闘前の値）を渡すこと。
+ */
+export function battleCollectibleGains(save: SaveData, state: BattleState): CollectibleGain[] {
+  if (state.outcome !== 'win') return [];
+  const counts = new Map<ItemId, number>();
+  for (const d of state.drops) {
+    if (!ITEMS[d.itemId]?.collectible) continue;
+    counts.set(d.itemId, (counts.get(d.itemId) ?? 0) + 1);
+  }
+  const gains: CollectibleGain[] = [];
+  for (const [itemId, count] of counts) {
+    const before = save.collection[itemId] ?? 0;
+    // applyBattleResult は drops を1件ずつ処理し「加算前の値が1以上」の回にだけジェム変換する。
+    // 初期所持0なら最初の1個は新規入手（無変換）、2個目以降が重複としてジェムに変わる。
+    const dupCount = before >= 1 ? count : Math.max(0, count - 1);
+    gains.push({
+      itemId,
+      name: ITEMS[itemId]?.name ?? itemId,
+      count,
+      dupCount,
+      gems: dupCount * BALANCE.COLLECT_DUP_GEMS,
+    });
+  }
+  return gains;
+}
+
+/**
+ * 戦闘リザルト表示用の純関数（v3.0.0 §10.5・§3）。この戦闘の勝利で「虹輝の宝珠」の
+ * ボスゲート初回撃破ボーナス（domain/dive.ts の defeatBoss と同一判定）が発生するかを判定する。
+ * 呼び出しは resolveFoeBattle/defeatBoss 適用前の save を渡すこと。
+ */
+export function bossGatePrismGain(save: SaveData, state: BattleState): boolean {
+  if (state.outcome !== 'win') return false;
+  const dive = save.diveState;
+  if (!dive?.pendingFoeBattle?.isBoss) return false;
+  return save.towerState.bossGates[dive.depth]?.defeated !== true;
 }
