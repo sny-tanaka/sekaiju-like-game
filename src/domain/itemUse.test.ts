@@ -137,4 +137,49 @@ describe('applyFieldItem', () => {
     expect(member.hp).toBe(0);
     expect(itemCount(res.save, 'item_potion')).toBe(1);
   });
+
+  // --- 界層還元香（item_floor_reset）: 現在階のボス・FOE・採取ポイントを復活させる ---
+  test('界層還元香で階のリセットが起き、1個消費する', () => {
+    const { save: base } = diveSave();
+    let save = addItem(base, 'item_floor_reset', 1);
+    const floor = save.towerState.floors[1];
+    // FOE を撃破済みにし、採取ポイントを枯渇させておく
+    save = {
+      ...save,
+      towerState: {
+        ...save.towerState,
+        floors: {
+          ...save.towerState.floors,
+          1: {
+            ...floor,
+            foeRuntime: floor.foeRuntime.map((f) => ({ ...f, defeated: true })),
+            depletedGathers: floor.generated.gatheringPoints.map((g) => g.id),
+          },
+        },
+      },
+    };
+    const res = applyFieldItem(save, 'item_floor_reset');
+    expect(res.ok).toBe(true);
+    const nextFloor = res.save.towerState.floors[1];
+    expect(nextFloor.foeRuntime.every((f) => f.defeated === false)).toBe(true);
+    expect(nextFloor.depletedGathers).toEqual([]);
+    expect(itemCount(res.save, 'item_floor_reset')).toBe(0);
+  });
+
+  test('界層還元香は拠点では使えない', () => {
+    let { save } = diveSave();
+    save = addItem(save, 'item_floor_reset', 1);
+    save = { ...save, diveState: null };
+    const res = applyFieldItem(save, 'item_floor_reset');
+    expect(res.ok).toBe(false);
+    expect(res.message).toBe('探索中のみ使える');
+    expect(itemCount(res.save, 'item_floor_reset')).toBe(1);
+  });
+
+  test('界層還元香を所持していなければ使えない', () => {
+    const { save } = diveSave();
+    const res = applyFieldItem(save, 'item_floor_reset');
+    expect(res.ok).toBe(false);
+    expect(res.save).toBe(save);
+  });
 });

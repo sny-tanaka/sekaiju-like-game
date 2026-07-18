@@ -1,5 +1,5 @@
 import { ITEMS, isFood } from '@/data/items';
-import { returnToTown } from '@/domain/dive';
+import { resurrectCurrentFloor, returnToTown } from '@/domain/dive';
 import { foodCount, itemCount, removeFood, removeItem } from '@/domain/inventory';
 import { computeBaseStats } from '@/domain/stats';
 import type { SaveData } from '@/domain/types';
@@ -36,6 +36,13 @@ export function applyFieldItem(save: SaveData, itemId: string, charId?: string):
     if (!save.diveState) return { save, ok: false, message: '探索中のみ使える' };
     const next = returnToTown(consume(save));
     return { save: next, ok: true, message: '拠点へ帰還した' };
+  }
+
+  // 界層還元香: 現在階のボス・FOE・採取ポイントを復活させる
+  if (itemId === 'item_floor_reset') {
+    if (!save.diveState) return { save, ok: false, message: '探索中のみ使える' };
+    const next = resurrectCurrentFloor(consume(save));
+    return { save: next, ok: true, message: 'この階の敵と採取が復活した' };
   }
 
   if (!save.diveState) return { save, ok: false, message: '探索中のみ使える' };
