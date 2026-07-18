@@ -37,6 +37,7 @@ import { canGather, gatherHere, gatheringPointHere, isGatherDepleted } from '@/d
 import { foodCount } from '@/domain/inventory';
 import { applyFieldItem } from '@/domain/itemUse';
 import { pathTo, turnBack, turnLeft, turnRight } from '@/domain/movement';
+import { activeQuests, formatQuestGoal, formatQuestRewards, reportableCount } from '@/domain/quest';
 import { createRng } from '@/domain/rng';
 import { availableSP, learnSkill } from '@/domain/skillTree';
 import { computeBaseStats } from '@/domain/stats';
@@ -68,6 +69,8 @@ export const Page = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   // サウンド設定モーダルの開閉
   const [soundOpen, setSoundOpen] = useState(false);
+  // 依頼進捗パネル（read-only）の開閉
+  const [questsOpen, setQuestsOpen] = useState(false);
   const [menuCharId, setMenuCharId] = useState<string | null>(null);
   const [skillTab, setSkillTab] = useState<'class' | 'race' | 'title'>('class');
   // 採集/調理の一時メッセージ
@@ -727,6 +730,76 @@ export const Page = () => {
         </div>
       ) : null}
 
+      {questsOpen ? (
+        <div
+          className={styles.itemOverlay}
+          onClick={() => setQuestsOpen(false)}
+        >
+          <div
+            className={styles.itemPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.itemTitle}>受注中の依頼</div>
+            {(() => {
+              const active = activeQuests(save);
+              if (active.length === 0) {
+                return (
+                  <p className={styles.itemEmpty}>
+                    受注中の依頼はありません。酒場で受注しましょう。
+                  </p>
+                );
+              }
+              return (
+                <>
+                  {active.some((a) => a.complete) ? (
+                    <p className={styles.questsHint}>達成した依頼は酒場で報告できます。</p>
+                  ) : null}
+                  {active.map(({ quest, progress, complete }) => {
+                    const pct =
+                      progress.required > 0
+                        ? Math.min(100, Math.round((progress.current / progress.required) * 100))
+                        : 0;
+                    return (
+                      <div
+                        key={quest.id}
+                        className={`${styles.questRow} ${complete ? styles.questRowComplete : ''}`}
+                      >
+                        <div className={styles.questHead}>
+                          <span className={styles.questName}>{quest.name}</span>
+                          {complete ? <span className={styles.questBadge}>達成！</span> : null}
+                          {quest.repeatable ? (
+                            <span className={styles.questChip}>くり返し</span>
+                          ) : null}
+                        </div>
+                        <div className={styles.questClient}>依頼主: {quest.client}</div>
+                        <div className={styles.questGoal}>
+                          {formatQuestGoal(quest, progress.current, progress.required)}
+                        </div>
+                        <div className={styles.questProgressTrack}>
+                          <div
+                            className={styles.questProgressFill}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <div className={styles.questRewards}>
+                          {formatQuestRewards(quest.rewards).join(' ・ ')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              );
+            })()}
+            <ActionButton
+              label="とじる"
+              sfx="cancel"
+              className={styles.itemClose}
+              onClick={() => setQuestsOpen(false)}
+            />
+          </div>
+        </div>
+      ) : null}
+
       {menuOpen ? (
         <div
           className={styles.menuOverlay}
@@ -791,6 +864,28 @@ export const Page = () => {
                         >
                           <span className={styles.menuGridIcon}>⚙</span>
                           <span className={styles.menuGridLabel}>設定</span>
+                        </ActionButton>
+                        <ActionButton
+                          sfx="cursor"
+                          className={`${styles.menuGridItem} ${styles.menuGridItemFull}`}
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setQuestsOpen(true);
+                          }}
+                        >
+                          <span className={styles.menuGridIcon}>📜</span>
+                          <div>
+                            <span className={styles.menuGridLabel}>依頼</span>
+                            {reportableCount(save) > 0 ? (
+                              <div className={styles.menuGridSub}>
+                                達成 {reportableCount(save)} 件（酒場で報告）
+                              </div>
+                            ) : (
+                              <div className={styles.menuGridSub}>
+                                受注中 {activeQuests(save).length} 件
+                              </div>
+                            )}
+                          </div>
                         </ActionButton>
                         <ActionButton
                           sfx={null}

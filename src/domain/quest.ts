@@ -1,4 +1,6 @@
 import { BALANCE } from '@/data/balance';
+import { ENEMIES } from '@/data/enemies';
+import { ITEMS } from '@/data/items';
 import { QUESTS, type QuestMaster } from '@/data/quests';
 import { addItem, itemCount, removeItem } from '@/domain/inventory';
 import type { ItemId, QuestState, SaveData } from '@/domain/types';
@@ -21,6 +23,36 @@ export interface ActiveQuestEntry {
   quest: QuestMaster;
   progress: { current: number; required: number };
   complete: boolean;
+}
+
+/** 依頼の目標ラベル（「スライム討伐 0/3」等）を組み立てる。酒場・ダンジョン共通。 */
+export function formatQuestGoal(quest: QuestMaster, current: number, required: number): string {
+  switch (quest.kind) {
+    case 'hunt': {
+      const name = quest.target.enemyId ? (ENEMIES[quest.target.enemyId]?.name ?? '？') : '？';
+      return `${name}討伐 ${current}/${required}`;
+    }
+    case 'delivery': {
+      const name = quest.target.itemId ? (ITEMS[quest.target.itemId]?.name ?? '？') : '？';
+      return `${name}納品 ${current}/${required}`;
+    }
+    case 'reach':
+      return `地下${quest.target.depth ?? 0}階到達 ${current}/${required}`;
+    case 'boss':
+      return `地下${quest.target.depth ?? 0}階ボス撃破 ${current}/${required}`;
+  }
+}
+
+/** 報酬（gold/gems/items）を「800G ・ ✦5 ・ きずぐすり×3」の断片配列に分解する。酒場・ダンジョン共通。 */
+export function formatQuestRewards(rewards: QuestMaster['rewards'], plusSign = false): string[] {
+  const parts: string[] = [];
+  if (rewards.gold) parts.push(`${plusSign ? '+' : ''}${rewards.gold}G`);
+  if (rewards.gems) parts.push(`✦${rewards.gems}`);
+  for (const item of rewards.items ?? []) {
+    const name = ITEMS[item.itemId]?.name ?? item.itemId;
+    parts.push(`${name}×${item.qty}`);
+  }
+  return parts;
 }
 
 function findState(save: SaveData, questId: string): QuestState | undefined {

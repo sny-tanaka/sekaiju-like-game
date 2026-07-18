@@ -472,3 +472,14 @@ export const mockTavern: SaveData = (() => {
     questStates: MOCK_TAVERN_QUEST_STATES,
   };
 })();
+
+// ============================================================
+// mockTavernMidDive — mockTavern（受注中の依頼あり）+ F3 探索中状態
+// ダンジョンの ☰ → 「依頼」パネルを、達成済み/進行中の依頼が混在した
+// 状態でスクショ確認できるようにするための合成 mock。
+// mockTavern は mockWithParty をベースにしているためパーティ編成は
+// 既に入っており、startDive を掛けるだけで良い。
+// ============================================================
+export const mockTavernMidDive: SaveData = (() => {
+  return startDive(mockTavern, 3);
+})();

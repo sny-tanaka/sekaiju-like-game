@@ -991,6 +991,89 @@
   cursor: pointer;
 }
 
+// ---- 依頼進捗パネル（☰ → 📜 依頼、read-only。itemPanel 内に表示） ----
+.questsHint {
+  margin: 0;
+  font-size: 12px;
+  color: var.$ink-faint;
+}
+
+.questRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 0.75px solid var.$rule;
+  border-radius: 4px;
+  background-color: var.$parchment-edge;
+}
+
+.questRowComplete {
+  border-color: rgba(201, 168, 106, 0.5);
+  background: linear-gradient(180deg, rgba(201, 168, 106, 0.16), var.$parchment-edge 70%);
+}
+
+.questHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.questName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var.$ink;
+}
+
+.questBadge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--danger, #b23c30);
+  color: #fff;
+}
+
+.questChip {
+  flex-shrink: 0;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: rgba(111, 159, 216, 0.12);
+  border: 0.75px solid rgba(111, 159, 216, 0.35);
+  color: #6f9fd8;
+}
+
+.questClient {
+  font-size: 11px;
+  color: var.$ink-faint;
+}
+
+.questGoal {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var.$ink;
+}
+
+.questProgressTrack {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--rule-soft);
+  overflow: hidden;
+}
+
+.questProgressFill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold-bright));
+}
+
+.questRewards {
+  font-size: 12px;
+  color: var.$illumination-gold;
+}
+
 // ---- ⚠ ボスゲート警告（.fpvWrap 上端に絶対配置） ----
 .bossGateWarn {
   position: absolute;
