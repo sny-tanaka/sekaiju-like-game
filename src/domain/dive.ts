@@ -389,3 +389,57 @@ export function goShallower(save: SaveData): SaveData {
 export function returnToTown(save: SaveData): SaveData {
   return { ...save, diveState: null };
 }
+
+/**
+ * 現在潜っている階の「敵と採取」を初期状態に戻す（界層還元香の効果）。
+ * - foeRuntime を foeSpawns から再構築（`ensureFloor` と同じ式）
+ * - depletedGathers を空に戻す
+ * - ボス階なら bossGates[depth].defeated を false に戻す
+ *
+ * 据え置き: openedChests / consumedEvents / record.highestBossDefeated /
+ *          bossDefeatLog / warp.unlockedCheckpoints / exploredCells / playerMaps。
+ *
+ * `diveState` が null（拠点にいる）／該当階の TowerFloor が未生成のときは save をそのまま返す。
+ */
+export function resurrectCurrentFloor(save: SaveData): SaveData {
+  const dive = save.diveState;
+  if (!dive) return save;
+  const depth = dive.depth;
+  const floor = save.towerState.floors[depth];
+  if (!floor) return save;
+
+  const foeRuntime: FoeRuntimeState[] = floor.generated.foeSpawns.map((s) => ({
+    spawnId: s.id,
+    cell: { ...s.startCell },
+    defeated: false,
+    alerted: false,
+  }));
+
+  const nextFloor: TowerFloor = {
+    ...floor,
+    foeRuntime,
+    depletedGathers: [],
+  };
+
+  const nextFloors = { ...save.towerState.floors, [depth]: nextFloor };
+  const currentGate = save.towerState.bossGates[depth];
+  const nextGates =
+    floor.isBossFloor && currentGate
+      ? { ...save.towerState.bossGates, [depth]: { ...currentGate, defeated: false } }
+      : save.towerState.bossGates;
+
+  return {
+    ...save,
+    towerState: {
+      ...save.towerState,
+      floors: nextFloors,
+      bossGates: nextGates,
+    },
+    diveState: {
+      ...dive,
+      // 復活直後にプレイヤー自身のセル上に FOE が現れたら、次の 1 歩で不意打ちを食う。
+      // 復活直前に予約されていた FOE 戦（あるならほぼその FOE 自身の再戦予約）はクリアする。
+      pendingFoeBattle: null,
+    },
+  };
+}

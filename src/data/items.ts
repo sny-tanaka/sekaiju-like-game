@@ -65,6 +65,17 @@ export const ITEMS: Record<ItemId, ItemMaster> = {
     useContext: ['field'],
     // 帰還処理は使用側で item id 判定して実行（special 効果）
   },
+  item_floor_reset: {
+    id: 'item_floor_reset',
+    name: '界層還元香',
+    description:
+      '使うと、いま潜っている階のボス・FOE・採取ポイントが最初の状態に戻る（探索中のみ）。',
+    category: 'consumable',
+    buyPrice: 5000,
+    maxStack: 5,
+    useContext: ['field'],
+    // 復活処理は使用側で item id 判定して実行（special 効果。resurrectCurrentFloor）
+  },
   // 売却用素材（ドロップ。売ると関連装備がショップに並ぶ [04 §8]）
   item_slime_jelly: {
     id: 'item_slime_jelly',

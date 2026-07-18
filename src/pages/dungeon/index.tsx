@@ -47,6 +47,9 @@ import { Redirect, useNavigation } from '@/store/navigation';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// 対象キャラを選ばず単押しで使うフィールドアイテム（帰還の糸／界層還元香）。
+const NO_TARGET_ITEMS = new Set(['item_return_thread', 'item_floor_reset']);
+
 // 探索（ダンジョン）。自動生成1階のグリッド移動＋自動マップ＋エンカウントゲージ。
 // 階段で上下移動（下り階段=深く進む方向、上り階段=浅く拠点へ戻る方向）、帰還で拠点へ。オートセーブは階移動・帰還時（[05 §4]）。
 export const Page = () => {
@@ -577,7 +580,7 @@ export const Page = () => {
               }
               return usable.map((s) => {
                 const item = ITEMS[s.itemId];
-                const isReturn = s.itemId === 'item_return_thread';
+                const noTarget = NO_TARGET_ITEMS.has(s.itemId);
                 return (
                   <div
                     key={s.itemId}
@@ -593,7 +596,7 @@ export const Page = () => {
                         <span className={styles.itemDesc}>{item.description}</span>
                       </div>
                     </div>
-                    {isReturn ? (
+                    {noTarget ? (
                       <ActionButton
                         label="使う"
                         className={styles.itemUse}
