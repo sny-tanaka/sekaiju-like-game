@@ -4,13 +4,13 @@ import styles from './style.module.scss';
 
 import { ActionButton } from '@/components/common/ActionButton/ActionButton';
 import { BALANCE } from '@/data/balance';
-import { ENEMIES } from '@/data/enemies';
-import { ITEMS } from '@/data/items';
-import { QUESTS, type QuestMaster } from '@/data/quests';
+import { QUESTS } from '@/data/quests';
 import {
   abandonQuest,
   acceptQuest,
   activeQuests,
+  formatQuestGoal,
+  formatQuestRewards,
   questBoard,
   questProgress,
   reportableCount,
@@ -20,36 +20,6 @@ import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
 type Tab = 'board' | 'active' | 'record';
-
-/** 報酬（gold/gems/items）を「800G ・ ✦5 ・ きずぐすり×3」のような文字列断片に分解する。 */
-function rewardParts(rewards: QuestMaster['rewards'], plusSign = false): string[] {
-  const parts: string[] = [];
-  if (rewards.gold) parts.push(`${plusSign ? '+' : ''}${rewards.gold}G`);
-  if (rewards.gems) parts.push(`✦${rewards.gems}`);
-  for (const item of rewards.items ?? []) {
-    const name = ITEMS[item.itemId]?.name ?? item.itemId;
-    parts.push(`${name}×${item.qty}`);
-  }
-  return parts;
-}
-
-/** 依頼の目標ラベル（「スライム討伐 0/3」等）を組み立てる。 */
-function goalLabel(quest: QuestMaster, current: number, required: number): string {
-  switch (quest.kind) {
-    case 'hunt': {
-      const name = quest.target.enemyId ? (ENEMIES[quest.target.enemyId]?.name ?? '？') : '？';
-      return `${name}討伐 ${current}/${required}`;
-    }
-    case 'delivery': {
-      const name = quest.target.itemId ? (ITEMS[quest.target.itemId]?.name ?? '？') : '？';
-      return `${name}納品 ${current}/${required}`;
-    }
-    case 'reach':
-      return `地下${quest.target.depth ?? 0}階到達 ${current}/${required}`;
-    case 'boss':
-      return `地下${quest.target.depth ?? 0}階ボス撃破 ${current}/${required}`;
-  }
-}
 
 // 酒場（v3.0.0 §10.2）。依頼掲示板 / 受注中 / 記録の3タブ構成。
 export const Page = () => {
@@ -94,7 +64,10 @@ export const Page = () => {
     const quest = QUESTS[questId];
     if (!quest) return;
     void applyAndPersist((s) => turnInQuest(s, questId));
-    setReportToast({ questName: quest.name, text: rewardParts(quest.rewards, true).join(' ') });
+    setReportToast({
+      questName: quest.name,
+      text: formatQuestRewards(quest.rewards, true).join(' '),
+    });
   };
 
   const handleAbandonConfirm = () => {
@@ -167,7 +140,7 @@ export const Page = () => {
           ) : (
             board.map(({ quest, status, timesCompleted }) => {
               const { current, required } = questProgress(save, quest.id);
-              const goal = goalLabel(quest, current, required);
+              const goal = formatQuestGoal(quest, current, required);
               return (
                 <div
                   key={quest.id}
@@ -180,7 +153,9 @@ export const Page = () => {
                   <div className={styles.client}>依頼主: {quest.client}</div>
                   <p className={styles.desc}>{quest.description}</p>
                   <div className={styles.goal}>{goal}</div>
-                  <div className={styles.rewards}>{rewardParts(quest.rewards).join(' ・ ')}</div>
+                  <div className={styles.rewards}>
+                    {formatQuestRewards(quest.rewards).join(' ・ ')}
+                  </div>
                   {timesCompleted > 0 && (
                     <div className={styles.timesCompleted}>達成 {timesCompleted} 回</div>
                   )}
@@ -222,7 +197,7 @@ export const Page = () => {
                   </div>
                   <div className={styles.client}>依頼主: {quest.client}</div>
                   <div className={styles.goal}>
-                    {goalLabel(quest, progress.current, progress.required)}
+                    {formatQuestGoal(quest, progress.current, progress.required)}
                   </div>
                   <div className={styles.progressTrack}>
                     <div
@@ -230,7 +205,9 @@ export const Page = () => {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <div className={styles.rewards}>{rewardParts(quest.rewards).join(' ・ ')}</div>
+                  <div className={styles.rewards}>
+                    {formatQuestRewards(quest.rewards).join(' ・ ')}
+                  </div>
                   {complete ? (
                     <ActionButton
                       label="報告する"

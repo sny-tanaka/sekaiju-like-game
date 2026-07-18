@@ -1,9 +1,12 @@
 import { BALANCE } from '@/data/balance';
+import type { QuestMaster } from '@/data/quests';
 import { addItem, itemCount } from '@/domain/inventory';
 import {
   abandonQuest,
   acceptQuest,
   activeQuests,
+  formatQuestGoal,
+  formatQuestRewards,
   isQuestComplete,
   questBoard,
   questProgress,
@@ -12,6 +15,21 @@ import {
 } from '@/domain/quest';
 import { createInitialSaveData } from '@/domain/saveData';
 import type { SaveData } from '@/domain/types';
+
+/** formatQuestGoal のテスト用に最小限の QuestMaster を組み立てる。 */
+function makeQuest(overrides: Partial<QuestMaster> & Pick<QuestMaster, 'kind'>): QuestMaster {
+  return {
+    id: 'quest_test',
+    name: 'テスト依頼',
+    client: 'テスト依頼主',
+    description: 'テスト用の依頼。',
+    target: {},
+    unlockDepth: 0,
+    repeatable: false,
+    rewards: {},
+    ...overrides,
+  };
+}
 
 function withDepth(save: SaveData, deepestReached: number): SaveData {
   return {
@@ -285,5 +303,69 @@ describe('activeQuests / reportableCount', () => {
     save = withKills(save, 'enemy_giant_rat', 5); // quest_rat_patrol は達成
 
     expect(reportableCount(save)).toBe(1);
+  });
+});
+
+describe('formatQuestGoal', () => {
+  test('hunt: 敵名を引いて「◯◯討伐 3/5」になる', () => {
+    const quest = makeQuest({ kind: 'hunt', target: { enemyId: 'enemy_slime', count: 5 } });
+    expect(formatQuestGoal(quest, 3, 5)).toBe('スライム討伐 3/5');
+  });
+
+  test('delivery: アイテム名を引いて「◯◯納品 2/3」になる', () => {
+    const quest = makeQuest({ kind: 'delivery', target: { itemId: 'item_potion', count: 3 } });
+    expect(formatQuestGoal(quest, 2, 3)).toBe('きずぐすり納品 2/3');
+  });
+
+  test('reach: 「地下15階到達 10/15」になる', () => {
+    const quest = makeQuest({ kind: 'reach', target: { depth: 15 } });
+    expect(formatQuestGoal(quest, 10, 15)).toBe('地下15階到達 10/15');
+  });
+
+  test('boss: 「地下10階ボス撃破 0/1」になる', () => {
+    const quest = makeQuest({ kind: 'boss', target: { depth: 10 } });
+    expect(formatQuestGoal(quest, 0, 1)).toBe('地下10階ボス撃破 0/1');
+  });
+
+  test('不明な enemyId/itemId は「？」にフォールバックする', () => {
+    const huntQuest = makeQuest({
+      kind: 'hunt',
+      target: { enemyId: 'enemy_does_not_exist', count: 5 },
+    });
+    expect(formatQuestGoal(huntQuest, 0, 5)).toBe('？討伐 0/5');
+
+    const deliveryQuest = makeQuest({
+      kind: 'delivery',
+      target: { itemId: 'item_does_not_exist', count: 3 },
+    });
+    expect(formatQuestGoal(deliveryQuest, 0, 3)).toBe('？納品 0/3');
+  });
+});
+
+describe('formatQuestRewards', () => {
+  test('gold+gems+items のフルセットを断片配列に分解する', () => {
+    const parts = formatQuestRewards({
+      gold: 800,
+      gems: 5,
+      items: [{ itemId: 'item_potion', qty: 3 }],
+    });
+    expect(parts).toEqual(['800G', '✦5', 'きずぐすり×3']);
+  });
+
+  test('plusSign=true のとき gold に + が付く', () => {
+    expect(formatQuestRewards({ gold: 800 }, true)).toEqual(['+800G']);
+  });
+
+  test('gold のみのときは gold の断片だけを返す', () => {
+    expect(formatQuestRewards({ gold: 800 })).toEqual(['800G']);
+  });
+
+  test('空の rewards は空配列を返す', () => {
+    expect(formatQuestRewards({})).toEqual([]);
+  });
+
+  test('未知の itemId はそのまま名前として使う', () => {
+    const parts = formatQuestRewards({ items: [{ itemId: 'item_does_not_exist', qty: 2 }] });
+    expect(parts).toEqual(['item_does_not_exist×2']);
   });
 });
