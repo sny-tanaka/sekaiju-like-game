@@ -8,12 +8,16 @@ import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
 import { RecycleFx } from '@/components/common/effects/RecycleFx/RecycleFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
+import { ELEMENT_LABEL } from '@/components/common/ResistBadges/ResistBadges';
 import { FORGE } from '@/data/balance';
 import { EQUIP_SLOT_LABEL } from '@/data/equipLabels';
 import { EQUIPMENT, isPreciousEquip } from '@/data/equipment';
+import { ITEMS } from '@/data/items';
+import { deriveHiddenEffects, HIDDEN_EFFECT_UNLOCK_LEVEL } from '@/domain/equipmentHiddenEffects';
 import {
   equipDisplayName,
   forgeBonusFor,
+  forgeRequiresMaterial,
   forgeWithIngot,
   gradedBaseBonuses,
   recycle,
@@ -21,6 +25,7 @@ import {
   recycleMany,
   type IngotType,
 } from '@/domain/forge';
+import type { EquipmentMaster, ItemId, SaveData, StatKey } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
@@ -37,6 +42,8 @@ type Pending =
       /** 強化後の forgeLevel */
       nextLevel: number;
       masterId: string;
+      /** 専用素材での強化ルート（[04 §4] B）: この強化で消費する専用素材（無ければ null）。 */
+      material: MaterialRequirement | null;
     }
   | { kind: 'recycle'; id: string; name: string; masterId: string }
   | { kind: 'recycleBulk'; ids: string[]; totalFragments: number };
@@ -68,12 +75,90 @@ function buildStatPreview(
   return null;
 }
 
+/** guild.storage 内の指定アイテムの所持数。 */
+function storageQty(save: SaveData, itemId: ItemId): number {
+  return save.guild.storage.find((s) => s.itemId === itemId)?.qty ?? 0;
+}
+
+/** 専用素材での強化ルート（[04 §4] B）: 指定インゴットでの強化に必要な素材情報。 */
+interface MaterialRequirement {
+  itemId: ItemId;
+  name: string;
+  have: number;
+  need: number;
+  insufficient: boolean;
+}
+
+/** curLevel から ingot 強化したときに専用素材を要求するか判定し、表示用情報を組み立てる。 */
+function materialRequirementFor(
+  save: SaveData,
+  masterId: string,
+  curLevel: number,
+  ingot: IngotType
+): MaterialRequirement | null {
+  const nextLevel = Math.min(FORGE.MAX_LEVEL, curLevel + FORGE.INGOT_INC[ingot]);
+  const itemId = forgeRequiresMaterial(masterId, curLevel, nextLevel);
+  if (!itemId) return null;
+  const have = storageQty(save, itemId);
+  const need = FORGE.MATERIAL_QTY;
+  return { itemId, name: ITEMS[itemId]?.name ?? itemId, have, need, insufficient: have < need };
+}
+
 /** インゴット種別の日本語ラベル。 */
 const INGOT_LABEL: Record<IngotType, string> = {
   copper: '銅インゴット',
   silver: '銀インゴット',
   gold: '金インゴット',
 };
+
+/** ステータス表示名（隠し能力の statMod ラベル用）。 */
+const STAT_LABEL: Record<StatKey, string> = {
+  hp: 'HP',
+  tp: 'TP',
+  str: '腕力',
+  vit: '体力',
+  agi: '敏捷',
+  int: '知力',
+  mnd: '精神',
+  luc: '幸運',
+};
+
+/** 隠し能力（deriveHiddenEffects の結果）を表示ラベルへ変換する（[04 §3-4]）。 */
+function hiddenAbilityLabels(eq: EquipmentMaster): string[] {
+  const labels: string[] = [];
+  let hasAilmentResist = false;
+  for (const eff of deriveHiddenEffects(eq)) {
+    if (eff.kind === 'statMod') {
+      labels.push(`${STAT_LABEL[eff.stat]}+${eff.value}`);
+    } else if (eff.kind === 'elementResist') {
+      labels.push(`${ELEMENT_LABEL[eff.element]}耐性UP`);
+    } else if (eff.kind === 'ailmentResist') {
+      // アクセサリの ailmentResist は常に全種同時に付くため「状態異常耐性UP」1本にまとめる。
+      hasAilmentResist = true;
+    }
+  }
+  if (hasAilmentResist) labels.push('状態異常耐性UP');
+  return labels;
+}
+
+/**
+ * 強化タブの隠し能力表示テキストを組み立てる（[04 §3-4]）。
+ * forgeLevel が HIDDEN_EFFECT_UNLOCK_LEVEL 未満は「？？？」の非開放ヒント、
+ * 到達済みなら実際のラベルを返す。
+ */
+function hiddenAbilityText(eq: EquipmentMaster | undefined, forgeLevel: number): string | null {
+  if (!eq) return null;
+  if (forgeLevel >= HIDDEN_EFFECT_UNLOCK_LEVEL) {
+    const labels = hiddenAbilityLabels(eq);
+    return labels.length > 0 ? `隠し能力: ${labels.join('・')}` : null;
+  }
+  // アクセサリは ATK/MAT/DEF/MDF が強化で一切変化しない（forgeBonusFor が常に {} を返す）ため、
+  // 「効果なし」に見えてしまう問題を緩和する専用ヒントにする（[04 §3-4]・§0）。
+  if (eq.slot === 'accessory') {
+    return `？？？（+${HIDDEN_EFFECT_UNLOCK_LEVEL}で状態異常耐性が開放されます）`;
+  }
+  return `？？？（+${HIDDEN_EFFECT_UNLOCK_LEVEL}で開放）`;
+}
 
 // 鍛冶屋（[04 §4]）。所有装備（個体）の強化（インゴット消費）とリサイクル。
 export const Page = () => {
@@ -196,6 +281,9 @@ export const Page = () => {
                 // 強化後レベル（銅+1 を基準に表示）
                 const nextLevel = Math.min(FORGE.MAX_LEVEL, e.forgeLevel + FORGE.INGOT_INC.copper);
                 const slotLabel = eq ? EQUIP_SLOT_LABEL[eq.slot] : '';
+                // 隠し能力（[04 §3-4]）: forgeLevel>=3 で開放。未開放時は「？？？」ヒントを出す。
+                const hiddenLocked = e.forgeLevel < HIDDEN_EFFECT_UNLOCK_LEVEL;
+                const hiddenText = hiddenAbilityText(eq, e.forgeLevel);
 
                 const rowClass = maxed
                   ? styles.rowMaxed
@@ -231,74 +319,150 @@ export const Page = () => {
                             </>
                           )}
                         </span>
+                        {hiddenText && (
+                          <span
+                            className={
+                              hiddenLocked ? styles.hiddenAbilityLocked : styles.hiddenAbilityOpen
+                            }
+                          >
+                            {hiddenText}
+                          </span>
+                        )}
                       </div>
                       {maxed && <span className={styles.maxChip}>MAX</span>}
                     </div>
                     {/* 下段: インゴットボタン or MAX チップのみ */}
-                    {!maxed && (
-                      <div className={styles.ingotRow}>
-                        <ActionButton
-                          label={`銅+${FORGE.INGOT_INC.copper} (${copper})`}
-                          className={styles.ingotCopper}
-                          disabled={copper <= 0}
-                          onClick={() =>
-                            setPending({
-                              kind: 'forge',
-                              instanceId: e.id,
-                              ingot: 'copper',
-                              name: equipDisplayName(e),
-                              ingotLabel: '銅',
-                              curLevel: e.forgeLevel,
-                              nextLevel: Math.min(
-                                FORGE.MAX_LEVEL,
-                                e.forgeLevel + FORGE.INGOT_INC.copper
-                              ),
-                              masterId: e.masterId,
-                            })
-                          }
-                        />
-                        <ActionButton
-                          label={`銀+${FORGE.INGOT_INC.silver} (${silver})`}
-                          className={styles.ingotSilver}
-                          disabled={silver <= 0}
-                          onClick={() =>
-                            setPending({
-                              kind: 'forge',
-                              instanceId: e.id,
-                              ingot: 'silver',
-                              name: equipDisplayName(e),
-                              ingotLabel: '銀',
-                              curLevel: e.forgeLevel,
-                              nextLevel: Math.min(
-                                FORGE.MAX_LEVEL,
-                                e.forgeLevel + FORGE.INGOT_INC.silver
-                              ),
-                              masterId: e.masterId,
-                            })
-                          }
-                        />
-                        <ActionButton
-                          label={`金+${FORGE.INGOT_INC.gold} (${gold})`}
-                          className={styles.ingotGold}
-                          disabled={gold <= 0}
-                          onClick={() =>
-                            setPending({
-                              kind: 'forge',
-                              instanceId: e.id,
-                              ingot: 'gold',
-                              name: equipDisplayName(e),
-                              ingotLabel: '金',
-                              curLevel: e.forgeLevel,
-                              nextLevel: Math.min(
-                                FORGE.MAX_LEVEL,
-                                e.forgeLevel + FORGE.INGOT_INC.gold
-                              ),
-                              masterId: e.masterId,
-                            })
-                          }
-                        />
-                      </div>
-                    )}
+                    {!maxed &&
+                      (() => {
+                        // 専用素材での強化ルート（[04 §4] B）: インゴット種別ごとに要求素材/所持数を判定する。
+                        const copperMat = materialRequirementFor(
+                          save,
+                          e.masterId,
+                          e.forgeLevel,
+                          'copper'
+                        );
+                        const silverMat = materialRequirementFor(
+                          save,
+                          e.masterId,
+                          e.forgeLevel,
+                          'silver'
+                        );
+                        const goldMat = materialRequirementFor(
+                          save,
+                          e.masterId,
+                          e.forgeLevel,
+                          'gold'
+                        );
+                        return (
+                          <div className={styles.ingotRow}>
+                            <ActionButton
+                              className={styles.ingotCopper}
+                              disabled={copper <= 0 || !!copperMat?.insufficient}
+                              onClick={() =>
+                                setPending({
+                                  kind: 'forge',
+                                  instanceId: e.id,
+                                  ingot: 'copper',
+                                  name: equipDisplayName(e),
+                                  ingotLabel: '銅',
+                                  curLevel: e.forgeLevel,
+                                  nextLevel: Math.min(
+                                    FORGE.MAX_LEVEL,
+                                    e.forgeLevel + FORGE.INGOT_INC.copper
+                                  ),
+                                  masterId: e.masterId,
+                                  material: copperMat,
+                                })
+                              }
+                            >
+                              <span className={styles.ingotLabel}>
+                                銅+{FORGE.INGOT_INC.copper} ({copper})
+                              </span>
+                              {copperMat && (
+                                <span
+                                  className={
+                                    copperMat.insufficient
+                                      ? styles.ingotMaterialInsufficient
+                                      : styles.ingotMaterial
+                                  }
+                                >
+                                  {copperMat.name} ×{copperMat.have}/{copperMat.need}
+                                </span>
+                              )}
+                            </ActionButton>
+                            <ActionButton
+                              className={styles.ingotSilver}
+                              disabled={silver <= 0 || !!silverMat?.insufficient}
+                              onClick={() =>
+                                setPending({
+                                  kind: 'forge',
+                                  instanceId: e.id,
+                                  ingot: 'silver',
+                                  name: equipDisplayName(e),
+                                  ingotLabel: '銀',
+                                  curLevel: e.forgeLevel,
+                                  nextLevel: Math.min(
+                                    FORGE.MAX_LEVEL,
+                                    e.forgeLevel + FORGE.INGOT_INC.silver
+                                  ),
+                                  masterId: e.masterId,
+                                  material: silverMat,
+                                })
+                              }
+                            >
+                              <span className={styles.ingotLabel}>
+                                銀+{FORGE.INGOT_INC.silver} ({silver})
+                              </span>
+                              {silverMat && (
+                                <span
+                                  className={
+                                    silverMat.insufficient
+                                      ? styles.ingotMaterialInsufficient
+                                      : styles.ingotMaterial
+                                  }
+                                >
+                                  {silverMat.name} ×{silverMat.have}/{silverMat.need}
+                                </span>
+                              )}
+                            </ActionButton>
+                            <ActionButton
+                              className={styles.ingotGold}
+                              disabled={gold <= 0 || !!goldMat?.insufficient}
+                              onClick={() =>
+                                setPending({
+                                  kind: 'forge',
+                                  instanceId: e.id,
+                                  ingot: 'gold',
+                                  name: equipDisplayName(e),
+                                  ingotLabel: '金',
+                                  curLevel: e.forgeLevel,
+                                  nextLevel: Math.min(
+                                    FORGE.MAX_LEVEL,
+                                    e.forgeLevel + FORGE.INGOT_INC.gold
+                                  ),
+                                  masterId: e.masterId,
+                                  material: goldMat,
+                                })
+                              }
+                            >
+                              <span className={styles.ingotLabel}>
+                                金+{FORGE.INGOT_INC.gold} ({gold})
+                              </span>
+                              {goldMat && (
+                                <span
+                                  className={
+                                    goldMat.insufficient
+                                      ? styles.ingotMaterialInsufficient
+                                      : styles.ingotMaterial
+                                  }
+                                >
+                                  {goldMat.name} ×{goldMat.have}/{goldMat.need}
+                                </span>
+                              )}
+                            </ActionButton>
+                          </div>
+                        );
+                      })()}
                   </div>
                 );
               } else {
@@ -459,6 +623,15 @@ export const Page = () => {
                         <span className={styles.dialogCostIngot}>
                           {INGOT_LABEL[pending.ingot]} ×1
                         </span>
+                        {pending.material && (
+                          <>
+                            {' '}
+                            ・{' '}
+                            <span className={styles.dialogCostIngot}>
+                              {pending.material.name} ×{pending.material.need}
+                            </span>
+                          </>
+                        )}
                         {statPrev && (
                           <>
                             {' '}

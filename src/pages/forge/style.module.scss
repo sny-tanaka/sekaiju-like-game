@@ -209,6 +209,23 @@
   color: #9ed8b4; // 緑
 }
 
+// 隠し能力（[04 §3-4]）。未開放（forgeLevel<3）は控えめな「？？？」ヒント。
+.hiddenAbilityLocked {
+  display: block;
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+// 開放済みは神秘的な淡いブルーで目立たせる。
+.hiddenAbilityOpen {
+  display: block;
+  font-size: 10px;
+  color: var(--info-blue-text);
+  margin-top: 2px;
+}
+
 // MAX chip（最大強化済み行の右端）
 .maxChip {
   font-size: 11px;
@@ -228,7 +245,13 @@
 // 銅ボタン
 .ingotCopper {
   flex: 1;
-  height: 36px;
+  min-height: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
   border-radius: 3px;
   background: rgba(201, 134, 91, 0.18);
   border: 1px solid rgba(201, 134, 91, 0.5);
@@ -247,7 +270,13 @@
 // 銀ボタン
 .ingotSilver {
   flex: 1;
-  height: 36px;
+  min-height: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
   border-radius: 3px;
   background: transparent;
   border: 1px solid rgba(200, 196, 186, 0.4);
@@ -266,7 +295,13 @@
 // 金ボタン
 .ingotGold {
   flex: 1;
-  height: 36px;
+  min-height: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
   border-radius: 3px;
   background: transparent;
   border: 1px solid var(--rule-soft);
@@ -280,6 +315,25 @@
     opacity: 0.4;
     cursor: not-allowed;
   }
+}
+
+// インゴットボタンのメインラベル（「銅+1 (3)」等）
+.ingotLabel {
+  display: block;
+}
+
+// 専用素材での強化ルート（[04 §4] B）: インゴットボタン内の素材所持数表記
+.ingotMaterial {
+  display: block;
+  font-size: 9px;
+  opacity: 0.85;
+}
+
+// 素材不足時（disabled と併用）
+.ingotMaterialInsufficient {
+  display: block;
+  font-size: 9px;
+  color: var(--danger-text);
 }
 
 // ---- リサイクルタブの行（横並び 1 段） ----

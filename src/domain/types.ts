@@ -521,6 +521,17 @@ export interface ItemMaster {
   collectible?: boolean;
 }
 
+/**
+ * 装備の隠し能力（鍛冶で開花。[04 §3-4]）。design-docs/04-items-equipment-crafting.md §3 の
+ * 判別共用体からスコープを絞ったサブセット（今回実装するのは elementResist/ailmentResist/statMod の3種のみ）。
+ * 将来拡張候補: grantSkill（装備でスキルを付与）。戦闘コマンドメニュー側の対応が必要で規模が大きいため見送り。
+ * `isUnique`（唯一品）も見送り（現状の装備はすべて種別×ティアの式で自動生成された量産品のため該当なし）。
+ */
+export type EquipmentEffect =
+  | { kind: 'elementResist'; element: Element; rate: number } // 0.85=15%軽減 等。複数属性は配列で複数エントリ
+  | { kind: 'ailmentResist'; ailment: AilmentType; rate: number }
+  | { kind: 'statMod'; stat: StatKey; value: number };
+
 export interface EquipmentMaster {
   id: ItemId;
   name: string;
@@ -532,6 +543,13 @@ export interface EquipmentMaster {
   bonuses: EquipBonuses;
   /** ジェム限定装備（v3.0.0 §6）。定義されている装備は通常カタログに出さず、交換所でのみ購入可。 */
   gemPrice?: number;
+  /**
+   * 鍛冶レベルが FORGE.HIDDEN_EFFECT_UNLOCK_LEVEL 以上で開花する隠し能力（[04 §3-4]）。
+   * ※ このフィールドとしては保持しない（66件のマスタへの手打ちを避けるため）。
+   *   実際の導出は `src/domain/equipmentHiddenEffects.ts` の `deriveHiddenEffects(eq)` が
+   *   slot/weaponType/armorType から都度計算する。ここは design-docs との対応を明示するための
+   *   コメントで、EquipmentEffect[] を表す実フィールドは存在しない。
+   */
 }
 
 // ============================================================================

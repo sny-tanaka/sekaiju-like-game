@@ -312,20 +312,34 @@ export const mockShopWithEquipped: SaveData = (() => {
 })();
 
 // ============================================================
-// mockForge — mockWithParty + インゴット (銅3/銀1/金0) + 装備プールに 4 個
+// mockForge — mockWithParty + インゴット (銅3/銀1/金0) + 装備プールに 7 個
+// f2/f5 は forgeLevel>=3（隠し能力 開放済み）。f1/f3/f4 は未開放（「？？？」ヒント確認用）。
+// f6/f7 は専用素材での強化ルート（[04 §4] B）確認用: forgeLevel3→4の"跨ぎ"直前で、
+// f6(tier1・素材不足)/f7(tier2・素材充足)の両パターンをカバーする。
 // ============================================================
 export const mockForge: SaveData = (() => {
   const equipment: EquipInstance[] = [
     { id: 'equip_inst_f1', masterId: 'equip_short_sword', forgeLevel: 0 },
-    { id: 'equip_inst_f2', masterId: 'equip_iron_spear', forgeLevel: 1 },
+    // 隠し能力 開放済み（+3。武器 → STR+3 相当の隠しステ上昇。equip_iron_spear は spear=str）
+    { id: 'equip_inst_f2', masterId: 'equip_iron_spear', forgeLevel: 3 },
     { id: 'equip_inst_f3', masterId: 'equip_leather_armor', forgeLevel: 0 },
     { id: 'equip_inst_f4', masterId: 'equip_oak_staff', forgeLevel: 2 },
+    // 隠し能力 開放済み（+3。装飾品 → 状態異常耐性UP）
+    { id: 'equip_inst_f5', masterId: 'equip_amulet', forgeLevel: 3 },
+    // 専用素材ルート: tier1武器・forgeLevel3。素材(item_mat_t1_lord_pelt)が1個のみ→不足表示・disabled確認用
+    { id: 'equip_inst_f6', masterId: 'equip_rat_dagger', forgeLevel: 3 },
+    // 専用素材ルート: tier2防具・forgeLevel3。素材(item_mat_t2_monarch_diadem)が2個で充足→通常表示確認用
+    { id: 'equip_inst_f7', masterId: 'equip_t2_heavy', forgeLevel: 3 },
   ];
   return {
     ...mockWithParty,
     guild: {
       ...mockWithParty.guild,
       equipment,
+      storage: [
+        { itemId: 'item_mat_t1_lord_pelt', qty: 1 },
+        { itemId: 'item_mat_t2_monarch_diadem', qty: 2 },
+      ],
     },
     forgeInventory: {
       fragments: { frag_copper: 5 },

@@ -1,6 +1,7 @@
 import { FORGE } from '@/data/balance';
 import { EQUIPMENT, isPreciousEquip } from '@/data/equipment';
-import type { EquipBonuses, EquipInstance, EquipSlotKey, SaveData } from '@/domain/types';
+import { FORGE_MATERIAL_BY_TIER } from '@/data/forgeMaterials';
+import type { EquipBonuses, EquipInstance, EquipSlotKey, ItemId, SaveData } from '@/domain/types';
 
 // ============================================================================
 // 鍛冶（[04 §4]）。強化（インゴットで +N）・リサイクル（→断片→インゴット）。
@@ -89,12 +90,45 @@ function updateEquipInstance(
 export interface ForgeResult {
   ok: boolean;
   save: SaveData;
-  reason?: 'notFound' | 'maxLevel' | 'noIngot';
+  reason?: 'notFound' | 'maxLevel' | 'noIngot' | 'noMaterial';
+}
+
+/**
+ * 強化アクションが専用素材を要求するか判定する（[04 §4] B）。
+ * curLevel から nextLevel への強化が FORGE.MATERIAL_REQUIRED_LEVEL を"新たに"跨ぐ場合のみ、
+ * 装備 tier に対応する専用素材の ItemId を返す。跨がない場合・tier0/未定義tierは null。
+ */
+export function forgeRequiresMaterial(
+  masterId: string,
+  curLevel: number,
+  nextLevel: number
+): ItemId | null {
+  const eq = EQUIPMENT[masterId];
+  if (!eq) return null;
+  const matId = FORGE_MATERIAL_BY_TIER[eq.tier ?? 0];
+  if (!matId) return null;
+  if (curLevel < FORGE.MATERIAL_REQUIRED_LEVEL && nextLevel >= FORGE.MATERIAL_REQUIRED_LEVEL) {
+    return matId;
+  }
+  return null;
+}
+
+/** 倉庫（guild.storage）内の指定アイテムの所持数。 */
+function storageQty(save: SaveData, itemId: ItemId): number {
+  return save.guild.storage.find((s) => s.itemId === itemId)?.qty ?? 0;
+}
+
+/** 倉庫から指定アイテムを qty 消費した storage 配列を返す（0 個になったスタックは除去）。 */
+function consumeStorage(save: SaveData, itemId: ItemId, qty: number) {
+  return save.guild.storage
+    .map((s) => (s.itemId === itemId ? { ...s, qty: s.qty - qty } : s))
+    .filter((s) => s.qty > 0);
 }
 
 /**
  * インゴットで装備を強化する（[04 §4.1]）。銅+1/銀+3/金+5。上限 +5。
  * 装備中・プールどちらの個体でも対象にできる。
+ * forgeLevel が FORGE.MATERIAL_REQUIRED_LEVEL を新たに跨ぐときは、専用素材も追加消費する（[04 §4] B）。
  */
 export function forgeWithIngot(save: SaveData, instanceId: string, ingot: IngotType): ForgeResult {
   // 個体を探す（プール優先、無ければ装備中）
@@ -111,12 +145,20 @@ export function forgeWithIngot(save: SaveData, instanceId: string, ingot: IngotT
   if ((save.forgeInventory.ingots[ingot] ?? 0) <= 0) return { ok: false, save, reason: 'noIngot' };
 
   const nextLevel = Math.min(FORGE.MAX_LEVEL, inst.forgeLevel + FORGE.INGOT_INC[ingot]);
+  const requiredMaterial = forgeRequiresMaterial(inst.masterId, inst.forgeLevel, nextLevel);
+  if (requiredMaterial && storageQty(save, requiredMaterial) < FORGE.MATERIAL_QTY) {
+    return { ok: false, save, reason: 'noMaterial' };
+  }
+
   let next: SaveData = {
     ...save,
     forgeInventory: {
       ...save.forgeInventory,
       ingots: { ...save.forgeInventory.ingots, [ingot]: save.forgeInventory.ingots[ingot] - 1 },
     },
+    guild: requiredMaterial
+      ? { ...save.guild, storage: consumeStorage(save, requiredMaterial, FORGE.MATERIAL_QTY) }
+      : save.guild,
   };
   next = updateEquipInstance(next, instanceId, (e) => ({ ...e, forgeLevel: nextLevel }));
   return { ok: true, save: next };
