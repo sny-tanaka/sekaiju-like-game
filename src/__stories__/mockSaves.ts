@@ -312,14 +312,18 @@ export const mockShopWithEquipped: SaveData = (() => {
 })();
 
 // ============================================================
-// mockForge — mockWithParty + インゴット (銅3/銀1/金0) + 装備プールに 4 個
+// mockForge — mockWithParty + インゴット (銅3/銀1/金0) + 装備プールに 5 個
+// f2/f5 は forgeLevel>=3（隠し能力 開放済み）。f1/f3/f4 は未開放（「？？？」ヒント確認用）。
 // ============================================================
 export const mockForge: SaveData = (() => {
   const equipment: EquipInstance[] = [
     { id: 'equip_inst_f1', masterId: 'equip_short_sword', forgeLevel: 0 },
-    { id: 'equip_inst_f2', masterId: 'equip_iron_spear', forgeLevel: 1 },
+    // 隠し能力 開放済み（+3。武器 → STR+3 相当の隠しステ上昇。equip_iron_spear は spear=str）
+    { id: 'equip_inst_f2', masterId: 'equip_iron_spear', forgeLevel: 3 },
     { id: 'equip_inst_f3', masterId: 'equip_leather_armor', forgeLevel: 0 },
     { id: 'equip_inst_f4', masterId: 'equip_oak_staff', forgeLevel: 2 },
+    // 隠し能力 開放済み（+3。装飾品 → 状態異常耐性UP）
+    { id: 'equip_inst_f5', masterId: 'equip_amulet', forgeLevel: 3 },
   ];
   return {
     ...mockWithParty,

@@ -10,14 +10,17 @@ import {
 import type { BattleEvent, NormalAttackEvent, SkillEvent, TickEvent } from '@/domain/battleEvent';
 import { previewTurnOrder } from '@/domain/combat';
 import { startDive } from '@/domain/dive';
+import { HIDDEN_EFFECT_UNLOCK_LEVEL } from '@/domain/equipmentHiddenEffects';
 import { addItem, itemCount } from '@/domain/inventory';
 import { createRng } from '@/domain/rng';
 import { addCharacterToGuild, createCharacter, createInitialSaveData } from '@/domain/saveData';
+import { computeBaseStats } from '@/domain/stats';
 import type {
   ActiveAilment,
   BattleCommand,
   BattleState,
   Character,
+  EquipInstance,
   SaveData,
 } from '@/domain/types';
 
@@ -1604,5 +1607,70 @@ describe('battle: predefinedActorOrder', () => {
     const firstActorEvt = after.events.find(hasActorId);
     expect(firstActorEvt).toBeDefined();
     expect(firstActorEvt?.actorId).toBe(previewOrder[0]);
+  });
+});
+
+describe('battle: buildAlly の隠し能力・statMods 反映（[04 §3-4]・§0 前提バグ修正）', () => {
+  function equipInst(masterId: string, forgeLevel: number): EquipInstance {
+    return { id: `eq_${masterId}_${forgeLevel}`, masterId, forgeLevel };
+  }
+
+  function diveSaveWithEquip(
+    equipment: Partial<Character['equipment']>,
+    raceId = 'race_garon'
+  ): SaveData {
+    let save = createInitialSaveData('鍛冶検証ギルド');
+    const char = createCharacter({ raceId, classId: 'class_warrior', name: '鍛冶テスト' });
+    char.equipment = { ...char.equipment, ...equipment };
+    save = addCharacterToGuild(save, char);
+    return startDive(save, 1);
+  }
+
+  test('forgeLevel < HIDDEN_EFFECT_UNLOCK_LEVEL の装備は stats/resist/ailmentResist に影響しない', () => {
+    // equip_iron_armor: armor/heavy tier0 → 隠し能力は bash 耐性0.85（forgeLevel>=3で開花するはずのもの）
+    const save = diveSaveWithEquip({
+      armor: equipInst('equip_iron_armor', HIDDEN_EFFECT_UNLOCK_LEVEL - 1),
+    });
+    const char = save.guild.members[0];
+    const baseStats = computeBaseStats(char);
+    const state = startBattle(save, ['enemy_slime']);
+    const ally = state.allies[0];
+    expect(ally.stats).toEqual(baseStats);
+    // race_garon: elementResist bash 0.8。装備側は forgeLevel 未達のため寄与しない（race分のみ）。
+    expect(ally.resist?.bash).toBe(0.8);
+  });
+
+  test('forgeLevel >= HIDDEN_EFFECT_UNLOCK_LEVEL の武器装備でSTR等の該当ステが上昇する', () => {
+    // equip_iron_spear: weapon/spear tier0 → 隠し能力 STR + statModMagnitude(0)=3
+    const save = diveSaveWithEquip({
+      weapon: equipInst('equip_iron_spear', HIDDEN_EFFECT_UNLOCK_LEVEL),
+    });
+    const char = save.guild.members[0];
+    const baseStats = computeBaseStats(char);
+    const state = startBattle(save, ['enemy_slime']);
+    const ally = state.allies[0];
+    expect(ally.stats.str).toBe(baseStats.str + 3);
+  });
+
+  test('forgeLevel >= HIDDEN_EFFECT_UNLOCK_LEVEL の防具装備で対応属性の被ダメージが軽減される（race×equip 乗算合成）', () => {
+    // race_garon: elementResist bash 0.8 / equip_iron_armor(heavy,tier0) の隠し能力: bash 0.85
+    const save = diveSaveWithEquip({
+      armor: equipInst('equip_iron_armor', HIDDEN_EFFECT_UNLOCK_LEVEL),
+    });
+    const state = startBattle(save, ['enemy_slime']);
+    const ally = state.allies[0];
+    expect(ally.resist?.bash).toBeCloseTo(0.8 * 0.85, 10);
+  });
+
+  test('ジェム限定装備の bonuses.statMods（STR+5）はforgeLevelに関係なく常に反映される（§0バグ修正の再現テスト）', () => {
+    // equip_gem_axe: bonuses.statMods.str = 5。forgeLevel 0（隠し能力は未開花）でも常時反映されるべき。
+    // 修正前は aggregateEquip/buildAlly が bonuses.statMods を一切参照せず、この assertion は失敗していた
+    // （ally.stats.str === baseStats.str のまま。ショップ説明文だけの「見せかけ効果」バグ）。
+    const save = diveSaveWithEquip({ weapon: equipInst('equip_gem_axe', 0) });
+    const char = save.guild.members[0];
+    const baseStats = computeBaseStats(char);
+    const state = startBattle(save, ['enemy_slime']);
+    const ally = state.allies[0];
+    expect(ally.stats.str).toBe(baseStats.str + 5);
   });
 });

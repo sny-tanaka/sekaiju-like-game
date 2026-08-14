@@ -32,6 +32,7 @@ import { applyCollectionRewards, collectibleDupGems } from '@/domain/collection'
 import { computeDamage, deriveCombat, effectiveEnemyStats, scaleStats } from '@/domain/combat';
 import { initEncounter } from '@/domain/encounter';
 import { enemyLapForDepth } from '@/domain/encounterTable';
+import { deriveHiddenEffects, HIDDEN_EFFECT_UNLOCK_LEVEL } from '@/domain/equipmentHiddenEffects';
 import { forgeBonusFor, gradedBaseBonuses } from '@/domain/forge';
 import { addItem, removeItem } from '@/domain/inventory';
 import { computePassiveMods } from '@/domain/passives';
@@ -96,12 +97,73 @@ function aggregateEquip(char: Character): EquipBonuses {
   return acc;
 }
 
+/**
+ * 装備の隠し能力（elementResist/ailmentResist）と statMods を集約する（[04 §3-4]）。
+ * - bonuses.statMods（ジェム限定装備の STR+5 等）は forgeLevel を問わず常に反映する（§0 バグ修正）。
+ * - 隠し能力（deriveHiddenEffects）は forgeLevel が HIDDEN_EFFECT_UNLOCK_LEVEL 以上の個体のみ反映する。
+ */
+function aggregateEquipEffects(char: Character): {
+  elementResist?: Partial<Record<Element, number>>;
+  ailmentResist?: Partial<Record<AilmentType, number>>;
+  statMods: Partial<Stats>;
+} {
+  const elementResist: Partial<Record<Element, number>> = {};
+  const ailmentResist: Partial<Record<AilmentType, number>> = {};
+  const statMods: Partial<Stats> = {};
+  for (const inst of Object.values(char.equipment)) {
+    if (!inst) continue;
+    const eq = EQUIPMENT[inst.masterId];
+    if (!eq) continue;
+    // 既存 bonuses.statMods（ジェム限定装備の STR+5 等。§0 バグ修正）
+    if (eq.bonuses.statMods) {
+      for (const [k, v] of Object.entries(eq.bonuses.statMods)) {
+        statMods[k as StatKey] = (statMods[k as StatKey] ?? 0) + (v ?? 0);
+      }
+    }
+    // 隠し能力（forgeLevel が閾値以上で開花）
+    if (inst.forgeLevel >= HIDDEN_EFFECT_UNLOCK_LEVEL) {
+      for (const eff of deriveHiddenEffects(eq)) {
+        if (eff.kind === 'elementResist') {
+          elementResist[eff.element] = (elementResist[eff.element] ?? 1) * eff.rate;
+        } else if (eff.kind === 'ailmentResist') {
+          ailmentResist[eff.ailment] = (ailmentResist[eff.ailment] ?? 1) * eff.rate;
+        } else if (eff.kind === 'statMod') {
+          statMods[eff.stat] = (statMods[eff.stat] ?? 0) + eff.value;
+        }
+      }
+    }
+  }
+  return {
+    elementResist: Object.keys(elementResist).length ? elementResist : undefined,
+    ailmentResist: Object.keys(ailmentResist).length ? ailmentResist : undefined,
+    statMods,
+  };
+}
+
+/** race と equip の resist/ailmentResist を要素ごとに乗算合成する（[04 §3-4]）。 */
+function mergeRateRecord<K extends string>(
+  a?: Partial<Record<K, number>>,
+  b?: Partial<Record<K, number>>
+): Partial<Record<K, number>> | undefined {
+  if (!a && !b) return undefined;
+  const keys = new Set([...(a ? Object.keys(a) : []), ...(b ? Object.keys(b) : [])]) as Set<K>;
+  const out = {} as Partial<Record<K, number>>;
+  for (const k of keys) out[k] = (a?.[k] ?? 1) * (b?.[k] ?? 1);
+  return out;
+}
+
 /** 味方の戦闘員を組む。HP/TP/ゲージ/状態異常は diveState の現在値を引き継ぐ。 */
 function buildAlly(save: SaveData, charId: string): Combatant | null {
   const char = save.guild.members.find((m) => m.id === charId);
   if (!char) return null;
   const member = save.diveState?.party.find((p) => p.charId === charId);
   const stats = computeBaseStats(char);
+  // 装備の隠し能力・statMods を素ステへ加算する（[04 §3-4]・§0 バグ修正）。
+  // maxHp/maxTp 計算より前に置くことで、hp/tp への statMod（ジェム限定装備の hp:20 等）も反映される。
+  const equipEffects = aggregateEquipEffects(char);
+  for (const [k, v] of Object.entries(equipEffects.statMods)) {
+    stats[k as StatKey] = (stats[k as StatKey] ?? 0) + (v ?? 0);
+  }
   // パッシブ常時効果（[03 §5.4]）。最大HP/TP はここで反映し、攻防系は Combatant.passive 経由で派生計算に乗せる。
   const passive = computePassiveMods(char);
   const maxHp = Math.round(stats.hp * (passive.maxHp ?? 1));
@@ -126,10 +188,10 @@ function buildAlly(save: SaveData, charId: string): Combatant | null {
     passive,
     unionGauge: member?.unionGauge ?? 0,
     isDown: member ? member.hp <= 0 : false,
-    // 属性耐性（§15.2: 味方 Combatant.resist に race.elementResist を載せる）
-    resist: race?.elementResist,
-    // 状態異常耐性（§15.2: 味方 Combatant.ailmentResist に race.ailmentResist を載せる）
-    ailmentResist: race?.ailmentResist,
+    // 属性耐性（§15.2: 味方 Combatant.resist に race.elementResist を載せる。[04 §3-4]: 装備の隠し能力と乗算合成）
+    resist: mergeRateRecord(race?.elementResist, equipEffects.elementResist),
+    // 状態異常耐性（§15.2: 味方 Combatant.ailmentResist に race.ailmentResist を載せる。[04 §3-4]: 装備の隠し能力と乗算合成）
+    ailmentResist: mergeRateRecord(race?.ailmentResist, equipEffects.ailmentResist),
     // 学習スキルLv（戦闘でスキル威力/消費に反映）
     skillLevels: char.learnedSkills,
     // 装備武器種から通常攻撃属性を決定（素手・未装備は bash）

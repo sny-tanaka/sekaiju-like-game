@@ -8,9 +8,11 @@ import { ForgeSparkFx } from '@/components/common/effects/ForgeSparkFx';
 import { RecycleFx } from '@/components/common/effects/RecycleFx/RecycleFx';
 import { InkSplatter } from '@/components/common/InkSplatter/InkSplatter';
 import { ItemSprite } from '@/components/common/ItemSprite/ItemSprite';
+import { ELEMENT_LABEL } from '@/components/common/ResistBadges/ResistBadges';
 import { FORGE } from '@/data/balance';
 import { EQUIP_SLOT_LABEL } from '@/data/equipLabels';
 import { EQUIPMENT, isPreciousEquip } from '@/data/equipment';
+import { deriveHiddenEffects, HIDDEN_EFFECT_UNLOCK_LEVEL } from '@/domain/equipmentHiddenEffects';
 import {
   equipDisplayName,
   forgeBonusFor,
@@ -21,6 +23,7 @@ import {
   recycleMany,
   type IngotType,
 } from '@/domain/forge';
+import type { EquipmentMaster, StatKey } from '@/domain/types';
 import { useGameState } from '@/store/gameState';
 import { Redirect, useNavigation } from '@/store/navigation';
 
@@ -74,6 +77,55 @@ const INGOT_LABEL: Record<IngotType, string> = {
   silver: '銀インゴット',
   gold: '金インゴット',
 };
+
+/** ステータス表示名（隠し能力の statMod ラベル用）。 */
+const STAT_LABEL: Record<StatKey, string> = {
+  hp: 'HP',
+  tp: 'TP',
+  str: '腕力',
+  vit: '体力',
+  agi: '敏捷',
+  int: '知力',
+  mnd: '精神',
+  luc: '幸運',
+};
+
+/** 隠し能力（deriveHiddenEffects の結果）を表示ラベルへ変換する（[04 §3-4]）。 */
+function hiddenAbilityLabels(eq: EquipmentMaster): string[] {
+  const labels: string[] = [];
+  let hasAilmentResist = false;
+  for (const eff of deriveHiddenEffects(eq)) {
+    if (eff.kind === 'statMod') {
+      labels.push(`${STAT_LABEL[eff.stat]}+${eff.value}`);
+    } else if (eff.kind === 'elementResist') {
+      labels.push(`${ELEMENT_LABEL[eff.element]}耐性UP`);
+    } else if (eff.kind === 'ailmentResist') {
+      // アクセサリの ailmentResist は常に全種同時に付くため「状態異常耐性UP」1本にまとめる。
+      hasAilmentResist = true;
+    }
+  }
+  if (hasAilmentResist) labels.push('状態異常耐性UP');
+  return labels;
+}
+
+/**
+ * 強化タブの隠し能力表示テキストを組み立てる（[04 §3-4]）。
+ * forgeLevel が HIDDEN_EFFECT_UNLOCK_LEVEL 未満は「？？？」の非開放ヒント、
+ * 到達済みなら実際のラベルを返す。
+ */
+function hiddenAbilityText(eq: EquipmentMaster | undefined, forgeLevel: number): string | null {
+  if (!eq) return null;
+  if (forgeLevel >= HIDDEN_EFFECT_UNLOCK_LEVEL) {
+    const labels = hiddenAbilityLabels(eq);
+    return labels.length > 0 ? `隠し能力: ${labels.join('・')}` : null;
+  }
+  // アクセサリは ATK/MAT/DEF/MDF が強化で一切変化しない（forgeBonusFor が常に {} を返す）ため、
+  // 「効果なし」に見えてしまう問題を緩和する専用ヒントにする（[04 §3-4]・§0）。
+  if (eq.slot === 'accessory') {
+    return `？？？（+${HIDDEN_EFFECT_UNLOCK_LEVEL}で状態異常耐性が開放されます）`;
+  }
+  return `？？？（+${HIDDEN_EFFECT_UNLOCK_LEVEL}で開放）`;
+}
 
 // 鍛冶屋（[04 §4]）。所有装備（個体）の強化（インゴット消費）とリサイクル。
 export const Page = () => {
@@ -196,6 +248,9 @@ export const Page = () => {
                 // 強化後レベル（銅+1 を基準に表示）
                 const nextLevel = Math.min(FORGE.MAX_LEVEL, e.forgeLevel + FORGE.INGOT_INC.copper);
                 const slotLabel = eq ? EQUIP_SLOT_LABEL[eq.slot] : '';
+                // 隠し能力（[04 §3-4]）: forgeLevel>=3 で開放。未開放時は「？？？」ヒントを出す。
+                const hiddenLocked = e.forgeLevel < HIDDEN_EFFECT_UNLOCK_LEVEL;
+                const hiddenText = hiddenAbilityText(eq, e.forgeLevel);
 
                 const rowClass = maxed
                   ? styles.rowMaxed
@@ -231,6 +286,15 @@ export const Page = () => {
                             </>
                           )}
                         </span>
+                        {hiddenText && (
+                          <span
+                            className={
+                              hiddenLocked ? styles.hiddenAbilityLocked : styles.hiddenAbilityOpen
+                            }
+                          >
+                            {hiddenText}
+                          </span>
+                        )}
                       </div>
                       {maxed && <span className={styles.maxChip}>MAX</span>}
                     </div>

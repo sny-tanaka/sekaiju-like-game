@@ -209,6 +209,23 @@
   color: #9ed8b4; // 緑
 }
 
+// 隠し能力（[04 §3-4]）。未開放（forgeLevel<3）は控えめな「？？？」ヒント。
+.hiddenAbilityLocked {
+  display: block;
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+// 開放済みは神秘的な淡いブルーで目立たせる。
+.hiddenAbilityOpen {
+  display: block;
+  font-size: 10px;
+  color: var(--info-blue-text);
+  margin-top: 2px;
+}
+
 // MAX chip（最大強化済み行の右端）
 .maxChip {
   font-size: 11px;
