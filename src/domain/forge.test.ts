@@ -2,6 +2,7 @@ import { FORGE } from '@/data/balance';
 import {
   forgeIncPerLevel,
   forgeBonusFor,
+  forgeRequiresMaterial,
   forgeWithIngot,
   gradeMult,
   gradedBaseBonuses,
@@ -11,10 +12,21 @@ import {
 } from '@/domain/forge';
 import { addEquipment } from '@/domain/inventory';
 import { createInitialSaveData } from '@/domain/saveData';
-import type { SaveData } from '@/domain/types';
+import type { ItemId, SaveData } from '@/domain/types';
 
 function withIngots(save: SaveData, copper = 0, silver = 0, gold = 0): SaveData {
   return { ...save, forgeInventory: { ...save.forgeInventory, ingots: { copper, silver, gold } } };
+}
+
+/** guild.storage に指定アイテムを qty 個持たせる（テスト用ヘルパ）。 */
+function withStorage(save: SaveData, itemId: ItemId, qty: number): SaveData {
+  return { ...save, guild: { ...save.guild, storage: [{ itemId, qty }] } };
+}
+
+/** プールの装備の forgeLevel を上書きする（テスト用ヘルパ）。 */
+function withForgeLevel(save: SaveData, index: number, forgeLevel: number): SaveData {
+  const equipment = save.guild.equipment.map((e, i) => (i === index ? { ...e, forgeLevel } : e));
+  return { ...save, guild: { ...save.guild, equipment } };
 }
 
 describe('forge: forgeIncPerLevel', () => {
@@ -95,6 +107,125 @@ describe('forge: forgeWithIngot', () => {
     const res = forgeWithIngot(save, save.guild.equipment[0].id, 'copper');
     expect(res.ok).toBe(false);
     expect(res.reason).toBe('maxLevel');
+  });
+});
+
+// ============================================================================
+// 専用素材での強化ルート（[04 §4] B）
+// ============================================================================
+
+describe('forge: forgeRequiresMaterial', () => {
+  test('tier1装備は curLevel<4 && nextLevel>=4 のときだけ専用素材IDを返す', () => {
+    // equip_rat_dagger: tier=1 → item_mat_t1_lord_pelt
+    expect(forgeRequiresMaterial('equip_rat_dagger', 3, 4)).toBe('item_mat_t1_lord_pelt');
+    // 跨がない（4未満のまま）
+    expect(forgeRequiresMaterial('equip_rat_dagger', 0, 1)).toBeNull();
+    // 既に4以上（跨ぎ済み）からさらに強化
+    expect(forgeRequiresMaterial('equip_rat_dagger', 4, 5)).toBeNull();
+  });
+
+  test('tier0装備は常に null を返す（素材不要）', () => {
+    expect(forgeRequiresMaterial('equip_short_sword', 3, 4)).toBeNull();
+    expect(forgeRequiresMaterial('equip_short_sword', 0, 5)).toBeNull();
+  });
+
+  test('tier5装備は tier4の専用素材IDを返す（専用tier5素材が無いため流用）', () => {
+    expect(forgeRequiresMaterial('equip_t5_spear', 3, 4)).toBe('item_mat_t4_sovereign_crown');
+  });
+
+  test('存在しない masterId は null を返す', () => {
+    expect(forgeRequiresMaterial('nonexistent_id', 3, 4)).toBeNull();
+  });
+});
+
+describe('forge: forgeWithIngot（専用素材消費）', () => {
+  test('tier1装備が forgeLevel 3→4 に上がる際、専用素材を MATERIAL_QTY 消費する（コツコツ+1）', () => {
+    let save = addEquipment(createInitialSaveData('g'), 'equip_rat_dagger');
+    save = withForgeLevel(save, 0, 3);
+    save = withIngots(save, 1);
+    save = withStorage(save, 'item_mat_t1_lord_pelt', FORGE.MATERIAL_QTY);
+    const id = save.guild.equipment[0].id;
+    const res = forgeWithIngot(save, id, 'copper');
+    expect(res.ok).toBe(true);
+    expect(res.save.guild.equipment[0].forgeLevel).toBe(4);
+    // 消費数ちょうどだったので storage から消える
+    expect(
+      res.save.guild.storage.find((s) => s.itemId === 'item_mat_t1_lord_pelt')
+    ).toBeUndefined();
+  });
+
+  test('tier1装備が一気に silver/gold で 4 を跨ぐときも専用素材を消費する', () => {
+    let save = addEquipment(createInitialSaveData('g'), 'equip_rat_dagger');
+    // forgeLevel=0 のまま gold(+5) → nextLevel=5（0<4 && 5>=4 なので跨ぐ）
+    save = withIngots(save, 0, 0, 1);
+    save = withStorage(save, 'item_mat_t1_lord_pelt', FORGE.MATERIAL_QTY);
+    const id = save.guild.equipment[0].id;
+    const res = forgeWithIngot(save, id, 'gold');
+    expect(res.ok).toBe(true);
+    expect(res.save.guild.equipment[0].forgeLevel).toBe(5);
+    expect(
+      res.save.guild.storage.find((s) => s.itemId === 'item_mat_t1_lord_pelt')
+    ).toBeUndefined();
+  });
+
+  test('専用素材が不足していると noMaterial で失敗し forgeLevel は変化しない', () => {
+    let save = addEquipment(createInitialSaveData('g'), 'equip_rat_dagger');
+    save = withForgeLevel(save, 0, 3);
+    save = withIngots(save, 1);
+    // MATERIAL_QTY(2) に満たない 1 個だけ所持
+    save = withStorage(save, 'item_mat_t1_lord_pelt', FORGE.MATERIAL_QTY - 1);
+    const id = save.guild.equipment[0].id;
+    const res = forgeWithIngot(save, id, 'copper');
+    expect(res.ok).toBe(false);
+    expect(res.reason).toBe('noMaterial');
+    expect(res.save.guild.equipment[0].forgeLevel).toBe(3);
+    // インゴットも消費されていない
+    expect(res.save.forgeInventory.ingots.copper).toBe(1);
+  });
+
+  test('素材を全く所持していないと noMaterial で失敗する', () => {
+    let save = addEquipment(createInitialSaveData('g'), 'equip_rat_dagger');
+    save = withForgeLevel(save, 0, 3);
+    save = withIngots(save, 1);
+    const id = save.guild.equipment[0].id;
+    const res = forgeWithIngot(save, id, 'copper');
+    expect(res.ok).toBe(false);
+    expect(res.reason).toBe('noMaterial');
+  });
+
+  test('一度4以上に達した個体は、その後さらに強化（4→5）しても素材が再消費されない', () => {
+    let save = addEquipment(createInitialSaveData('g'), 'equip_rat_dagger');
+    save = withForgeLevel(save, 0, 4);
+    save = withIngots(save, 1);
+    // 専用素材は一切持たせない
+    const id = save.guild.equipment[0].id;
+    const res = forgeWithIngot(save, id, 'copper');
+    expect(res.ok).toBe(true);
+    expect(res.save.guild.equipment[0].forgeLevel).toBe(5);
+  });
+
+  test('tier0装備は素材消費が発生しない（storageが空でも強化できる）', () => {
+    let save = addEquipment(createInitialSaveData('g'), 'equip_short_sword');
+    save = withIngots(save, 0, 0, 1); // gold: 0→5
+    expect(save.guild.storage).toHaveLength(0);
+    const id = save.guild.equipment[0].id;
+    const res = forgeWithIngot(save, id, 'gold');
+    expect(res.ok).toBe(true);
+    expect(res.save.guild.equipment[0].forgeLevel).toBe(5);
+  });
+
+  test('tier5装備は tier4の素材（item_mat_t4_sovereign_crown）を消費する', () => {
+    let save = addEquipment(createInitialSaveData('g'), 'equip_t5_spear');
+    save = withForgeLevel(save, 0, 3);
+    save = withIngots(save, 1);
+    save = withStorage(save, 'item_mat_t4_sovereign_crown', FORGE.MATERIAL_QTY);
+    const id = save.guild.equipment[0].id;
+    const res = forgeWithIngot(save, id, 'copper');
+    expect(res.ok).toBe(true);
+    expect(res.save.guild.equipment[0].forgeLevel).toBe(4);
+    expect(
+      res.save.guild.storage.find((s) => s.itemId === 'item_mat_t4_sovereign_crown')
+    ).toBeUndefined();
   });
 });
 

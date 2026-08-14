@@ -147,6 +147,11 @@ export const FORGE = {
   INGOT_INC: { copper: 1, silver: 3, gold: 5 } as const,
   /** 断片が何個でインゴット1個に自動変換されるか（[04 §4.2]）。 */
   FRAGMENTS_PER_INGOT: 10,
+  // ---- 専用素材での強化ルート（B） ----
+  /** このレベルを"新たに"跨ぐ強化で専用素材を要求する。 */
+  MATERIAL_REQUIRED_LEVEL: 4,
+  /** 1回の消費数。 */
+  MATERIAL_QTY: 2,
 } as const;
 
 // ----------------------------------------------------------------------------
